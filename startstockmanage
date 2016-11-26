@@ -1,1 +1,2 @@
+#! /bin/bash
 start-stop-daemon --start --background -d /mnt/usbdisk/stockdatamanage/ --exec /mnt/usbdisk/stockdatamanage/run.sh
