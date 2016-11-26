@@ -117,13 +117,14 @@ Session = sqlconn.Session
 
 def downGubenToSQL(stockID, retry=20, timeout=10):
     """下载单个股票股本数据写入数据库"""
-    gubenURL = urlGuben(stockID)
-
+    logging.debug('downGubenToSQL: %s', stockID)
     socket.setdefaulttimeout(timeout)
-    headers = {'User-Agent': ('Mozilla/5.0 (Windows; U; Windows NT 6.1; '
-                              'en-US;rv:1.9.1.6) Gecko/20091201 '
-                              'Firefox/3.5.6')}
-    req = urllib2.Request(gubenURL, headers=headers)
+    gubenURL = urlGuben(stockID)
+#     headers = {'User-Agent': ('Mozilla/5.0 (Windows; U; Windows NT 6.1; '
+#                               'en-US;rv:1.9.1.6) Gecko/20091201 '
+#                               'Firefox/3.5.6')}
+#     req = urllib2.Request(gubenURL, headers=headers)
+    req = getreq(gubenURL)
 #     downloadStat = False
     gubenDf = pd.DataFrame()
     for _ in range(retry):
