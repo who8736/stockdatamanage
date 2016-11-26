@@ -6,9 +6,7 @@ Created on Thu Mar 10 21:11:51 2016
 """
 
 import os
-# import sys
 import logging
-# import urllib
 import urllib2
 import socket
 import datetime as dt
@@ -16,26 +14,16 @@ import ConfigParser
 
 from lxml import etree
 import tushare as ts  # @UnresolvedImport
-# import mysql.connector
 import pandas as pd  # @UnusedImport
 from pandas.compat import StringIO
 from sqlalchemy import create_engine, MetaData, Table, Column
 from sqlalchemy import DATE, DECIMAL, String
-# from sqlalchemy import FLOAT, Integer
-# from sqlalchemy import Sequence, Index
 from sqlalchemy.orm import sessionmaker, scoped_session
-# from sqlalchemy.ext.declarative import declarative_base
 import sqlalchemy
-# from _sqlite3 import Row
 from pandas.core.frame import DataFrame
 from tushare.stock import cons as ct
 
 import datatrans
-# import eastmoneydata
-# import yahoodata
-# from sqlconn import engine, Session
-# from datatrans import transQuarterToDate, dateList
-# from datatrans import quarterAdd
 
 
 class SQLConn():
@@ -74,8 +62,6 @@ class SQLConn():
             logging.error('read conf file error.')
 
     def saveConf(self):
-        #         self.loadConf()
-        #         if not os.path.isfile('stockanalyse.conf'):
         cf = ConfigParser.ConfigParser()
         # add section / set option & key
         cf.add_section('main')
@@ -91,39 +77,11 @@ engine = sqlconn.engine
 Session = sqlconn.Session
 
 
-# def getHist(stockID='600004', start='1979-01-01', end=None):
-#     """抓取股票历史K线
-#     stockID： 股票代码
-#     start: 开始日期
-#     end: 结束日期
-#     """
-#     if end is None:
-#         end = dt.datetime.today().strftime('%Y-%m-%d')
-# #     print start
-# #     print end
-#     return ts.get_hist_data(stockID, start, end)
-
-
-# def fullUpdateLirun():
-#     stockList = readStockID()
-#     lirunList = []
-#     for i in stockList:
-#         stockID = i[0]
-#         lirun = lirunFileToList(stockID)
-#         if lirun:
-#             lirunList.append(lirun)
-#     tableName = 'lirun'
-#     return writeSQL(lirunList, tableName)
-
 def downGubenToSQL(stockID, retry=20, timeout=10):
     """下载单个股票股本数据写入数据库"""
     logging.debug('downGubenToSQL: %s', stockID)
     socket.setdefaulttimeout(timeout)
     gubenURL = urlGuben(stockID)
-#     headers = {'User-Agent': ('Mozilla/5.0 (Windows; U; Windows NT 6.1; '
-#                               'en-US;rv:1.9.1.6) Gecko/20091201 '
-#                               'Firefox/3.5.6')}
-#     req = urllib2.Request(gubenURL, headers=headers)
     req = getreq(gubenURL)
 #     downloadStat = False
     gubenDf = pd.DataFrame()
@@ -137,7 +95,6 @@ def downGubenToSQL(stockID, retry=20, timeout=10):
             gubenDf = gubenDataToDf(stockID, guben)
             tablename = 'guben'
             lastUpdate = getGubenLastUpdateDate(stockID)
-        #     print '%s: %s' % (stockID, lastUpdate)
             gubenDf = gubenDf[gubenDf.date > lastUpdate]
             if not gubenDf.empty:
                 writeSQL(gubenDf, tablename)
@@ -161,8 +118,6 @@ def downKlineToSQL(stockID, startDate=None, endDate=None, retry_count=20):
         except IOError:
             logging.warning('fail download %s Kline data %d times, retry....',
                             stockID, cur_retry)
-#             logging.warning(e)
-#             return
         else:
             if (df is None) or df.empty:
                 return
@@ -209,11 +164,9 @@ def createGubenTable():
 
 
 def createKlineTable(stockID):
-    #     engine = getEngine()
     tableName = 'kline%s' % stockID
     sql = 'create table %s like klinesample' % tableName
     return engine.execute(sql)
-#     engine.close()
 
 
 def createStockList():
@@ -233,7 +186,6 @@ def createStockList():
     bvps,每股净资
     pb,市净率
     timeToMarket,上市日期"""
-#     engine = getEngine()
     metadata = MetaData()
     unusedTable = Table('stocklist', metadata,
                         Column('code', String(6), primary_key=True),
@@ -256,7 +208,6 @@ def createStockList():
                         Column('timeToMarket', DATE)
                         )
     metadata.create_all(engine)
-#     engine.close()
 
 
 def getStockBasicsFromCSV():
@@ -283,12 +234,10 @@ def getStockBasicsFromCSV():
                timeToMarket,上市日期
     """
     csvFile = open('all.csv')
-#     df = pd.read_csv(csvFile.read(), dtype={'code': 'object'})
     text = csvFile.read()
     text = text.decode('GBK')
     text = text.replace('--', '')
     df = pd.read_csv(StringIO(text), dtype={'code': 'object'})
-#     df = pd.read_csv(csvFile, dtype={'code': 'object'})
     df = df.set_index('code')
     return df
 
@@ -317,18 +266,11 @@ def get_stock_basics():
                timeToMarket,上市日期
     """
     url = ct.ALL_STOCK_BASICS_FILE
-#     print url
     req = getreq(url)
-#     headers = {'User-Agent': ('Mozilla/5.0 (Windows; U; '
-#                               'Windows NT 6.1;'
-#                               'en-US;rv:1.9.1.6) Gecko/20091201 '
-#                               'Firefox/3.5.6')}
-#     req = urllib2.Request(url, headers=headers)
 #     proxy = urllib2.ProxyHandler({'http': '127.0.0.1:8087'})
 #     opener = urllib2.build_opener(proxy)
 #     urllib2.install_opener(opener)
     text = urllib2.urlopen(req, timeout=30).read()
-#     text = urllib2.urlopen(req, timeout=20).read()
     text = text.decode('GBK')
     text = text.replace('--', '')
     df = pd.read_csv(StringIO(text), dtype={'code': 'object'})
@@ -351,47 +293,32 @@ def updateStockList(retry=10):
         logging.error('updateStockList fail!!!')
         return False
     sl.index.name = 'stockid'
-#     print sl
-#    engine = getEngine()
-#     if not append:
-#         clearStockList()
     clearStockList()
-#    print sl.head()
-#    writeSQL(sl, 'stocklist')
     sl.to_sql(u'stocklist',
               engine,
               if_exists=u'append')
-#             dtype = {'date': sqlalchemy.types.DATE})
-#    engine.close()
 
 
 def dropTable(tableName):
-    #     engine = getEngine()
     engine.execute('DROP TABLE %s' % tableName)
-#     engine.close()
 
 
 def getLowPEStockList(maxPE=40):
     """选取指定范围PE的股票
     maxPE: 最大PE
     """
-#     engine = getEngine()
     sql = 'select stockid, pe from stocklist where pe > 0 and pe <= %s' % maxPE
     df = pd.read_sql(sql, engine)
-#     engine.close()
     return df
 
 
 def getAllTableName(tableName):
-    #     engine = getEngine()
     result = engine.execute('show tables like %s', tableName)
     return result.fetchall()
 
 
 def clearStockList():
-    #     engine = getEngine()
     engine.execute('TRUNCATE TABLE stocklist')
-#     engine.close()
 
 
 def getKlineLastUpdateDate(stockID):
@@ -399,7 +326,6 @@ def getKlineLastUpdateDate(stockID):
     if not existTable(tablename):
         createKlineTable(stockID)
         return dt.datetime.strptime('1990-01-01', '%Y-%m-%d')
-#     engine = getEngine()
     sql = 'select max(date) from %s' % tablename
     return getLastUpdate(sql)
 
@@ -410,17 +336,11 @@ def getGubenLastUpdateDate(stockID):
 
 
 def readStockListFromSQL():
-    #     engine = getEngine()
     result = engine.execute('select stockid, name from stocklist')
-#     engine.close()
-#     result = engine.execute('select * from stocklisttest')
     stockIDList = []
     for i in result:
         stockIDList.append([i[0], i[1]])
         pass
-#     print result.rowcount
-
-#     print stockIDList
     return stockIDList
 
 
@@ -452,33 +372,11 @@ def readStockListDf():
     stockNames = []
     for i in stockList:
         stockIDs.append(i[0])
-#         name = i[1].encode('utf-8').decode('utf-8')
         name = i[1].encode('gbk')
-#         print repr(name)
         stockNames.append(name)
-#         print repr(i[1])
     stockListDf = DataFrame({'stockid': stockIDs,
                              'name': stockNames})
     return stockListDf
-
-
-# def readStockID(stockList):
-#     return [i[0] for i in stockList]
-
-
-# def getAllHist():
-#     stockIDList = readStockID()
-#     print type(stockIDList)
-#     print stockIDList
-#     count = len(stockIDList)
-#     curNum = 1
-#     for i in stockIDList:
-#         print 'get stock data %d of %d, stockID is %s' % (curNum, count, i)
-# #        df = getHist(i[0])
-# #         writeSQL(i, df)
-#         curNum += 1
-#
-#     print 'data update done.'
 
 
 def updateKlineMarketValue(stockID, startDate='1990-01-01', endDate=None):
@@ -486,7 +384,6 @@ def updateKlineMarketValue(stockID, startDate='1990-01-01', endDate=None):
     klineTablename = 'kline%s' % stockID
     gubenCount = gubenDf['date'].count()
 
-#     engine = getEngine()
     for i in range(gubenCount):
         startDate = gubenDf['date'][i]
         try:
@@ -502,7 +399,6 @@ def updateKlineMarketValue(stockID, startDate='1990-01-01', endDate=None):
         if endDate:
             sql += ' and date < "%s"' % endDate
         engine.execute(sql)
-#     engine.close()
 
 
 def updateKlineTTMLirun(stockID, startDate='1990-01-01', endDate='2099-12-31'):
@@ -510,18 +406,15 @@ def updateKlineTTMLirun(stockID, startDate='1990-01-01', endDate='2099-12-31'):
     a更新Kline表TTM利润
     """
     TTMLirunDf = readTTMLirunForStockID(stockID, startDate)
-#     print TTMLirunDf
     klineTablename = 'kline%s' % stockID
     TTMLirunCount = TTMLirunDf['date'].count()
 
-#     engine = getEngine()
     for i in range(TTMLirunCount):
         startDate = TTMLirunDf['reportdate'][i]
         try:
             endDate = TTMLirunDf['reportdate'][i + 1]
         except KeyError:
             endDate = None
-#             print e
         TTMLirun = TTMLirunDf['ttmprofits'][i]
 
         sql = 'update %s set ttmprofits = %s' % (klineTablename, TTMLirun)
@@ -529,15 +422,12 @@ def updateKlineTTMLirun(stockID, startDate='1990-01-01', endDate='2099-12-31'):
         if endDate:
             sql += ' and date < "%s"' % endDate
         engine.execute(sql)
-#     engine.close()
 
 
 def gubenDfToList(df):
     timea = dt.datetime.now()
     gubenList = []
     for date, row in df.iterrows():
-        #         print date, row
-        #         date = row['date']
         stockid = row['stockid']
         date = row['date']
         totalshares = row['totalshares']
@@ -560,19 +450,14 @@ def writeLirun(df):
 def writeGuben(stockID, df):
     logging.debug('start writeGuben %s' % stockID)
     timea = dt.datetime.now()
-#     print df
     gubenList = gubenDfToList(df)
-#     print klineList
     if not gubenList:
         return False
-
-#     engine = getEngine()
 
     tableName = 'guben'
     if not existTable(tableName):
         createGubenTable(stockID)
 
-#     Session = scoped_session(sessionmaker(bind = engine, autoflush = False))
     session = Session()
     metadata = MetaData(bind=engine)
     mytable = Table(tableName, metadata, autoload=True)
@@ -580,9 +465,6 @@ def writeGuben(stockID, df):
     session.execute(mytable.insert().prefix_with('IGNORE'), gubenList)
     session.commit()
     session.close()
-#     engine.close()
-
-#     logging.info('end quickWriteSQLB %s' % stockID)
     timeb = dt.datetime.now()
     logging.debug('writeGuben stockID %s took %s' %
                   (stockID, (timeb - timea)))
@@ -593,10 +475,7 @@ def writeSQL(data, tableName, insertType='IGNORE'):
     """insetType: IGNORE 忽略重复主键；
 
     """
-#     timea = dt.datetime.now()
     logging.debug('start writeSQL %s' % tableName)
-
-#     engine = getEngine()
 
     if not existTable(tableName):
         logging.error('not exist %s' % tableName)
@@ -604,29 +483,18 @@ def writeSQL(data, tableName, insertType='IGNORE'):
 
     if isinstance(data, DataFrame):
         if data.empty:
-            # logging.info('write a empty DataFrame, return caller')
             return True
         data = transDfToList(data)
 
     if not data:
         return True
 
-#     print 'write data:\n%s' % data
-#     Session = scoped_session(sessionmaker(bind = engine, autoflush = False))
     session = Session()
     metadata = MetaData(bind=engine)
     mytable = Table(tableName, metadata, autoload=True)
-
-#     print 'cccccccccc'
-#     print type(data)
-#     print data
     session.execute(mytable.insert().prefix_with(insertType), data)
     session.commit()
     session.close()
-#     engine.close()
-
-#     timeb = dt.datetime.now()
-#     logging.info('writeSQL %s took %s', tableName, (timeb - timea))
     return True
 
 
@@ -634,154 +502,6 @@ def writeStockIDListToFile(stockIDList, filename):
     stockFile = open(filename, 'wb')
     stockFile.write('\n'.join(stockIDList))
     stockFile.close()
-
-
-# def quickWriteSQL(stockID, df):
-#     logging.info('start quickWriteSQL %s' % stockID)
-#     Base = declarative_base()
-#
-#     class kline(Base):
-#         __tablename__ = 'kline%s' % stockID
-#         date = Column(DATE, primary_key=True)  # 日期
-#         open = Column(DECIMAL(precision=10, scale=2))  # 开盘价
-#         high = Column(DECIMAL(precision=10, scale=2))  # 最高价
-#         close = Column(DECIMAL(precision=10, scale=2))  # 收盘价
-#         low = Column(DECIMAL(precision=10, scale=2))  # 最低价
-#         volume = Column(DECIMAL(precision=20, scale=2))  # 成交量
-#         price_change = Column(DECIMAL(precision=10, scale=2))  # 价格变动
-#         p_change = Column(DECIMAL(precision=10, scale=2))  # 涨跌幅
-#         ma5 = Column(DECIMAL(precision=10, scale=3))  # 5日均价
-#         ma10 = Column(DECIMAL(precision=10, scale=3))  # 10日均价
-#         ma20 = Column(DECIMAL(precision=10, scale=3))  # 20日均价
-#         v_ma5 = Column(DECIMAL(precision=20, scale=3))  # 5日均量
-#         v_ma10 = Column(DECIMAL(precision=20, scale=3))  # 10日均量
-#         v_ma20 = Column(DECIMAL(precision=20, scale=3))  # 20日均量
-#         totals = Column(DECIMAL(precision=20, scale=3))  # 总股本
-#         total_shares = Column(DECIMAL(precision=20, scale=3))  # 总市值
-#         ttm_profit = Column(DECIMAL(precision=20, scale=3))  # TTM利润
-#         ttm_pe = Column(DECIMAL(precision=10, scale=3))  # TTM市盈率
-#         turnover = Column(DECIMAL(precision=10, scale=3))  # 换手率[注#指数无此项]
-#
-#         def __init__(self, date, open_, high, close, low, volume,
-#                      price_change, p_change, ma5, ma10, ma20,
-#                      v_ma5, v_ma10, v_ma20, turnover):
-#             self.date = date
-#             self.open = open_
-#             self.high = high
-#             self.close = close
-#             self.low = low
-#             self.volume = volume
-#             self.price_change = price_change
-#             self.p_change = p_change
-#             self.ma5 = ma5
-#             self.ma10 = ma10
-#             self.ma20 = ma20
-#             self.v_ma5 = v_ma5
-#             self.v_ma10 = v_ma10
-#             self.v_ma20 = v_ma20
-#             self.turnover = turnover
-#
-#         def __repr__(self):
-#             return '<kline (%s, %f, %f>' % (self.date, self.open, self.high)
-#
-#     timea = dt.datetime.now()
-# #     engine = getEngine()
-#     Base.metadata.create_all(engine)
-# #    tableName = 'kline%s' % stockID
-# #    Session = scoped_session(sessionmaker(bind = engine, autoflush = False))
-#     session = Session()
-#     try:
-#         for date, row in df.iterrows():
-#             query = session.query(kline)
-#             a = query.get(date)
-#             if a is None:  # 以主键获取，等效于上句
-#                 (open_, high, close, low, volume,
-#                  price_change, p_change, ma5, ma10, ma20,
-#                  v_ma5, v_ma10, v_ma20, turnover) = row
-#                 k = kline(date, open_, high, close, low, volume,
-#                           price_change, p_change, ma5, ma10, ma20,
-#                           v_ma5, v_ma10, v_ma20, turnover)
-#                 session.add(k)
-#         session.flush()
-#         session.commit()
-#         session.close()
-#         print 'commit final'
-#     except:
-#         logging.error(sys.exc_info()[0])
-#         raise
-#     logging.info('end quickWriteSQL %s', stockID)
-#     timeb = dt.datetime.now()
-#     print timeb - timea
-#     engine.close()
-
-#
-# def quickWriteSQLA(stockID, df):
-#     #     return
-#     logging.info('**start quickWriteSQLA %s' % stockID)
-#     Base = declarative_base()
-#
-#     class kline(Base):
-#         __tablename__ = 'kline%s' % stockID
-#         date = Column(DATE, primary_key=True)  # 日期
-#         open = Column(DECIMAL(precision=10, scale=2))  # 开盘价
-#         high = Column(DECIMAL(precision=10, scale=2))  # 最高价
-#         close = Column(DECIMAL(precision=10, scale=2))  # 收盘价
-#         low = Column(DECIMAL(precision=10, scale=2))  # 最低价
-#         volume = Column(DECIMAL(precision=20, scale=2))  # 成交量
-# #         price_change = Column(DECIMAL(precision = 10, scale = 2))  # 价格变动
-# #         p_change = Column(DECIMAL(precision = 10, scale = 2))  # 涨跌幅
-# #         ma5 = Column(DECIMAL(precision = 10, scale = 3))  # 5日均价
-# #         ma10 = Column(DECIMAL(precision = 10, scale = 3))  # 10日均价
-# #         ma20 = Column(DECIMAL(precision = 10, scale = 3))  # 20日均价
-# #         v_ma5 = Column(DECIMAL(precision = 20, scale = 3))  # 5日均量
-# #         v_ma10 = Column(DECIMAL(precision = 20, scale = 3))  # 10日均量
-# #         v_ma20 = Column(DECIMAL(precision = 20, scale = 3))  # 20日均量
-# #         totals = Column(DECIMAL(precision = 20, scale = 3))  # 总股本
-# #         total_shares = Column(DECIMAL(precision = 20, scale = 3))  # 总市值
-# #         ttm_profit = Column(DECIMAL(precision = 20, scale = 3))  # TTM利润
-# #         ttm_pe = Column(DECIMAL(precision = 10, scale = 3))  # TTM市盈率
-#         turnover = Column(DECIMAL(precision = 10, scale = 3))  # 换手率[注#指数无此项]
-#
-#         def __init__(self, date, open_, high, close, low, volume):
-#             self.date = date
-#             self.open = open_
-#             self.high = high
-#             self.close = close
-#             self.low = low
-#             self.volume = volume
-#
-#         def __repr__(self):
-#             return '<kline (%s, %f, %f>' % (self.date, self.open, self.high)
-#
-#     timea = dt.datetime.now()
-# #     engine = getEngine()
-#     Base.metadata.create_all(engine)
-# #    tableName = 'kline%s' % stockID
-# #    Session = scoped_session(sessionmaker(bind = engine, autoflush = False))
-#     session = Session()
-#     try:
-#         for unusedIndex, row in df.iterrows():
-#             #             print index, row
-#             date = row['date']
-#             open_ = row['open']
-#             high = row['high']
-#             close = row['close']
-#             low = row['low']
-#             volume = row['volume']
-#             a = session.query(kline.date).filter(kline.date == date).all()
-#             if not a:  #
-#                 k = kline(date, open_, high, close, low, volume)
-#                 session.add(k)
-#         session.flush()
-#         session.commit()
-#         print 'commit final'
-#     except:
-#         logging.error(sys.exc_info()[0])
-#         raise
-#     logging.info('end quickWriteSQLA %s' % stockID)
-#     timeb = dt.datetime.now()
-#     print timeb - timea
-# #     engine.close()
 
 
 def downloadLirun(date):
@@ -917,11 +637,6 @@ def gubenDataToDf(stockID, guben):
     return gubenDf
 
 
-# def downloadGuzhiToFiles(stockList):
-#     for stockID in stockList:
-#         downGuzhiToFile(stockID)
-
-
 def downGuzhiToFile(stockID):
     url = urlGuzhi(stockID)
     filename = filenameGuzhi(stockID)
@@ -954,7 +669,6 @@ def transGuzhiDataToDict(guzhi):
     next1YearPE = guzhiData[2][6].text.strip()
     next2YearPE = guzhiData[2][7].text.strip()
     next3YearPE = guzhiData[2][8].text.strip()
-#    print '|%s|' % peg
     if stockID != '--':
         guzhiDict['stockid'] = stockID  # 取得股票代码
     if peg != '--':
@@ -978,22 +692,10 @@ def readGuzhiFilesToDf(stockList):
     return DataFrame(guzhiList)
 
 
-# def readQuartersTTMLirunInc(stockList):
-#     """批量读取前6个季度TTM利润增长率
-#     # stockList: 股票代码列表
-#     # 返回： DataFrame,
-#     """
-#
-#     for stockID in stockList:
-#         readTTMLirunForDate(date)
-
-
 def downloadKline(stockID, startDate=None, endDate=None):
     if startDate is None:  # startDate为空时取股票最后更新日期
         startDate = getKlineLastUpdateDate(stockID)
         startDate = startDate.strftime('%Y-%m-%d')
-#     else:
-#         startDate = '1990-01-01'
     if endDate is None:
         endDate = dt.datetime.today().strftime('%Y-%m-%d')
     return downloadKlineTuShare(stockID, startDate, endDate)
@@ -1005,30 +707,13 @@ def downloadKlineTuShare(stockID,
         histDf = ts.get_hist_data(stockID, startDate, endDate)
     except IOError:
         return None
-#     logging.info('downloadKlineTuShare final:%s, %s, %s',
-#                  stockID, startDate, endDate)
     return histDf
 
 
-# def downloadTTMLirun(date):
-#     logging.info('start downloadTTMLirun: %d', date)
-#     df = readLirunList(date)
-#     ttmdf = calAllTTMLirun(df, date)
-#     # TODO: 补充写TTMLirun
-# #     writeTTMLirun(ttmdf)
-#     logging.info('end downloadTTMLirun: %d', date)
-#     return True
-
-
 def readLirunList(date):
-    #     engine = getEngine()
     sql = 'select * from lirun where `date` >= %s and `date` <= %s' % (
         str(date - 10), str(date))
-#     sql = 'select * from lirun'
     df = pd.read_sql(sql, engine)
-#     print df
-#     print type(df)
-#     engine.close()
     return df
 
 
@@ -1045,42 +730,28 @@ def readTTMLirunForStockID(stockID,
     --------
     DataFrame: 返回DataFrame格式TTM利润
     """
-    #     engine = getEngine()
     # 指定日期（含）前最近一次股本变动日期
     sql = (u'select max(reportdate) from ttmlirun '
            u'where stockid="%(stockID)s" '
            u'and reportdate<="%(startDate)s"' % locals())
-#     print sql
-
     # 指定日期（含）前无TTM利润数据的，查询起始日期设定为startDate
     # 否则设定为最近一次数据日期
     result = engine.execute(sql).fetchone()
     if result is None:
-        #         lastUpdate = None
         TTMLirunStartDate = startDate
     else:
-        #         lastUpdate = result[0]
         TTMLirunStartDate = result[0]
-#     if lastUpdate is None:
-#         TTMLirunStartDate = startDate
-#     else:
-#         TTMLirunStartDate = lastUpdate
     sql = (u'select * from ttmlirun where stockid = "%(stockID)s"'
            u' and `reportdate` >= "%(TTMLirunStartDate)s"' % locals())
     if endDate:
         sql += u' and `date` <= "%s"' % endDate
-#     print sql
     df = pd.read_sql(sql, engine)
-#     print df
 
     # 指定日期（含）前存在股本变动数据的，重设第1次变动日期为startDate，
     # 减少更新Kline表中总市值所需计算量
-#     if lastUpdate is not None:
     if TTMLirunStartDate != startDate:
         df.loc[df.reportdate == TTMLirunStartDate,
                u'reportdate'] = startDate
-#     print df
-#     engine.close()
     return df
 
 
@@ -1089,12 +760,9 @@ def readTTMLirunForDate(date):
     date: 格式YYYYQ, 4位年+1位季度，利润所属日期
     return: 返回DataFrame格式TTM利润
     """
-    #     engine = getEngine()
     sql = (u'select * from ttmlirun where '
            u'`date` = "%(date)s"' % locals())
-#     print sql
     df = pd.read_sql(sql, engine)
-#     engine.close()
     return df
 
 
@@ -1103,21 +771,15 @@ def readLirunForDate(date):
     date: 格式YYYYQ, 4位年+1位季度，利润所属日期
     return: 返回DataFrame格式利润
     """
-    #     engine = getEngine()
     sql = (u'select * from lirun where '
            u'`date` = "%(date)s"' % locals())
-#     print sql
     df = pd.read_sql(sql, engine)
-#     engine.close()
     return df
 
 
 def readTTMPE(stockID):
-    #     engine = getEngine()
-    #     sql = 'select * from ttmpe%s' % stockID
     sql = 'select date, ttmpe from kline%s' % stockID
     df = pd.read_sql(sql, engine)
-#     engine.close()
     return df
 
 
@@ -1131,46 +793,22 @@ def readCurrentTTMPE(stockID):
 
 
 def readCurrentTTMPEs(stockList):
-    #     engine = getEngine()
-    #     sql = 'select * from ttmpe%s' % stockID
     idList = []
     peList = []
     for stockID in stockList:
         idList.append(stockID)
         peList.append(readCurrentTTMPE(stockID))
 
-#     engine.close()
     return DataFrame({'stockid': stockList, 'pe': peList})
 
 
 def alterKline():
-    #     engine = getEngine()
-    #    stockList = readStockID()
-    #     for i in stockList:
-    #     print tablename
-    #         sql = 'show tables like "kline%s"' % i[0]
     sql = 'show tables like %s'
-#         sql = ('SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES '
-#                 'WHERE TABLE_SCHEMA="stockdata" '
-#                 'and table_name like "kline%"')
-#     tablename = tablenameKline(stockID)
-#     sql = ('ALTER TABLE `stockdata`.`kline000001`'
-#            'CHANGE COLUMN `volume` `volume` DOUBLE NULL DEFAULT NULL ,'
-#            'CHANGE COLUMN `totalmarketvalue` `totalmarketvalue` '
-#            'DOUBLE NULL DEFAULT NULL ,'
-#            'CHANGE COLUMN `ttmprofits` `ttmprofits` '
-#            'DOUBLE NULL DEFAULT NULL ;' % tablename)
-#     print sql
-
     result = engine.execute(sql, 'kline%')
     result = result.fetchall()
-#     engine.close()
-#     print result
 
     for i in result:
-        #         engine = getEngine()
         tablename = i[0]
-#         print tablename
         sql = 'call stockdata.alterkline(%s)'
         try:
             result = engine.execute(sql, tablename)
@@ -1179,7 +817,6 @@ def alterKline():
         except sqlalchemy.exc.OperationalError, e:
             print e
     return
-#     engine.close()
 
 
 def calAllTTMLirun(date, incrementUpdate=True):
@@ -1206,9 +843,8 @@ def calAllTTMLirun(date, incrementUpdate=True):
     if incrementUpdate:
         TTMLirunCur = readTTMLirunForDate(date)
         lirunCur = lirunCur[~lirunCur.stockid.isin(TTMLirunCur.stockid)]
-#     stockList = lirunCur['stockid']
+
     # 上年第四季度利润, 仅取利润字段并更名为profits1
-    #
     lastYearEnd = (date / 10 - 1) * 10 + 4
     lirunLastYearEnd = readLirunForDate(lastYearEnd)
     print 'lirunLastYearEnd.head():', lirunLastYearEnd.head()
@@ -1244,34 +880,21 @@ def calTTMLirunIncRate(date, incrementUpdate=True):
     if incrementUpdate:
         TTMLirunCur = TTMLirunCur[TTMLirunCur.incrate.isnull()]
     TTMLirunLastYear = readTTMLirunForDate(date - 10)
-#     print TTMLirunLastYear.head()
     TTMLirunLastYear = TTMLirunLastYear[['stockid', 'ttmprofits']]
     TTMLirunLastYear.columns = ['stockid', 'ttmprofits1']
-#     print TTMLirunLastYear.head()
 
     # 整合以上2个表，stockid为整合键
     TTMLirunCur = pd.merge(TTMLirunCur, TTMLirunLastYear, on='stockid')
 
     TTMLirunCur['incrate'] = (TTMLirunCur.ttmprofits /
                               TTMLirunCur.ttmprofits1 * 100 - 100)
-#     print TTMLirunCur.head()
-#     TTMLirunCur = TTMLirunCur[['stockid', 'date', 'ttmprofits',
-#                                'reportdate', 'incrate']]
-#     print TTMLirunCur.head()
-#     print TTMLirunLastYear.head()
     for i in TTMLirunCur.values:
-        #         print type(i)
-        #         print i
         stockID = i[0]
         incRate = round(i[4], 2)
-#         print date, stockID, incRate
         sql = (u'update ttmlirun '
                u'set incrate = %(incRate)s'
                u' where stockid = "%(stockID)s"'
                u'and `date` = %(date)s' % locals())
-#         sql = (u'update ttmlirun '
-#                u'set incrate = null'
-#                u' where stockid = "%(stockID)s"' % locals())
         engine.execute(sql)
     return
 
@@ -1283,90 +906,13 @@ def calTTMLirun(stockdf, date):
     if lirun1.empty or lirun2.empty or lirun3.empty:
         return None
     lirun1 = lirun1.iat[0, 2]
-#     print '============================'
-#     print stockdf
-#     print '----------------'
-#     print lirun2
-#     print lirun2.isnull()
-#     print '----------------'
-#     print lirun3
     lirun2 = lirun2.iat[0, 2]
     stockID = lirun3.iat[0, 0]
-#     print stockID
     reportdate = lirun3.iat[0, 3]
     lirun3 = lirun3.iat[0, 2]
-#     print stockdf
-#     print lirun1
-#     print lirun2
-#     print lirun3
-#     print (date / 10 - 1) * 10 + 4
     # TTM利润 = 本期利润＋上年末利润-上年同期利润
     lirun = lirun3 + lirun2 - lirun1
     return [stockID, date, lirun, reportdate]
-
-
-# def writeTTMLirun(df):
-#     logging.info('start writeTTMLirun')
-#     Base = declarative_base()
-#
-#     class ttmlirun(Base):
-#         __tablename__ = 'ttmlirun'
-#         __table_args__ = (Index('my_index', "stockid", "date"),)
-#         id = Column(Integer, Sequence("user_id_seq"), primary_key=True)
-#         stockid = Column(String(6), index=True)  # 股票代码
-#         date = Column(Integer, index=True)  # 利润归属日期
-#         ttmprofits = Column(FLOAT)  # 利润
-#         reportdate = Column(DATE)  # 利润公告日期
-#
-#         def __init__(self, stockid, date, ttmprofits, reportdate):
-#             self.stockid = stockid
-#             self.date = date
-#             self.ttmprofits = ttmprofits
-#             self.reportdate = reportdate
-#
-#         def __repr__(self):
-#             return '<lirun (%s, %s, %d>' % (self.stockid,
-#                                             self.date, self.profits)
-#
-#     timea = dt.datetime.now()
-# #     engine = getEngine()
-#     Base.metadata.create_all(engine)
-# #    tableName = 'ttmlirun'
-# #     Session = scoped_session(sessionmaker(bind = engine,
-#                                 autoflush = False))
-#     session = Session()
-#     try:
-#         for unusedIndex, row in df.iterrows():
-#             #             print '========================='
-#             #             print index
-#             #             print '-------------'
-#             #             print row
-#             #             date, reportdate, stockID, ttmprofits = row
-#             stockID = row['stockid']
-#             date = row['date']
-#             ttmprofits = row['ttmprofits']
-#             reportdate = row['reportdate']
-# #             print stockID, date, ttmprofits, reportdate
-# #             query = session.query(guben)
-#             a = session.query(ttmlirun).filter(ttmlirun.stockid == stockID)\
-#                 .filter(ttmlirun.date == date).all()
-# #             print 'fdskafjklsdjafl'
-# #             print a
-# #             a = query.get(date)
-#             if not a:  #
-#                 #
-#                 k = ttmlirun(stockID, date, ttmprofits, reportdate)
-#                 session.add(k)
-#         session.flush()
-#         session.commit()
-#         session.close()
-#     except:
-#         logging.error(sys.exc_info()[0])
-#         raise
-#     logging.info('end writeTTMLirun')
-#     timeb = dt.datetime.now()
-# #     engine.close()
-#     print timeb - timea
 
 
 def updateKlineEXTData(stockID, startDate=None):
@@ -1403,7 +949,6 @@ def getTTMPELastUpdate(stockID):
     """
     sql = (u'select ttmpe from lastupdate '
            u'where stockid="%(stockID)s"' % locals())
-#     print sql
     return getLastUpdate(sql)
 
 
@@ -1419,7 +964,6 @@ def getLirunUpdateStartQuarter():
     """
     sql = (u'select min(maxdate) from (SELECT stockid, max(date) as maxdate '
            u'FROM stockdata.lirun group by stockid) as temp;')
-#     print sql
     result = engine.execute(sql)
     lastQuarter = result.first()[0]
     startQuarter = datatrans.quarterAdd(lastQuarter, 1)
@@ -1427,7 +971,6 @@ def getLirunUpdateStartQuarter():
 
 
 def getLirunUpdateEndQuarter():
-    #     today = dt.datetime.now()
     curQuarter = datatrans.transDateToQuarter(dt.datetime.now())
     return datatrans.quarterSub(curQuarter, 1)
 
@@ -1444,26 +987,15 @@ def getLastUpdate(sql):
     datetime：datetime
     """
     lastUpdateDate = engine.execute(sql).first()
-#     print type(lastUpdateDate)
     if lastUpdateDate is None:
         return dt.datetime.strptime('1990-01-01', '%Y-%m-%d')
 
     lastUpdateDate = lastUpdateDate[0]
-#     print type(lastUpdateDate)
     if isinstance(lastUpdateDate, dt.date):
         return lastUpdateDate + dt.timedelta(days=1)
     else:
         logging.debug('lastUpdateDate is: ', type(lastUpdateDate))
         return dt.datetime.strptime('1990-01-01', '%Y-%m-%d')
-#     try:
-#         lastUpdateDate = result.first()[0] + dt.timedelta(days=1)
-#     except TypeError, e:
-#         logging.warning('getLastUpdate: %s', sql)
-#         logging.warning(e)
-#         return dt.datetime.strptime('1990-01-01', '%Y-%m-%d')
-# #     lastUpdatDate = lastUpdatDate.strftime('%Y-%m-%d')
-# #     logging.info('getLastUpdate date: %s', lastUpdatDate)
-#     return lastUpdateDate
 
 
 def setKlineTTMPELastUpdate(stockID, endDate):
@@ -1472,44 +1004,6 @@ def setKlineTTMPELastUpdate(stockID, endDate):
            'on duplicate key update `ttmpe`="%(endDate)s";' % locals())
     result = engine.execute(sql)
     return result
-
-
-# def updateTTMPEA(stockID):
-#     tablename = 'ttmpe%s' % stockID
-#     if not existTable(tablename):
-#         createTTMPETable(tablename)
-#     closeDf = readClose(stockID)
-# #     print closeDf.head()
-#     ttmLirunDf = readTTMLirun(stockID)
-#     gubenDf = readGuben(stockID)
-#
-# #     print ttmLirunDf
-# #     print gubenDf
-#     dateList = []
-#     peList = []
-#     engine = getEngine()
-#     for unusedIndex, row in closeDf.iterrows():
-#         date = row['date']
-#         close = row['close']
-# #         print  date, close
-#         sql = 'select * from %s where `date` = "%s"' % (tablename, date)
-#         result = engine.execute(sql)
-#         if result.rowcount != 0:
-#             continue
-#         guben = readGubenFromDf(gubenDf, date)
-#         if guben is None:
-#             continue
-# #         print date, guben
-#         ttmLirun = readTTMLirunFromDf(ttmLirunDf, date)
-#         if ttmLirun is None:
-#             continue
-#         dateList.append(date)
-#         peList.append(close * guben / 10000 / ttmLirun)
-# #         print date, ttmLirun
-#     TTMPEDf = pd.DataFrame({'date': dateList,
-#                             'ttmpe': peList})
-#     writeTTMPE(stockID, TTMPEDf)
-#     engine.close()
 
 
 def updateKlineTTMPE(stockID, startDate='1990-01-01', endDate=None):
@@ -1534,8 +1028,6 @@ def updateKlineTTMPE(stockID, startDate='1990-01-01', endDate=None):
     else:
         endDate = dt.datetime.today().strftime('%Y-%m-%d')
     return endDate
-#     print result.fetchall()
-#     engine.close()
 
 
 def urlMainTable(stockID, tableType):
@@ -1555,7 +1047,6 @@ def downloadMainTable(stockID):
     for tableType in mainTableType:
         url = urlMainTable(stockID, tableType)
         filename = filenameMainTable(stockID, tableType)
-#         print url
         logging.debug('downloadMainTable %s, %s', stockID, tableType)
         result = downloadDataToFile(url, filename)
         if not result:
@@ -1595,14 +1086,9 @@ def urlGuzhi(stockID):
 
 
 def downloadData(url, timeout=10, maxRetry=10):
-    #     tryCount = 0
     for _ in range(maxRetry):
-        #         tryCount += 1
         try:
-            #             print u'开始下载数据。。。'
             socket.setdefaulttimeout(timeout)
-    #         sock = urllib.urlopen(url)
-    #         data = sock.read()
             headers = {'User-Agent': ('Mozilla/5.0 (Windows; U; '
                                       'Windows NT 6.1;'
                                       'en-US;rv:1.9.1.6) Gecko/20091201 '
@@ -1622,72 +1108,15 @@ def downloadDataToFile(url, filename, timeout=10, maxRetry=10):
     data = downloadData(url, timeout, maxRetry)
     if not data:
         return False
-#     print u'开始写入数据文件'
     try:
         mainFile = open(filename, 'wb')
         mainFile.write(data)
     except IOError, e:
-        print e
-        print u'写文件失败： %s' % filename
+        logging.error('[%s]写文件失败： %s', e, filename)
         return False
     else:
         mainFile.close()
-#     print u'写入文件成功：%s' % filename
     return True
-
-
-# def writeTTMPE(stockID, df):
-#     logging.info('start writeTTMPE %s', stockID)
-#     tableName = 'ttmpe%s' % stockID
-#     Base = declarative_base()
-#
-#     class ttmpeTable(Base):
-#         __tablename__ = tableName
-#         __table_args__ = (Index('my_index', 'date'),)
-#         id = Column(Integer, Sequence('user_id_seq'), primary_key=True)
-#         date = Column(DATE, index=True)  # 变动日期
-#         ttmpe = Column(FLOAT)  # TTM市盈率
-#
-#         def __init__(self, date, ttmpe):
-#             self.date = date
-#             self.ttmpe = ttmpe
-#
-#         def __repr__(self):
-#             return '<ttmpe (%s, %f>' % (self.date, self.ttmpe)
-#
-#     timea = dt.datetime.now()
-# #     engine = getEngine()
-#     Base.metadata.create_all(engine)
-#     Session = scoped_session(sessionmaker(bind = engine, autoflush = False))
-#     session = Session()
-#     try:
-#         for unusedIndex, row in df.iterrows():
-#             #             print '========================='
-#             #             print index
-#             #             print '-------------'
-#             #             print row
-#             date = row['date']
-#             ttmpe = row['ttmpe']
-# #             print date, totalshares
-# #             query = session.query(guben)
-#             a = session.query(ttmpeTable)
-#             a = a.filter(ttmpeTable.date == date).all()
-# #             print 'fdskafjklsdjafl'
-# #             print a
-# #             a = query.get(date)
-#             if not a:  #
-#                 #
-#                 k = ttmpeTable(date, ttmpe)
-#                 session.add(k)
-#         session.flush()
-#         session.commit()
-#     except:
-#         logging.error(sys.exc_info()[0])
-#         raise
-#     logging.info('end writeGuben %s' % stockID)
-#     timeb = dt.datetime.now()
-#     print timeb - timea
-#     engine.close()
 
 
 def readGubenFromDf(df, date):
@@ -1729,20 +1158,16 @@ def readGuben(stockID, startDate='1990-01-01', endDate=None):
         date: 股本变动日期
         totalshares: 变动后总股本
     """
-    # engine = getEngine()
-
     # 指定日期（含）前最近一次股本变动日期
     sql = (u'select max(date) from guben '
            u'where stockid="%(stockID)s" '
            u'and date<="%(startDate)s"' % locals())
-#     print sql
     result = engine.execute(sql)
     lastUpdate = result.fetchone()[0]
 
     # 指定日期（含）前无股本变动数据的，查询起始日期设定为startDate
     # 否则设定为最近一次变动日期
     if lastUpdate is None:
-        #         gubenStartDate = dt.datetime.strftime(startDate, '%Y-%m-%d')
         gubenStartDate = startDate
     else:
         gubenStartDate = lastUpdate
@@ -1752,47 +1177,30 @@ def readGuben(stockID, startDate='1990-01-01', endDate=None):
            u' and `date` >= "%(gubenStartDate)s"' % locals())
     if endDate:
         sql += u' and `date` <= "%s"' % endDate
-#     print sql
     df = pd.read_sql(sql, engine)
-#     print df
-#     df['date'][df.date == gubenstartDate] = startDate
-#     df.iat[0, 0] = startDate
 
     # 指定日期（含）前存在股本变动数据的，重设第1次变动日期为startDate，
     # 减少更新Kline表中总市值所需计算量
     if lastUpdate is not None:
         df.loc[df.date == gubenStartDate, 'date'] = startDate
-#     print df
-#     engine.close()
     return df
 
 
 def readClose(stockID):
-    #     engine = getEngine()
     sql = 'select date, close from kline%s' % stockID
-#     sql = 'select * from lirun'
     df = pd.read_sql(sql, engine)
-#     engine.close()
-#     print df
-#     print type(df)
     return df
 
 
 def existTable(tablename):
-    #     engine = getEngine()
-    #     print tablename
     sql = 'show tables like "%s"' % tablename
-#     print sql
     result = engine.execute(sql)
-#     engine.close()
     return False if result.rowcount == 0 else True
 
 
 def createTTMPETable(tablename):
-    #     engine = getEngine()
     sql = 'create table %s like ttmpesimple' % tablename
     result = engine.execute(sql)
-#     engine.close()
     return result
 
 
@@ -1803,11 +1211,8 @@ def transLirunDf(df, year, quarter):
     if quarter == 4:
         year += 1
     reportdate = df['report_date'].apply(lambda x: str(year) + '-' + x)
-#     print reportdate
-#     reportdate = [dt.datetime.strptime(d, '%Y-%m-%d') for d in reportdate]
     rd = []
     for d in reportdate:
-        #         print d
         if d[-5:] == '02-29':
             d = d[:-5] + '02-28'
         dd = dt.datetime.strptime(d, '%Y-%m-%d')
@@ -1819,19 +1224,13 @@ def transLirunDf(df, year, quarter):
     df = pd.DataFrame(data)
     print 'transLirunDf, len(df):%s' % len(df)
     df = df.drop_duplicates()
-#     print 'dfa:%s' % len(dfa)
-#     df = df.dropna()
-    #     dateSeries = pd.Series({[date for i in range(df['code'].count())]})
     return df
 
 
 def getStockIDsForClassified(classified):
-    #     engine = getEngine()
     sql = ('select stockid from classified '
            'where cname = "%(classified)s"' % locals())
     result = engine.execute(sql)
-#     engine.close()
-#     result = engine.execute('select * from stocklisttest')
     stockIDList = [classifiedID[0] for classifiedID in result.fetchall()]
     return stockIDList
 
@@ -1846,23 +1245,18 @@ def downloadClassified():
 
 def classifiedToSQL(classifiedDf):
     tablename = 'classified'
-#     classifiedList = transDfToList(classifiedDf)
     return writeSQL(classifiedDf, tablename)
 
 
 def getClassifiedForStocksID(stockID):
-    #     engine = getEngine()
     sql = ('select cname from classified '
            'where stockid = "%(stockID)s"' % stockID)
     result = engine.execute(sql)
-#     engine.close()
     classified = result.first()[0]
     return classified
 
 
 def transDfToList(df):
-    #    return [v for unusedk, v in df.to_dict('records').iteritems()]
-    #    return [v for v in df.to_dict('records')]
     outList = []
     for index, row in df.iterrows():
         tmpDict = row.to_dict()
