@@ -1,0 +1,6 @@
+
+需安装的包
+apt install python-mysqldb
+pip --trusted-host pypi.python.org install sqlalchemy
+pip --trusted-host pypi.python.org install pandas
+pip --trusted-host pypi.python.org install tushare
