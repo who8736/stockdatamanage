@@ -1055,7 +1055,7 @@ def getLastUpdate(sql):
     if isinstance(lastUpdateDate, dt.date):
         return lastUpdateDate + dt.timedelta(days=1)
     else:
-        logging.debug('lastUpdateDate is: ', type(lastUpdateDate))
+        logging.debug('lastUpdateDate is: %s', type(lastUpdateDate))
         return dt.datetime.strptime('1990-01-01', '%Y-%m-%d')
 
 
@@ -1098,6 +1098,7 @@ def updateLirun():
     dates = datatrans.dateList(startQuarter, endQuarter)
     for date in dates:
         #         print date
+        logging.debug('updateLirun: %s', date)
         df = downloadLirun(date)
         if df is None:
             continue
