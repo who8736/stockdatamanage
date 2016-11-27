@@ -11,10 +11,13 @@ import urllib2
 import socket
 import datetime as dt
 import ConfigParser
+import re
+
 
 from lxml import etree
+import lxml
 import tushare as ts  # @UnresolvedImport
-import pandas as pd  # @UnusedImport
+import pandas as pd
 from pandas.compat import StringIO
 from sqlalchemy import create_engine, MetaData, Table, Column
 from sqlalchemy import DATE, DECIMAL, String
@@ -312,6 +315,85 @@ def getLowPEStockList(maxPE=40):
     return df
 
 
+def get_report_data(year, quarter):
+    """
+        获取业绩报表数据
+    Parameters
+    --------
+    year:int 年度 e.g:2014
+    quarter:int 季度 :1、2、3、4，只能输入这4个季度
+       说明：由于是从网站获取的数据，需要一页页抓取，速度取决于您当前网络速度
+
+    Return
+    --------
+    DataFrame
+        code,代码
+        name,名称
+        eps,每股收益
+        eps_yoy,每股收益同比(%)
+        bvps,每股净资产
+        roe,净资产收益率(%)
+        epcf,每股现金流量(元)
+        net_profits,净利润(万元)
+        profits_yoy,净利润同比(%)
+        distrib,分配方案
+        report_date,发布日期
+    """
+    if ct._check_input(year, quarter) is True:
+        ct._write_head()
+        df = _get_report_data(year, quarter, 1, pd.DataFrame())
+        if df is not None:
+            #             df = df.drop_duplicates('code')
+            df['code'] = df['code'].map(lambda x: str(x).zfill(6))
+        return df
+
+
+def _get_report_data(year, quarter, pageNo, dataArr,
+                     retry_count=10, timeout=20):
+    ct._write_console()
+    for _ in range(retry_count):
+        url = ct.REPORT_URL % (ct.P_TYPE['http'], ct.DOMAINS['vsf'],
+                               ct.PAGES['fd'], year, quarter,
+                               pageNo, ct.PAGE_NUM[1])
+#         url = ('http://vip.stock.finance.sina.com.cn/q/go.php/'
+#                'vFinanceAnalyze/kind/mainindex/index.phtml?'
+#                's_i=&s_a=&s_c=&reportdate=%s&quarter=%s&p=1&num=60' %
+#                (year, quarter))
+#         request = getreq(url)
+        request = urllib2.Request(url)
+#         print
+#         print url
+        try:
+            text = urllib2.urlopen(request, timeout=timeout).read()
+#             print repr(text)
+#             print text
+        except IOError, e:
+            logging.warning('[%s] fail to down, retry: %s', e, url)
+        else:
+            text = text.decode('GBK')
+            text = text.replace('--', '')
+            html = lxml.html.parse(StringIO(text))
+            res = html.xpath("//table[@class=\"list_table\"]/tr")
+            if ct.PY3:
+                sarr = [etree.tostring(node).decode('utf-8') for node in res]
+            else:
+                sarr = [etree.tostring(node) for node in res]
+            sarr = ''.join(sarr)
+            sarr = '<table>%s</table>' % sarr
+#             print sarr
+            df = pd.read_html(sarr)[0]
+            df = df.drop(11, axis=1)
+            df.columns = ct.REPORT_COLS
+            dataArr = dataArr.append(df, ignore_index=True)
+            xpathStr = '//div[@class=\"pages\"]/a[last()]/@onclick'
+            nextPage = html.xpath(xpathStr)
+            if len(nextPage) > 0:
+                pageNo = re.findall(r'\d+', nextPage[0])[0]
+                return _get_report_data(year, quarter, pageNo, dataArr)
+            else:
+                return dataArr
+
+
 def getAllTableName(tableName):
     result = engine.execute('show tables like %s', tableName)
     return result.fetchall()
@@ -484,7 +566,7 @@ def writeSQL(data, tableName, insertType='IGNORE'):
     if isinstance(data, DataFrame):
         if data.empty:
             return True
-        data = transDfToList(data)
+        data = datatrans.transDfToList(data)
 
     if not data:
         return True
@@ -527,6 +609,8 @@ def downloadLirunFromEastmoney(stockList, date):
         code,代码
         net_profits,净利润(万元)
         report_date,发布日期
+
+    # 缺点： 数据中无准确的报表发布日期
     """
     lirunList = []
     date = datatrans.transQuarterToDate(date).replace('-', '')
@@ -556,28 +640,31 @@ def downloadLirunFromTushare(date):
     """
     year = date / 10
     quarter = date % 10
-    df = ts.get_report_data(year, quarter)
+#     df = ts.get_report_data(year, quarter)
+    # 因tushare的利润下载函数不支持重试和指定超时值，使用下面的改进版本
+    df = get_report_data(year, quarter)
     if df is None:
         return None
     df = df.loc[:, ['code', 'net_profits', 'report_date']]
-    return transLirunDf(df, year, quarter)
+    return datatrans.transLirunDf(df, year, quarter)
 
 
 def getreq(url):
     #     headers = {'User-Agent': ('Mozilla/5.0 (Windows; U; Windows NT 6.1; '
     #                               'en-US;rv:1.9.1.6) Gecko/20091201 '
     #                               'Firefox/3.5.6')}
-    headers = {'User-Agent': ('Mozilla/5.0 (Windows NT 10.0; WOW64; '
-                              'rv:49.0) Gecko/20100101 Firefox/49.0'),
-               'Accept': ('text/html,application/xhtml+xml,application/xml;'
-                          'q=0.9,*/*;q=0.8'),
-               'Accept-Encoding': 'gzip, deflate',
-               'Accept-Language': 'zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3',
-               'Connection': 'keep-alive',
-               'DNT': '1',
-               'Upgrade-Insecure-Requests': '1',
-               }
-    return urllib2.Request(url, headers=headers)
+    #     headers = {'User-Agent': ('Mozilla/5.0 (Windows NT 10.0; WOW64; '
+    #                               'rv:49.0) Gecko/20100101 Firefox/49.0'),
+    #                'Accept': ('text/html,application/xhtml+xml,'
+    #                           'application/xml;q=0.9,*/*;q=0.8'),
+    #                'Accept-Encoding': 'gzip, deflate',
+    #                'Accept-Language': 'zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3',
+    #                'Connection': 'keep-alive',
+    #                'DNT': '1',
+    #                'Upgrade-Insecure-Requests': '1',
+    #                }
+    #     return urllib2.Request(url, headers=headers)
+    return urllib2.Request(url)
 
 
 def gubenURLToDf(stockID):
@@ -653,33 +740,7 @@ def readGuzhiFileToDict(stockID):
     guzhiFile = open(guzhiFilename)
     guzhiData = guzhiFile.read()
     guzhiFile.close()
-    return transGuzhiDataToDict(guzhiData)
-
-
-def transGuzhiDataToDict(guzhi):
-    guzhiTree = etree.HTML(guzhi)
-    xpathStr = '//html//body//div//tr'
-    guzhiData = guzhiTree.xpath(xpathStr)
-    guzhiDict = {}
-    try:
-        stockID = guzhiData[2][1].text.strip()  # 取得股票代码
-    except IndexError:
-        return None  # 无数据
-    peg = guzhiData[2][3].text.strip()
-    next1YearPE = guzhiData[2][6].text.strip()
-    next2YearPE = guzhiData[2][7].text.strip()
-    next3YearPE = guzhiData[2][8].text.strip()
-    if stockID != '--':
-        guzhiDict['stockid'] = stockID  # 取得股票代码
-    if peg != '--':
-        guzhiDict['peg'] = float(peg.replace(',', ''))
-    if next1YearPE != '--':
-        guzhiDict['next1YearPE'] = float(next1YearPE.replace(',', ''))
-    if next2YearPE != '--':
-        guzhiDict['next2YearPE'] = float(next2YearPE.replace(',', ''))
-    if next3YearPE != '--':
-        guzhiDict['next3YearPE'] = float(next3YearPE.replace(',', ''))
-    return guzhiDict
+    return datatrans.transGuzhiDataToDict(guzhiData)
 
 
 def readGuzhiFilesToDf(stockList):
@@ -932,9 +993,9 @@ def updateKlineEXTData(stockID, startDate=None):
         startDate = getTTMPELastUpdate(stockID)
         startDate = startDate.strftime('%Y-%m-%d')
     updateKlineMarketValue(stockID, startDate)
-#     updateKlineTTMLirun(stockID, startDate)
-#     endDate = updateKlineTTMPE(stockID, startDate)
-#     setKlineTTMPELastUpdate(stockID, endDate)
+    updateKlineTTMLirun(stockID, startDate)
+    endDate = updateKlineTTMPE(stockID, startDate)
+    setKlineTTMPELastUpdate(stockID, endDate)
 
 
 def getTTMPELastUpdate(stockID):
@@ -1030,6 +1091,29 @@ def updateKlineTTMPE(stockID, startDate='1990-01-01', endDate=None):
     return endDate
 
 
+def updateLirun():
+    startQuarter = getLirunUpdateStartQuarter()
+    endQuarter = getLirunUpdateEndQuarter()
+
+    dates = datatrans.dateList(startQuarter, endQuarter)
+    for date in dates:
+        #         print date
+        df = downloadLirun(date)
+        if df is None:
+            continue
+#         print len(df)
+        # 读取已存储的利润数据，从下载数据中删除该部分，对未存储的利润写入数据库
+        lirunCur = readLirunForDate(date)
+        df = df[~df.stockid.isin(lirunCur.stockid)]
+        df = df[df.profits.notnull()]
+#         print df
+
+        # 对未存储的利润写入数据库，并重新计算TTM利润
+        if not df.empty:
+            writeLirun(df)
+            calAllTTMLirun(date)
+
+
 def urlMainTable(stockID, tableType):
     url = ('http://money.finance.sina.com.cn/corp/go.php'
            '/vDOWN_%(tableType)s/displaytype/4'
@@ -1085,8 +1169,8 @@ def urlGuzhi(stockID):
     return url
 
 
-def downloadData(url, timeout=10, maxRetry=10):
-    for _ in range(maxRetry):
+def downloadData(url, timeout=10, retry_count=10):
+    for _ in range(retry_count):
         try:
             socket.setdefaulttimeout(timeout)
             headers = {'User-Agent': ('Mozilla/5.0 (Windows; U; '
@@ -1104,8 +1188,8 @@ def downloadData(url, timeout=10, maxRetry=10):
     return False
 
 
-def downloadDataToFile(url, filename, timeout=10, maxRetry=10):
-    data = downloadData(url, timeout, maxRetry)
+def downloadDataToFile(url, filename, timeout=10, retry_count=10):
+    data = downloadData(url, timeout, retry_count)
     if not data:
         return False
     try:
@@ -1204,29 +1288,6 @@ def createTTMPETable(tablename):
     return result
 
 
-def transLirunDf(df, year, quarter):
-    date = [year * 10 + quarter for unusedi in range(df['code'].count())]
-    stockid = df['code']
-    profits = df['net_profits']
-    if quarter == 4:
-        year += 1
-    reportdate = df['report_date'].apply(lambda x: str(year) + '-' + x)
-    rd = []
-    for d in reportdate:
-        if d[-5:] == '02-29':
-            d = d[:-5] + '02-28'
-        dd = dt.datetime.strptime(d, '%Y-%m-%d')
-        rd.append(dd)
-    data = {'stockid': stockid,
-            'date': date,
-            'profits': profits * 10000,
-            'reportdate': rd}
-    df = pd.DataFrame(data)
-    print 'transLirunDf, len(df):%s' % len(df)
-    df = df.drop_duplicates()
-    return df
-
-
 def getStockIDsForClassified(classified):
     sql = ('select stockid from classified '
            'where cname = "%(classified)s"' % locals())
@@ -1254,15 +1315,6 @@ def getClassifiedForStocksID(stockID):
     result = engine.execute(sql)
     classified = result.first()[0]
     return classified
-
-
-def transDfToList(df):
-    outList = []
-    for index, row in df.iterrows():
-        tmpDict = row.to_dict()
-        tmpDict[df.index.name] = index
-        outList.append(tmpDict)
-    return outList
 
 
 def readStockName(stockID):
@@ -1384,6 +1436,7 @@ if __name__ == '__main__':
 # 更新TTM市盈率
 #     updateKlineEXTData(testStockID, startDate)
 #     updateKlineEXTData(testStockID)
+#     updateKlineEXTData('600519')
 
 # 更新股票列表
 #     createStockList()
@@ -1392,8 +1445,8 @@ if __name__ == '__main__':
 #     url = 'http://218.244.146.57/static/all.csv'
 #     filename = './stocklisttest.csv'
 #     downloadDataToFile(url, filename)
-    df = getStockBasicsFromCSV()
-    print df.head(5)
+#     df = getStockBasicsFromCSV()
+#     print df.head(5)
 
 # 删除所有表
 #     engine = getEngine()

@@ -4,6 +4,10 @@ Created on 2016年5月6日
 
 @author: who8736
 '''
+import datetime as dt
+
+import pandas as pd
+from lxml import etree
 
 
 def quarterSub(quarterDate, subNum):
@@ -24,7 +28,7 @@ def quarterAdd(quarterDate, addNum):
     quarters = int(quarterDate / 10) * 4 + (quarterDate % 10)
     quarters = quarters + addNum
     year = (quarters - 1) / 4
-    print year
+#     print year
     quarterDate = year * 10 + (quarters - year * 4)
     return quarterDate
 
@@ -41,6 +45,69 @@ def dateList(startDate, endDate):
 
 def transDateToQuarter(date):
     return date.year * 10 + int((date.month + 2) / 3)
+
+
+def getLastQuarter():
+    curQuarter = transDateToQuarter(dt.datetime.today())
+    return quarterSub(curQuarter, 1)
+
+
+def transLirunDf(df, year, quarter):
+    date = [year * 10 + quarter for unusedi in range(df['code'].count())]
+    stockid = df['code']
+    profits = df['net_profits']
+    if quarter == 4:
+        year += 1
+    reportdate = df['report_date'].apply(lambda x: str(year) + '-' + x)
+    rd = []
+    for d in reportdate:
+        if d[-5:] == '02-29':
+            d = d[:-5] + '02-28'
+        dd = dt.datetime.strptime(d, '%Y-%m-%d')
+        rd.append(dd)
+    data = {'stockid': stockid,
+            'date': date,
+            'profits': profits * 10000,
+            'reportdate': rd}
+    df = pd.DataFrame(data)
+#     print 'transLirunDf, len(df):%s' % len(df)
+    df = df.drop_duplicates()
+    return df
+
+
+def transGuzhiDataToDict(guzhi):
+    guzhiTree = etree.HTML(guzhi)
+    xpathStr = '//html//body//div//tr'
+    guzhiData = guzhiTree.xpath(xpathStr)
+    guzhiDict = {}
+    try:
+        stockID = guzhiData[2][1].text.strip()  # 取得股票代码
+    except IndexError:
+        return None  # 无数据
+    peg = guzhiData[2][3].text.strip()
+    next1YearPE = guzhiData[2][6].text.strip()
+    next2YearPE = guzhiData[2][7].text.strip()
+    next3YearPE = guzhiData[2][8].text.strip()
+    if stockID != '--':
+        guzhiDict['stockid'] = stockID  # 取得股票代码
+    if peg != '--':
+        guzhiDict['peg'] = float(peg.replace(',', ''))
+    if next1YearPE != '--':
+        guzhiDict['next1YearPE'] = float(next1YearPE.replace(',', ''))
+    if next2YearPE != '--':
+        guzhiDict['next2YearPE'] = float(next2YearPE.replace(',', ''))
+    if next3YearPE != '--':
+        guzhiDict['next3YearPE'] = float(next3YearPE.replace(',', ''))
+    return guzhiDict
+
+
+def transDfToList(df):
+    outList = []
+    for index, row in df.iterrows():
+        tmpDict = row.to_dict()
+        tmpDict[df.index.name] = index
+        outList.append(tmpDict)
+    return outList
 
 
 def transQuarterToDate(date):

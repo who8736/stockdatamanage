@@ -14,7 +14,7 @@ from multiprocessing.dummy import Pool as ThreadPool
 import sqlrw
 import datetime as dt
 
-import datatrans
+# import datatrans
 
 
 class DataManage():
@@ -38,7 +38,7 @@ class DataManage():
         self.updateGuben()
         self.updateKlineEXTData()
         self.updateGuzhi()
-        self.updateMainTableA()
+        self.updateMainTable()
 
         logging.info('--------全部更新完成--------')
 
@@ -48,26 +48,27 @@ class DataManage():
         print 'stockList have %d item.' % self.stockNum
         startTime = dt.datetime.now()
 
-        startQuarter = sqlrw.getLirunUpdateStartQuarter()
-        endQuarter = sqlrw.getLirunUpdateEndQuarter()
-
-        dates = datatrans.dateList(startQuarter, endQuarter)
-        for date in dates:
-            print date
-            df = sqlrw.downloadLirun(date)
-            if df is None:
-                continue
-            print len(df)
-            # 读取已存储的利润数据，从下载数据中删除该部分，对未存储的利润写入数据库
-            lirunCur = sqlrw.readLirunForDate(date)
-            df = df[~df.stockid.isin(lirunCur.stockid)]
-            df = df[df.profits.notnull()]
-            print df
-
-            # 对未存储的利润写入数据库，并重新计算TTM利润
-            if not df.empty:
-                sqlrw.writeLirun(df)
-                sqlrw.calAllTTMLirun(date)
+        sqlrw.updateLirun()
+#         startQuarter = sqlrw.getLirunUpdateStartQuarter()
+#         endQuarter = sqlrw.getLirunUpdateEndQuarter()
+#
+#         dates = datatrans.dateList(startQuarter, endQuarter)
+#         for date in dates:
+#             print date
+#             df = sqlrw.downloadLirun(date)
+#             if df is None:
+#                 continue
+#             print len(df)
+#             # 读取已存储的利润数据，从下载数据中删除该部分，对未存储的利润写入数据库
+#             lirunCur = sqlrw.readLirunForDate(date)
+#             df = df[~df.stockid.isin(lirunCur.stockid)]
+#             df = df[df.profits.notnull()]
+#             print df
+#
+#             # 对未存储的利润写入数据库，并重新计算TTM利润
+#             if not df.empty:
+#                 sqlrw.writeLirun(df)
+#                 sqlrw.calAllTTMLirun(date)
 
         endTime = dt.datetime.now()
         logging.info('===========end updateLirun===========')
@@ -88,20 +89,20 @@ class DataManage():
         logging.info('updateKlineBaseData cost time: %s ',
                      endTime - startTime)
 
-    def updateKlineMarketValue(self):
-        for i in self.stockList:
-            stockID = i[0]
-            logging.info('start updateKlineMarketValue %s', stockID)
-            sqlrw.updateKlineMarketValue(stockID)
+#     def updateKlineMarketValue(self):
+#         for i in self.stockList:
+#             stockID = i[0]
+#             logging.info('start updateKlineMarketValue %s', stockID)
+#             sqlrw.updateKlineMarketValue(stockID)
 
-    def updateKlineTTMLirun(self):
-        """
-        a更新Kline表TTM利润
-        """
-        for i in self.stockList:
-            stockID = i[0]
-            logging.info('start updateKlineTTMLirun %s', stockID)
-            sqlrw.updateKlineTTMLirun(stockID)
+#     def updateKlineTTMLirun(self):
+#         """
+#         a更新Kline表TTM利润
+#         """
+#         for i in self.stockList:
+#             stockID = i[0]
+#             logging.info('start updateKlineTTMLirun %s', stockID)
+#             sqlrw.updateKlineTTMLirun(stockID)
 
     def updateGuben(self):
         logging.info('===========start updateGuben===========')

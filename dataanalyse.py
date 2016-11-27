@@ -20,11 +20,6 @@ import sqlrw
 #     """选取指定范围PE的股票
 #     maxPE: 最大PE
 #     """
-# #     engine = getEngine()
-#     sql = 'select stockid, pe from stocklist where pe > 0 and pe <= %s' % maxPE
-#     df = pd.read_sql(sql, engine)
-# #     engine.close()
-#     return df
 
 
 def calGuzhi(stockList=None):
@@ -67,10 +62,9 @@ def calGuzhi(stockList=None):
     pegDf = pd.merge(peDf, pegDf, on='stockid', how='left')
 #     print pegDf.head()
 
-    # TODO: endDate现为指定值， 待修改为自动取当前日期再转换为YYYYQ格式
     # TODO:　假设当前为第2季度，但第1季度上市公司的财务报告未公布，导致缺少数据如何处理
     sectionNum = 6  # 取6个季度
-    endDate = 20162
+    endDate = datatrans.getLastQuarter()
     startDate = datatrans.quarterSub(endDate, sectionNum - 1)
 #     quarter  = (int(endDate / 10) * 4 + (endDate % 10)) - sectionNum
     dateList = datatrans.dateList(startDate, endDate)
@@ -133,7 +127,7 @@ def youzhiSelect(pegDf):
     print pegDf.head()
     pegDf = pegDf[pegDf.peg.notnull()]
     pegDf = pegDf[(pegDf.peg > 0) & (pegDf.peg < 1) & (pegDf.avgrate > 0)]
-    pegDf = pegDf[pegDf.madrate < 2]
+#     pegDf = pegDf[pegDf.madrate < 2]
 #     pegDf = pegDf[['stockid', 'pe', 'peg',
 #                    'next1YearPE',  'next2YearPE',  'next3YearPE',
 #                    'incrate0', 'incrate1', 'incrate2',
@@ -202,7 +196,7 @@ if __name__ == '__main__':
     testChigu()
 
     # 测试筛选估值
-    testShaixuan()
+#     testShaixuan()
 
     # 测试TTMPE直方图、概率分布
 #     ttmdf = sqlrw.readTTMPE(testStockID)
