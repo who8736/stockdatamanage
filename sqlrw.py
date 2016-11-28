@@ -732,7 +732,7 @@ def downGuzhiToFile(stockID):
 
 
 def filenameGuzhi(stockID):
-    return '.\\data\\guzhi\\%s.xml' % stockID
+    return './data/guzhi/%s.xml' % stockID
 
 
 def readGuzhiFileToDict(stockID):
@@ -1123,7 +1123,7 @@ def urlMainTable(stockID, tableType):
 
 
 def filenameMainTable(stockID, tableType):
-    filename = '.\\data\\%s\\%s.csv' % (tableType, stockID)
+    filename = './data/%s/%s.csv' % (tableType, stockID)
     return filename
 
 
@@ -1153,11 +1153,11 @@ def urlGuben(stockID):
 
 
 def filenameGuben(stockID):
-    return '.\\data\\guben\\%s.csv' % stockID
+    return './data/guben/%s.csv' % stockID
 
 
 def filenameLirun(stockID):
-    filename = '.\\data\\ProfitStatement\\%s.csv' % stockID
+    filename = './data/ProfitStatement/%s.csv' % stockID
     return filename
 
 

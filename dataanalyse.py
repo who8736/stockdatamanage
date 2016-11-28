@@ -196,7 +196,7 @@ if __name__ == '__main__':
     testChigu()
 
     # 测试筛选估值
-#     testShaixuan()
+    testShaixuan()
 
     # 测试TTMPE直方图、概率分布
 #     ttmdf = sqlrw.readTTMPE(testStockID)
