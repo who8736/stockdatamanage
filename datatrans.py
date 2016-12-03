@@ -5,8 +5,10 @@ Created on 2016年5月6日
 @author: who8736
 '''
 import datetime as dt
+import logging
 
 import pandas as pd
+from pandas.core.frame import DataFrame
 from lxml import etree
 
 
@@ -50,6 +52,48 @@ def transDateToQuarter(date):
 def getLastQuarter():
     curQuarter = transDateToQuarter(dt.datetime.today())
     return quarterSub(curQuarter, 1)
+
+
+def gubenDataToDf(stockID, guben):
+    gubenTree = etree.HTML(guben)
+    gubenData = gubenTree.xpath('''//html//body//div//div
+                                //div//div//table//tr//td
+                                //table//tr//td//table//tr//td''')
+    date = [gubenData[i][0].text for i in range(0, len(gubenData), 2)]
+    date = [dt.datetime.strptime(d, '%Y-%m-%d') for d in date]
+#     print date
+    totalshares = [
+        gubenData[i + 1][0].text for i in range(0, len(gubenData), 2)]
+#     print totalshares
+#     t = [i[:-2] for i in totalshares]
+#     print t
+    try:
+        totalshares = [float(i[:-2]) * 10000 for i in totalshares]
+    except ValueError, e:
+        logging.error('stockID:%s, %s', stockID, e)
+#     print totalshares
+    gubenDf = DataFrame({'stockid': stockID,
+                         'date': date,
+                         'totalshares': totalshares})
+    return gubenDf
+
+
+def gubenDfToList(df):
+    timea = dt.datetime.now()
+    gubenList = []
+    for date, row in df.iterrows():
+        stockid = row['stockid']
+        date = row['date']
+        totalshares = row['totalshares']
+
+        guben = {'stockid': stockid,
+                 'date': date,
+                 'totalshares': totalshares
+                 }
+        gubenList.append(guben)
+    timeb = dt.datetime.now()
+    logging.debug('klineDfToList took %s' % (timeb - timea))
+    return gubenList
 
 
 def transLirunDf(df, year, quarter):

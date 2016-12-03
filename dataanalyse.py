@@ -8,6 +8,7 @@ Created on 2016年5月4日
 import logging
 import os
 import datetime as dt
+# from functools import partial
 
 import pandas as pd
 
@@ -48,6 +49,10 @@ def calGuzhi(stockList=None):
         avgrate: 平均增长率
         madrate: 平均离差率， 按平均离差除以平均值计算，反应TTM利润增长率与平均增长率之间的偏离水平
                  # 该值越小，越体现TTM利润的稳定增长
+        stdrate: 标准差差异率， 按标准差除以平均值计算
+        pe200: 当前ttmpe在过去200个交易日中的水平，为0时表示当前ttmpe水平为200个交易日以来最低
+                #为100时表示当前ttmpe水平为200个交易日以来最高
+        pe1000: 参考pe200的说明
     """
 
     if stockList is None:
@@ -58,7 +63,8 @@ def calGuzhi(stockList=None):
     # pe数据
     peDf = sqlrw.readCurrentTTMPEs(stockList)
     # 估值数据
-    pegDf = sqlrw.readGuzhiFilesToDf(stockList)
+#     pegDf = sqlrw.readGuzhiFilesToDf(stockList)
+    pegDf = sqlrw.readGuzhiSQLToDf(stockList)
     pegDf = pd.merge(peDf, pegDf, on='stockid', how='left')
 #     print pegDf.head()
 
@@ -81,7 +87,10 @@ def calGuzhi(stockList=None):
 #     print pegDf.head()
     # 平均利润增长率
     endfield = 'incrate%s' % (sectionNum - 1)
-    pegDf['avgrate'] = pegDf.ix[:, 'incrate0':endfield].mean(axis=1)
+    pegDf['avgrate'] = pegDf.ix[:, 'incrate0':endfield].mean(axis=1).round(2)
+#     pegDf = pegDf.round(2)
+#     f = partial(Series.round, decimals=2)
+#     df.apply(f)
 
     # 平均利润增长率（另一种计算方法）
 #     pegDf['avgrate'] = 0
@@ -95,20 +104,48 @@ def calGuzhi(stockList=None):
 #     lirunmean = df.ix[:, 'incrate0':'incrate5'].mean(axis=1).head()
     # 计算每行指定列的平均绝对离差率
     pegDf['madrate'] = lirunmad / pegDf['avgrate']
-
+    pegDf['madrate'] = pegDf['madrate'].round(2)
+    # 计算每行指定列的平均绝对离差率
+    lirunstd = pegDf.ix[:, 'incrate0':endfield].std(axis=1)
+    pegDf['stdrate'] = lirunstd / pegDf['avgrate']
+    pegDf['stdrate'] = pegDf['stdrate'].round(2)
+#     print type(lirunstd / pegDf['avgrate'])
     # 增加股票名称
     nameDf = sqlrw.readStockListDf()
     pegDf = pd.merge(pegDf, nameDf, on='stockid', how='left')
 #     print pegDf
 
+    # 计算pe200与pe1000
+    pegDf['pe200'] = peHistRate(stockList, 200)
+    pegDf['pe1000'] = peHistRate(stockList, 1000)
+    print pegDf
     # 设置输出列与列顺序
     pegDf = pegDf[['stockid', 'name', 'pe', 'peg',
                    'next1YearPE',  'next2YearPE',  'next3YearPE',
                    'incrate0', 'incrate1', 'incrate2',
                    'incrate3', 'incrate4', 'incrate5',
-                   'avgrate', 'madrate'
+                   'avgrate', 'madrate', 'stdrate', 'pe200', 'pe1000'
                    ]]
     return pegDf
+
+
+def peHistRate(stockList, dayCount):
+    print dayCount, stockList
+    perates = []
+    for stockID in stockList:
+        sql = ('select ttmpe from kline%(stockID)s order by `date` desc '
+               'limit %(dayCount)s;' % locals())
+        result = sqlrw.engine.execute(sql)
+        peList = result.fetchall()
+        peList = [i[0] for i in peList]
+        peCur = peList[0]
+        perate = float(sum(1 for i in peList if i < peCur)) / dayCount * 100
+        print stockID, perate, peList
+        perates.append(perate)
+#         perate =
+#         perates.append(sum(peList))
+#         print stockID,
+    return perates
 
 
 def youzhiSelect(pegDf):
@@ -127,7 +164,9 @@ def youzhiSelect(pegDf):
     print pegDf.head()
     pegDf = pegDf[pegDf.peg.notnull()]
     pegDf = pegDf[(pegDf.peg > 0) & (pegDf.peg < 1) & (pegDf.avgrate > 0)]
-#     pegDf = pegDf[pegDf.madrate < 2]
+    pegDf = pegDf[pegDf.pe < 30]
+    pegDf = pegDf[pegDf.madrate < 0.6]
+    pegDf = pegDf.sort(columns='peg')
 #     pegDf = pegDf[['stockid', 'pe', 'peg',
 #                    'next1YearPE',  'next2YearPE',  'next3YearPE',
 #                    'incrate0', 'incrate1', 'incrate2',
@@ -146,25 +185,36 @@ def dfToCsvFile(df, filename):
 
 def testChigu():
     #     youzhiSelect()
-    inFilename = '.\data\chigustockid.txt'
-    outFilename = '.\data\chiguguzhi.csv'
+    inFilename = './data/chigustockid.txt'
+    outFilename = './data/chiguguzhi.csv'
 #     testStockList = ['600519', '600999', '000651', '000333']
     testStockList = sqlrw.readStockListFromFile(inFilename)
-    print testStockList
+#     print testStockList
     df = calGuzhi(testStockList)
 #     df = calGuzhi()
-    print df.head()
     dfToCsvFile(df, outFilename)
+    sqlrw.engine.execute(u'TRUNCATE TABLE chiguguzhi')
+#     df.index.name = 'stockid'
+#     clearStockList()
+#     df.set_index('stockid', inplace=True)
+#     print df.head()
+    sqlrw.writeSQL(df, u'chiguguzhi')
+#     df.to_sql(u'chiguguzhi',
+#               sqlrw.engine,
+#               if_exists=u'append')
 
 
 def testShaixuan():
     df = calGuzhi()
     df = youzhiSelect(df)
     print df.head()
-    outFilename = '.\data\youzhi.csv'
+    outFilename = './data/youzhi.csv'
     dfToCsvFile(df, outFilename)
-    outFilename = '.\data\youzhiid.txt'
-    sqlrw.writeStockIDListToFile(df['stockid'], outFilename)
+    outFilename = './data/youzhiid.txt'
+#     sqlrw.writeStockIDListToFile(df['stockid'], outFilename)
+    sqlrw.engine.execute(u'TRUNCATE TABLE youzhiguzhi')
+    sqlrw.writeSQL(df, u'youzhiguzhi')
+
 
 if __name__ == '__main__':
     logfilename = os.path.join(os.path.abspath(os.curdir),

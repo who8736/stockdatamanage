@@ -15,6 +15,8 @@ import sqlrw
 import datetime as dt
 
 # import datatrans
+import hyanalyse
+import dataanalyse
 
 
 def logfun(func):
@@ -46,6 +48,7 @@ def startUpdate():
     updateKlineEXTData(stockList, threadNum)
     updateGuzhi(stockList, threadNum)
     updateMainTable(stockList, threadNum)
+    updateGhuzhiData()
 
 #     logging.info('--------全部更新完成--------')
 
@@ -78,7 +81,8 @@ def updateGuben(stockList, threadNum):
 @logfun
 def updateGuzhi(stockList, threadNum):
     pool = ThreadPool(processes=threadNum)
-    pool.map(sqlrw.downGuzhiToFile, stockList)
+#     pool.map(sqlrw.downGuzhiToFile, stockList)
+    pool.map(sqlrw.downGuzhiToSQL, stockList)
     pool.close()
     pool.join()
 
@@ -99,6 +103,17 @@ def updateMainTable(stockList, threadNum):
     pool.map(sqlrw.downloadMainTable, stockList)
     pool.close()
     pool.join()
+
+
+@logfun
+def updateHYData():
+    hyanalyse.calAllHYTTMLirun(20164)
+
+
+@logfun
+def updateGhuzhiData():
+    dataanalyse.testChigu()
+    dataanalyse.testShaixuan()
 
 
 def readStockListFromFile(filename):

@@ -12,6 +12,7 @@ import socket
 import datetime as dt
 import ConfigParser
 import re
+import sys
 
 
 from lxml import etree
@@ -27,6 +28,7 @@ from pandas.core.frame import DataFrame
 from tushare.stock import cons as ct
 
 import datatrans
+import initsql
 
 
 class SQLConn():
@@ -80,6 +82,76 @@ engine = sqlconn.engine
 Session = sqlconn.Session
 
 
+def downHYToSQL(retryMax=3):
+    url = u'http://www.csindex.com.cn/sseportal/ps/zhs/hqjt/csi/ZzhyflWz.xls'
+    for _ in range(retryMax):
+        try:
+            df = pd.read_excel(url, 0,
+                               parse_cols=[0, 4, 7, 10, 13],
+                               names=['stockid', 'level1', 'level2',
+                                      'level3', 'level4'],
+                               converters={0: str, 1: str, 2: str,
+                                           3: str, 4: str})
+        except TypeError:
+            logging.warning('down hangye data fail, retry...')
+            continue
+        if not df.empty:
+            for index, row in df.iterrows():
+                stockID = row[0]
+                level1 = row[1]
+                level2 = row[2]
+                level3 = row[3]
+                level4 = row[4]
+                sql = (('replace into hangye'
+                        '(stockid, level1, level2, level3, level4) '
+                        'values("%(stockID)s", "%(level1)s", "%(level2)s", '
+                        '"%(level3)s", "%(level4)s");') % locals())
+                engine.execute(sql)
+            return
+
+
+def downHYNameToSQL(retryMax=3):
+    url = u'http://www.csindex.com.cn/sseportal/ps/zhs/hqjt/csi/ZzhyflWz.xls'
+    for _ in range(retryMax):
+        try:
+            df = pd.read_excel(url,
+                               0,
+                               parse_cols=[4, 5, 7, 8, 10, 11, 13, 14],
+                               converters={0: unicode, 1: unicode,
+                                           2: unicode, 3: unicode,
+                                           4: unicode, 5: unicode,
+                                           6: unicode, 7: unicode})
+        except TypeError:
+            logging.warning('down hangye data fail, retry...')
+            continue
+        else:
+            if not df.empty:
+                return writeHYNameToSQL(df)
+    logging.error('down hangye data fail.')
+    return False
+
+
+def writeHYNameToSQL(df):
+    dflist = []
+    for i in range(4):
+        _df = df.iloc[:, i * 2:(i + 1) * 2]
+        _df = _df.drop_duplicates()
+#         print _df.head()
+        _df.columns = ['levelid', 'levelname']
+#         print _df.head()
+        dflist.append(_df)
+    hdDf = pd.concat(dflist)
+
+#     print hdDf.head(20)
+    for index, row in hdDf.iterrows():
+        levelid = row[0]
+        levelname = row[1]
+#         print levelid, levelname
+        sql = (('replace into hangyename(levelid, levelname) '
+                'values("%(levelid)s", "%(levelname)s");') % locals())
+        engine.execute(sql)
+
+
 def downGubenToSQL(stockID, retry=20, timeout=10):
     """下载单个股票股本数据写入数据库"""
     logging.debug('downGubenToSQL: %s', stockID)
@@ -95,7 +167,7 @@ def downGubenToSQL(stockID, retry=20, timeout=10):
             logging.warning('[%s]:download %s guben data, retry...',
                             e, stockID)
         else:
-            gubenDf = gubenDataToDf(stockID, guben)
+            gubenDf = datatrans.gubenDataToDf(stockID, guben)
             tablename = 'guben'
             lastUpdate = getGubenLastUpdateDate(stockID)
             gubenDf = gubenDf[gubenDf.date > lastUpdate]
@@ -103,6 +175,59 @@ def downGubenToSQL(stockID, retry=20, timeout=10):
                 writeSQL(gubenDf, tablename)
             return
     logging.error('fail download %s guben data.', stockID)
+
+
+def downGuzhiToSQL(stockID, retry=20, timeout=10):
+    """下载单个股票估值数据写入数据库"""
+    logging.debug('downGuzhiToSQL: %s', stockID)
+    url = urlGuzhi(stockID)
+    data = downloadData(url)
+    if data is None:
+        logging.error('down %s guzhi data fail.', stockID)
+        return False
+
+    # 保存至文件
+    filename = filenameGuzhi(stockID)
+    try:
+        mainFile = open(filename, 'wb')
+        mainFile.write(data)
+    except IOError, e:
+        logging.error('[%s]写文件失败： %s', e, filename)
+#         return False
+    finally:
+        mainFile.close()
+
+    # 写入数据库
+    guzhiDict = datatrans.transGuzhiDataToDict(data)
+    if guzhiDict is None:
+        return True
+    # print guzhiDict
+#     guzhiDf = DataFrame(guzhiDict, index=[0])
+#     writeSQLUpdate(guzhiDict, 'guzhi')
+#     print guzhiDict
+    tablename = 'guzhi'
+    if 'peg' in guzhiDict.keys():
+        peg = guzhiDict['peg']
+    else:
+        peg = 'null'
+    if 'next1YearPE' in guzhiDict.keys():
+        next1YearPE = guzhiDict['next1YearPE']
+    else:
+        next1YearPE = 'null'
+    if 'next2YearPE' in guzhiDict.keys():
+        next2YearPE = guzhiDict['next2YearPE']
+    else:
+        next2YearPE = 'null'
+    if 'next3YearPE' in guzhiDict.keys():
+        next3YearPE = guzhiDict['next3YearPE']
+    else:
+        next3YearPE = 'null'
+    sql = (('replace into %(tablename)s'
+            '(stockid, peg, next1YearPE, next2YearPE, next3YearPE) '
+            'values("%(stockID)s", %(peg)s, '
+            '%(next1YearPE)s, %(next2YearPE)s, '
+            '%(next3YearPE)s);') % locals())
+    return engine.execute(sql)
 
 
 def downKlineToSQL(stockID, startDate=None, endDate=None, retry_count=20):
@@ -125,8 +250,8 @@ def downKlineToSQL(stockID, startDate=None, endDate=None, retry_count=20):
             if (df is None) or df.empty:
                 return
             tableName = tablenameKline(stockID)
-            if not existTable(tableName):
-                createKlineTable(stockID)
+            if not initsql.existTable(tableName):
+                initsql.createKlineTable(stockID)
             writeSQL(df, tableName)
             return
     logging.error('fail download %s Kline data!', stockID)
@@ -160,16 +285,6 @@ def lirunFileToList(stockID, date):
 
 def tablenameKline(stockID):
     return 'kline%s' % stockID
-
-
-def createGubenTable():
-    pass  # TODO: 创建总股本表
-
-
-def createKlineTable(stockID):
-    tableName = 'kline%s' % stockID
-    sql = 'create table %s like klinesample' % tableName
-    return engine.execute(sql)
 
 
 def createStockList():
@@ -405,8 +520,8 @@ def clearStockList():
 
 def getKlineLastUpdateDate(stockID):
     tablename = tablenameKline(stockID)
-    if not existTable(tablename):
-        createKlineTable(stockID)
+    if not initsql.existTable(tablename):
+        initsql.createKlineTable(stockID)
         return dt.datetime.strptime('1990-01-01', '%Y-%m-%d')
     sql = 'select max(date) from %s' % tablename
     return getLastUpdate(sql)
@@ -454,7 +569,9 @@ def readStockListDf():
     stockNames = []
     for i in stockList:
         stockIDs.append(i[0])
-        name = i[1].encode('gbk')
+        name = i[1].encode('utf-8')
+#         print type(i[1]), i[1], name
+#         name = i[1]
         stockNames.append(name)
     stockListDf = DataFrame({'stockid': stockIDs,
                              'name': stockNames})
@@ -506,24 +623,6 @@ def updateKlineTTMLirun(stockID, startDate='1990-01-01', endDate='2099-12-31'):
         engine.execute(sql)
 
 
-def gubenDfToList(df):
-    timea = dt.datetime.now()
-    gubenList = []
-    for date, row in df.iterrows():
-        stockid = row['stockid']
-        date = row['date']
-        totalshares = row['totalshares']
-
-        guben = {'stockid': stockid,
-                 'date': date,
-                 'totalshares': totalshares
-                 }
-        gubenList.append(guben)
-    timeb = dt.datetime.now()
-    logging.debug('klineDfToList took %s' % (timeb - timea))
-    return gubenList
-
-
 def writeLirun(df):
     tablename = 'lirun'
     return writeSQL(df, tablename)
@@ -532,13 +631,13 @@ def writeLirun(df):
 def writeGuben(stockID, df):
     logging.debug('start writeGuben %s' % stockID)
     timea = dt.datetime.now()
-    gubenList = gubenDfToList(df)
+    gubenList = datatrans.gubenDfToList(df)
     if not gubenList:
         return False
 
     tableName = 'guben'
-    if not existTable(tableName):
-        createGubenTable(stockID)
+    if not initsql.existTable(tableName):
+        initsql.createGubenTable(stockID)
 
     session = Session()
     metadata = MetaData(bind=engine)
@@ -559,13 +658,14 @@ def writeSQL(data, tableName, insertType='IGNORE'):
     """
     logging.debug('start writeSQL %s' % tableName)
 
-    if not existTable(tableName):
+    if not initsql.existTable(tableName):
         logging.error('not exist %s' % tableName)
         return False
 
     if isinstance(data, DataFrame):
         if data.empty:
             return True
+        data = data.where(pd.notnull(data), None)
         data = datatrans.transDfToList(data)
 
     if not data:
@@ -575,6 +675,36 @@ def writeSQL(data, tableName, insertType='IGNORE'):
     metadata = MetaData(bind=engine)
     mytable = Table(tableName, metadata, autoload=True)
     session.execute(mytable.insert().prefix_with(insertType), data)
+    session.commit()
+    session.close()
+    return True
+
+
+def writeSQLUpdate(data, tableName):
+    """insetType: IGNORE 忽略重复主键；
+
+    """
+    logging.debug('start writeSQL %s' % tableName)
+
+    if not initsql.existTable(tableName):
+        logging.error('not exist %s' % tableName)
+        return False
+
+    if isinstance(data, DataFrame):
+        if data.empty:
+            return True
+#         data = datatrans.transDfToList(data)
+
+    if data is None:
+        return True
+
+    session = Session()
+    metadata = MetaData(bind=engine)
+    mytable = Table(tableName, metadata, autoload=True)
+    mytable(data)
+    session.add(mytable)
+#     session.execute(mytable.replace(), data)
+    # session.merge(data)
     session.commit()
     session.close()
     return True
@@ -649,22 +779,24 @@ def downloadLirunFromTushare(date):
     return datatrans.transLirunDf(df, year, quarter)
 
 
-def getreq(url):
-    #     headers = {'User-Agent': ('Mozilla/5.0 (Windows; U; Windows NT 6.1; '
-    #                               'en-US;rv:1.9.1.6) Gecko/20091201 '
-    #                               'Firefox/3.5.6')}
-    #     headers = {'User-Agent': ('Mozilla/5.0 (Windows NT 10.0; WOW64; '
-    #                               'rv:49.0) Gecko/20100101 Firefox/49.0'),
-    #                'Accept': ('text/html,application/xhtml+xml,'
-    #                           'application/xml;q=0.9,*/*;q=0.8'),
-    #                'Accept-Encoding': 'gzip, deflate',
-    #                'Accept-Language': 'zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3',
-    #                'Connection': 'keep-alive',
-    #                'DNT': '1',
-    #                'Upgrade-Insecure-Requests': '1',
-    #                }
-    #     return urllib2.Request(url, headers=headers)
-    return urllib2.Request(url)
+def getreq(url, includeHeader=False):
+    if includeHeader:
+        #         headers = {'User-Agent': ('Mozilla/5.0 (Windows; U; Windows NT 6.1; '
+        #                                   'en-US;rv:1.9.1.6) Gecko/20091201 '
+        #                                   'Firefox/3.5.6')}
+        headers = {'User-Agent': ('Mozilla/5.0 (Windows NT 10.0; WOW64; '
+                                  'rv:49.0) Gecko/20100101 Firefox/49.0'),
+                   'Accept': ('text/html,application/xhtml+xml,'
+                              'application/xml;q=0.9,*/*;q=0.8'),
+                   'Accept-Encoding': 'gzip, deflate',
+                   'Accept-Language': 'zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3',
+                   'Connection': 'keep-alive',
+                   'DNT': '1',
+                   'Upgrade-Insecure-Requests': '1',
+                   }
+        return urllib2.Request(url, headers=headers)
+    else:
+        return urllib2.Request(url)
 
 
 def gubenURLToDf(stockID):
@@ -684,7 +816,7 @@ def gubenURLToDf(stockID):
     else:
         #         sock.close()
         #     print guben
-        return gubenDataToDf(stockID, guben)
+        return datatrans.gubenDataToDf(stockID, guben)
 
 
 def gubenFileToDf(stockID):
@@ -697,31 +829,7 @@ def gubenFileToDf(stockID):
         print e
         print u'读取总股本文件失败： %s' % stockID
         return False
-    return gubenDataToDf(stockID, guben)
-
-
-def gubenDataToDf(stockID, guben):
-    gubenTree = etree.HTML(guben)
-    gubenData = gubenTree.xpath('''//html//body//div//div
-                                //div//div//table//tr//td
-                                //table//tr//td//table//tr//td''')
-    date = [gubenData[i][0].text for i in range(0, len(gubenData), 2)]
-    date = [dt.datetime.strptime(d, '%Y-%m-%d') for d in date]
-#     print date
-    totalshares = [
-        gubenData[i + 1][0].text for i in range(0, len(gubenData), 2)]
-#     print totalshares
-#     t = [i[:-2] for i in totalshares]
-#     print t
-    try:
-        totalshares = [float(i[:-2]) * 10000 for i in totalshares]
-    except ValueError, e:
-        logging.error('stockID:%s, %s', stockID, e)
-#     print totalshares
-    gubenDf = DataFrame({'stockid': stockID,
-                         'date': date,
-                         'totalshares': totalshares})
-    return gubenDf
+    return datatrans.gubenDataToDf(stockID, guben)
 
 
 def downGuzhiToFile(stockID):
@@ -753,22 +861,31 @@ def readGuzhiFilesToDf(stockList):
     return DataFrame(guzhiList)
 
 
-def downloadKline(stockID, startDate=None, endDate=None):
-    if startDate is None:  # startDate为空时取股票最后更新日期
-        startDate = getKlineLastUpdateDate(stockID)
-        startDate = startDate.strftime('%Y-%m-%d')
-    if endDate is None:
-        endDate = dt.datetime.today().strftime('%Y-%m-%d')
-    return downloadKlineTuShare(stockID, startDate, endDate)
+def readGuzhiSQLToDf(stockList):
+    listStr = ','.join(stockList)
+    sql = 'select * from guzhi where stockid in (%s);' % listStr
+#     result = engine.execute(sql)
+    df = pd.read_sql(sql, engine)
+    print df
+    return df
 
 
-def downloadKlineTuShare(stockID,
-                         startDate='1990-01-01', endDate='2099-12-31'):
-    try:
-        histDf = ts.get_hist_data(stockID, startDate, endDate)
-    except IOError:
-        return None
-    return histDf
+# def downloadKline(stockID, startDate=None, endDate=None):
+#     if startDate is None:  # startDate为空时取股票最后更新日期
+#         startDate = getKlineLastUpdateDate(stockID)
+#         startDate = startDate.strftime('%Y-%m-%d')
+#     if endDate is None:
+#         endDate = dt.datetime.today().strftime('%Y-%m-%d')
+#     return downloadKlineTuShare(stockID, startDate, endDate)
+#
+#
+# def downloadKlineTuShare(stockID,
+#                          startDate='1990-01-01', endDate='2099-12-31'):
+#     try:
+#         histDf = ts.get_hist_data(stockID, startDate, endDate)
+#     except IOError:
+#         return None
+#     return histDf
 
 
 def readLirunList(date):
@@ -947,8 +1064,9 @@ def calTTMLirunIncRate(date, incrementUpdate=True):
     # 整合以上2个表，stockid为整合键
     TTMLirunCur = pd.merge(TTMLirunCur, TTMLirunLastYear, on='stockid')
 
-    TTMLirunCur['incrate'] = (TTMLirunCur.ttmprofits /
-                              TTMLirunCur.ttmprofits1 * 100 - 100)
+    TTMLirunCur['incrate'] = ((TTMLirunCur.ttmprofits -
+                               TTMLirunCur.ttmprofits1) /
+                              abs(TTMLirunCur.ttmprofits1) * 100)
     for i in TTMLirunCur.values:
         stockID = i[0]
         incRate = round(i[4], 2)
@@ -1074,7 +1192,7 @@ def updateKlineTTMPE(stockID, startDate='1990-01-01', endDate=None):
     #     engine = getEngine()
     klineTablename = 'kline%s' % stockID
     sql = ('update %(klineTablename)s '
-           'set ttmpe = totalmarketvalue / ttmprofits'
+           'set ttmpe = round(totalmarketvalue / ttmprofits, 2)'
            ' where date >= "%(startDate)s"' % locals())
     if endDate:
         sql += ' and date < "%s"' % endDate
@@ -1186,7 +1304,7 @@ def downloadData(url, timeout=10, retry_count=10):
         else:
             return content
     logging.error('download data fail!!! url:%s', url)
-    return False
+    return None
 
 
 def downloadDataToFile(url, filename, timeout=10, retry_count=10):
@@ -1275,18 +1393,6 @@ def readClose(stockID):
     sql = 'select date, close from kline%s' % stockID
     df = pd.read_sql(sql, engine)
     return df
-
-
-def existTable(tablename):
-    sql = 'show tables like "%s"' % tablename
-    result = engine.execute(sql)
-    return False if result.rowcount == 0 else True
-
-
-def createTTMPETable(tablename):
-    sql = 'create table %s like ttmpesimple' % tablename
-    result = engine.execute(sql)
-    return result
 
 
 def getStockIDsForClassified(classified):
