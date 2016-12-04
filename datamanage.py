@@ -123,19 +123,19 @@ def readStockListFromFile(filename):
     return stockList
 
 
-def readTestStockList():
-    filename = '.\\data\\teststock.txt'
-    return readStockListFromFile(filename)
+# def readTestStockList():
+#     filename = '.\\data\\teststock.txt'
+#     return readStockListFromFile(filename)
 
 
-def readChiguStock():
-    filename = '.\\data\\chigustockid.txt'
-    readStockListFromFile(filename)
+# def readChiguStock():
+#     filename = '.\\data\\chigustockid.txt'
+#     readStockListFromFile(filename)
 
-
-def readYouzhiStock():
-    filename = '.\\data\\youzhiid.txt'
-    readStockListFromFile(filename)
+#
+# def readYouzhiStock():
+#     filename = '.\\data\\youzhiid.txt'
+#     readStockListFromFile(filename)
 
 
 if __name__ == '__main__':

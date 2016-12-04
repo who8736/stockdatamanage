@@ -188,9 +188,10 @@ def testChigu():
     inFilename = './data/chigustockid.txt'
     outFilename = './data/chiguguzhi.csv'
 #     testStockList = ['600519', '600999', '000651', '000333']
-    testStockList = sqlrw.readStockListFromFile(inFilename)
+#     testStockList = sqlrw.readStockListFromFile(inFilename)
+    stockList = sqlrw.loadChigu()
 #     print testStockList
-    df = calGuzhi(testStockList)
+    df = calGuzhi(stockList)
 #     df = calGuzhi()
     dfToCsvFile(df, outFilename)
     sqlrw.engine.execute(u'TRUNCATE TABLE chiguguzhi')

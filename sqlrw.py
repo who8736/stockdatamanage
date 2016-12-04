@@ -287,6 +287,12 @@ def tablenameKline(stockID):
     return 'kline%s' % stockID
 
 
+def loadChigu():
+    sql = 'select stockid from chigu;'
+    result = engine.execute(sql)
+    return [i[0] for i in result.fetchall()]
+
+
 def createStockList():
     """code,代码
     name,名称

@@ -98,6 +98,11 @@ def createGubenTable():
     pass  # TODO: 创建总股本表
 
 
+def createChiguTable():
+    sql = 'CREATE TABLE chigu(stockid VARCHAR(6),PRIMARY KEY (stockid));'
+    return sqlrw.engine.execute(sql)
+
+
 def createKlineTable(stockID):
     tableName = 'kline%s' % stockID
     sql = 'create table %s like klinesample' % tableName
@@ -116,3 +121,5 @@ if __name__ == '__main__':
         createHYName()
     if not existTable('hyprofits'):
         createHYProfitsTable()
+    if not existTable('chigu'):
+        createChiguTable()
