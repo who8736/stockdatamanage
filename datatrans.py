@@ -54,6 +54,10 @@ def getLastQuarter():
     return quarterSub(curQuarter, 1)
 
 
+def getCurYear():
+    return dt.datetime.today().year
+
+
 def gubenDataToDf(stockID, guben):
     gubenTree = etree.HTML(guben)
     gubenData = gubenTree.xpath('''//html//body//div//div

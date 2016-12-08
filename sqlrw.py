@@ -12,7 +12,7 @@ import socket
 import datetime as dt
 import ConfigParser
 import re
-import sys
+# import sys
 
 
 from lxml import etree
@@ -534,8 +534,14 @@ def getKlineLastUpdateDate(stockID):
 
 
 def getGubenLastUpdateDate(stockID):
-    sql = 'select max(date) from guben where stockid="%s"' % stockID
+    sql = 'select max(date) from guben where stockid="%s" limit 1;' % stockID
     return getLastUpdate(sql)
+
+
+def getGuzhi(stockID):
+    sql = 'select * from guzhiresult where stockid="%s" limit 1' % stockID
+    result = engine.execute(sql)
+    return result.fetchone()
 
 
 def readStockListFromSQL():
@@ -1430,10 +1436,13 @@ def getClassifiedForStocksID(stockID):
     return classified
 
 
-def readStockName(stockID):
-    sql = 'select name from stocklist where stockid=%s' % stockID
-    result = engine.execute(sql)
-    return result.first()[0]
+def getStockName(stockID):
+    sql = 'select name from stocklist where stockid="%s";' % stockID
+    result = engine.execute(sql).first()
+    if result is not None:
+        return result[0]
+    else:
+        return None
 
 
 if __name__ == '__main__':

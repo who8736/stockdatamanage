@@ -6,6 +6,7 @@ Created on 2016年12月2日
 '''
 import sqlrw
 import datatrans
+import logging
 
 
 def getStockListForHY(hyID):
@@ -18,6 +19,67 @@ def getStockListForHY(hyID):
     stockList = [i[0] for i in result.fetchall()]
 #     print len(stockList), stockList
     return stockList
+
+
+def getHYID(stockID, level):
+    if level < 1 or level > 4:
+        logging.error('error HY level: %s', level)
+        return None
+    sql = ('select level%(level)s from hangye where stockid="%(stockID)s";'
+           % locals())
+    result = sqlrw.engine.execute(sql)
+    return result.fetchone()[0]
+
+
+def getHYName(hyID):
+    print 'getHYName(hyID):hyID: ', hyID
+    sql = ('select levelname from hangyename where levelid="%(hyID)s";'
+           % locals())
+    result = sqlrw.engine.execute(sql)
+    hyName = result.fetchone()[0]
+    return hyName
+
+
+def getHYProfitsIncRate(hyID, quarter):
+    sql = ('select profitsIncRate from hyprofits '
+           'where hyid="%(hyID)s" and date="%(quarter)s";'
+           % locals())
+    result = sqlrw.engine.execute(sql)
+    return result.fetchone()[0]
+
+
+def getHYProfitsIncRates(hyID):
+    curYear = datatrans.getCurYear()
+    lastYearQuarter1 = (curYear - 3) * 10 + 4
+    lastYearQuarter2 = (curYear - 2) * 10 + 4
+    lastYearQuarter3 = (curYear - 1) * 10 + 4
+    hyIncRate1 = getHYProfitsIncRate(hyID, lastYearQuarter1)
+    hyIncRate2 = getHYProfitsIncRate(hyID, lastYearQuarter2)
+    hyIncRate3 = getHYProfitsIncRate(hyID, lastYearQuarter3)
+    return (hyIncRate1, hyIncRate2, hyIncRate3)
+
+
+def getStockProfitsIncRate(stockID, quarter):
+    sql = ('select incrate from ttmlirun '
+           'where stockid="%(stockID)s" and date="%(quarter)s";'
+           % locals())
+    result = sqlrw.engine.execute(sql).fetchone()
+    if result is not None:
+        return result[0]
+    else:
+        return None
+
+
+def getStockProfitsIncRates(stockID):
+    curYear = datatrans.getCurYear()
+    lastYearQuarter1 = (curYear - 3) * 10 + 4
+    lastYearQuarter2 = (curYear - 2) * 10 + 4
+    lastYearQuarter3 = (curYear - 1) * 10 + 4
+    incRate1 = getStockProfitsIncRate(stockID, lastYearQuarter1)
+    incRate2 = getStockProfitsIncRate(stockID, lastYearQuarter2)
+    incRate3 = getStockProfitsIncRate(stockID, lastYearQuarter3)
+    print (incRate1, incRate2, incRate3)
+    return (incRate1, incRate2, incRate3)
 
 
 def calHYTTMLirun(hyID, date):

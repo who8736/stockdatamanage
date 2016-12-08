@@ -65,6 +65,12 @@ def createYouzhiGuzhiTable():
     return result
 
 
+def createGuzhiResultTable():
+    sql = 'CREATE TABLE guzhiresult like chiguguzhi;'
+    result = sqlrw.engine.execute(sql)
+    return result
+
+
 def createTTMPETable(tablename):
     sql = 'create table %s like ttmpesimple' % tablename
     result = sqlrw.engine.execute(sql)
@@ -123,3 +129,5 @@ if __name__ == '__main__':
         createHYProfitsTable()
     if not existTable('chigu'):
         createChiguTable()
+    if not existTable('guzhiresult'):
+        createGuzhiResultTable()

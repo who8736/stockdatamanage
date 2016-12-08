@@ -103,11 +103,11 @@ def calGuzhi(stockList=None):
     # 计算每行指定列的平均值
 #     lirunmean = df.ix[:, 'incrate0':'incrate5'].mean(axis=1).head()
     # 计算每行指定列的平均绝对离差率
-    pegDf['madrate'] = lirunmad / pegDf['avgrate']
+    pegDf['madrate'] = lirunmad / abs(pegDf['avgrate'])
     pegDf['madrate'] = pegDf['madrate'].round(2)
     # 计算每行指定列的平均绝对离差率
     lirunstd = pegDf.ix[:, 'incrate0':endfield].std(axis=1)
-    pegDf['stdrate'] = lirunstd / pegDf['avgrate']
+    pegDf['stdrate'] = lirunstd / abs(pegDf['avgrate'])
     pegDf['stdrate'] = pegDf['stdrate'].round(2)
 #     print type(lirunstd / pegDf['avgrate'])
     # 增加股票名称
@@ -162,6 +162,7 @@ def youzhiSelect(pegDf):
     DataFrame: 筛选后的估值分析表格
     """
     print pegDf.head()
+    pegDf = pegDf.dropna()
     pegDf = pegDf[pegDf.peg.notnull()]
     pegDf = pegDf[(pegDf.peg > 0) & (pegDf.peg < 1) & (pegDf.avgrate > 0)]
     pegDf = pegDf[pegDf.pe < 30]
@@ -185,7 +186,7 @@ def dfToCsvFile(df, filename):
 
 def testChigu():
     #     youzhiSelect()
-    inFilename = './data/chigustockid.txt'
+    #     inFilename = './data/chigustockid.txt'
     outFilename = './data/chiguguzhi.csv'
 #     testStockList = ['600519', '600999', '000651', '000333']
 #     testStockList = sqlrw.readStockListFromFile(inFilename)
@@ -207,6 +208,8 @@ def testChigu():
 
 def testShaixuan():
     df = calGuzhi()
+    sqlrw.engine.execute(u'TRUNCATE TABLE guzhiresult')
+    sqlrw.writeSQL(df, u'guzhiresult')
     df = youzhiSelect(df)
     print df.head()
     outFilename = './data/youzhi.csv'
