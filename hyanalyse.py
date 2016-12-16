@@ -100,7 +100,7 @@ def calHYTTMLirun(hyID, date):
     print 'allTTMLirunLast', allTTMLirunLast
     print 'profitsCur', profitsCur
     print 'profitsLast', profitsLast
-    profitsIncRate = profitsInc / abs(profitsLast) * 100
+    profitsIncRate = round(profitsInc / abs(profitsLast) * 100, 2)
     print profitsInc, profitsIncRate
 #     return [profitsInc, profitsIncRate]
     sql = (('replace into hyprofits'

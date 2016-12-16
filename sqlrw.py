@@ -1428,6 +1428,34 @@ def classifiedToSQL(classifiedDf):
     return writeSQL(classifiedDf, tablename)
 
 
+def getChiguList():
+    sql = ('select chigu.stockid, stocklist.name from chigu, stocklist '
+           'where chigu.stockid=stocklist.stockid')
+    result = engine.execute(sql)
+#     return [stockid[0] for stockid in result.fetchall()]
+    return result.fetchall()
+
+
+def getGuzhiList():
+    sql = ('select guzhiresult.stockid, stocklist.name '
+           'from guzhiresult, stocklist '
+           'where guzhiresult.stockid=stocklist.stockid')
+#     sql = 'select stockid from guzhiresult'
+    result = engine.execute(sql)
+#     return [stockid[0] for stockid in result.fetchall()]
+    return result.fetchall()
+
+
+def getYouzhiList():
+    sql = ('select youzhiguzhi.stockid, stocklist.name '
+           'from youzhiguzhi, stocklist '
+           'where youzhiguzhi.stockid=stocklist.stockid')
+#     sql = 'select stockid from guzhiresult'
+    result = engine.execute(sql)
+#     return [stockid[0] for stockid in result.fetchall()]
+    return result.fetchall()
+
+
 def getClassifiedForStocksID(stockID):
     sql = ('select cname from classified '
            'where stockid = "%(stockID)s"' % stockID)

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Hello world!{% endblock %}
+{% block body %}
+	<div class="container">
+	    {{ super() }}
+		<hr>
+		<div class="text-center">
+		{% for stock in stockList %}
+			<a class="text-center" href="/report/{{ stock[0] }}">
+				{{ stock[0] }} {{ stock[1] }}</a><br>
+		{% endfor %}
+		</div>
+	</div>
+{% endblock %}

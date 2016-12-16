@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}股票估值分析 -- 首页{% endblock %}
+
+
+{% block body %}
+	<div class="container">
+		{{ super() }}
+		<h2><a href="/reporttype/chigu">持股股票估值数据</a><br></h2>
+		<h2><a href="/reporttype/youzhi">优质股票估值数据</a><br></h2>
+		<h2><a href="/reporttype/all">全部股票估值数据</a><br></h2>
+		<h2><a href="/reporttype/all">这是添加了bootstrap的模板</a><br></h2>
+	</div>
+{% endblock %}
+
