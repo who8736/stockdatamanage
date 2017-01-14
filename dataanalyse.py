@@ -130,6 +130,10 @@ def calGuzhi(stockList=None):
 
 
 def peHistRate(stockList, dayCount):
+    """ 计算一组股票指定日期PE在过去一段时期内的水平，
+        # 最低为0，最高为100
+        # 历史交易天数不足时，PE水平为-1
+    """
     print dayCount, stockList
     perates = []
     for stockID in stockList:
@@ -137,14 +141,16 @@ def peHistRate(stockList, dayCount):
                'limit %(dayCount)s;' % locals())
         result = sqlrw.engine.execute(sql)
         peList = result.fetchall()
-        peList = [i[0] for i in peList]
-        peCur = peList[0]
-        perate = float(sum(1 for i in peList if i < peCur)) / dayCount * 100
-        print stockID, perate, peList
-        perates.append(perate)
-#         perate =
-#         perates.append(sum(peList))
-#         print stockID,
+        # 如果历史交易天数不足，则历史PE水平为-1
+        if len(peList) != dayCount:
+            perates.append(-1)
+        else:
+            peList = [i[0] for i in peList]
+            peCur = peList[0]
+            perate = float(
+                sum(1 for i in peList if i < peCur)) / dayCount * 100
+            print stockID, perate, peList
+            perates.append(perate)
     return perates
 
 

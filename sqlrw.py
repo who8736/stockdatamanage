@@ -1189,6 +1189,14 @@ def getLastUpdate(sql):
         return dt.datetime.strptime('1990-01-01', '%Y-%m-%d')
 
 
+def saveChigu(stockList):
+    engine.execute('TRUNCATE TABLE chigu')
+    for stockID in stockList:
+        sql = ('insert into chigu (`stockid`) '
+               'values ("%s");') % stockID
+        engine.execute(sql)
+
+
 def setKlineTTMPELastUpdate(stockID, endDate):
     sql = ('insert into lastupdate (`stockid`, `ttmpe`) '
            'values ("%(stockID)s", "%(endDate)s") '

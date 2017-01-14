@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}股票估值分析 -- 设置持股股票{% endblock %}
+
+{% block body %}
+	<div class="container">
+		{{ super() }}
+        <form  class="form-horizontal" method="POST">
+        	<fieldset>
+        	<div class="control-group">
+	        	<label class="control-label">持股股票列表</label>
+	        	<div class="controls">
+		        	<input  class="input-block-level" type="text" name="stockList" value="{{ stockListStr }}" size="100"/>
+	    		</div>
+        	</div>
+        	
+            {{ form.csrf_token }}
+            <p><button type="submit" class="btn">提交</button></p>
+            </fieldset>
+        </form>
+
+	</div>
+{% endblock %}
