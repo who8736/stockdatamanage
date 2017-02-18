@@ -4,7 +4,8 @@ Created on 2016年5月6日
 
 @author: who8736
 '''
-import datetime as dt
+# import datetime as dt
+from datetime import datetime, timedelta
 import logging
 
 import pandas as pd
@@ -23,7 +24,7 @@ def quarterSub(quarterDate, subNum):
 
 def quarterAdd(quarterDate, addNum):
     """
-    # 从quarterDate中减去subNum个季度
+    # 从quarterDate中加上subNum个季度
     quarterDate: YYYYQ格式， 4位表示年，1表示季度
 
     """
@@ -36,6 +37,8 @@ def quarterAdd(quarterDate, addNum):
 
 
 def dateList(startDate, endDate):
+    """ 生成从startDate到endDate的季度列表
+    """
     dates = []
     while startDate <= endDate:
         dates.append(startDate)
@@ -45,17 +48,36 @@ def dateList(startDate, endDate):
     return dates
 
 
+def dateStrList(startDate, endDate):
+    """ 生成从startDate到endDate的日期列表，日期样式为"2016-01-01"
+    """
+    sDate = parse_ymd(startDate)
+    eDate = parse_ymd(endDate)
+    dateList = []
+    while sDate <= eDate:
+        dateList.append(sDate.strftime('%Y-%m-%d'))
+        sDate = sDate + timedelta(days=1)
+    return dateList
+
+
+def parse_ymd(s):
+    """ 日期字符串转换为datetime
+    """
+    year_s, mon_s, day_s = s.split('-')
+    return datetime(int(year_s), int(mon_s), int(day_s))
+
+
 def transDateToQuarter(date):
     return date.year * 10 + int((date.month + 2) / 3)
 
 
 def getLastQuarter():
-    curQuarter = transDateToQuarter(dt.datetime.today())
+    curQuarter = transDateToQuarter(datetime.today())
     return quarterSub(curQuarter, 1)
 
 
 def getCurYear():
-    return dt.datetime.today().year
+    return datetime.today().year
 
 
 def gubenDataToDf(stockID, guben):
@@ -64,7 +86,7 @@ def gubenDataToDf(stockID, guben):
                                 //div//div//table//tr//td
                                 //table//tr//td//table//tr//td''')
     date = [gubenData[i][0].text for i in range(0, len(gubenData), 2)]
-    date = [dt.datetime.strptime(d, '%Y-%m-%d') for d in date]
+    date = [datetime.strptime(d, '%Y-%m-%d') for d in date]
 #     print date
     totalshares = [
         gubenData[i + 1][0].text for i in range(0, len(gubenData), 2)]
@@ -83,7 +105,7 @@ def gubenDataToDf(stockID, guben):
 
 
 def gubenDfToList(df):
-    timea = dt.datetime.now()
+    timea = datetime.now()
     gubenList = []
     for date, row in df.iterrows():
         stockid = row['stockid']
@@ -95,7 +117,7 @@ def gubenDfToList(df):
                  'totalshares': totalshares
                  }
         gubenList.append(guben)
-    timeb = dt.datetime.now()
+    timeb = datetime.now()
     logging.debug('klineDfToList took %s' % (timeb - timea))
     return gubenList
 
@@ -111,7 +133,7 @@ def transLirunDf(df, year, quarter):
     for d in reportdate:
         if d[-5:] == '02-29':
             d = d[:-5] + '02-28'
-        dd = dt.datetime.strptime(d, '%Y-%m-%d')
+        dd = datetime.strptime(d, '%Y-%m-%d')
         rd.append(dd)
     data = {'stockid': stockid,
             'date': date,

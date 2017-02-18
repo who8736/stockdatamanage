@@ -5,10 +5,25 @@
 	    {{ super() }}
 		<hr>
 		<div class="text-center">
-		{% for stock in stockList %}
-			<a class="text-center" href="/report/{{ stock[0] }}">
-				{{ stock[0] }} {{ stock[1] }}</a><br>
-		{% endfor %}
+		    <table class="table">
+			    <tr>
+			      <th>代码</th>
+			      <th>名称</th>
+			      <th>收盘价</th>
+			      <th>PE</th>
+			      <th>PEG</th>
+			    </tr>
+				{% for stock in stockList %}
+			    	<tr>
+						<td><a class="text-center" href="/report/{{ stock[0] }}">
+							{{ stock[0] }}</a></td>
+						<td>{{ stock[1] }}</td>
+						<td>{{ stock[2] }}</td>
+						<td>{{ stock[3] }}</td>
+						<td>{{ stock[4] }}</td>
+					</tr>
+				{% endfor %}
+			</table>
 		</div>
 	</div>
 {% endblock %}

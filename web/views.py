@@ -10,6 +10,9 @@ from flask import render_template, redirect, url_for
 from report import report1 as guzhiReport
 from sqlrw import getChiguList, getGuzhiList, getYouzhiList
 from sqlrw import saveChigu, readStockIDsFromSQL
+from sqlrw import getStockName, readCurrentTTMPE
+from sqlrw import readCurrentClose, readCurrentPEG
+
 from . import app
 from .forms import StockListForm
 
@@ -69,7 +72,15 @@ def reportnav(typeid):
     else:
         stockList = getGuzhiList()
 
-    return render_template("reportnav.html", stockList=stockList)
+    stockReportList = []
+    for stockID in stockList:
+        stockName = getStockName(stockID)
+        stockClose = readCurrentClose(stockID)
+        pe = readCurrentTTMPE(stockID)
+        peg = readCurrentPEG(stockID)
+        stockReportList.append([stockID, stockName,
+                                stockClose, pe, peg])
+    return render_template("reportnav.html", stockList=stockReportList)
 
 
 @app.route('/report/<stockid>')

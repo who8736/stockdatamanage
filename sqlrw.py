@@ -29,6 +29,7 @@ from tushare.stock import cons as ct
 
 import datatrans
 import initsql
+from bokeh.sampledata import stocks
 
 
 class SQLConn():
@@ -924,24 +925,24 @@ def readTTMLirunForStockID(stockID,
     sql = (u'select max(reportdate) from ttmlirun '
            u'where stockid="%(stockID)s" '
            u'and reportdate<="%(startDate)s"' % locals())
+    print sql
     # 指定日期（含）前无TTM利润数据的，查询起始日期设定为startDate
     # 否则设定为最近一次数据日期
     result = engine.execute(sql).fetchone()
-    if result is None:
-        TTMLirunStartDate = startDate
-    else:
-        TTMLirunStartDate = result[0]
+    if result[0] is not None:
+        startDate = result[0]
     sql = (u'select * from ttmlirun where stockid = "%(stockID)s"'
-           u' and `reportdate` >= "%(TTMLirunStartDate)s"' % locals())
+           u' and `reportdate` >= "%(startDate)s"' % locals())
+    print sql
     if endDate:
         sql += u' and `date` <= "%s"' % endDate
     df = pd.read_sql(sql, engine)
 
     # 指定日期（含）前存在股本变动数据的，重设第1次变动日期为startDate，
     # 减少更新Kline表中总市值所需计算量
-    if TTMLirunStartDate != startDate:
-        df.loc[df.reportdate == TTMLirunStartDate,
-               u'reportdate'] = startDate
+#     if TTMLirunStartDate != startDate:
+#         df.loc[df.reportdate == TTMLirunStartDate,
+#                u'reportdate'] = startDate
     return df
 
 
@@ -1197,6 +1198,37 @@ def saveChigu(stockList):
         engine.execute(sql)
 
 
+def savePELirunIncrease(startDate='2007-01-01', endDate=None):
+    stockList = readStockListFromSQL()
+    for stockID, stockName_ in stockList:
+        #         sql = (u'insert ignore into pelirunincrease(stockid, date, pe) '
+        #                u'select "%(stockID)s", date, ttmpe from kline%(stockID)s '
+        #                u'where `date`>="%(startDate)s";') % locals()
+        #
+        #         engine.execute(sql)
+
+        TTMLirunDf = readTTMLirunForStockID(stockID, startDate)
+        TTMLirunDf = TTMLirunDf.dropna().reset_index(drop=True)
+        klineTablename = 'kline%s' % stockID
+        TTMLirunCount = len(TTMLirunDf)
+        for i in range(TTMLirunCount):
+            incrate = TTMLirunDf['incrate'].iloc[i]
+            startDate_ = TTMLirunDf['reportdate'].iloc[i]
+            try:
+                endDate_ = TTMLirunDf['reportdate'].iloc[i + 1]
+            except IndexError:
+                endDate_ = None
+
+            sql = ('update pelirunincrease '
+                   'set lirunincrease = %(incrate)s'
+                   ' where stockid="%(stockID)s"'
+                   ' and date>="%(startDate_)s"') % locals()
+            if endDate_ is not None:
+                sql += (' and date<"%(endDate_)s"' % locals())
+            engine.execute(sql)
+#         break
+
+
 def setKlineTTMPELastUpdate(stockID, endDate):
     sql = ('insert into lastupdate (`stockid`, `ttmpe`) '
            'values ("%(stockID)s", "%(endDate)s") '
@@ -1415,6 +1447,21 @@ def readClose(stockID):
     return df
 
 
+def readCurrentClose(stockID):
+    sql = ('select close from kline%(stockID)s '
+           'where kline%(stockID)s.date=('
+           'select max(`date`) from kline%(stockID)s'
+           ')' % locals())
+    result = engine.execute(sql)
+    return result.fetchone()[0]
+
+
+def readCurrentPEG(stockID):
+    sql = 'select peg from guzhiresult where stockid="%s" limit 1' % stockID
+    result = engine.execute(sql)
+    return result.fetchone()[0]
+
+
 def getStockIDsForClassified(classified):
     sql = ('select stockid from classified '
            'where cname = "%(classified)s"' % locals())
@@ -1437,31 +1484,31 @@ def classifiedToSQL(classifiedDf):
 
 
 def getChiguList():
-    sql = ('select chigu.stockid, stocklist.name from chigu, stocklist '
-           'where chigu.stockid=stocklist.stockid')
+    #     sql = ('select chigu.stockid, stocklist.name from chigu, stocklist '
+    #            'where chigu.stockid=stocklist.stockid')
+    sql = 'select stockid from chigu'
     result = engine.execute(sql)
-#     return [stockid[0] for stockid in result.fetchall()]
-    return result.fetchall()
+    return [stockid[0] for stockid in result.fetchall()]
 
 
 def getGuzhiList():
-    sql = ('select guzhiresult.stockid, stocklist.name '
-           'from guzhiresult, stocklist '
-           'where guzhiresult.stockid=stocklist.stockid')
-#     sql = 'select stockid from guzhiresult'
+    #     sql = ('select guzhiresult.stockid, stocklist.name '
+    #            'from guzhiresult, stocklist '
+    #            'where guzhiresult.stockid=stocklist.stockid')
+    sql = 'select stockid from guzhiresult'
     result = engine.execute(sql)
-#     return [stockid[0] for stockid in result.fetchall()]
-    return result.fetchall()
+    return [stockid[0] for stockid in result.fetchall()]
+#     return result.fetchall()
 
 
 def getYouzhiList():
-    sql = ('select youzhiguzhi.stockid, stocklist.name '
-           'from youzhiguzhi, stocklist '
-           'where youzhiguzhi.stockid=stocklist.stockid')
-#     sql = 'select stockid from guzhiresult'
+    #     sql = ('select youzhiguzhi.stockid, stocklist.name '
+    #            'from youzhiguzhi, stocklist '
+    #            'where youzhiguzhi.stockid=stocklist.stockid')
+    sql = 'select stockid from guzhiresult'
     result = engine.execute(sql)
-#     return [stockid[0] for stockid in result.fetchall()]
-    return result.fetchall()
+    return [stockid[0] for stockid in result.fetchall()]
+#     return result.fetchall()
 
 
 def getClassifiedForStocksID(stockID):
@@ -1621,8 +1668,10 @@ if __name__ == '__main__':
 # 读取TTM利润信息
 #     df = readTTMLirunForStockID(testStockID, startDate)
 #     print df
-#     pe = readCurrentTTMPE(testStockID)
-#     print pe
+    pe = readCurrentTTMPE(testStockID)
+    stockClose = readCurrentClose(testStockID)
+    peg = readCurrentPEG(testStockID)
+    print testStockID, stockClose, pe, peg
 
 #     pe = readCurrentTTMPEs(testStockList)
 #     print pe
@@ -1634,6 +1683,10 @@ if __name__ == '__main__':
 # standard: sina 新浪行业， sw 申万行业
 #     t = downloadClassified()
 #     print t
+
+
+# 生成pelirunincrease表的数据
+#     savePELirunIncrease()
 
     timed = dt.datetime.now()
     logging.info('datamanage test took %s' % (timed - timec))

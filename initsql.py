@@ -100,6 +100,40 @@ def createHYProfitsTable():
     return result
 
 
+def createGuzhiHistoryStatusTable():
+    """ 各字段定义 ：
+    integrity： BOOL类型, 过去3年数据是否完整
+    seculargrowth： BOOL类型, 是否保持持续增长，当某季TTM利润增长率为负时，该值为否
+    growthmadrate： FLOAT类型, 利润增长平均离差率
+    """
+    sql = ('CREATE TABLE guzhihistorystatus('
+           'stockid VARCHAR(6),'
+           'date INT(11),'
+           'integrity BOOL,'
+           'seculargrowth BOOL,'
+           'growthmadrate FLOAT,'
+           'averageincrement FLOAT,'
+           'PRIMARY KEY ( stockid, date)); ')
+    result = sqlrw.engine.execute(sql)
+    return result
+
+
+def createPELirunIncreaseTable():
+    """ 各字段定义 ：
+    integrity： BOOL类型, 过去3年数据是否完整
+    seculargrowth： BOOL类型, 是否保持持续增长，当某季TTM利润增长率为负时，该值为否
+    growthmadrate： FLOAT类型, 利润增长平均离差率
+    """
+    sql = ('CREATE TABLE pelirunincrease('
+           'stockid VARCHAR(6),'
+           'date DATE,'
+           'pe FLOAT,'
+           'lirunincrease FLOAT,'
+           'PRIMARY KEY (date, stockid)); ')
+    result = sqlrw.engine.execute(sql)
+    return result
+
+
 def createGubenTable():
     pass  # TODO: 创建总股本表
 
@@ -131,3 +165,7 @@ if __name__ == '__main__':
         createChiguTable()
     if not existTable('guzhiresult'):
         createGuzhiResultTable()
+    if not existTable('guzhihistorystatus'):
+        createGuzhiHistoryStatusTable()
+    if not existTable('pelirunincrease'):
+        createPELirunIncreaseTable()

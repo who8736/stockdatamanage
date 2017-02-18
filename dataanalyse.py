@@ -129,6 +129,51 @@ def calGuzhi(stockList=None):
     return pegDf
 
 
+def calHistoryStatus(stockID):
+    TTMLirunDf = sqlrw.readTTMLirunForStockID(stockID)
+    dates = TTMLirunDf['date']
+    for date in dates:
+        #         print i
+        result = _calHistoryStatus(stockID, TTMLirunDf, date)
+        integrity, seculargrowth, growthmadrate, averageincrement = result
+        sql = (u'insert ignore into guzhihistorystatus (`stockid`, `date`, '
+               u'`integrity`, `seculargrowth`, `growthmadrate`, '
+               u'`averageincrement`) '
+               u'values ("%(stockID)s", "%(date)s", %(integrity)r, '
+               u'%(seculargrowth)r, "%(growthmadrate)s", '
+               u'"%(averageincrement)s");') % locals()
+        print sql
+        sqlrw.engine.execute(sql)
+
+
+def _calHistoryStatus(stockID, TTMLirunDf, date):
+    startDate = datatrans.quarterSub(date, 11)
+    print '_calHistoryStatus, current date: %s, start date: %s' % (date,
+                                                                   startDate)
+    _TTMLirunDf = TTMLirunDf[(TTMLirunDf.date >= startDate) &
+                             (TTMLirunDf.date <= date)]
+    print len(_TTMLirunDf)
+    if len(_TTMLirunDf) == 12:
+        integrity = True
+    else:
+        integrity = False
+
+    if len(_TTMLirunDf[_TTMLirunDf.incrate > 0]) == 12:
+        seculargrowth = True
+    else:
+        seculargrowth = False
+
+    # 计算利润增长率的平均绝对离差
+    lirunMad = _TTMLirunDf['incrate'].mad()
+    # 计算利润增长率的平均值
+    lirunAverage = _TTMLirunDf['incrate'].mean()
+    # 计算利润增长率的平均绝对离差率
+    growthmadrate = round(lirunMad / abs(lirunAverage), 2)
+    print integrity, seculargrowth, growthmadrate
+    print _TTMLirunDf[_TTMLirunDf.date == date]
+    return [integrity, seculargrowth, growthmadrate, lirunAverage]
+
+
 def peHistRate(stockList, dayCount):
     """ 计算一组股票指定日期PE在过去一段时期内的水平，
         # 最低为0，最高为100
@@ -253,10 +298,10 @@ if __name__ == '__main__':
     logging.info('===================start=====================')
 
     # 测试持股估值
-    testChigu()
+#     testChigu()
 
     # 测试筛选估值
-    testShaixuan()
+#     testShaixuan()
 
     # 测试TTMPE直方图、概率分布
 #     ttmdf = sqlrw.readTTMPE(testStockID)
@@ -273,6 +318,9 @@ if __name__ == '__main__':
 
 #    c = ttmdf.hist().get_figure()
 #    print 'type c :', type(c)
+
+    # 生成历史估值状态
+    calHistoryStatus('000333')
 
     timed = dt.datetime.now()
     logging.info('datamanage test took %s' % (timed - timec))
