@@ -1459,7 +1459,11 @@ def readCurrentClose(stockID):
 def readCurrentPEG(stockID):
     sql = 'select peg from guzhiresult where stockid="%s" limit 1' % stockID
     result = engine.execute(sql)
-    return result.fetchone()[0]
+    result = result.fetchone()
+    if result is not None:
+        return result[0]
+    else:
+        return None
 
 
 def getStockIDsForClassified(classified):
