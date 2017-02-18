@@ -1458,6 +1458,7 @@ def readCurrentClose(stockID):
 
 def readCurrentPEG(stockID):
     sql = 'select peg from guzhiresult where stockid="%s" limit 1' % stockID
+    logging.info(sql)
     result = engine.execute(sql)
     try:
         result = result.fetchone()[0]
