@@ -1459,11 +1459,12 @@ def readCurrentClose(stockID):
 def readCurrentPEG(stockID):
     sql = 'select peg from guzhiresult where stockid="%s" limit 1' % stockID
     result = engine.execute(sql)
-    result = result.fetchone()
-    if result is not None:
-        return result[0]
-    else:
+    try:
+        result = result.fetchone()[0]
+    except TypeError:
         return None
+    else:
+        return result
 
 
 def getStockIDsForClassified(classified):
@@ -1530,6 +1531,20 @@ def getStockName(stockID):
         return result[0]
     else:
         return None
+
+
+def test():
+    stockList = getChiguList()
+
+    stockReportList = []
+    for stockID in stockList:
+        stockName = getStockName(stockID)
+        stockClose = readCurrentClose(stockID)
+        pe = readCurrentTTMPE(stockID)
+        peg = readCurrentPEG(stockID)
+        stockReportList.append([stockID, stockName,
+                                stockClose, pe, peg])
+    print stockReportList
 
 
 if __name__ == '__main__':
@@ -1676,6 +1691,7 @@ if __name__ == '__main__':
     stockClose = readCurrentClose(testStockID)
     peg = readCurrentPEG(testStockID)
     print testStockID, stockClose, pe, peg
+    test()
 
 #     pe = readCurrentTTMPEs(testStockList)
 #     print pe
