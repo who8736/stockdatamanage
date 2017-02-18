@@ -29,7 +29,7 @@ from tushare.stock import cons as ct
 
 import datatrans
 import initsql
-from bokeh.sampledata import stocks
+# from bokeh.sampledata import stocks
 
 
 class SQLConn():
