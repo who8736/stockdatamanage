@@ -40,7 +40,7 @@ def index():
 @app.route('/stocklist', methods=["GET", "POST"])
 def setStockList():
     stockList = getChiguList()
-    stockListStr = "|".join([i[0] for i in stockList])
+    stockListStr = "|".join([i for i in stockList])
     form = StockListForm()
 #     form.stockList = stockListStr
     if form.validate_on_submit():
