@@ -6,16 +6,17 @@ Created on 2016年12月14日
 '''
 
 from flask import render_template, redirect, url_for
+from flask import send_file
 # from flask_login import login_required, current_user
 from report import report1 as guzhiReport
 from sqlrw import getChiguList, getGuzhiList, getYouzhiList
 from sqlrw import saveChigu, readStockIDsFromSQL
 from sqlrw import getStockName, readCurrentTTMPE
 from sqlrw import readCurrentClose, readCurrentPEG
+from plot import plotKline
 
 from . import app
 from .forms import StockListForm
-
 # import sys
 #
 # sys.setdefaultencoding('utf-8')
@@ -90,3 +91,8 @@ def reportView(stockid):
 #     reportstr = 'test'
     return render_template("report.html",
                            stock=stockItem)
+
+
+@app.route('/klineimg/<stockID>')
+def klineimg(stockID):
+    return send_file(plotKline(stockID))
