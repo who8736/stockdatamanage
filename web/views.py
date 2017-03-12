@@ -81,7 +81,7 @@ def reportnav(typeid):
         peg = readCurrentPEG(stockID)
         stockReportList.append([stockID, stockName,
                                 stockClose, pe, peg])
-    return render_template("reportnav.html", stockList=stockReportList)
+    return render_template('reportnav.html', stockList=stockReportList)
 
 
 @app.route('/report/<stockid>')
@@ -89,10 +89,14 @@ def reportView(stockid):
     stockItem = guzhiReport(stockid)
 #     reportstr = reportstr[:20]
 #     reportstr = 'test'
-    return render_template("report.html",
+    return render_template('report.html',
                            stock=stockItem)
 
 
 @app.route('/klineimg/<stockID>')
 def klineimg(stockID):
-    return send_file(plotKline(stockID))
+    plotImg = plotKline(stockID)
+    plotImg.seek(0)
+    return send_file(plotImg,
+                     attachment_filename='img.png',
+                     as_attachment=True)

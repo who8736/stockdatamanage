@@ -60,6 +60,7 @@ def plotKline(stockID):
         dates.append(time.mktime(date.timetuple()))
         peDatas.append(ttmpe)
 
+    print peDatas
     gs1 = gs.GridSpec(3, 1)
     gs1.update(hspace=0)
     fig = plt.figure()
@@ -74,10 +75,10 @@ def plotKline(stockID):
 
 #     ax1.subplots_adjust(hspace=None)
 #     fig.subplots_adjust(hspace=0)
-    plt.show()
+#     plt.show()
     imgData = BytesIO()
     fig.savefig(imgData, format='png')
-    imgData.seek(0)
+#     imgData.seek(0)
 
     return imgData
 #     datetime.date
