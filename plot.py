@@ -9,6 +9,10 @@ Created on 2017年2月10日
 import time
 from io import BytesIO
 
+import matplotlib
+
+matplotlib.use('Agg')
+
 import matplotlib.pyplot as plt
 from matplotlib.finance import candlestick_ohlc
 import matplotlib.gridspec as gs
@@ -60,6 +64,7 @@ def plotKline(stockID):
         dates.append(time.mktime(date.timetuple()))
         peDatas.append(ttmpe)
 
+    print dates
     print peDatas
     gs1 = gs.GridSpec(3, 1)
     gs1.update(hspace=0)
@@ -69,8 +74,8 @@ def plotKline(stockID):
     ax1.set_title(stockID)
     ax2 = fig.add_subplot(gs1[2:3, :])
     ax2.plot(dates, peDatas)
-#     ax2.xaxis.set_major_locator(MonthLocator())
-#     ax2.xaxis.set_major_formatter(DateFormatter('%Y-%m'))
+    ax2.xaxis.set_major_locator(MonthLocator())
+    ax2.xaxis.set_major_formatter(DateFormatter('%Y-%m'))
     fig.autofmt_xdate()
 
 #     ax1.subplots_adjust(hspace=None)
