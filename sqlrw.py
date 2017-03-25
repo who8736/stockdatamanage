@@ -921,7 +921,7 @@ def readTTMLirunForStockID(stockID,
     --------
     DataFrame: 返回DataFrame格式TTM利润
     """
-    # 指定日期（含）前最近一次股本变动日期
+    # 指定日期（含）前最近一次利润变动日期
     sql = (u'select max(reportdate) from ttmlirun '
            u'where stockid="%(stockID)s" '
            u'and reportdate<="%(startDate)s"' % locals())
@@ -934,7 +934,7 @@ def readTTMLirunForStockID(stockID,
     sql = (u'select * from ttmlirun where stockid = "%(stockID)s"'
            u' and `reportdate` >= "%(startDate)s"' % locals())
     print sql
-    if endDate:
+    if endDate is not None:
         sql += u' and `date` <= "%s"' % endDate
     df = pd.read_sql(sql, engine)
 
@@ -944,6 +944,54 @@ def readTTMLirunForStockID(stockID,
 #         df.loc[df.reportdate == TTMLirunStartDate,
 #                u'reportdate'] = startDate
     return df
+
+
+def readLastTTMLirunForStockID(stockID, limit=1):
+    """取指定股票最近几期TTM利润
+    Parameters
+    --------
+    stockID: str 股票代码  e.g: '600519'
+    limit: 取最近期数的数据
+
+    Return
+    --------
+    list: 返回list格式TTM利润
+    """
+    sql = (u'select incrate from ttmlirun '
+           u'where stockid="%(stockID)s" '
+           u'order by date desc '
+           u'limit %(limit)s' % locals())
+#     print sql
+    result = engine.execute(sql).fetchall()
+    result = [i[0] for i in reversed(result)]
+    return result
+
+#     df = pd.read_sql(sql, engine)
+#     return df
+
+
+def readLastTTMLirun(stockList, limit=1):
+    """取股票列表最近几期TTM利润
+    Parameters
+    --------
+    stockList: str 股票代码  e.g: ['600519', '002518']
+    limit: 取最近期数的数据
+
+    Return
+    --------
+    DataFrame: 返回DataFrame格式TTM利润
+    """
+    TTMLirunList = []
+    for stockID in stockList:
+        TTMLirun = readLastTTMLirunForStockID(stockID, limit)
+        TTMLirun.insert(0, stockID)
+        TTMLirunList.append(TTMLirun)
+
+#     print TTMLirunList
+    columns = ['incrate%s' % i for i in range(limit)]
+    columns.insert(0, 'stockid')
+    TTMLirunDf = DataFrame(TTMLirunList, columns=columns)
+    return TTMLirunDf
 
 
 def readTTMLirunForDate(date):
@@ -1029,32 +1077,32 @@ def calAllTTMLirun(date, incrementUpdate=True):
         TTMLirun = lirunCur
         TTMLirun.columns = [['stockid', 'date',
                              'ttmprofits', 'reportdate']]
-        return writeSQL(TTMLirun, 'ttmlirun')
+#         return writeSQL(TTMLirun, 'ttmlirun')
+    else:
+        if incrementUpdate:
+            TTMLirunCur = readTTMLirunForDate(date)
+            lirunCur = lirunCur[~lirunCur.stockid.isin(TTMLirunCur.stockid)]
 
-    if incrementUpdate:
-        TTMLirunCur = readTTMLirunForDate(date)
-        lirunCur = lirunCur[~lirunCur.stockid.isin(TTMLirunCur.stockid)]
+        # 上年第四季度利润, 仅取利润字段并更名为profits1
+        lastYearEnd = (date / 10 - 1) * 10 + 4
+        lirunLastYearEnd = readLirunForDate(lastYearEnd)
+        print 'lirunLastYearEnd.head():', lirunLastYearEnd.head()
+        lirunLastYearEnd = lirunLastYearEnd[['stockid', 'profits']]
+        lirunLastYearEnd.columns = ['stockid', 'profits1']
 
-    # 上年第四季度利润, 仅取利润字段并更名为profits1
-    lastYearEnd = (date / 10 - 1) * 10 + 4
-    lirunLastYearEnd = readLirunForDate(lastYearEnd)
-    print 'lirunLastYearEnd.head():', lirunLastYearEnd.head()
-    lirunLastYearEnd = lirunLastYearEnd[['stockid', 'profits']]
-    lirunLastYearEnd.columns = ['stockid', 'profits1']
+        # 上年同期利润, 仅取利润字段并更名为profits2
+        lastYearQuarter = date - 10
+        lirunLastQarter = readLirunForDate(lastYearQuarter)
+        lirunLastQarter = lirunLastQarter[['stockid', 'profits']]
+        lirunLastQarter.columns = ['stockid', 'profits2']
 
-    # 上年同期利润, 仅取利润字段并更名为profits2
-    lastYearQuarter = date - 10
-    lirunLastQarter = readLirunForDate(lastYearQuarter)
-    lirunLastQarter = lirunLastQarter[['stockid', 'profits']]
-    lirunLastQarter.columns = ['stockid', 'profits2']
+        # 整合以上三个季度利润，stockid为整合键
+        TTMLirun = pd.merge(lirunCur, lirunLastYearEnd, on='stockid')
+        TTMLirun = pd.merge(TTMLirun, lirunLastQarter, on='stockid')
 
-    # 整合以上三个季度利润，stockid为整合键
-    TTMLirun = pd.merge(lirunCur, lirunLastYearEnd, on='stockid')
-    TTMLirun = pd.merge(TTMLirun, lirunLastQarter, on='stockid')
-
-    TTMLirun['ttmprofits'] = (TTMLirun.profits +
-                              TTMLirun.profits1 - TTMLirun.profits2)
-    TTMLirun = TTMLirun[['stockid', 'date', 'ttmprofits', 'reportdate']]
+        TTMLirun['ttmprofits'] = (TTMLirun.profits +
+                                  TTMLirun.profits1 - TTMLirun.profits2)
+        TTMLirun = TTMLirun[['stockid', 'date', 'ttmprofits', 'reportdate']]
     print 'TTMLirun.head():', TTMLirun.head()
 
     # 写入ttmlirun表后，重算TTM利润增长率
@@ -1501,7 +1549,7 @@ def getGuzhiList():
     #     sql = ('select guzhiresult.stockid, stocklist.name '
     #            'from guzhiresult, stocklist '
     #            'where guzhiresult.stockid=stocklist.stockid')
-    sql = 'select stockid from guzhiresult'
+    sql = 'select stockid from youzhiguzhi'
     result = engine.execute(sql)
     return [stockid[0] for stockid in result.fetchall()]
 #     return result.fetchall()
@@ -1657,6 +1705,7 @@ if __name__ == '__main__':
 #         print date
 #         result = calAllTTMLirun(date)
 #     print result
+#     print calAllTTMLirun(20164)
 
 # 更新TTM市盈率
 #     updateKlineEXTData(testStockID, startDate)
@@ -1688,11 +1737,11 @@ if __name__ == '__main__':
 # 读取TTM利润信息
 #     df = readTTMLirunForStockID(testStockID, startDate)
 #     print df
-    pe = readCurrentTTMPE(testStockID)
-    stockClose = readCurrentClose(testStockID)
-    peg = readCurrentPEG(testStockID)
-    print testStockID, stockClose, pe, peg
-    test()
+#     pe = readCurrentTTMPE(testStockID)
+#     stockClose = readCurrentClose(testStockID)
+#     peg = readCurrentPEG(testStockID)
+#     print testStockID, stockClose, pe, peg
+#     test()
 
 #     pe = readCurrentTTMPEs(testStockList)
 #     print pe
@@ -1709,6 +1758,13 @@ if __name__ == '__main__':
 # 生成pelirunincrease表的数据
 #     savePELirunIncrease()
 
+# 取最近几期TTM利润数据
+#     df = readLastTTMLirunForStockID('600519', 6)
+#     print df
+    stockList = ['000001', '600000', '600519']
+    limit = 6
+    TTMLirunList = readLastTTMLirun(stockList, limit)
+    print TTMLirunList
     timed = dt.datetime.now()
     logging.info('datamanage test took %s' % (timed - timec))
     logging.info('===================end=====================')

@@ -70,18 +70,26 @@ def calGuzhi(stockList=None):
 
     # TODO:　假设当前为第2季度，但第1季度上市公司的财务报告未公布，导致缺少数据如何处理
     sectionNum = 6  # 取6个季度
-    endDate = datatrans.getLastQuarter()
-    startDate = datatrans.quarterSub(endDate, sectionNum - 1)
+# 新取TTM利润方法，取每支股票最后N季度数据
+    incDf = sqlrw.readLastTTMLirun(stockList, sectionNum)
+#     print 'incDf:'
+#     print incDf
+    pegDf = pd.merge(pegDf, incDf, on='stockid', how='left')
+
+# 原取TTM利润方法，按当前日期计算取前N季度数据， 但但第1季度上市公司的财务报告未公布，导致缺少数据无法处理
+#     endDate = datatrans.getLastQuarter()
+#     startDate = datatrans.quarterSub(endDate, sectionNum - 1)
 #     quarter  = (int(endDate / 10) * 4 + (endDate % 10)) - sectionNum
-    dateList = datatrans.dateList(startDate, endDate)
+#     dateList = datatrans.dateList(startDate, endDate)
 #     print dateList
+
     # 过去N个季度TTM利润增长率
-    for i in range(sectionNum):
-        incDf = sqlrw.readTTMLirunForDate(dateList[i])
-        incDf = incDf[['stockid', 'incrate']]
-        incDf.columns = ['stockid', 'incrate%d' % i]
+#     for i in range(sectionNum):
+#         incDf = sqlrw.readTTMLirunForDate(dateList[i])
+#         incDf = incDf[['stockid', 'incrate']]
+#         incDf.columns = ['stockid', 'incrate%d' % i]
 #         print incDf.head()
-        pegDf = pd.merge(pegDf, incDf, on='stockid', how='left')
+#         pegDf = pd.merge(pegDf, incDf, on='stockid', how='left')
 #         pegDf = pd.merge(pegDf, incDf, on='stockid')
 
 #     print pegDf.head()
@@ -118,7 +126,7 @@ def calGuzhi(stockList=None):
     # 计算pe200与pe1000
     pegDf['pe200'] = peHistRate(stockList, 200)
     pegDf['pe1000'] = peHistRate(stockList, 1000)
-    print pegDf
+#     print pegDf
     # 设置输出列与列顺序
     pegDf = pegDf[['stockid', 'name', 'pe', 'peg',
                    'next1YearPE',  'next2YearPE',  'next3YearPE',
@@ -179,7 +187,7 @@ def peHistRate(stockList, dayCount):
         # 最低为0，最高为100
         # 历史交易天数不足时，PE水平为-1
     """
-    print dayCount, stockList
+#     print dayCount, stockList
     perates = []
     for stockID in stockList:
         sql = ('select ttmpe from kline%(stockID)s order by `date` desc '
@@ -194,7 +202,7 @@ def peHistRate(stockList, dayCount):
             peCur = peList[0]
             perate = float(
                 sum(1 for i in peList if i < peCur)) / dayCount * 100
-            print stockID, perate, peList
+#             print stockID, perate, peList
             perates.append(perate)
     return perates
 
@@ -212,7 +220,7 @@ def youzhiSelect(pegDf):
     --------
     DataFrame: 筛选后的估值分析表格
     """
-    print pegDf.head()
+#     print pegDf.head()
     pegDf = pegDf.dropna()
     pegDf = pegDf[pegDf.peg.notnull()]
     pegDf = pegDf[(pegDf.peg > 0) & (pegDf.peg < 1) & (pegDf.avgrate > 0)]
@@ -225,8 +233,8 @@ def youzhiSelect(pegDf):
 #                    'incrate3', 'incrate4', 'incrate5',
 #                    'avgrate'
 #                    ]]
-    print pegDf.head()
-    print len(pegDf)
+#     print pegDf.head()
+#     print len(pegDf)
     return pegDf
 
 
@@ -262,6 +270,7 @@ def testShaixuan():
     sqlrw.engine.execute(u'TRUNCATE TABLE guzhiresult')
     sqlrw.writeSQL(df, u'guzhiresult')
     df = youzhiSelect(df)
+    print 'youzhiSelect result:'
     print df.head()
     outFilename = './data/youzhi.csv'
     dfToCsvFile(df, outFilename)
@@ -301,7 +310,7 @@ if __name__ == '__main__':
 #     testChigu()
 
     # 测试筛选估值
-#     testShaixuan()
+    testShaixuan()
 
     # 测试TTMPE直方图、概率分布
 #     ttmdf = sqlrw.readTTMPE(testStockID)
@@ -320,7 +329,10 @@ if __name__ == '__main__':
 #    print 'type c :', type(c)
 
     # 生成历史估值状态
-    calHistoryStatus('000333')
+#     calHistoryStatus('000333')
+
+    # 测试估值计算函数
+#     calGuzhi()
 
     timed = dt.datetime.now()
     logging.info('datamanage test took %s' % (timed - timec))
