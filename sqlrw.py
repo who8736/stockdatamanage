@@ -1559,7 +1559,8 @@ def getYouzhiList():
     #     sql = ('select youzhiguzhi.stockid, stocklist.name '
     #            'from youzhiguzhi, stocklist '
     #            'where youzhiguzhi.stockid=stocklist.stockid')
-    sql = 'select stockid from guzhiresult'
+    #     sql = 'select stockid from guzhiresult'
+    sql = 'select stockid from youzhiguzhi'
     result = engine.execute(sql)
     return [stockid[0] for stockid in result.fetchall()]
 #     return result.fetchall()
