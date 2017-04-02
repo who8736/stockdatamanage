@@ -908,6 +908,19 @@ def readLirunList(date):
     return df
 
 
+def readPERate(stockID):
+    """ 读取一只股票的PE历史水平，
+    # 返回PE200， PE1000两个数值，分别代表该股票当前PE值在过去200、1000个交易日中的水平
+    """
+    sql = (u'select pe200, pe1000 from guzhiresult '
+           u'where stockid="%(stockID)s" limit 1' % locals())
+    print sql
+    # 指定日期（含）前无TTM利润数据的，查询起始日期设定为startDate
+    # 否则设定为最近一次数据日期
+    result = engine.execute(sql).fetchone()
+    return result
+
+
 def readTTMLirunForStockID(stockID,
                            startDate='1990-01-01', endDate=None):
     """取指定股票一段日间的TTM利润，startDate当日无数据时，取之前最近一次数据

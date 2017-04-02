@@ -13,6 +13,7 @@ from sqlrw import getChiguList, getGuzhiList, getYouzhiList
 from sqlrw import saveChigu, readStockIDsFromSQL
 from sqlrw import getStockName, readCurrentTTMPE
 from sqlrw import readCurrentClose, readCurrentPEG
+from sqlrw import readPERate
 from plot import plotKline
 
 from . import app
@@ -79,8 +80,9 @@ def reportnav(typeid):
         stockClose = readCurrentClose(stockID)
         pe = readCurrentTTMPE(stockID)
         peg = readCurrentPEG(stockID)
+        pe200, pe1000 = readPERate(stockID)
         stockReportList.append([stockID, stockName,
-                                stockClose, pe, peg])
+                                stockClose, pe, peg, pe200, pe1000])
     return render_template('reportnav.html', stockList=stockReportList)
 
 

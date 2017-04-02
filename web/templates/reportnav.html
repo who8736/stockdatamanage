@@ -12,6 +12,8 @@
 			      <th>收盘价</th>
 			      <th>PE</th>
 			      <th>PEG</th>
+			      <th>PE200</th>
+			      <th>PE1000</th>
 			    </tr>
 				{% for stock in stockList %}
 			    	<tr>
@@ -21,6 +23,8 @@
 						<td>{{ stock[2] }}</td>
 						<td>{{ stock[3] }}</td>
 						<td>{{ stock[4] }}</td>
+						<td>{{ stock[5] }}</td>
+						<td>{{ stock[6] }}</td>
 					</tr>
 				{% endfor %}
 			</table>
