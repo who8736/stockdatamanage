@@ -1330,7 +1330,10 @@ def updateLirun():
     for date in dates:
         #         print date
         logging.debug('updateLirun: %s', date)
-        df = downloadLirun(date)
+        try:
+            df = downloadLirun(date)
+        except ValueError:
+            continue
         if df is None:
             continue
 #         print len(df)
@@ -1711,6 +1714,7 @@ if __name__ == '__main__':
 #     df = getLirun(year, quarter)
 #     print df.head(5)
 #     writeLirun(df)
+    updateLirun()
 
 # 更新TTM利润信息
 #     date = 20161
@@ -1775,10 +1779,11 @@ if __name__ == '__main__':
 # 取最近几期TTM利润数据
 #     df = readLastTTMLirunForStockID('600519', 6)
 #     print df
-    stockList = ['000001', '600000', '600519']
-    limit = 6
-    TTMLirunList = readLastTTMLirun(stockList, limit)
-    print TTMLirunList
+#     stockList = ['000001', '600000', '600519']
+#     limit = 6
+#     TTMLirunList = readLastTTMLirun(stockList, limit)
+#     print TTMLirunList
+
     timed = dt.datetime.now()
     logging.info('datamanage test took %s' % (timed - timec))
     logging.info('===================end=====================')

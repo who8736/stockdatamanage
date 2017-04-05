@@ -127,9 +127,16 @@ def test():
     for date in dates:
         calAllHYTTMLirun(date)
 
+
+def getHYIDName(stockID):
+    hyID = getHYID(stockID, 4)
+    hyName = getHYName(hyID)
+    print stockID, hyID, hyName
+
 if __name__ == '__main__':
     #     test()
     #     calAllHYTTMLirunForDate(20154)
-    hyID = '02030301'
-    calHYTTMLirun(hyID, 20164)
-#     calHYTTMLirun(hyID, 20162)
+    #     hyID = '02030301'
+    #     calHYTTMLirun(hyID, 20164)
+    #     calHYTTMLirun(hyID, 20162)
+    stockList = ['000732', '', '', '', '', '', '', ]

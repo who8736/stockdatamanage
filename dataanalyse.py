@@ -225,6 +225,7 @@ def youzhiSelect(pegDf):
     pegDf = pegDf[pegDf.peg.notnull()]
     pegDf = pegDf[(pegDf.peg > 0) & (pegDf.peg < 1) & (pegDf.avgrate > 0)]
     pegDf = pegDf[pegDf.pe < 30]
+    pegDf = pegDf[(pegDf.pe200 < 20) & (pegDf.pe1000 < 30)]
     pegDf = pegDf[pegDf.madrate < 0.6]
     pegDf = pegDf.sort(columns='peg')
 #     pegDf = pegDf[['stockid', 'pe', 'peg',
