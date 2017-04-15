@@ -166,7 +166,14 @@ if __name__ == '__main__':
 #     logging.warning('This is warning message')
 
 #     updateDataTest()
-    startUpdate()
+
+#     startUpdate()
+
+    stockList = sqlrw.readStockIDsFromSQL()
+#     stockList = stockList[:10]
+    threadNum = 20
+    updateGuzhi(stockList, threadNum)
+
 
 #     stockID = '000005'
 #     sqlrw.downloadMainTable(stockID)

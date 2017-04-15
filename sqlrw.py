@@ -428,6 +428,17 @@ def dropTable(tableName):
     engine.execute('DROP TABLE %s' % tableName)
 
 
+def dropNAData():
+    """ 清除K线图数据中交易量为0的数据
+    """
+    stockList = readStockIDsFromSQL()
+#     stockList = ['002100']
+    for stockID in stockList:
+        tablename = tablenameKline(stockID)
+        sql = 'delete from %(tablename)s where volume=0;' % locals()
+        engine.execute(sql)
+
+
 def getLowPEStockList(maxPE=40):
     """选取指定范围PE的股票
     maxPE: 最大PE
@@ -1714,7 +1725,7 @@ if __name__ == '__main__':
 #     df = getLirun(year, quarter)
 #     print df.head(5)
 #     writeLirun(df)
-    updateLirun()
+#     updateLirun()
 
 # 更新TTM利润信息
 #     date = 20161
@@ -1783,6 +1794,9 @@ if __name__ == '__main__':
 #     limit = 6
 #     TTMLirunList = readLastTTMLirun(stockList, limit)
 #     print TTMLirunList
+
+# 清除K线图数据中交易量为0的数据
+    dropNAData()
 
     timed = dt.datetime.now()
     logging.info('datamanage test took %s' % (timed - timec))

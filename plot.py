@@ -11,15 +11,17 @@ from io import BytesIO
 
 import matplotlib
 
-matplotlib.use('Agg')
+matplotlib.use('Agg')  # @UndefinedVariable
 
-import matplotlib.pyplot as plt
-from matplotlib.finance import candlestick_ohlc
-import matplotlib.gridspec as gs
-from matplotlib.dates import DateFormatter, MonthLocator
+import matplotlib.pyplot as plt  # @IgnorePep8
+from matplotlib.finance import candlestick_ohlc  # @IgnorePep8
+import matplotlib.gridspec as gs  # @IgnorePep8
+from matplotlib.dates import DateFormatter, MonthLocator  # @IgnorePep8
+from matplotlib.ticker import FixedLocator  # @IgnorePep8
+import tushare  # @IgnorePep8
 
-from sqlrw import engine
-from datatrans import dateStrList
+from sqlrw import engine  # @IgnorePep8
+from datatrans import dateStrList  # @IgnorePep8
 
 
 def scatter(startDate, endDate):
@@ -46,8 +48,8 @@ def scatter(startDate, endDate):
 #         plt.show()
 
 
-def plotKline(stockID):
-
+def plotKlineOld(stockID):
+    #     return plotKline(stockID)
     #     ax2 = fig.add_subplot(2, 1, 2)
     sql = ('select date, open, high, low, close, ttmpe '
            'from kline%(stockID)s '
@@ -90,10 +92,88 @@ def plotKline(stockID):
 #     datetime.timestamp()
 #     datetime.
 
+
+def plotKline(stockID):
+    """ 绘制K线与TTMPE图
+    """
+    sql = ('select date, open, high, low, close, ttmpe '
+           'from kline%(stockID)s '
+           'order by date desc limit 1000;' % locals())
+    result = engine.execute(sql).fetchall()
+    stockDatas = [i for i in reversed(result)]
+    klineDatas = []
+    dates = []
+    peDatas = []
+    indexes = range(len(stockDatas))
+    for i in indexes:
+        date, _open, high, low, close, ttmpe = stockDatas[i]
+        klineDatas.append([i, _open, high, low, close])
+        dates.append(date.strftime("%Y-%m-%d"))
+        peDatas.append(ttmpe)
+
+    gs1 = gs.GridSpec(3, 1)
+    gs1.update(hspace=0)
+    fig = plt.figure()
+    ax1 = fig.add_subplot(gs1[0:2, :])
+    candlestick_ohlc(ax1, klineDatas)
+    ax1.set_title(stockID)
+    plt.grid(True)
+    ax2 = fig.add_subplot(gs1[2:3, :])
+    ax2.plot(indexes, peDatas)
+    ax1.set_xlim((0, len(stockDatas)))
+    tickerIndex, tickerLabels = getMonthIndex(dates)
+    locator = FixedLocator(tickerIndex)
+    ax1.xaxis.set_major_locator(locator)
+    ax2.xaxis.set_major_locator(locator)
+    ax2.set_xticklabels(tickerLabels)
+    for label in ax2.get_xticklabels():
+        label.set_rotation(45)
+    plt.grid(True)
+    plt.legend()
+    plt.show()
+    imgData = BytesIO()
+    fig.savefig(imgData, format='png')
+    return imgData
+
+
+def getMonthIndex(dates):
+    month = ''
+    monthIndex = []
+    monthstr = []
+    for i in range(len(dates)):
+        date = dates[i]
+        if month != date[:4]:
+            month = date[:4]
+            monthIndex.append(i)
+            monthstr.append(month)
+    return monthIndex, monthstr
+
+
+def test():
+    df = tushare.get_k_data('600000')
+    df = df[-200:]
+    ax = plt.subplot(111)
+    print df.head()
+    ax.plot(df.index, df.close)
+    monthIndex = getMonthIndex(df.date)
+    tickerIndex = df.index[monthIndex]
+    tickerLabels = df.date[monthIndex].str[:7]
+    locator = FixedLocator(tickerIndex)
+    ax.xaxis.set_major_locator(locator)
+    ax.set_xticklabels(tickerLabels)
+    for label in ax.get_xticklabels():
+        label.set_rotation(45)
+    plt.grid(True)
+#     plt.savefig('testplot.png')
+    plt.legend()
+    plt.show()
+
+
 if __name__ == '__main__':
     startDate = '2017-01-01'
     endDate = '2017-03-31'
 #     k = dateStrList(startDate, endDate)
 #     print k
 #     scatter(startDate, endDate)
-    plotKline('600519')
+    plotKline('002100')
+#     test()
