@@ -121,13 +121,14 @@ def plotKline(stockID):
     ax2 = fig.add_subplot(gs1[2:3, :])
     ax2.plot(indexes, peDatas)
     ax1.set_xlim((0, len(stockDatas)))
+    ax2.set_xlim((0, len(stockDatas)))
     tickerIndex, tickerLabels = getMonthIndex(dates)
     locator = FixedLocator(tickerIndex)
     ax1.xaxis.set_major_locator(locator)
     ax2.xaxis.set_major_locator(locator)
     ax2.set_xticklabels(tickerLabels)
-    for label in ax2.get_xticklabels():
-        label.set_rotation(45)
+#     for label in ax2.get_xticklabels():
+#         label.set_rotation(45)
     plt.grid(True)
     plt.legend()
     plt.show()
