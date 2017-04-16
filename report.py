@@ -39,7 +39,7 @@ def report(stockID):
     reportStr += u'当前TTMPE参考最近200个工作日水平： %+6.2f\n' % guzhiData[16]
     reportStr += u'当前TTMPE参考最近1000个工作日水平： %+6.2f\n' % guzhiData[17]
 
-    hyIDlv4 = hyanalyse.getHYID(stockID, level=4)
+    hyIDlv4 = hyanalyse.getHYIDForStock(stockID)
     hyIDlv3 = hyIDlv4[:6]
     hyIDlv2 = hyIDlv4[:4]
     hyIDlv1 = hyIDlv4[:2]
@@ -102,7 +102,7 @@ def report1(stockID):
     # 当前TTMPE参考最近1000个工作日水平
     myItem.PERate1000 = guzhiData[17]
 
-    hyIDlv4 = hyanalyse.getHYID(stockID, level=4)
+    hyIDlv4 = hyanalyse.getHYIDForStock(stockID)
     hyIDlv3 = hyIDlv4[:6]
     hyIDlv2 = hyIDlv4[:4]
     hyIDlv1 = hyIDlv4[:2]
