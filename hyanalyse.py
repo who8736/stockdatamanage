@@ -7,6 +7,7 @@ Created on 2016年12月2日
 import sqlrw
 import datatrans
 import logging
+from wtforms.ext import dateutil
 
 
 def getStockListForHY(hyID):
@@ -21,38 +22,57 @@ def getStockListForHY(hyID):
     return stockList
 
 
-def getHYID(stockID, level):
-    if level < 1 or level > 4:
-        logging.error('error HY level: %s', level)
-        return None
+def getHYIDForStock(stockID):
+    """ 当查询指定股票的4级行业的代码
+    """
     sql = ('select hyid from hangyestock where stockid="%(stockID)s";'
            % locals())
+    result = sqlrw.engine.execute(sql).fetchone()
+    if result is None:
+        return None
+    else:
+        hyID = result[0]
+        return hyID
+
+
+def getHYIDForHY(hyID, subLevel):
+    """ 查询指定行业包含的下级行业代码
+    """
+    level = len(hyID) / 2
+    sql = ('select hyid from hangyename '
+           'where hylevel%(level)sid="%(hyID)s" and hylevel="%(subLevel)s";') % locals()
+#     print sql
     result = sqlrw.engine.execute(sql)
-    hyID = result.fetchone()[0]
-    # 当查询1、2、3级行业的代码时，需根据hyID查询hangyename表获取最终结果
-    if level != 4:
-        sql = ('select level%(level)sid from hangyename '
-               'where hyid="%(hyID)s";')
-        result = sqlrw.engine.execute(sql)
-        hyID = result.fetchone()[0]
-    return hyID
+    result = result.fetchall()
+#     print 'getHYIDForHY:', result
+    if result is None:
+        return None
+    else:
+        return [i[0] for i in result]
 
 
 def getHYName(hyID):
     print 'getHYName(hyID):hyID: ', hyID
-    sql = ('select hyname from hangyename where levelid="%(hyID)s";'
+    sql = ('select hyname from hangyename where hyid="%(hyID)s";'
            % locals())
-    result = sqlrw.engine.execute(sql)
-    hyName = result.fetchone()[0]
-    return hyName
+    result = sqlrw.engine.execute(sql).fetchone()
+    if result is None:
+        return None
+    else:
+        hyName = result[0]
+        return hyName
 
 
 def getHYProfitsIncRate(hyID, quarter):
     sql = ('select profitsIncRate from hyprofits '
            'where hyid="%(hyID)s" and date="%(quarter)s";'
            % locals())
-    result = sqlrw.engine.execute(sql)
-    return result.fetchone()[0]
+    print sql
+    result = sqlrw.engine.execute(sql).fetchone()
+    if result is None:
+        return None
+    else:
+        return result[0]
 
 
 def getHYProfitsIncRates(hyID):
@@ -90,6 +110,67 @@ def getStockProfitsIncRates(stockID):
 
 
 def calHYTTMLirun(hyID, date):
+    """ 计算指定行业的TTMLirun
+    date: 格式YYYYQ, 4位年+1位季度，利润所属日期
+    """
+    if len(hyID) == 8:
+        return calHYTTMLirunLowLevel(hyID, date)
+    else:
+        return calHYTTMLirunHighLevel(hyID, date)
+
+
+def calHYTTMLirunHighLevel(hyID, date):
+    """ 计算第1、2、3级行业的TTM利润
+    """
+    level = len(hyID) / 2
+    subHyIDList = getHYIDForHY(hyID, level + 1)
+    if subHyIDList is None:
+        return None
+    profitsCur = 0
+    for subHyID in subHyIDList:
+        sql = ('select profits from hyprofits '
+               'where hyid="%(subHyID)s" and date=%(date)s;') % locals()
+#         print sql
+        result = sqlrw.engine.execute(sql).fetchone()
+#         print 'result:', result
+        if result is None or result[0] is None:
+            continue
+        profitsCur += result[0]
+
+    LastDate = date - 10
+    sql = ('select profits from hyprofits '
+           'where hyid="%(subHyID)s" and date="%(LastDate)s";') % locals()
+    print sql
+    result = sqlrw.engine.execute(sql).fetchone()
+    print 'result 145:', result
+    if result is None:
+        profitsLast = None
+#         profitsIncRate = None
+    else:
+        profitsLast = result[0]
+
+    if profitsLast is None or profitsLast == 0:
+        sql = (('replace into hyprofits(hyid, date, profits) '
+                'values("%(hyID)s", "%(date)s", %(profitsCur)s);') % locals())
+    else:
+        profitsInc = profitsCur - profitsLast
+        profitsIncRate = round(profitsInc / profitsLast, 2)
+        sql = (('replace into hyprofits'
+                '(hyid, date, profits, profitsInc, profitsIncRate) '
+                'values("%(hyID)s", "%(date)s", %(profitsCur)s, '
+                '%(profitsInc)s, %(profitsIncRate)s);') % locals())
+    print sql
+    result = sqlrw.engine.execute(sql)
+#     print 'result 158:', result
+#     if result is None:
+#         return False
+#     else:
+#         return result[0]
+
+
+def calHYTTMLirunLowLevel(hyID, date):
+    """ 计算第4级行业的TTM利润
+    """
     stockList = getStockListForHY(hyID)
     allTTMLirunCur = sqlrw.readTTMLirunForDate(date)
     allTTMLirunLast = sqlrw.readTTMLirunForDate(date - 10)
@@ -111,39 +192,41 @@ def calHYTTMLirun(hyID, date):
     print profitsInc, profitsIncRate
 #     return [profitsInc, profitsIncRate]
     sql = (('replace into hyprofits'
-            '(hyid, date, profitsInc, profitsIncRate) '
-            'values("%(hyID)s", "%(date)s", "%(profitsInc)s", '
-            '"%(profitsIncRate)s");') % locals())
+            '(hyid, date, profits, profitsInc, profitsIncRate) '
+            'values("%(hyID)s", "%(date)s", "%(profitsCur)s", '
+            '"%(profitsInc)s", "%(profitsIncRate)s");') % locals())
+    print sql
     sqlrw.engine.execute(sql)
     return True
 
 
 def calAllHYTTMLirun(date):
-    sql = 'select levelid from hangyename;'
-    result = sqlrw.engine.execute(sql)
-    hyIDList = result.fetchall()
-    hyIDList = [i[0] for i in hyIDList]
-    print hyIDList
-    for hyID in hyIDList:
-        print hyID
-        calHYTTMLirun(hyID, date)
+    for level in range(4, 0, -1):
+        sql = 'select hyid from hangyename where hylevel=%(level)s;' % locals()
+        result = sqlrw.engine.execute(sql)
+        hyIDList = result.fetchall()
+        hyIDList = [i[0] for i in hyIDList]
+        print hyIDList
+        for hyID in hyIDList:
+            print hyID
+            calHYTTMLirun(hyID, date)
 
 
 def test():
-    dates = datatrans.dateList(20111, 20154)
+    dates = datatrans.dateList(20111, 20164)
     for date in dates:
         calAllHYTTMLirun(date)
 
 
-def getHYIDName(stockID):
-    hyID = getHYID(stockID, 4)
-    hyName = getHYName(hyID)
-    print stockID, hyID, hyName
+# def getHYIDName(stockID):
+#     hyID = getHYIDForStock(stockID)
+#     hyName = getHYName(hyID)
+#     print stockID, hyID, hyName
 
 if __name__ == '__main__':
-    #         test()
-    #     calAllHYTTMLirunForDate(20154)
-    hyID = '02030301'
-    calHYTTMLirun(hyID, 20164)
+    test()
+#     calAllHYTTMLirun(20154)
+#     hyID = '000101'
+#     calHYTTMLirun(hyID, 20154)
     #     calHYTTMLirun(hyID, 20162)
 #     stockList = ['000732', '', '', '', '', '', '', ]
