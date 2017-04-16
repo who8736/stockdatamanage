@@ -84,29 +84,24 @@ Session = sqlconn.Session
 
 
 def downHYToSQL(retryMax=3):
+    """ 下载行业与股票对应关系并写入数据库
+    """
     url = u'http://www.csindex.com.cn/sseportal/ps/zhs/hqjt/csi/ZzhyflWz.xls'
     for _ in range(retryMax):
         try:
             df = pd.read_excel(url, 0,
-                               parse_cols=[0, 4, 7, 10, 13],
-                               names=['stockid', 'level1', 'level2',
-                                      'level3', 'level4'],
-                               converters={0: str, 1: str, 2: str,
-                                           3: str, 4: str})
+                               parse_cols=[0, 13],
+                               names=['stockid', 'hyid'],
+                               converters={0: str, 1: str})
         except TypeError:
             logging.warning('down hangye data fail, retry...')
             continue
         if not df.empty:
             for index, row in df.iterrows():
                 stockID = row[0]
-                level1 = row[1]
-                level2 = row[2]
-                level3 = row[3]
-                level4 = row[4]
-                sql = (('replace into hangye'
-                        '(stockid, level1, level2, level3, level4) '
-                        'values("%(stockID)s", "%(level1)s", "%(level2)s", '
-                        '"%(level3)s", "%(level4)s");') % locals())
+                hyID = row[1]
+                sql = (('replace into hangyestock (stockid, hyid) '
+                        'values("%(stockID)s", "%(hyID)s")') % locals())
                 engine.execute(sql)
             return
 
@@ -138,19 +133,21 @@ def writeHYNameToSQL(df):
         _df = df.iloc[:, i * 2:(i + 1) * 2]
         _df = _df.drop_duplicates()
 #         print _df.head()
-        _df.columns = ['levelid', 'levelname']
+        _df.columns = ['hyid', 'hyname']
 #         print _df.head()
         dflist.append(_df)
     hdDf = pd.concat(dflist)
+    hdDf['hylevel'] = hdDf.hyid.str.len()
+    hdDf['hylevel'] = hdDf.hylevel / 2
 
-#     print hdDf.head(20)
-    for index, row in hdDf.iterrows():
-        levelid = row[0]
-        levelname = row[1]
-#         print levelid, levelname
-        sql = (('replace into hangyename(levelid, levelname) '
-                'values("%(levelid)s", "%(levelname)s");') % locals())
-        engine.execute(sql)
+    hdDf['hylevel1id'] = hdDf.hyid.str[:2]
+    hdDf['hylevel2id'] = hdDf.hyid.str[:4]
+    hdDf['hylevel3id'] = hdDf.hyid.str[:6]
+
+    print hdDf
+    engine.execute('TRUNCATE TABLE hangyename')
+    writeSQL(hdDf, 'hangyename')
+    return
 
 
 def downGubenToSQL(stockID, retry=20, timeout=10):
@@ -407,8 +404,8 @@ def updateStockList(retry=10):
     sl = pd.DataFrame()
     for _ in range(retry):
         try:
-            #             sl = ts.get_stock_basics().fillna(value=0)
-            sl = getStockBasicsFromCSV().fillna(value=0)
+            sl = ts.get_stock_basics().fillna(value=0)
+#             sl = getStockBasicsFromCSV().fillna(value=0)
         except socket.timeout:
             logging.warning('updateStockList timeout!!!')
         else:
@@ -505,7 +502,7 @@ def _get_report_data(year, quarter, pageNo, dataArr,
         else:
             text = text.decode('GBK')
             text = text.replace('--', '')
-            html = lxml.html.parse(StringIO(text))
+            html = lxml.html.parse(StringIO(text))  # @UndefinedVariable
             res = html.xpath("//table[@class=\"list_table\"]/tr")
             if ct.PY3:
                 sarr = [etree.tostring(node).decode('utf-8') for node in res]
@@ -704,34 +701,34 @@ def writeSQL(data, tableName, insertType='IGNORE'):
     return True
 
 
-def writeSQLUpdate(data, tableName):
-    """insetType: IGNORE 忽略重复主键；
-
-    """
-    logging.debug('start writeSQL %s' % tableName)
-
-    if not initsql.existTable(tableName):
-        logging.error('not exist %s' % tableName)
-        return False
-
-    if isinstance(data, DataFrame):
-        if data.empty:
-            return True
-#         data = datatrans.transDfToList(data)
-
-    if data is None:
-        return True
-
-    session = Session()
-    metadata = MetaData(bind=engine)
-    mytable = Table(tableName, metadata, autoload=True)
-    mytable(data)
-    session.add(mytable)
-#     session.execute(mytable.replace(), data)
-    # session.merge(data)
-    session.commit()
-    session.close()
-    return True
+# def writeSQLUpdate(data, tableName):
+#     """insetType: IGNORE 忽略重复主键；
+#
+#     """
+#     logging.debug('start writeSQL %s' % tableName)
+#
+#     if not initsql.existTable(tableName):
+#         logging.error('not exist %s' % tableName)
+#         return False
+#
+#     if isinstance(data, DataFrame):
+#         if data.empty:
+#             return True
+# #         data = datatrans.transDfToList(data)
+#
+#     if data is None:
+#         return True
+#
+#     session = Session()
+#     metadata = MetaData(bind=engine)
+#     mytable = Table(tableName, metadata, autoload=True)
+#     mytable(data)
+#     session.add(mytable)
+# #     session.execute(mytable.replace(), data)
+#     # session.merge(data)
+#     session.commit()
+#     session.close()
+#     return True
 
 
 def writeStockIDListToFile(stockIDList, filename):
@@ -1552,7 +1549,8 @@ def getStockIDsForClassified(classified):
 
 
 def downloadClassified():
-    """下载行业分类"""
+    """ 旧版下载行业分类， 计划删除本函数
+    """
     classifiedDf = ts.get_industry_classified(standard='sw')
     classifiedDf = classifiedDf[['code', 'c_name']]
     classifiedDf.columns = ['stockid', 'cname']
@@ -1560,6 +1558,8 @@ def downloadClassified():
 
 
 def classifiedToSQL(classifiedDf):
+    """ 旧版写行业分类到数据库， 计划删除本函数
+    """
     tablename = 'classified'
     return writeSQL(classifiedDf, tablename)
 
@@ -1782,6 +1782,8 @@ if __name__ == '__main__':
 # standard: sina 新浪行业， sw 申万行业
 #     t = downloadClassified()
 #     print t
+#     downHYToSQL()
+    downHYNameToSQL()
 
 
 # 生成pelirunincrease表的数据
@@ -1796,7 +1798,7 @@ if __name__ == '__main__':
 #     print TTMLirunList
 
 # 清除K线图数据中交易量为0的数据
-    dropNAData()
+#     dropNAData()
 
     timed = dt.datetime.now()
     logging.info('datamanage test took %s' % (timed - timec))

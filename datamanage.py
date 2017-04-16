@@ -39,8 +39,12 @@ def logfun(func):
 def startUpdate():
     """自动更新全部数据，包括K线历史数据、利润数据、K线表中的TTM市盈率
     """
+    # 更新股票列表与行业列表
+    sqlrw.updateStockList()
     stockList = sqlrw.readStockIDsFromSQL()
 #     stockList = stockList[:10]
+
+    # 更新股票交易与估值数据
     threadNum = 20
     updateKlineBaseData(stockList, threadNum)
     updateLirun()

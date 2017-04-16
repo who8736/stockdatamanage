@@ -11,9 +11,9 @@ import logging
 
 def getStockListForHY(hyID):
     levelNum = len(hyID) / 2
-    levels = ['level1', 'level2', 'level3', 'level4']
-    level = levels[levelNum - 1]
-    sql = 'select stockid from hangye where %(level)s="%(hyID)s";' % locals()
+#     levels = ['level1', 'level2', 'level3', 'level4']
+#     level = levels[levelNum - 1]
+    sql = 'select stockid from hangyestock where hyid="%(hyID)s";' % locals()
     result = sqlrw.engine.execute(sql)
 #     stockList = result.fetchall()
     stockList = [i[0] for i in result.fetchall()]
@@ -25,15 +25,22 @@ def getHYID(stockID, level):
     if level < 1 or level > 4:
         logging.error('error HY level: %s', level)
         return None
-    sql = ('select level%(level)s from hangye where stockid="%(stockID)s";'
+    sql = ('select hyid from hangyestock where stockid="%(stockID)s";'
            % locals())
     result = sqlrw.engine.execute(sql)
-    return result.fetchone()[0]
+    hyID = result.fetchone()[0]
+    # 当查询1、2、3级行业的代码时，需根据hyID查询hangyename表获取最终结果
+    if level != 4:
+        sql = ('select level%(level)sid from hangyename '
+               'where hyid="%(hyID)s";')
+        result = sqlrw.engine.execute(sql)
+        hyID = result.fetchone()[0]
+    return hyID
 
 
 def getHYName(hyID):
     print 'getHYName(hyID):hyID: ', hyID
-    sql = ('select levelname from hangyename where levelid="%(hyID)s";'
+    sql = ('select hyname from hangyename where levelid="%(hyID)s";'
            % locals())
     result = sqlrw.engine.execute(sql)
     hyName = result.fetchone()[0]
@@ -134,9 +141,9 @@ def getHYIDName(stockID):
     print stockID, hyID, hyName
 
 if __name__ == '__main__':
-    #     test()
+    #         test()
     #     calAllHYTTMLirunForDate(20154)
-    #     hyID = '02030301'
-    #     calHYTTMLirun(hyID, 20164)
+    hyID = '02030301'
+    calHYTTMLirun(hyID, 20164)
     #     calHYTTMLirun(hyID, 20162)
-    stockList = ['000732', '', '', '', '', '', '', ]
+#     stockList = ['000732', '', '', '', '', '', '', ]

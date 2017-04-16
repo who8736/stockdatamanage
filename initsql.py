@@ -39,22 +39,28 @@ def createChiguGuzhiTable():
 
 
 def createHY():
-    sql = ('CREATE TABLE hangye('
+    sql = ('CREATE TABLE hangyestock('
            'stockid VARCHAR(6),'
-           'level1 VARCHAR(2),'
-           'level2 VARCHAR(4),'
-           'level3 VARCHAR(6),'
-           'level4 VARCHAR(8),'
-           'PRIMARY KEY ( stockid )); ')
+           'hyid VARCHAR(8),'
+           'PRIMARY KEY ( stockid ),'
+           'KEY `hyid` (`hyid`)); ')
     result = sqlrw.engine.execute(sql)
     return result
 
 
 def createHYName():
     sql = ('CREATE TABLE hangyename('
-           'levelid VARCHAR(8),'
-           'levelname VARCHAR(50),'
-           'PRIMARY KEY ( levelid )); ')
+           'hyid VARCHAR(8),'
+           'hyname VARCHAR(50),'
+           'hylevel INT,'
+           'hylevel1id VARCHAR(2),'
+           'hylevel2id VARCHAR(4),'
+           'hylevel3id VARCHAR(6),'
+           'PRIMARY KEY ( hyid ),'
+           'KEY `hyid` (`hyid`),'
+           'KEY `hylevel1id` (`hylevel1id`),'
+           'KEY `hylevel2id` (`hylevel2id`),'
+           'KEY `hylevel3id` (`hylevel3id`)); ')
     result = sqlrw.engine.execute(sql)
     return result
 
@@ -155,7 +161,7 @@ if __name__ == '__main__':
         createYouzhiGuzhiTable()
     if not existTable('guzhi'):
         createGuzhiTable()
-    if not existTable('hangye'):
+    if not existTable('hangyestock'):
         createHY()
     if not existTable('hangyename'):
         createHYName()
