@@ -171,12 +171,12 @@ if __name__ == '__main__':
 
 #     updateDataTest()
 
-#     startUpdate()
+    startUpdate()
 
-    stockList = sqlrw.readStockIDsFromSQL()
+#     stockList = sqlrw.readStockIDsFromSQL()
 #     stockList = stockList[:10]
-    threadNum = 20
-    updateGuzhi(stockList, threadNum)
+#     threadNum = 20
+#     updateGuzhi(stockList, threadNum)
 
 
 #     stockID = '000005'
