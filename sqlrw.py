@@ -78,6 +78,7 @@ class SQLConn():
         # write to file
         cf.write(open('sql.conf', 'w+'))
 
+
 sqlconn = SQLConn()
 engine = sqlconn.engine
 Session = sqlconn.Session
@@ -926,7 +927,10 @@ def readPERate(stockID):
     # 指定日期（含）前无TTM利润数据的，查询起始日期设定为startDate
     # 否则设定为最近一次数据日期
     result = engine.execute(sql).fetchone()
-    return result
+    if result is None:
+        return (None, None)
+    else:
+        return result
 
 
 def readTTMLirunForStockID(stockID,
@@ -1404,6 +1408,9 @@ def filenameLirun(stockID):
 
 
 def urlGuzhi(stockID):
+    '''
+    估值数据文件下载地址
+    '''
     url = 'http://f9.eastmoney.com/soft/gp72.php?code=%s' % stockID
     if stockID[0] == '6':
         url += '01'
