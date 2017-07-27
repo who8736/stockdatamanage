@@ -267,7 +267,8 @@ def testChigu():
 
 
 def testShaixuan():
-    df = calGuzhi()
+    stockList = sqlrw.readStockListDf().stockid.values
+    df = calGuzhi(stockList)
     sqlrw.engine.execute(u'TRUNCATE TABLE guzhiresult')
     sqlrw.writeSQL(df, u'guzhiresult')
     df = youzhiSelect(df)
@@ -275,7 +276,7 @@ def testShaixuan():
     print df.head()
     outFilename = './data/youzhi.csv'
     dfToCsvFile(df, outFilename)
-    outFilename = './data/youzhiid.txt'
+#     outFilename = './data/youzhiid.txt'
 #     sqlrw.writeStockIDListToFile(df['stockid'], outFilename)
     sqlrw.engine.execute(u'TRUNCATE TABLE youzhiguzhi')
     sqlrw.writeSQL(df, u'youzhiguzhi')
