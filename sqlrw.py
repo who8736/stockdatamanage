@@ -803,9 +803,9 @@ def downloadLirunFromTushare(date):
 
 def getreq(url, includeHeader=False):
     if includeHeader:
-        #         headers = {'User-Agent': ('Mozilla/5.0 (Windows; U; Windows NT 6.1; '
-        #                                   'en-US;rv:1.9.1.6) Gecko/20091201 '
-        #                                   'Firefox/3.5.6')}
+        # headers = {'User-Agent': ('Mozilla/5.0 (Windows; U; Windows NT 6.1; '
+        #                           'en-US;rv:1.9.1.6) Gecko/20091201 '
+        #                           'Firefox/3.5.6')}
         headers = {'User-Agent': ('Mozilla/5.0 (Windows NT 10.0; WOW64; '
                                   'rv:49.0) Gecko/20100101 Firefox/49.0'),
                    'Accept': ('text/html,application/xhtml+xml,'
@@ -1052,16 +1052,22 @@ def readCurrentTTMPE(stockID):
            'where kline%(stockID)s.date=('
            'select max(`date`) from kline%(stockID)s'
            ')' % locals())
-    result = engine.execute(sql)
-    return result.fetchone()[0]
+
+    result = engine.execute(sql).fetchone()
+    if result is None:
+        return None
+    else:
+        return result[0]
 
 
 def readCurrentTTMPEs(stockList):
-    idList = []
+    #     idList = []
     peList = []
     for stockID in stockList:
-        idList.append(stockID)
-        peList.append(readCurrentTTMPE(stockID))
+        result = readCurrentTTMPE(stockID)
+        if result is None:
+            logging.debug('readCurrentTTMPE failed: %s', stockID)
+        peList.append(result)
 
     return DataFrame({'stockid': stockList, 'pe': peList})
 
@@ -1274,11 +1280,12 @@ def saveChigu(stockList):
 def savePELirunIncrease(startDate='2007-01-01', endDate=None):
     stockList = readStockListFromSQL()
     for stockID, stockName_ in stockList:
-        #         sql = (u'insert ignore into pelirunincrease(stockid, date, pe) '
-        #                u'select "%(stockID)s", date, ttmpe from kline%(stockID)s '
-        #                u'where `date`>="%(startDate)s";') % locals()
+        #     sql = (u'insert ignore into pelirunincrease(stockid, date, pe) '
+        #            u'select "%(stockID)s", date, ttmpe '
+        #            u'from kline%(stockID)s '
+        #            u'where `date`>="%(startDate)s";') % locals()
         #
-        #         engine.execute(sql)
+        #     engine.execute(sql)
 
         TTMLirunDf = readTTMLirunForStockID(stockID, startDate)
         TTMLirunDf = TTMLirunDf.dropna().reset_index(drop=True)

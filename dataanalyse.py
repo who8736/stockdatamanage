@@ -64,8 +64,8 @@ def calGuzhi(stockList=None):
     peDf = sqlrw.readCurrentTTMPEs(stockList)
     # 估值数据
 #     pegDf = sqlrw.readGuzhiFilesToDf(stockList)
-    pegDf = sqlrw.readGuzhiSQLToDf(stockList)
-    pegDf = pd.merge(peDf, pegDf, on='stockid', how='left')
+#     pegDf = sqlrw.readGuzhiSQLToDf(stockList)
+#     pegDf = pd.merge(peDf, pegDf, on='stockid', how='left')
 #     print pegDf.head()
 
     # TODO:　假设当前为第2季度，但第1季度上市公司的财务报告未公布，导致缺少数据如何处理
@@ -74,7 +74,7 @@ def calGuzhi(stockList=None):
     incDf = sqlrw.readLastTTMLirun(stockList, sectionNum)
 #     print 'incDf:'
 #     print incDf
-    pegDf = pd.merge(pegDf, incDf, on='stockid', how='left')
+    guzhiDf = pd.merge(peDf, incDf, on='stockid', how='left')
 
 # 原取TTM利润方法，按当前日期计算取前N季度数据， 但但第1季度上市公司的财务报告未公布，导致缺少数据无法处理
 #     endDate = datatrans.getLastQuarter()
@@ -95,7 +95,8 @@ def calGuzhi(stockList=None):
 #     print pegDf.head()
     # 平均利润增长率
     endfield = 'incrate%s' % (sectionNum - 1)
-    pegDf['avgrate'] = pegDf.ix[:, 'incrate0':endfield].mean(axis=1).round(2)
+    guzhiDf['avgrate'] = guzhiDf.ix[:,
+                                    'incrate0':endfield].mean(axis=1).round(2)
 #     pegDf = pegDf.round(2)
 #     f = partial(Series.round, decimals=2)
 #     df.apply(f)
@@ -107,34 +108,40 @@ def calGuzhi(stockList=None):
 #     pegDf['avgrate'] /= sectionNum
 
     # 计算每行指定列的平均绝对离差
-    lirunmad = pegDf.ix[:, 'incrate0':endfield].mad(axis=1)
+    lirunmad = guzhiDf.ix[:, 'incrate0':endfield].mad(axis=1)
     # 计算每行指定列的平均值
 #     lirunmean = df.ix[:, 'incrate0':'incrate5'].mean(axis=1).head()
     # 计算每行指定列的平均绝对离差率
-    pegDf['madrate'] = lirunmad / abs(pegDf['avgrate'])
-    pegDf['madrate'] = pegDf['madrate'].round(2)
+    guzhiDf['madrate'] = lirunmad / abs(guzhiDf['avgrate'])
+    guzhiDf['madrate'] = guzhiDf['madrate'].round(2)
     # 计算每行指定列的平均绝对离差率
-    lirunstd = pegDf.ix[:, 'incrate0':endfield].std(axis=1)
-    pegDf['stdrate'] = lirunstd / abs(pegDf['avgrate'])
-    pegDf['stdrate'] = pegDf['stdrate'].round(2)
+    lirunstd = guzhiDf.ix[:, 'incrate0':endfield].std(axis=1)
+    guzhiDf['stdrate'] = lirunstd / abs(guzhiDf['avgrate'])
+    guzhiDf['stdrate'] = guzhiDf['stdrate'].round(2)
 #     print type(lirunstd / pegDf['avgrate'])
     # 增加股票名称
     nameDf = sqlrw.readStockListDf()
-    pegDf = pd.merge(pegDf, nameDf, on='stockid', how='left')
+    guzhiDf = pd.merge(guzhiDf, nameDf, on='stockid', how='left')
 #     print pegDf
 
     # 计算pe200与pe1000
-    pegDf['pe200'] = peHistRate(stockList, 200)
-    pegDf['pe1000'] = peHistRate(stockList, 1000)
+    guzhiDf['pe200'] = peHistRate(stockList, 200)
+    guzhiDf['pe1000'] = peHistRate(stockList, 1000)
 #     print pegDf
     # 设置输出列与列顺序
-    pegDf = pegDf[['stockid', 'name', 'pe', 'peg',
-                   'next1YearPE',  'next2YearPE',  'next3YearPE',
-                   'incrate0', 'incrate1', 'incrate2',
-                   'incrate3', 'incrate4', 'incrate5',
-                   'avgrate', 'madrate', 'stdrate', 'pe200', 'pe1000'
-                   ]]
-    return pegDf
+    # 因无法取得数据，删除'peg', 'next1YearPE',  'next2YearPE',  'next3YearPE'
+    guzhiDf = guzhiDf[['stockid', 'name', 'pe',
+                       'incrate0', 'incrate1', 'incrate2',
+                       'incrate3', 'incrate4', 'incrate5',
+                       'avgrate', 'madrate', 'stdrate', 'pe200', 'pe1000'
+                       ]]
+#     guzhiDf = guzhiDf[['stockid', 'name', 'pe', 'peg',
+#                        'next1YearPE',  'next2YearPE',  'next3YearPE',
+#                        'incrate0', 'incrate1', 'incrate2',
+#                        'incrate3', 'incrate4', 'incrate5',
+#                        'avgrate', 'madrate', 'stdrate', 'pe200', 'pe1000'
+#                        ]]
+    return guzhiDf
 
 
 def calHistoryStatus(stockID):
@@ -219,15 +226,18 @@ def youzhiSelect(pegDf):
     Return
     --------
     DataFrame: 筛选后的估值分析表格
+
+    # 2017-07-28：　因无法取得peg数据， 临时取消peg筛选条件
     """
 #     print pegDf.head()
     pegDf = pegDf.dropna()
-    pegDf = pegDf[pegDf.peg.notnull()]
-    pegDf = pegDf[(pegDf.peg > 0) & (pegDf.peg < 1) & (pegDf.avgrate > 0)]
+#     pegDf = pegDf[pegDf.peg.notnull()]
+#     pegDf = pegDf[(pegDf.peg > 0) & (pegDf.peg < 1) & (pegDf.avgrate > 0)]
+    pegDf = pegDf[pegDf.avgrate > 0]
     pegDf = pegDf[pegDf.pe < 30]
     pegDf = pegDf[(pegDf.pe200 < 20) & (pegDf.pe1000 < 30)]
     pegDf = pegDf[pegDf.madrate < 0.6]
-    pegDf = pegDf.sort(columns='peg')
+    pegDf = pegDf.sort_values(by='pe')
 #     pegDf = pegDf[['stockid', 'pe', 'peg',
 #                    'next1YearPE',  'next2YearPE',  'next3YearPE',
 #                    'incrate0', 'incrate1', 'incrate2',

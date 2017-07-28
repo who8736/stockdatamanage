@@ -50,7 +50,7 @@ def startUpdate():
     updateLirun()
     updateGuben(stockList, threadNum)
     updateKlineEXTData(stockList, threadNum)
-    updateGuzhi(stockList, threadNum)
+#     updateGuzhi(stockList, threadNum)   # 待删除
     updateMainTable(stockList, threadNum)
     updateGhuzhiData()
 
