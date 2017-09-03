@@ -490,7 +490,7 @@ def get_report_data(year, quarter):
 
 
 def _get_report_data(year, quarter, pageNo, dataArr,
-                     retry_count=10, timeout=20):
+                     retry_count=3, timeout=20):
     ct._write_console()
     for _ in range(retry_count):
         url = ct.REPORT_URL % (ct.P_TYPE['http'], ct.DOMAINS['vsf'],
@@ -1400,6 +1400,7 @@ def downloadMainTable(stockID):
         if not result:
             logging.error('download fail: %s', url)
             continue
+        time.sleep(1)
     return result
 
 
@@ -1436,10 +1437,10 @@ def urlGuzhi(stockID):
     return url
 
 
-def downloadData(url, timeout=10, retry_count=10):
-    proxy_handler = urllib2.ProxyHandler({"http": 'http://127.0.0.1:8087'})
-    opener = urllib2.build_opener(proxy_handler)
-    urllib2.install_opener(opener)
+def downloadData(url, timeout=10, retry_count=3):
+    #     proxy_handler = urllib2.ProxyHandler({"http": 'http://127.0.0.1:8087'})
+    #     opener = urllib2.build_opener(proxy_handler)
+    #     urllib2.install_opener(opener)
     for _ in range(retry_count):
         try:
             socket.setdefaulttimeout(timeout)
@@ -1452,13 +1453,14 @@ def downloadData(url, timeout=10, retry_count=10):
         except IOError, e:
             logging.warning('[%s]fail to download data, retry url:%s',
                             e, url)
+            time.sleep(1)
         else:
             return content
     logging.error('download data fail!!! url:%s', url)
     return None
 
 
-def downloadDataToFile(url, filename, timeout=10, retry_count=10):
+def downloadDataToFile(url, filename, timeout=10, retry_count=3):
     data = downloadData(url, timeout, retry_count)
     if not data:
         return False

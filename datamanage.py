@@ -125,7 +125,7 @@ def updateMainTable(stockList, threadNum):
 
 
 @logfun
-def updateMainTableSingleThread(stockList, threadNum):
+def updateMainTableSingleThread(stockList):
     for stockID in stockList:
         sqlrw.downloadMainTable(stockID)
         time.sleep(1)
@@ -197,6 +197,7 @@ if __name__ == '__main__':
 
 #     stockList = sqlrw.readStockIDsFromSQL()
 #     updateGubenSingleThread(stockList)
+#     updateMainTableSingleThread(stockList)
 #     stockList = stockList[:10]
 #     threadNum = 20
 #     updateGuzhi(stockList, threadNum)
