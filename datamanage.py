@@ -56,7 +56,10 @@ def startUpdate():
 
     updateKlineEXTData(stockList, threadNum)
 #     updateGuzhi(stockList, threadNum)   # 待删除
-    updateMainTable(stockList, threadNum)
+
+    # 因新浪反爬虫策略，更新股本数据改用单线程
+    updateMainTableSingleThread(stockList, threadNum)
+#     updateMainTable(stockList, threadNum)
     updateGhuzhiData()
 
 #     logging.info('--------全部更新完成--------')
@@ -119,6 +122,13 @@ def updateMainTable(stockList, threadNum):
     pool.map(sqlrw.downloadMainTable, stockList)
     pool.close()
     pool.join()
+
+
+@logfun
+def updateMainTableSingleThread(stockList, threadNum):
+    for stockID in stockList:
+        sqlrw.downloadMainTable(stockID)
+        time.sleep(1)
 
 
 @logfun

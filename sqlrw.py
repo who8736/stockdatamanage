@@ -160,6 +160,7 @@ def downGubenToSQL(stockID, retry=3, timeout=10):
     req = getreq(gubenURL)
 #     downloadStat = False
     gubenDf = pd.DataFrame()
+
     proxy_handler = urllib2.ProxyHandler({"http": 'http://127.0.0.1:8087'})
     opener = urllib2.build_opener(proxy_handler)
     urllib2.install_opener(opener)
@@ -1436,6 +1437,9 @@ def urlGuzhi(stockID):
 
 
 def downloadData(url, timeout=10, retry_count=10):
+    proxy_handler = urllib2.ProxyHandler({"http": 'http://127.0.0.1:8087'})
+    opener = urllib2.build_opener(proxy_handler)
+    urllib2.install_opener(opener)
     for _ in range(retry_count):
         try:
             socket.setdefaulttimeout(timeout)
