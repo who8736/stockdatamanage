@@ -48,7 +48,9 @@ def startUpdate():
     threadNum = 20
     updateKlineBaseData(stockList, threadNum)
     updateLirun()
-    updateGuben(stockList, threadNum)
+
+    # 因新浪反爬虫策略，暂时停止更新股本数据
+#     updateGuben(stockList, threadNum)
     updateKlineEXTData(stockList, threadNum)
 #     updateGuzhi(stockList, threadNum)   # 待删除
     updateMainTable(stockList, threadNum)
