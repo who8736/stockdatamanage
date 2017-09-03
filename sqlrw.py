@@ -151,7 +151,7 @@ def writeHYNameToSQL(df):
     return
 
 
-def downGubenToSQL(stockID, retry=20, timeout=10):
+def downGubenToSQL(stockID, retry=3, timeout=10):
     """下载单个股票股本数据写入数据库"""
     logging.debug('downGubenToSQL: %s', stockID)
     socket.setdefaulttimeout(timeout)
