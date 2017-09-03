@@ -12,6 +12,7 @@ import socket
 import datetime as dt
 import ConfigParser
 import re
+import time
 # import sys
 
 
@@ -159,12 +160,20 @@ def downGubenToSQL(stockID, retry=3, timeout=10):
     req = getreq(gubenURL)
 #     downloadStat = False
     gubenDf = pd.DataFrame()
+    proxy_handler = urllib2.ProxyHandler({"http": 'http://127.0.0.1:8087'})
+    opener = urllib2.build_opener(proxy_handler)
+    urllib2.install_opener(opener)
     for _ in range(retry):
         try:
             guben = urllib2.urlopen(req).read()
         except IOError, e:
             logging.warning('[%s]:download %s guben data, retry...',
                             e, stockID)
+#             print type(e)
+            errorString = '%s' % e
+            if errorString == 'HTTP Error 456: ':
+                print 'sleep 60 seconds...'
+                time.sleep(60)
         else:
             gubenDf = datatrans.gubenDataToDf(stockID, guben)
             tablename = 'guben'

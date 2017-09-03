@@ -8,6 +8,7 @@ Created on 2016年1月10日
 # import sys  # python的系统调用模块
 import os
 import logging
+import time
 # import ConfigParser
 from multiprocessing.dummy import Pool as ThreadPool
 from functools import wraps
@@ -49,8 +50,10 @@ def startUpdate():
     updateKlineBaseData(stockList, threadNum)
     updateLirun()
 
-    # 因新浪反爬虫策略，暂时停止更新股本数据
+    # 因新浪反爬虫策略，更新股本数据改用单线程
 #     updateGuben(stockList, threadNum)
+    updateGubenSingleThread(stockList)
+
     updateKlineEXTData(stockList, threadNum)
 #     updateGuzhi(stockList, threadNum)   # 待删除
     updateMainTable(stockList, threadNum)
@@ -78,6 +81,13 @@ def updateGuben(stockList, threadNum):
     pool.map(sqlrw.downGubenToSQL, stockList)
     pool.close()
     pool.join()
+
+
+@logfun
+def updateGubenSingleThread(stockList):
+    for stockID in stockList:
+        sqlrw.downGubenToSQL(stockID)
+        time.sleep(1)
 
 #
 # def updateDataTest(stockList):
@@ -173,9 +183,10 @@ if __name__ == '__main__':
 
 #     updateDataTest()
 
-    startUpdate()
+#     startUpdate()
 
-#     stockList = sqlrw.readStockIDsFromSQL()
+    stockList = sqlrw.readStockIDsFromSQL()
+    updateGubenSingleThread(stockList)
 #     stockList = stockList[:10]
 #     threadNum = 20
 #     updateGuzhi(stockList, threadNum)
