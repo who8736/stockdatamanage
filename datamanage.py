@@ -183,10 +183,10 @@ if __name__ == '__main__':
 
 #     updateDataTest()
 
-#     startUpdate()
+    startUpdate()
 
-    stockList = sqlrw.readStockIDsFromSQL()
-    updateGubenSingleThread(stockList)
+#     stockList = sqlrw.readStockIDsFromSQL()
+#     updateGubenSingleThread(stockList)
 #     stockList = stockList[:10]
 #     threadNum = 20
 #     updateGuzhi(stockList, threadNum)
