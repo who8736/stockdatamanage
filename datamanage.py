@@ -88,7 +88,8 @@ def updateGuben(stockList, threadNum):
 
 
 @logfun
-def updateGubenSingleThread(stockList):
+def updateGubenSingleThread():
+    stockList = sqlrw.readGubenUpdateList()
     for stockID in stockList:
         sqlrw.downGubenToSQL(stockID)
         time.sleep(1)
@@ -197,7 +198,7 @@ if __name__ == '__main__':
     startUpdate()
 
 #     stockList = sqlrw.readStockIDsFromSQL()
-#     updateGubenSingleThread(stockList)
+#     updateGubenSingleThread()
 #     updateMainTableSingleThread(stockList)
 #     stockList = stockList[:10]
 #     threadNum = 20

@@ -1542,6 +1542,28 @@ def readGuben(stockID, startDate='1990-01-01', endDate=None):
     return df
 
 
+def readGubenUpdateList():
+    """ 比较股票已存股本数据与最新股数据，不相同时则表示需要更新的股票
+    """
+#     sql = u'select stockid, totals as totalsnew from stocklist;'
+#     dfNew = pd.read_sql(sql, engine)
+
+    dfNew = ts.get_stock_basics()
+    dfNew = dfNew.reset_index()
+    dfNew = dfNew[['code', 'totals']]
+    dfNew.columns = ['stockid', 'totalsnew']
+    sql = (u'SELECT stockid, totalshares as totalsold '
+           u'FROM (select * from stockdata.guben order by date desc) '
+           u'as tablea group by stockid;')
+    dfOld = pd.read_sql(sql, engine)
+    dfOld.totalsold = dfOld.totalsold / 100000000
+    dfOld = dfOld.round(2)
+    updateList = pd.merge(dfNew, dfOld, on='stockid', how='left')
+    updateList = updateList[abs(
+        updateList.totalsnew - updateList.totalsold) > 0.1]
+    return updateList.stockid
+
+
 def readClose(stockID):
     sql = 'select date, close from kline%s' % stockID
     df = pd.read_sql(sql, engine)
