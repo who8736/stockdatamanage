@@ -57,8 +57,9 @@ def startUpdate():
     updateKlineEXTData(stockList, threadNum)
 #     updateGuzhi(stockList, threadNum)   # 待删除
 
-    # 因新浪反爬虫策略，更新股本数据改用单线程
-    updateMainTableSingleThread(stockList, threadNum)
+    # 因新浪反爬虫策略，更新股本数据改用单线程, 20170903
+    # 主表数据暂时没用，停止更新， 20170904
+#     updateMainTableSingleThread(stockList, threadNum)
 #     updateMainTable(stockList, threadNum)
     updateGhuzhiData()
 
