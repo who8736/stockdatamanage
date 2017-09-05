@@ -52,7 +52,7 @@ def startUpdate():
 
     # 因新浪反爬虫策略，更新股本数据改用单线程
 #     updateGuben(stockList, threadNum)
-    updateGubenSingleThread(stockList)
+    updateGubenSingleThread()
 
     updateKlineEXTData(stockList, threadNum)
 #     updateGuzhi(stockList, threadNum)   # 待删除
