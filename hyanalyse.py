@@ -140,9 +140,9 @@ def calHYTTMLirunHighLevel(hyID, date):
     LastDate = date - 10
     sql = ('select profits from hyprofits '
            'where hyid="%(subHyID)s" and date="%(LastDate)s";') % locals()
-    print sql
+#     print sql
     result = sqlrw.engine.execute(sql).fetchone()
-    print 'result 145:', result
+#     print 'result 145:', result
     if result is None:
         profitsLast = None
 #         profitsIncRate = None
@@ -159,7 +159,7 @@ def calHYTTMLirunHighLevel(hyID, date):
                 '(hyid, date, profits, profitsInc, profitsIncRate) '
                 'values("%(hyID)s", "%(date)s", %(profitsCur)s, '
                 '%(profitsInc)s, %(profitsIncRate)s);') % locals())
-    print sql
+#     print sql
     result = sqlrw.engine.execute(sql)
 #     print 'result 158:', result
 #     if result is None:
@@ -184,23 +184,25 @@ def calHYTTMLirunLowLevel(hyID, date):
     profitsLast = sum(allTTMLirunLast['ttmprofits'])
 
     profitsInc = profitsCur - profitsLast
-    print 'allTTMLirunCur', allTTMLirunCur
-    print 'allTTMLirunLast', allTTMLirunLast
-    print 'profitsCur', profitsCur
-    print 'profitsLast', profitsLast
+#     print 'allTTMLirunCur', allTTMLirunCur
+#     print 'allTTMLirunLast', allTTMLirunLast
+#     print 'profitsCur', profitsCur
+#     print 'profitsLast', profitsLast
     profitsIncRate = round(profitsInc / abs(profitsLast) * 100, 2)
-    print profitsInc, profitsIncRate
+#     print profitsInc, profitsIncRate
 #     return [profitsInc, profitsIncRate]
     sql = (('replace into hyprofits'
             '(hyid, date, profits, profitsInc, profitsIncRate) '
             'values("%(hyID)s", "%(date)s", "%(profitsCur)s", '
             '"%(profitsInc)s", "%(profitsIncRate)s");') % locals())
-    print sql
+#     print sql
     sqlrw.engine.execute(sql)
     return True
 
 
 def calAllHYTTMLirun(date):
+    """ 计算各级行业TTM利润，依次计算第4、3、2、1级
+    """
     for level in range(4, 0, -1):
         sql = 'select hyid from hangyename where hylevel=%(level)s;' % locals()
         result = sqlrw.engine.execute(sql)
@@ -213,7 +215,7 @@ def calAllHYTTMLirun(date):
 
 
 def test():
-    dates = datatrans.dateList(20111, 20164)
+    dates = datatrans.dateList(20171, 20172)
     for date in dates:
         calAllHYTTMLirun(date)
 

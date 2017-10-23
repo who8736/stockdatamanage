@@ -187,6 +187,7 @@ def transQuarterToDate(date):
     day = days[month]
     return '%(year)d-%(month)02d-%(day)d' % locals()
 
+
 if __name__ == '__main__':
     quarterDate = 20161
     subNum = 6

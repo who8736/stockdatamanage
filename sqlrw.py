@@ -13,6 +13,7 @@ import datetime as dt
 import ConfigParser
 import re
 import time
+import zipfile
 # import sys
 
 
@@ -27,6 +28,7 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 import sqlalchemy
 from pandas.core.frame import DataFrame
 from tushare.stock import cons as ct
+import xlrd
 
 import datatrans
 import initsql
@@ -85,71 +87,73 @@ engine = sqlconn.engine
 Session = sqlconn.Session
 
 
-def downHYToSQL(retryMax=3):
+def downHYFile(timeout=10):
+    """ 从中证指数网下载行业数据文件
+
+    下载按钮的xpath
+    /html/body/div[3]/div/div/div[1]/div[1]/form/a[1]
+    """
+    logging.debug('downHYFile')
+    socket.setdefaulttimeout(timeout)
+
+    # 获取当前可用下载日期
+    gubenURL = ('http://www.csindex.com.cn/zh-CN/downloads/'
+                'industry-price-earnings-ratio')
+    req = getreq(gubenURL)
+    htmlresult = urllib2.urlopen(req).read()
+    myTree = etree.HTML(htmlresult)
+    dateStr = myTree.xpath('''//html//body//div//div//div//div
+                                //div//form//label//input//@value''')
+    dateStr = dateStr[0]
+#     print dateStr
+#     print dateStr.split('-')
+    dateStr = ''.join(dateStr.split('-'))
+#     print dateStr
+
+    # 下载并解压行业数据文件
+    HYFileUrl = 'http://115.29.204.48/syl/csi%s.zip' % dateStr
+    print HYFileUrl
+    HYZipFilename = './data/csi%s.zip' % dateStr
+    HYDataFilename = 'csi%s.xls' % dateStr
+    HYDataPath = './data/csi%s.xls' % dateStr
+    downloadDataToFile(HYFileUrl, HYZipFilename)
+
+    zfile = zipfile.ZipFile(HYZipFilename, 'r')
+    file(HYDataPath, 'wb').write(zfile.read(HYDataFilename))
+    return HYDataFilename
+
+
+def downHYToSQL(filename, retryMax=3):
     """ 下载行业与股票对应关系并写入数据库
     """
-    url = u'http://www.csindex.com.cn/sseportal/ps/zhs/hqjt/csi/ZzhyflWz.xls'
-    for _ in range(retryMax):
-        try:
-            df = pd.read_excel(url, 0,
-                               parse_cols=[0, 13],
-                               names=['stockid', 'hyid'],
-                               converters={0: str, 1: str})
-        except TypeError:
-            logging.warning('down hangye data fail, retry...')
-            continue
-        if not df.empty:
-            for index, row in df.iterrows():
-                stockID = row[0]
-                hyID = row[1]
-                sql = (('replace into hangyestock (stockid, hyid) '
-                        'values("%(stockID)s", "%(hyID)s")') % locals())
-                engine.execute(sql)
-            return
+    filename = os.path.join('./data', filename)
+    xlsFile = xlrd.open_workbook(filename, encoding_override="cp1252")
+    table = xlsFile.sheets()[4]
+    stockIDList = table.col_values(0)[1:]
+    hyIDList = table.col_values(8)[1:]
+    hyDf = pd.DataFrame({'stockid': stockIDList, 'hyid': hyIDList})
+    engine.execute('TRUNCATE TABLE hangyestock')
+    writeSQL(hyDf, 'hangyestock')
 
 
-def downHYNameToSQL(retryMax=3):
-    url = u'http://www.csindex.com.cn/sseportal/ps/zhs/hqjt/csi/ZzhyflWz.xls'
-    for _ in range(retryMax):
-        try:
-            df = pd.read_excel(url,
-                               0,
-                               parse_cols=[4, 5, 7, 8, 10, 11, 13, 14],
-                               converters={0: unicode, 1: unicode,
-                                           2: unicode, 3: unicode,
-                                           4: unicode, 5: unicode,
-                                           6: unicode, 7: unicode})
-        except TypeError:
-            logging.warning('down hangye data fail, retry...')
-            continue
-        else:
-            if not df.empty:
-                return writeHYNameToSQL(df)
-    logging.error('down hangye data fail.')
-    return False
-
-
-def writeHYNameToSQL(df):
-    dflist = []
-    for i in range(4):
-        _df = df.iloc[:, i * 2:(i + 1) * 2]
-        _df = _df.drop_duplicates()
-#         print _df.head()
-        _df.columns = ['hyid', 'hyname']
-#         print _df.head()
-        dflist.append(_df)
-    hdDf = pd.concat(dflist)
-    hdDf['hylevel'] = hdDf.hyid.str.len()
-    hdDf['hylevel'] = hdDf.hylevel / 2
-
-    hdDf['hylevel1id'] = hdDf.hyid.str[:2]
-    hdDf['hylevel2id'] = hdDf.hyid.str[:4]
-    hdDf['hylevel3id'] = hdDf.hyid.str[:6]
-
-    print hdDf
+def downHYNameToSQL(filename, retryMax=3):
+    filename = os.path.join('./data', filename)
+    xlsFile = xlrd.open_workbook(filename, encoding_override="cp1252")
+    table = xlsFile.sheets()[0]
+    hyIDList = table.col_values(0)[1:]
+    hyNameList = table.col_values(1)[1:]
+    hyLevelList = [len(hyID) / 2 for hyID in hyIDList]
+    hyLevel1IDList = [hyID[:2] for hyID in hyIDList]
+    hyLevel2IDList = [hyID[:4] for hyID in hyIDList]
+    hyLevel3IDList = [hyID[:6] for hyID in hyIDList]
+    hyNameDf = pd.DataFrame({'hyid': hyIDList,
+                             'hyname': hyNameList,
+                             'hylevel': hyLevelList,
+                             'hylevel1id': hyLevel1IDList,
+                             'hylevel2id': hyLevel2IDList,
+                             'hylevel3id': hyLevel3IDList})
     engine.execute('TRUNCATE TABLE hangyename')
-    writeSQL(hdDf, 'hangyename')
-    return
+    writeSQL(hyNameDf, 'hangyename')
 
 
 def downGubenToSQL(stockID, retry=3, timeout=10):
@@ -161,9 +165,11 @@ def downGubenToSQL(stockID, retry=3, timeout=10):
 #     downloadStat = False
     gubenDf = pd.DataFrame()
 
-    proxy_handler = urllib2.ProxyHandler({"http": 'http://127.0.0.1:8087'})
-    opener = urllib2.build_opener(proxy_handler)
-    urllib2.install_opener(opener)
+    # 使用代理抓取数据
+#     proxy_handler = urllib2.ProxyHandler({"http": 'http://127.0.0.1:8087'})
+#     opener = urllib2.build_opener(proxy_handler)
+#     urllib2.install_opener(opener)
+
     for _ in range(retry):
         try:
             guben = urllib2.urlopen(req).read()
@@ -431,6 +437,23 @@ def updateStockList(retry=10):
               engine,
               if_exists=u'append')
 
+    # 读取行业表中的股票代码，与当前获取的股票列表比较，
+    # 如果存在部分股票未列入行业表，则更新行业列表数据
+    sql = 'select stockid from hangyestock;'
+    result = engine.execute(sql)
+    hystock = result.fetchall()
+    hystock = [i[0] for i in hystock]
+    noinhy = [i for i in sl.index if i not in hystock]
+    # 股票列表中上市日期不为0，即为已上市
+    # 且不在行业列表中，表示需更新行业数据
+    slnoinhy = sl[(sl.timeToMarket != 0) & (sl.index.isin(noinhy))]
+#     sl2 = sl1[sl1.index.isin(noinhy)]
+    if not slnoinhy.empty:
+        #         pass
+        updateHYFile()
+#         downHYToSQL()
+#         downHYNameToSQL()
+
 
 def dropTable(tableName):
     engine.execute('DROP TABLE %s' % tableName)
@@ -541,7 +564,8 @@ def getAllTableName(tableName):
 
 
 def clearStockList():
-    engine.execute('TRUNCATE TABLE stocklist')
+    if initsql.existTable('stocklist'):
+        engine.execute('TRUNCATE TABLE stocklist')
 
 
 def getKlineLastUpdateDate(stockID):
@@ -960,7 +984,7 @@ def readTTMLirunForStockID(stockID,
     sql = (u'select max(reportdate) from ttmlirun '
            u'where stockid="%(stockID)s" '
            u'and reportdate<="%(startDate)s"' % locals())
-    print sql
+#     print sql
     # 指定日期（含）前无TTM利润数据的，查询起始日期设定为startDate
     # 否则设定为最近一次数据日期
     result = engine.execute(sql).fetchone()
@@ -968,7 +992,7 @@ def readTTMLirunForStockID(stockID,
         startDate = result[0]
     sql = (u'select * from ttmlirun where stockid = "%(stockID)s"'
            u' and `reportdate` >= "%(startDate)s"' % locals())
-    print sql
+#     print sql
     if endDate is not None:
         sql += u' and `date` <= "%s"' % endDate
     df = pd.read_sql(sql, engine)
@@ -1196,6 +1220,12 @@ def calTTMLirun(stockdf, date):
     return [stockID, date, lirun, reportdate]
 
 
+def updateHYFile():
+    HYDataFilename = downHYFile()
+    downHYToSQL(HYDataFilename)
+    downHYNameToSQL(HYDataFilename)
+
+
 def updateKlineEXTData(stockID, startDate=None):
     """
     # 更新Kline表MarketValue、TTMPE等附加数据
@@ -1212,10 +1242,13 @@ def updateKlineEXTData(stockID, startDate=None):
     if startDate is None:
         startDate = getTTMPELastUpdate(stockID)
         startDate = startDate.strftime('%Y-%m-%d')
-    updateKlineMarketValue(stockID, startDate)
-    updateKlineTTMLirun(stockID, startDate)
-    endDate = updateKlineTTMPE(stockID, startDate)
-    setKlineTTMPELastUpdate(stockID, endDate)
+    try:
+        updateKlineMarketValue(stockID, startDate)
+        updateKlineTTMLirun(stockID, startDate)
+        endDate = updateKlineTTMPE(stockID, startDate)
+        setKlineTTMPELastUpdate(stockID, endDate)
+    except Exception, e:
+        logging.error('fail to updateKlineEXTData: %s,[%s]', stockID, e)
 
 
 def getTTMPELastUpdate(stockID):
@@ -1545,13 +1578,13 @@ def readGuben(stockID, startDate='1990-01-01', endDate=None):
 def readGubenUpdateList():
     """ 比较股票已存股本数据与最新股数据，不相同时则表示需要更新的股票
     """
-#     sql = u'select stockid, totals as totalsnew from stocklist;'
-#     dfNew = pd.read_sql(sql, engine)
+    sql = u'select stockid, totals as totalsnew from stocklist;'
+    dfNew = pd.read_sql(sql, engine)
 
-    dfNew = ts.get_stock_basics()
-    dfNew = dfNew.reset_index()
-    dfNew = dfNew[['code', 'totals']]
-    dfNew.columns = ['stockid', 'totalsnew']
+#     dfNew = ts.get_stock_basics()
+#     dfNew = dfNew.reset_index()
+#     dfNew = dfNew[['code', 'totals']]
+#     dfNew.columns = ['stockid', 'totalsnew']
     sql = (u'SELECT stockid, totalshares as totalsold '
            u'FROM (select * from stockdata.guben order by date desc) '
            u'as tablea group by stockid;')
@@ -1641,7 +1674,6 @@ def getYouzhiList():
     sql = 'select stockid from youzhiguzhi'
     result = engine.execute(sql)
     return [stockid[0] for stockid in result.fetchall()]
-#     return result.fetchall()
 
 
 def getClassifiedForStocksID(stockID):
@@ -1697,7 +1729,7 @@ if __name__ == '__main__':
     logging.info('===================start=====================')
     timec = dt.datetime.now()
 #     timea = dt.datetime.now()
-    testStockID = u'600519'
+    testStockID = u'000333'
     testStockList = ['000001', '600519', '000651']
 # #     engine = getEngine()
     startDate = u'2016-04-30'
@@ -1752,6 +1784,7 @@ if __name__ == '__main__':
 #     writeGuben(stockID, df)
 #     quickWriteSQL(stockID, df)
 #     downloadGuben(stockID)
+#     downGubenToSQL(testStockID)
 #     gubenDf = gubenFileToDf(testStockID)
 #     gubenDf = gubenURLToDf(stockID)
 #     print gubenDf
@@ -1834,8 +1867,9 @@ if __name__ == '__main__':
 #     t = downloadClassified()
 #     print t
 #     downHYToSQL()
-    downHYNameToSQL()
-
+#     downHYNameToSQL()
+#     downHYFile()
+    updateHYFile()
 
 # 生成pelirunincrease表的数据
 #     savePELirunIncrease()

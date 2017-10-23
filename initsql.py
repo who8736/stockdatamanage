@@ -154,6 +154,39 @@ def createKlineTable(stockID):
     sql = 'create table %s like klinesample' % tableName
     return sqlrw.engine.execute(sql)
 
+
+def createStocklist():
+    sql = ("CREATE TABLE `stocklist` ("
+           "`stockid` varchar(6) NOT NULL,"
+           "`name` varchar(20) DEFAULT NULL,"
+           "`industry` varchar(20) DEFAULT NULL,"
+           "`area` varchar(20) DEFAULT NULL,"
+           "`pe` double DEFAULT NULL,"
+           "`outstanding` double DEFAULT NULL,"
+           "`totals` double DEFAULT NULL,"
+           "`totalAssets` double DEFAULT NULL,"
+           "`liquidAssets` double DEFAULT NULL,"
+           "`fixedAssets` double DEFAULT NULL,"
+           "`reserved` double DEFAULT NULL,"
+           "`reservedPerShare` double DEFAULT NULL,"
+           "`esp` double DEFAULT NULL,"
+           "`bvps` double DEFAULT NULL,"
+           "`pb` double DEFAULT NULL,"
+           "`timeToMarket` bigint(20) DEFAULT NULL,"
+           "`undp` double DEFAULT NULL,"
+           "`perundp` double DEFAULT NULL,"
+           "`rev` double DEFAULT NULL,"
+           "`profit` double DEFAULT NULL,"
+           "`gpr` double DEFAULT NULL,"
+           "`npr` double DEFAULT NULL,"
+           "`holders` double DEFAULT NULL,"
+           "PRIMARY KEY (`stockid`)"
+           ") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
+           )
+    result = sqlrw.engine.execute(sql)
+    return result
+
+
 if __name__ == '__main__':
     if not existTable('chiguguzhi'):
         createChiguGuzhiTable()
@@ -175,3 +208,5 @@ if __name__ == '__main__':
         createGuzhiHistoryStatusTable()
     if not existTable('pelirunincrease'):
         createPELirunIncreaseTable()
+    if not existTable('stocklist'):
+        createStocklist()
