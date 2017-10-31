@@ -76,7 +76,7 @@ def calGuzhi(stockList=None):
 #     print incDf
     guzhiDf = pd.merge(peDf, incDf, on='stockid', how='left')
 
-# 原取TTM利润方法，按当前日期计算取前N季度数据， 但但第1季度上市公司的财务报告未公布，导致缺少数据无法处理
+# 原取TTM利润方法，按当前日期计算取前N季度数据， 但第1季度上市公司的财务报告未公布，导致缺少数据无法处理
 #     endDate = datatrans.getLastQuarter()
 #     startDate = datatrans.quarterSub(endDate, sectionNum - 1)
 #     quarter  = (int(endDate / 10) * 4 + (endDate % 10)) - sectionNum
@@ -249,9 +249,9 @@ def youzhiSelect(pegDf):
     return pegDf
 
 
-def dfToCsvFile(df, filename):
-    #     filename = u'.\\youzhi.csv'
-    return df.to_csv(filename)
+# def dfToCsvFile(df, filename):
+#    #     filename = u'.\\youzhi.csv'
+#    return df.to_csv(filename)
 
 
 def testChigu():
@@ -264,7 +264,8 @@ def testChigu():
 #     print testStockList
     df = calGuzhi(stockList)
 #     df = calGuzhi()
-    dfToCsvFile(df, outFilename)
+#    dfToCsvFile(df, outFilename)
+    df.to_csv(outFilename)
     sqlrw.engine.execute(u'TRUNCATE TABLE chiguguzhi')
 #     df.index.name = 'stockid'
 #     clearStockList()
@@ -285,7 +286,8 @@ def testShaixuan():
     print 'youzhiSelect result:'
     print df.head()
     outFilename = './data/youzhi.csv'
-    dfToCsvFile(df, outFilename)
+#    dfToCsvFile(df, outFilename)
+    df.to_csv(outFilename)
 #     outFilename = './data/youzhiid.txt'
 #     sqlrw.writeStockIDListToFile(df['stockid'], outFilename)
     sqlrw.engine.execute(u'TRUNCATE TABLE youzhiguzhi')

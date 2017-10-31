@@ -148,6 +148,91 @@ def report1(stockID):
 #     return reportStr
     return myItem
 
+
+def reportValuation(stockID):
+    myItem = reportItem(stockID)
+    myStockValuation = sqlrw.readValuation(stockID)
+    myItem.name = myStockValuation[1]
+    guzhiData = sqlrw.getGuzhi(stockID)
+
+    # 股票评分
+    myItem.pf = myStockValuation[2]
+    myItem.lowpe = myStockValuation[4]
+    myItem.lowhype = myStockValuation[7]
+    myItem.lowpeg = myStockValuation[17]
+    myItem.wdzz = myStockValuation[19]
+    myItem.lowpez200 = myStockValuation[21]
+    myItem.lowpez1000 = myStockValuation[23]
+
+    # 当前TTMPE
+    myItem.curTTMPE = myStockValuation[3]
+    myItem.peg = myStockValuation[16]
+    myItem.hype = myStockValuation[6]
+    # 未来三年PE预计
+    myItem.PEYuji = [guzhiData[4], guzhiData[5], guzhiData[6]]
+    # 最近6个季度TTM利润增长率
+    myItem.profitsInc = [myStockValuation[8], myStockValuation[9],
+                         myStockValuation[10], myStockValuation[11],
+                         myStockValuation[12], myStockValuation[13]]
+    # 最近6个季度TTM利润平均增长率
+    myItem.profitsIncAvg = myStockValuation[14]
+    # 根据平均绝对离差计算的增长率差异水平
+    myItem.profitsIncMad = guzhiData[14]
+    # 根据标准差计算的增长率差异水平
+    myItem.profitsIncStand = myStockValuation[15]
+    # 当前TTMPE参考最近200个工作日水平
+    myItem.PERate200 = myStockValuation[24]
+    myItem.PEZ200 = myStockValuation[20]
+    # 当前TTMPE参考最近1000个工作日水平
+    myItem.PERate1000 = myStockValuation[25]
+    myItem.PEZ1000 = myStockValuation[22]
+
+    hyIDlv4 = hyanalyse.getHYIDForStock(stockID)
+    hyIDlv3 = hyIDlv4[:6]
+    hyIDlv2 = hyIDlv4[:4]
+    hyIDlv1 = hyIDlv4[:2]
+
+    # 最近三年TTM利润增长率水平
+    myItem.profitsInc3Years = hyanalyse.getStockProfitsIncRates(stockID)
+    # 所属1级行业
+    myItem.hyIDlv1 = hyIDlv1
+    myItem.hyLv1 = hyanalyse.getHYName(hyIDlv1)
+    # 最近三年TTM利润增长率水平
+    myItem.hyIncLv1 = hyanalyse.getHYProfitsIncRates(hyIDlv1)
+    # 所属2级行业
+    myItem.hyIDlv2 = hyIDlv2
+    myItem.hyLv2 = hyanalyse.getHYName(hyIDlv2)
+    # 最近三年TTM利润增长率水平
+    myItem.hyIncLv2 = hyanalyse.getHYProfitsIncRates(hyIDlv2)
+    # 所属3级行业
+    myItem.hyIDlv3 = hyIDlv3
+    myItem.hyLv3 = hyanalyse.getHYName(hyIDlv3)
+    # 最近三年TTM利润增长率水平
+    myItem.hyIncLv3 = hyanalyse.getHYProfitsIncRates(hyIDlv3)
+    # 所属4级行业
+    myItem.hyIDlv4 = hyIDlv4
+    myItem.hyLv4 = hyanalyse.getHYName(hyIDlv4)
+    # 最近三年TTM利润增长率水平
+    myItem.hyIncLv4 = hyanalyse.getHYProfitsIncRates(hyIDlv4)
+#
+    stockList = hyanalyse.getStockListForHY(hyIDlv4)
+#     print stockList
+    sameHYList = []
+    for sameHYStockID in stockList:
+        if sameHYStockID[0] not in ['0', '3', '6']:
+            continue
+#         print u'sameHYStockID:', sameHYStockID
+        sameHYList.append([sameHYStockID,
+                           sqlrw.getStockName(sameHYStockID),
+                           hyanalyse.getStockProfitsIncRates(sameHYStockID)])
+    myItem.sameHYList = sameHYList
+#     outFilename = u'./data/report%s.txt' % stockID
+#     outfile = codecs.open(outFilename, 'wb', 'utf-8')
+#     outfile.write(reportStr)
+#     outfile.close()
+#     return reportStr
+    return myItem
+
 if __name__ == '__main__':
     stockID = u'000002'
     report(stockID)

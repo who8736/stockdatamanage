@@ -12,12 +12,14 @@ import time
 # import ConfigParser
 from multiprocessing.dummy import Pool as ThreadPool
 from functools import wraps
-import sqlrw
 import datetime as dt
 
-# import datatrans
+import datatrans
 import hyanalyse
 import dataanalyse
+import sqlrw
+from download import downGuben, downGuzhi, downKline
+from download import downMainTable, downloadLirun, downStockList
 
 
 def logfun(func):
@@ -41,7 +43,7 @@ def startUpdate():
     """自动更新全部数据，包括K线历史数据、利润数据、K线表中的TTM市盈率
     """
     # 更新股票列表与行业列表
-    sqlrw.updateStockList()
+    downStockList()
     stockList = sqlrw.readStockIDsFromSQL()
 #     stockList = stockList[:10]
 
@@ -68,7 +70,29 @@ def startUpdate():
 
 @logfun
 def updateLirun():
-    sqlrw.updateLirun()
+    startQuarter = sqlrw.getLirunUpdateStartQuarter()
+    endQuarter = sqlrw.getLirunUpdateEndQuarter()
+
+    dates = datatrans.dateList(startQuarter, endQuarter)
+    for date in dates:
+        #         print date
+        logging.debug('updateLirun: %s', date)
+        try:
+            df = downloadLirun(date)
+        except ValueError:
+            continue
+        if df is None:
+            continue
+        # 读取已存储的利润数据，从下载数据中删除该部分，对未存储的利润写入数据库
+        lirunCur = sqlrw.readLirunForDate(date)
+        df = df[~df.stockid.isin(lirunCur.stockid)]
+        df = df[df.profits.notnull()]
+#         print df
+
+        # 对未存储的利润写入数据库，并重新计算TTM利润
+        if not df.empty:
+            sqlrw.writeLirun(df)
+            sqlrw.calAllTTMLirun(date)
 
 
 @logfun
@@ -81,18 +105,22 @@ def updateKlineEXTData(stockList, threadNum):
 
 @logfun
 def updateGuben(stockList, threadNum):
+    """ 更新股本多线程版， 因新浪限制， 暂时无用
+    """
     pool = ThreadPool(processes=threadNum)
-    pool.map(sqlrw.downGubenToSQL, stockList)
+    pool.map(downGuben, stockList)
     pool.close()
     pool.join()
 
 
 @logfun
 def updateGubenSingleThread():
+    """ 更新股本单线程版
+    """
     stockList = sqlrw.readGubenUpdateList()
     for stockID in stockList:
-        sqlrw.downGubenToSQL(stockID)
-        time.sleep(1)
+        downGuben(stockID)
+        time.sleep(5)
 
 #
 # def updateDataTest(stockList):
@@ -101,9 +129,11 @@ def updateGubenSingleThread():
 
 @logfun
 def updateGuzhi(stockList, threadNum):
+    """ 因东方财富修改估值文件下载功能， 暂不能用
+    """
     pool = ThreadPool(processes=threadNum)
 #     pool.map(sqlrw.downGuzhiToFile, stockList)
-    pool.map(sqlrw.downGuzhiToSQL, stockList)
+    pool.map(downGuzhi, stockList)
     pool.close()
     pool.join()
 
@@ -113,29 +143,33 @@ def updateKlineBaseData(stockList, threadNum):
     """ 启动多线程更新K线历史数据主函数
     """
     pool = ThreadPool(processes=threadNum)
-    pool.map(sqlrw.downKlineToSQL, stockList)
+    pool.map(downKline, stockList)
     pool.close()
     pool.join()
 
 
 @logfun
 def updateMainTable(stockList, threadNum):
+    """ 更新主表数据多线程版， # 因新浪反爬虫策略，改用单线程
+    """
     pool = ThreadPool(processes=threadNum)
-    pool.map(sqlrw.downloadMainTable, stockList)
+    pool.map(downMainTable, stockList)
     pool.close()
     pool.join()
 
 
 @logfun
 def updateMainTableSingleThread(stockList):
+    """ 更新主表数据单线程版， 因主表数据暂时无用
+    """
     for stockID in stockList:
-        sqlrw.downloadMainTable(stockID)
+        downMainTable(stockID)
         time.sleep(1)
 
 
 @logfun
 def updateHYData():
-    hyanalyse.calAllHYTTMLirun(20164)
+    hyanalyse.calAllHYTTMLirun(20173)
 
 
 @logfun
@@ -169,6 +203,7 @@ def readStockListFromFile(filename):
 if __name__ == '__main__':
     logfilename = os.path.join(os.path.abspath(os.curdir), 'datamanage.log')
     print os.path.abspath(os.curdir)
+    print logfilename
     formatStr = ('%(asctime)s %(filename)s[line:%(lineno)d] '
                  '%(levelname)s %(message)s')
     logging.basicConfig(level=logging.DEBUG,
@@ -206,4 +241,4 @@ if __name__ == '__main__':
 
 
 #     stockID = '000005'
-#     sqlrw.downloadMainTable(stockID)
+#     sqlrw.downMainTable(stockID)

@@ -4,13 +4,21 @@ Created on 2016年12月2日
 
 @author: who8736
 '''
+
+import datetime as dt
+
+import pandas as pd
+from pandas.core.frame import DataFrame
+
 import sqlrw
 import datatrans
-import logging
-from wtforms.ext import dateutil
+# import logging
+# from wtforms.ext import dateutil
 
 
 def getStockListForHY(hyID):
+    """ 返回指定行业的所有股票代码列表
+    """
     levelNum = len(hyID) / 2
 #     levels = ['level1', 'level2', 'level3', 'level4']
 #     level = levels[levelNum - 1]
@@ -35,16 +43,45 @@ def getHYIDForStock(stockID):
         return hyID
 
 
-def getHYIDForHY(hyID, subLevel):
+# def getHYStock():
+#     """ 查询已进行行业分类的股票列表
+#     """
+#     sql = 'select stockid from hangyestock;'
+#     result = sqlrw.engine.execute(sql)
+#     hystock = result.fetchall()
+#     hystock = [i[0] for i in hystock]
+#     return hystock
+
+
+def getHYLirunCount(hyID, quarter):
+    """ 查询行业在指定季度中已发布财报的股票数量
+    """
+    sql = ('select count(1) from hyprofits where hyid="%(hyID)s" and '
+           'date="%(quarter)s"') % locals()
+    result = sqlrw.engine.execute(sql)
+    return result.fetchone()[0]
+
+
+def getHYList(level=4):
+    """ 查询指定级别的所有行业代码
+    """
+    sql = 'select hyid from hangyename where hylevel=%(level)s;' % locals()
+#     print sql
+    result = sqlrw.engine.execute(sql)
+    return [i[0] for i in result.fetchall()]
+
+
+def getSubHY(hyID, subLevel):
     """ 查询指定行业包含的下级行业代码
     """
     level = len(hyID) / 2
     sql = ('select hyid from hangyename '
-           'where hylevel%(level)sid="%(hyID)s" and hylevel="%(subLevel)s";') % locals()
+           'where hylevel%(level)sid="%(hyID)s" and '
+           'hylevel="%(subLevel)s";') % locals()
 #     print sql
     result = sqlrw.engine.execute(sql)
     result = result.fetchall()
-#     print 'getHYIDForHY:', result
+#     print 'getSubHY:', result
     if result is None:
         return None
     else:
@@ -61,6 +98,16 @@ def getHYName(hyID):
     else:
         hyName = result[0]
         return hyName
+
+
+def getHYStockCount(hyID):
+    """ 返回4级行业下的股票数量
+    """
+    sql = ('select count(1) from hangyestock where hyid="%(hyID)s";'
+           % locals())
+    result = sqlrw.engine.execute(sql).fetchone()
+    if result is not None:
+        return result[0]
 
 
 def getHYProfitsIncRate(hyID, quarter):
@@ -123,7 +170,7 @@ def calHYTTMLirunHighLevel(hyID, date):
     """ 计算第1、2、3级行业的TTM利润
     """
     level = len(hyID) / 2
-    subHyIDList = getHYIDForHY(hyID, level + 1)
+    subHyIDList = getSubHY(hyID, level + 1)
     if subHyIDList is None:
         return None
     profitsCur = 0
@@ -214,10 +261,99 @@ def calAllHYTTMLirun(date):
             calHYTTMLirun(hyID, date)
 
 
+def getHYQuarters():
+    """ 取得进行行业分析比较时采用的财报季度
+        如果某行业上一季度已公布财报的公司数量占该行业的公司总数的80%以上
+        则以当前日期的上一季度作为分析用的日期，否则采用上上季度的日期
+    """
+    lastQuarter = datatrans.getLastQuarter()
+    last2Quarter = datatrans.quarterSub(lastQuarter, 1)
+    hylist = getHYList()
+    hyQuarters = {}
+    for hyID in hylist:
+        hyStockCount = getHYStockCount(hyID)
+        hyLirunCount = getHYLirunCount(hyID, lastQuarter)
+        if hyStockCount == 0:
+            continue
+        print hyID, float(hyLirunCount) / hyStockCount
+        if float(hyLirunCount) / hyStockCount > 0.8:
+            hyQuarters[hyID] = lastQuarter
+        else:
+            hyQuarters[hyID] = last2Quarter
+    return hyQuarters
+
+
+def getHYPE(hyID, date):
+    """ 计算行业在指定日期的市盈率
+    """
+    stockIDs = getStockListForHY(hyID)
+    valueSum = 0
+    profitSum = 0
+    for stockID in stockIDs:
+        sql = ('select date, totalmarketvalue, ttmprofits, ttmpe '
+               'from kline%(stockID)s where `date`<="%(date)s "'
+               'order by `date` desc limit 1;') % locals()
+        result = sqlrw.engine.execute(sql)
+        if result is not None:
+            #            value, profit = result.fetchone()
+            result = result.first()
+            value = result[1]
+            profit = result[2]
+            ttmpe = result[3]
+            if profit < 0 or value is None:
+                continue
+
+#            print stockID, result[0], result[1], result[2], result[3]
+            valueSum += value
+            profitSum += profit
+    if profitSum != 0:
+        pe = round(valueSum / profitSum, 2)
+#        print 'htHYPE', date, valueSum, profitSum, pe
+        return pe
+
+
+def getHYsPE(date=None):
+    """ 计算所有行业在指定日期的市盈率
+    """
+    if date is None:
+        date = dt.datetime.today().strftime('%Y%m%d')
+    hyList = getHYList()
+    hyIDs = []
+    hyPEs = []
+    for hyID in hyList:
+        pe = getHYPE(hyID, date)
+        if pe is not None:
+            hyIDs.append(hyID)
+            hyPEs.append(pe)
+    return DataFrame({'hyid': hyIDs, 'hype': hyPEs})
+
+
 def test():
-    dates = datatrans.dateList(20171, 20172)
+    dates = datatrans.dateList(20173, 20173)
     for date in dates:
         calAllHYTTMLirun(date)
+
+
+def test1():
+    """ 查询一组股票所处的行业分别有多少公司
+    """
+    stockIDs = ['002508', '600261', '002285', '000488',
+                '002573', '300072', '000910']
+    for stockID in stockIDs:
+        stockName = sqlrw.getStockName(stockID)
+        hyID = getHYIDForStock(stockID)
+        hyName = getHYName(hyID)
+        hyCount = getHYStockCount(hyID)
+        print stockID, stockName, hyID, hyName, hyCount
+
+
+def test2():
+    hyList = getHYList()
+    hyPEs = {}
+    for hyID in hyList:
+        pe = getHYPE(hyID, '20171027')
+        hyPEs[hyID] = pe
+        print hyID, pe
 
 
 # def getHYIDName(stockID):
@@ -225,10 +361,19 @@ def test():
 #     hyName = getHYName(hyID)
 #     print stockID, hyID, hyName
 
+
 if __name__ == '__main__':
-    test()
-#     calAllHYTTMLirun(20154)
-#     hyID = '000101'
-#     calHYTTMLirun(hyID, 20154)
+    #    test()
+    #     hylist = getHYList()
+    #     hyCount = {}
+    #    hyquarters = getHYQuarters()
+    #    test1()
+    #    test2()
+    hypedf = getHYsPE()
+    #    getHYPE('01010801', '20171027')
+
+    #     calAllHYTTMLirun(20154)
+    #     hyID = '000101'
+    #     calHYTTMLirun(hyID, 20154)
     #     calHYTTMLirun(hyID, 20162)
-#     stockList = ['000732', '', '', '', '', '', '', ]
+    #     stockList = ['000732', '', '', '', '', '', '', ]

@@ -7,79 +7,37 @@ Created on Thu Mar 10 21:11:51 2016
 
 import os
 import logging
-import urllib2
-import socket
+# import urllib2
+# import socket
 import datetime as dt
-import ConfigParser
-import re
-import time
-import zipfile
+# import ConfigParser
+# import re
+# import time
+
 # import sys
 
 
-from lxml import etree
-import lxml
-import tushare as ts  # @UnresolvedImport
+# from lxml import etree
+# import lxml
+# import tushare as ts  # @UnresolvedImport
 import pandas as pd
 from pandas.compat import StringIO
-from sqlalchemy import create_engine, MetaData, Table, Column
+# from sqlalchemy import create_engine
+from sqlalchemy import MetaData, Table, Column
 from sqlalchemy import DATE, DECIMAL, String
-from sqlalchemy.orm import sessionmaker, scoped_session
+# from sqlalchemy.orm import sessionmaker, scoped_session
 import sqlalchemy
 from pandas.core.frame import DataFrame
-from tushare.stock import cons as ct
+# from tushare.stock import cons as ct
 import xlrd
 
 import datatrans
 import initsql
+from sqlconn import SQLConn
+from misc import filenameGuben, filenameLirun, filenameGuzhi
+# from download import downHYFile
+
 # from bokeh.sampledata import stocks
-
-
-class SQLConn():
-
-    def __init__(self, parent=None):
-        self.loadSQLConf()
-        user = self.user
-        password = self.password
-        ip = self.ip
-        connectStr = (u'mysql://%(user)s:%(password)s@%(ip)s'
-                      u'/stockdata?charset=utf8' % locals())
-        self.engine = create_engine(connectStr,
-                                    strategy=u'threadlocal', echo=False)
-        self.Session = scoped_session(
-            sessionmaker(bind=self.engine, autoflush=False))
-
-    def loadSQLConf(self):
-        if not os.path.isfile('sql.conf'):
-            self.user = u'root'
-            self.password = u'password'
-            self.ip = '127.0.0.1'
-            self.saveConf()
-            return
-
-        try:
-            cf = ConfigParser.ConfigParser()
-            cf.read('sql.conf')
-            if cf.has_option('main', 'user'):
-                self.user = cf.get('main', 'user')
-            if cf.has_option('main', 'password'):
-                self.password = cf.get('main', 'password')
-            if cf.has_option('main', 'ip'):
-                self.ip = cf.get('main', 'ip')
-        except Exception, e:
-            print e
-            logging.error('read conf file error.')
-
-    def saveConf(self):
-        cf = ConfigParser.ConfigParser()
-        # add section / set option & key
-        cf.add_section('main')
-        cf.set('main', 'user', self.user)
-        cf.set('main', 'password', self.password)
-        cf.set('main', 'ip', self.ip)
-
-        # write to file
-        cf.write(open('sql.conf', 'w+'))
 
 
 sqlconn = SQLConn()
@@ -87,44 +45,8 @@ engine = sqlconn.engine
 Session = sqlconn.Session
 
 
-def downHYFile(timeout=10):
-    """ 从中证指数网下载行业数据文件
-
-    下载按钮的xpath
-    /html/body/div[3]/div/div/div[1]/div[1]/form/a[1]
-    """
-    logging.debug('downHYFile')
-    socket.setdefaulttimeout(timeout)
-
-    # 获取当前可用下载日期
-    gubenURL = ('http://www.csindex.com.cn/zh-CN/downloads/'
-                'industry-price-earnings-ratio')
-    req = getreq(gubenURL)
-    htmlresult = urllib2.urlopen(req).read()
-    myTree = etree.HTML(htmlresult)
-    dateStr = myTree.xpath('''//html//body//div//div//div//div
-                                //div//form//label//input//@value''')
-    dateStr = dateStr[0]
-#     print dateStr
-#     print dateStr.split('-')
-    dateStr = ''.join(dateStr.split('-'))
-#     print dateStr
-
-    # 下载并解压行业数据文件
-    HYFileUrl = 'http://115.29.204.48/syl/csi%s.zip' % dateStr
-    print HYFileUrl
-    HYZipFilename = './data/csi%s.zip' % dateStr
-    HYDataFilename = 'csi%s.xls' % dateStr
-    HYDataPath = './data/csi%s.xls' % dateStr
-    downloadDataToFile(HYFileUrl, HYZipFilename)
-
-    zfile = zipfile.ZipFile(HYZipFilename, 'r')
-    file(HYDataPath, 'wb').write(zfile.read(HYDataFilename))
-    return HYDataFilename
-
-
-def downHYToSQL(filename, retryMax=3):
-    """ 下载行业与股票对应关系并写入数据库
+def writeHYToSQL(filename):
+    """ 从文件中读取行业与股票对应关系并写入数据库
     """
     filename = os.path.join('./data', filename)
     xlsFile = xlrd.open_workbook(filename, encoding_override="cp1252")
@@ -136,7 +58,7 @@ def downHYToSQL(filename, retryMax=3):
     writeSQL(hyDf, 'hangyestock')
 
 
-def downHYNameToSQL(filename, retryMax=3):
+def writeHYNameToSQL(filename):
     filename = os.path.join('./data', filename)
     xlsFile = xlrd.open_workbook(filename, encoding_override="cp1252")
     table = xlsFile.sheets()[0]
@@ -156,63 +78,17 @@ def downHYNameToSQL(filename, retryMax=3):
     writeSQL(hyNameDf, 'hangyename')
 
 
-def downGubenToSQL(stockID, retry=3, timeout=10):
-    """下载单个股票股本数据写入数据库"""
-    logging.debug('downGubenToSQL: %s', stockID)
-    socket.setdefaulttimeout(timeout)
-    gubenURL = urlGuben(stockID)
-    req = getreq(gubenURL)
-#     downloadStat = False
-    gubenDf = pd.DataFrame()
-
-    # 使用代理抓取数据
-#     proxy_handler = urllib2.ProxyHandler({"http": 'http://127.0.0.1:8087'})
-#     opener = urllib2.build_opener(proxy_handler)
-#     urllib2.install_opener(opener)
-
-    for _ in range(retry):
-        try:
-            guben = urllib2.urlopen(req).read()
-        except IOError, e:
-            logging.warning('[%s]:download %s guben data, retry...',
-                            e, stockID)
-#             print type(e)
-            errorString = '%s' % e
-            if errorString == 'HTTP Error 456: ':
-                print 'sleep 60 seconds...'
-                time.sleep(60)
-        else:
-            gubenDf = datatrans.gubenDataToDf(stockID, guben)
-            tablename = 'guben'
-            lastUpdate = getGubenLastUpdateDate(stockID)
-            gubenDf = gubenDf[gubenDf.date > lastUpdate]
-            if not gubenDf.empty:
-                writeSQL(gubenDf, tablename)
-            return
-    logging.error('fail download %s guben data.', stockID)
+def writeGubenToSQL(stockID, gubenDf):
+    """单个股票股本数据写入数据库"""
+    tablename = 'guben'
+    lastUpdate = gubenUpdateDate(stockID)
+    gubenDf = gubenDf[gubenDf.date > lastUpdate]
+    if not gubenDf.empty:
+        return writeSQL(gubenDf, tablename)
 
 
-def downGuzhiToSQL(stockID, retry=20, timeout=10):
+def writeGuzhiToSQL(stockID, data):
     """下载单个股票估值数据写入数据库"""
-    logging.debug('downGuzhiToSQL: %s', stockID)
-    url = urlGuzhi(stockID)
-    data = downloadData(url)
-    if data is None:
-        logging.error('down %s guzhi data fail.', stockID)
-        return False
-
-    # 保存至文件
-    filename = filenameGuzhi(stockID)
-    try:
-        mainFile = open(filename, 'wb')
-        mainFile.write(data)
-    except IOError, e:
-        logging.error('[%s]写文件失败： %s', e, filename)
-#         return False
-    finally:
-        mainFile.close()
-
-    # 写入数据库
     guzhiDict = datatrans.transGuzhiDataToDict(data)
     if guzhiDict is None:
         return True
@@ -245,31 +121,12 @@ def downGuzhiToSQL(stockID, retry=20, timeout=10):
     return engine.execute(sql)
 
 
-def downKlineToSQL(stockID, startDate=None, endDate=None, retry_count=20):
-    """下载单个股票K线历史写入数据库"""
-    logging.debug('download kline: %s', stockID)
-    if startDate is None:  # startDate为空时取股票最后更新日期
-        startDate = getKlineLastUpdateDate(stockID)
-#         print stockID, startDate
-        startDate = startDate.strftime('%Y-%m-%d')
-    if endDate is None:
-        endDate = dt.datetime.today().strftime('%Y-%m-%d')
-#     retryCount = 0
-    for cur_retry in range(1, retry_count + 1):
-        try:
-            df = ts.get_hist_data(stockID, startDate, endDate, retry_count=1)
-        except IOError:
-            logging.warning('fail download %s Kline data %d times, retry....',
-                            stockID, cur_retry)
-        else:
-            if (df is None) or df.empty:
-                return
-            tableName = tablenameKline(stockID)
-            if not initsql.existTable(tableName):
-                initsql.createKlineTable(stockID)
-            writeSQL(df, tableName)
-            return
-    logging.error('fail download %s Kline data!', stockID)
+def writeKline(stockID, df):
+    """股票K线历史写入数据库"""
+    tableName = tablenameKline(stockID)
+    if not initsql.existTable(tableName):
+        initsql.createKlineTable(stockID)
+    writeSQL(df, tableName)
 
 
 def lirunFileToList(stockID, date):
@@ -381,80 +238,6 @@ def getStockBasicsFromCSV():
     return df
 
 
-def get_stock_basics():
-    """
-        获取沪深上市公司基本情况
-    Return
-    --------
-    DataFrame
-               code,代码
-               name,名称
-               industry,细分行业
-               area,地区
-               pe,市盈率
-               outstanding,流通股本
-               totals,总股本(万)
-               totalAssets,总资产(万)
-               liquidAssets,流动资产
-               fixedAssets,固定资产
-               reserved,公积金
-               reservedPerShare,每股公积金
-               eps,每股收益
-               bvps,每股净资
-               pb,市净率
-               timeToMarket,上市日期
-    """
-    url = ct.ALL_STOCK_BASICS_FILE
-    req = getreq(url)
-#     proxy = urllib2.ProxyHandler({'http': '127.0.0.1:8087'})
-#     opener = urllib2.build_opener(proxy)
-#     urllib2.install_opener(opener)
-    text = urllib2.urlopen(req, timeout=30).read()
-    text = text.decode('GBK')
-    text = text.replace('--', '')
-    df = pd.read_csv(StringIO(text), dtype={'code': 'object'})
-    df = df.set_index('code')
-    return df
-
-
-def updateStockList(retry=10):
-    sl = pd.DataFrame()
-    for _ in range(retry):
-        try:
-            sl = ts.get_stock_basics().fillna(value=0)
-#             sl = getStockBasicsFromCSV().fillna(value=0)
-        except socket.timeout:
-            logging.warning('updateStockList timeout!!!')
-        else:
-            logging.debug('updateStockList ok')
-            break
-    if sl.empty:
-        logging.error('updateStockList fail!!!')
-        return False
-    sl.index.name = 'stockid'
-    clearStockList()
-    sl.to_sql(u'stocklist',
-              engine,
-              if_exists=u'append')
-
-    # 读取行业表中的股票代码，与当前获取的股票列表比较，
-    # 如果存在部分股票未列入行业表，则更新行业列表数据
-    sql = 'select stockid from hangyestock;'
-    result = engine.execute(sql)
-    hystock = result.fetchall()
-    hystock = [i[0] for i in hystock]
-    noinhy = [i for i in sl.index if i not in hystock]
-    # 股票列表中上市日期不为0，即为已上市
-    # 且不在行业列表中，表示需更新行业数据
-    slnoinhy = sl[(sl.timeToMarket != 0) & (sl.index.isin(noinhy))]
-#     sl2 = sl1[sl1.index.isin(noinhy)]
-    if not slnoinhy.empty:
-        #         pass
-        updateHYFile()
-#         downHYToSQL()
-#         downHYNameToSQL()
-
-
 def dropTable(tableName):
     engine.execute('DROP TABLE %s' % tableName)
 
@@ -479,85 +262,6 @@ def getLowPEStockList(maxPE=40):
     return df
 
 
-def get_report_data(year, quarter):
-    """
-        获取业绩报表数据
-    Parameters
-    --------
-    year:int 年度 e.g:2014
-    quarter:int 季度 :1、2、3、4，只能输入这4个季度
-       说明：由于是从网站获取的数据，需要一页页抓取，速度取决于您当前网络速度
-
-    Return
-    --------
-    DataFrame
-        code,代码
-        name,名称
-        eps,每股收益
-        eps_yoy,每股收益同比(%)
-        bvps,每股净资产
-        roe,净资产收益率(%)
-        epcf,每股现金流量(元)
-        net_profits,净利润(万元)
-        profits_yoy,净利润同比(%)
-        distrib,分配方案
-        report_date,发布日期
-    """
-    if ct._check_input(year, quarter) is True:
-        ct._write_head()
-        df = _get_report_data(year, quarter, 1, pd.DataFrame())
-        if df is not None:
-            #             df = df.drop_duplicates('code')
-            df['code'] = df['code'].map(lambda x: str(x).zfill(6))
-        return df
-
-
-def _get_report_data(year, quarter, pageNo, dataArr,
-                     retry_count=3, timeout=20):
-    ct._write_console()
-    for _ in range(retry_count):
-        url = ct.REPORT_URL % (ct.P_TYPE['http'], ct.DOMAINS['vsf'],
-                               ct.PAGES['fd'], year, quarter,
-                               pageNo, ct.PAGE_NUM[1])
-#         url = ('http://vip.stock.finance.sina.com.cn/q/go.php/'
-#                'vFinanceAnalyze/kind/mainindex/index.phtml?'
-#                's_i=&s_a=&s_c=&reportdate=%s&quarter=%s&p=1&num=60' %
-#                (year, quarter))
-#         request = getreq(url)
-        request = urllib2.Request(url)
-#         print
-#         print url
-        try:
-            text = urllib2.urlopen(request, timeout=timeout).read()
-#             print repr(text)
-#             print text
-        except IOError, e:
-            logging.warning('[%s] fail to down, retry: %s', e, url)
-        else:
-            text = text.decode('GBK')
-            text = text.replace('--', '')
-            html = lxml.html.parse(StringIO(text))  # @UndefinedVariable
-            res = html.xpath("//table[@class=\"list_table\"]/tr")
-            if ct.PY3:
-                sarr = [etree.tostring(node).decode('utf-8') for node in res]
-            else:
-                sarr = [etree.tostring(node) for node in res]
-            sarr = ''.join(sarr)
-            sarr = '<table>%s</table>' % sarr
-#             print sarr
-            df = pd.read_html(sarr)[0]
-            df = df.drop(11, axis=1)
-            df.columns = ct.REPORT_COLS
-            dataArr = dataArr.append(df, ignore_index=True)
-            xpathStr = '//div[@class=\"pages\"]/a[last()]/@onclick'
-            nextPage = html.xpath(xpathStr)
-            if len(nextPage) > 0:
-                pageNo = re.findall(r'\d+', nextPage[0])[0]
-                return _get_report_data(year, quarter, pageNo, dataArr)
-            else:
-                return dataArr
-
-
 def getAllTableName(tableName):
     result = engine.execute('show tables like %s', tableName)
     return result.fetchall()
@@ -568,7 +272,7 @@ def clearStockList():
         engine.execute('TRUNCATE TABLE stocklist')
 
 
-def getKlineLastUpdateDate(stockID):
+def klineUpdateDate(stockID):
     tablename = tablenameKline(stockID)
     if not initsql.existTable(tablename):
         initsql.createKlineTable(stockID)
@@ -577,7 +281,7 @@ def getKlineLastUpdateDate(stockID):
     return getLastUpdate(sql)
 
 
-def getGubenLastUpdateDate(stockID):
+def gubenUpdateDate(stockID):
     sql = 'select max(date) from guben where stockid="%s" limit 1;' % stockID
     return getLastUpdate(sql)
 
@@ -685,6 +389,8 @@ def writeLirun(df):
 
 
 def writeGuben(stockID, df):
+    """ 确认无用后删除
+    """
     logging.debug('start writeGuben %s' % stockID)
     timea = dt.datetime.now()
     gubenList = datatrans.gubenDfToList(df)
@@ -706,6 +412,13 @@ def writeGuben(stockID, df):
     logging.debug('writeGuben stockID %s took %s' %
                   (stockID, (timeb - timea)))
     return True
+
+
+def writeStockList(stockList):
+    clearStockList()
+    stockList.to_sql(u'stocklist',
+                     engine,
+                     if_exists=u'append')
 
 
 def writeSQL(data, tableName, insertType='IGNORE'):
@@ -772,109 +485,6 @@ def writeStockIDListToFile(stockIDList, filename):
     stockFile.close()
 
 
-def downloadLirun(date):
-    """
-    # 获取业绩报表数据
-    """
-    return downloadLirunFromTushare(date)
-#     return downloadLirunFromEastmoney(date)
-
-
-def downloadLirunFromEastmoney(stockList, date):
-    """
-    a获取业绩报表数据,数据源为Eastmoney
-    Parameters
-    --------
-    year:int 年度 e.g:2014
-    quarter:int 季度 :1、2、3、4，只能输入这4个季度
-    a说明：由于是从网站获取的数据，需要一页页抓取，速度取决于您当前网络速度
-
-    Return
-    --------
-    DataFrame
-        code,代码
-        net_profits,净利润(万元)
-        report_date,发布日期
-
-    # 缺点： 数据中无准确的报表发布日期
-    """
-    lirunList = []
-    date = datatrans.transQuarterToDate(date).replace('-', '')
-    for stockID in stockList:
-        lirun = lirunFileToList(stockID, date)
-        if lirun:
-            lirunList.append(lirun)
-    return DataFrame(lirunList)
-#     return lirunList
-
-
-def downloadLirunFromTushare(date):
-    """
-    a获取业绩报表数据,数据源为Tushare
-    Parameters
-    --------
-    year:int 年度 e.g:2014
-    quarter:int 季度 :1、2、3、4，只能输入这4个季度
-    a说明：由于是从网站获取的数据，需要一页页抓取，速度取决于您当前网络速度
-
-    Return
-    --------
-    DataFrame
-        code,代码
-        net_profits,净利润(万元)
-        report_date,发布日期
-    """
-    year = date / 10
-    quarter = date % 10
-#     df = ts.get_report_data(year, quarter)
-    # 因tushare的利润下载函数不支持重试和指定超时值，使用下面的改进版本
-    df = get_report_data(year, quarter)
-    if df is None:
-        return None
-    df = df.loc[:, ['code', 'net_profits', 'report_date']]
-    return datatrans.transLirunDf(df, year, quarter)
-
-
-def getreq(url, includeHeader=False):
-    if includeHeader:
-        # headers = {'User-Agent': ('Mozilla/5.0 (Windows; U; Windows NT 6.1; '
-        #                           'en-US;rv:1.9.1.6) Gecko/20091201 '
-        #                           'Firefox/3.5.6')}
-        headers = {'User-Agent': ('Mozilla/5.0 (Windows NT 10.0; WOW64; '
-                                  'rv:49.0) Gecko/20100101 Firefox/49.0'),
-                   'Accept': ('text/html,application/xhtml+xml,'
-                              'application/xml;q=0.9,*/*;q=0.8'),
-                   'Accept-Encoding': 'gzip, deflate',
-                   'Accept-Language': 'zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3',
-                   'Connection': 'keep-alive',
-                   'DNT': '1',
-                   'Upgrade-Insecure-Requests': '1',
-                   }
-        return urllib2.Request(url, headers=headers)
-    else:
-        return urllib2.Request(url)
-
-
-def gubenURLToDf(stockID):
-    gubenURL = urlGuben(stockID)
-    timeout = 6
-    try:
-        print u'开始下载数据。。。'
-        socket.setdefaulttimeout(timeout)
-#         sock = urllib.urlopen(gubenURL)
-#         guben = sock.read()
-        req = getreq(gubenURL)
-        guben = urllib2.urlopen(req).read()
-    except IOError, e:
-        print e
-        print u'数据下载失败： %s' % stockID
-        return None
-    else:
-        #         sock.close()
-        #     print guben
-        return datatrans.gubenDataToDf(stockID, guben)
-
-
 def gubenFileToDf(stockID):
     filename = filenameGuben(stockID)
     try:
@@ -886,17 +496,6 @@ def gubenFileToDf(stockID):
         print u'读取总股本文件失败： %s' % stockID
         return False
     return datatrans.gubenDataToDf(stockID, guben)
-
-
-def downGuzhiToFile(stockID):
-    url = urlGuzhi(stockID)
-    filename = filenameGuzhi(stockID)
-    logging.debug('write guzhi file: %s', filename)
-    return downloadDataToFile(url, filename)
-
-
-def filenameGuzhi(stockID):
-    return './data/guzhi/%s.xml' % stockID
 
 
 def readGuzhiFileToDict(stockID):
@@ -926,9 +525,20 @@ def readGuzhiSQLToDf(stockList):
     return df
 
 
+def readValuationSammary():
+    sql = ('select stockid, name, pf, pe, peg, pe200, pe1000 '
+           'from valuation order by pf desc;')
+    stocks = pd.read_sql(sql, engine)
+    return stocks
+
+def readValuation(stockID):
+    sql = ('select * from valuation where stockid="%(stockID)s"') % locals()
+    result = engine.execute(sql).fetchone()
+    return result
+
 # def downloadKline(stockID, startDate=None, endDate=None):
 #     if startDate is None:  # startDate为空时取股票最后更新日期
-#         startDate = getKlineLastUpdateDate(stockID)
+#         startDate = klineUpdateDate(stockID)
 #         startDate = startDate.strftime('%Y-%m-%d')
 #     if endDate is None:
 #         endDate = dt.datetime.today().strftime('%Y-%m-%d')
@@ -1076,6 +686,8 @@ def readLirunForDate(date):
 
 
 def readTTMPE(stockID):
+    """ 读取某支股票的全部TTMPE
+    """
     sql = 'select date, ttmpe from kline%s' % stockID
     df = pd.read_sql(sql, engine)
     return df
@@ -1220,12 +832,6 @@ def calTTMLirun(stockdf, date):
     return [stockID, date, lirun, reportdate]
 
 
-def updateHYFile():
-    HYDataFilename = downHYFile()
-    downHYToSQL(HYDataFilename)
-    downHYNameToSQL(HYDataFilename)
-
-
 def updateKlineEXTData(stockID, startDate=None):
     """
     # 更新Kline表MarketValue、TTMPE等附加数据
@@ -1267,7 +873,9 @@ def getTTMPELastUpdate(stockID):
 
 
 def getLirunUpdateStartQuarter():
-    """根据利润表数据判断本次利润表更新的起始日期，
+    """根据利润表数据判断本次利润表更新的起始日期
+    选取利润表中每支股票的财报最大日期，且为在stocklist股票基本信息表中存在的股票
+    再找出财报日期中最小的数值作为本次利润表更新的起始日期
     Parameters
     --------
 
@@ -1276,8 +884,12 @@ def getLirunUpdateStartQuarter():
     --------
     startQuarter：YYYYQ 起始更新日期
     """
+#     sql = (u'select min(maxdate) from (SELECT stockid, max(date) as maxdate '
+#            u'FROM stockdata.lirun group by stockid) as temp;')
     sql = (u'select min(maxdate) from (SELECT stockid, max(date) as maxdate '
-           u'FROM stockdata.lirun group by stockid) as temp;')
+           u'FROM stockdata.lirun group by stockid having stockid '
+           u'in (select stockid from stocklist)) as temp;')
+
     result = engine.execute(sql)
     lastQuarter = result.first()[0]
     startQuarter = datatrans.quarterAdd(lastQuarter, 1)
@@ -1312,7 +924,7 @@ def getLastUpdate(sql):
         return dt.datetime.strptime('1990-01-01', '%Y-%m-%d')
 
 
-def saveChigu(stockList):
+def writeChigu(stockList):
     engine.execute('TRUNCATE TABLE chigu')
     for stockID in stockList:
         sql = ('insert into chigu (`stockid`) '
@@ -1384,140 +996,44 @@ def updateKlineTTMPE(stockID, startDate='1990-01-01', endDate=None):
     return endDate
 
 
-def updateLirun():
-    startQuarter = getLirunUpdateStartQuarter()
-    endQuarter = getLirunUpdateEndQuarter()
-
-    dates = datatrans.dateList(startQuarter, endQuarter)
-    for date in dates:
-        #         print date
-        logging.debug('updateLirun: %s', date)
-        try:
-            df = downloadLirun(date)
-        except ValueError:
-            continue
-        if df is None:
-            continue
-#         print len(df)
-        # 读取已存储的利润数据，从下载数据中删除该部分，对未存储的利润写入数据库
-        lirunCur = readLirunForDate(date)
-        df = df[~df.stockid.isin(lirunCur.stockid)]
-        df = df[df.profits.notnull()]
-#         print df
-
-        # 对未存储的利润写入数据库，并重新计算TTM利润
-        if not df.empty:
-            writeLirun(df)
-            calAllTTMLirun(date)
-
-
-def urlMainTable(stockID, tableType):
-    url = ('http://money.finance.sina.com.cn/corp/go.php'
-           '/vDOWN_%(tableType)s/displaytype/4'
-           '/stockid/%(stockID)s/ctrl/all.phtml' % locals())
-    return url
+# def updateLirun():
+#     startQuarter = getLirunUpdateStartQuarter()
+#     endQuarter = getLirunUpdateEndQuarter()
+#
+#     dates = datatrans.dateList(startQuarter, endQuarter)
+#     for date in dates:
+#         #         print date
+#         logging.debug('updateLirun: %s', date)
+#         try:
+#             df = downloadLirun(date)
+#         except ValueError:
+#             continue
+#         if df is None:
+#             continue
+# #         print len(df)
+#         # 读取已存储的利润数据，从下载数据中删除该部分，对未存储的利润写入数据库
+#         lirunCur = readLirunForDate(date)
+#         df = df[~df.stockid.isin(lirunCur.stockid)]
+#         df = df[df.profits.notnull()]
+# #         print df
+#
+#         # 对未存储的利润写入数据库，并重新计算TTM利润
+#         if not df.empty:
+#             writeLirun(df)
+#             calAllTTMLirun(date)
 
 
-def filenameMainTable(stockID, tableType):
-    filename = './data/%s/%s.csv' % (tableType, stockID)
-    return filename
-
-
-def downloadMainTable(stockID):
-    mainTableType = ['BalanceSheet', 'ProfitStatement', 'CashFlow']
-    for tableType in mainTableType:
-        url = urlMainTable(stockID, tableType)
-        filename = filenameMainTable(stockID, tableType)
-        logging.debug('downloadMainTable %s, %s', stockID, tableType)
-        result = downloadDataToFile(url, filename)
-        if not result:
-            logging.error('download fail: %s', url)
-            continue
-        time.sleep(1)
-    return result
-
-
-def downloadGuben(stockID):
-    url = urlGuben(stockID)
-    filename = filenameGuben(stockID)
-    return downloadDataToFile(url, filename)
-
-
-def urlGuben(stockID):
-    return ('http://vip.stock.finance.sina.com.cn/corp/go.php'
-            '/vCI_StockStructureHistory/stockid'
-            '/%s/stocktype/TotalStock.phtml' % stockID)
-
-
-def filenameGuben(stockID):
-    return './data/guben/%s.csv' % stockID
-
-
-def filenameLirun(stockID):
-    filename = './data/ProfitStatement/%s.csv' % stockID
-    return filename
-
-
-def urlGuzhi(stockID):
-    '''
-    估值数据文件下载地址
-    '''
-    url = 'http://f9.eastmoney.com/soft/gp72.php?code=%s' % stockID
-    if stockID[0] == '6':
-        url += '01'
-    else:
-        url += '02'
-    return url
-
-
-def downloadData(url, timeout=10, retry_count=3):
-    #     proxy_handler = urllib2.ProxyHandler({"http": 'http://127.0.0.1:8087'})
-    #     opener = urllib2.build_opener(proxy_handler)
-    #     urllib2.install_opener(opener)
-    for _ in range(retry_count):
-        try:
-            socket.setdefaulttimeout(timeout)
-            headers = {'User-Agent': ('Mozilla/5.0 (Windows; U; '
-                                      'Windows NT 6.1;'
-                                      'en-US;rv:1.9.1.6) Gecko/20091201 '
-                                      'Firefox/3.5.6')}
-            req = urllib2.Request(url, headers=headers)
-            content = urllib2.urlopen(req).read()
-        except IOError, e:
-            logging.warning('[%s]fail to download data, retry url:%s',
-                            e, url)
-            time.sleep(1)
-        else:
-            return content
-    logging.error('download data fail!!! url:%s', url)
-    return None
-
-
-def downloadDataToFile(url, filename, timeout=10, retry_count=3):
-    data = downloadData(url, timeout, retry_count)
-    if not data:
-        return False
-    try:
-        mainFile = open(filename, 'wb')
-        mainFile.write(data)
-    except IOError, e:
-        logging.error('[%s]写文件失败： %s', e, filename)
-        return False
-    else:
-        mainFile.close()
-    return True
-
-
-def readGubenFromDf(df, date):
-    """从股本列表中读取指定日期的股本数值
-    # 指定日期无股本数据时，选取之前最近的股本数据
-    """
-    d = df[df.date <= date]
-    if d.empty:
-        return None
-    guben = d[d.date == d['date'].max(), 'totalshares']
-#     guben = d.iat[0, 3]
-    return guben
+# 疑似无用函数，待删除
+# def readGubenFromDf(df, date):
+#     """从股本列表中读取指定日期的股本数值
+#     # 指定日期无股本数据时，选取之前最近的股本数据
+#     """
+#     d = df[df.date <= date]
+#     if d.empty:
+#         return None
+#     guben = d[d.date == d['date'].max(), 'totalshares']
+# #     guben = d.iat[0, 3]
+#     return guben
 
 
 def readTTMLirunFromDf(df, date):
@@ -1592,6 +1108,7 @@ def readGubenUpdateList():
     dfOld.totalsold = dfOld.totalsold / 100000000
     dfOld = dfOld.round(2)
     updateList = pd.merge(dfNew, dfOld, on='stockid', how='left')
+    updateList.fillna({'totalsold': 0}, inplace=True)
     updateList = updateList[abs(
         updateList.totalsnew - updateList.totalsold) > 0.1]
     return updateList.stockid
@@ -1630,15 +1147,6 @@ def getStockIDsForClassified(classified):
     result = engine.execute(sql)
     stockIDList = [classifiedID[0] for classifiedID in result.fetchall()]
     return stockIDList
-
-
-def downloadClassified():
-    """ 旧版下载行业分类， 计划删除本函数
-    """
-    classifiedDf = ts.get_industry_classified(standard='sw')
-    classifiedDf = classifiedDf[['code', 'c_name']]
-    classifiedDf.columns = ['stockid', 'cname']
-    return classifiedDf
 
 
 def classifiedToSQL(classifiedDf):
@@ -1693,202 +1201,6 @@ def getStockName(stockID):
         return None
 
 
-def test():
-    stockList = getChiguList()
-
-    stockReportList = []
-    for stockID in stockList:
-        stockName = getStockName(stockID)
-        stockClose = readCurrentClose(stockID)
-        pe = readCurrentTTMPE(stockID)
-        peg = readCurrentPEG(stockID)
-        stockReportList.append([stockID, stockName,
-                                stockClose, pe, peg])
-    print stockReportList
-
-
 if __name__ == '__main__':
-    logfilename = os.path.join(os.path.abspath(os.curdir), 'stockanalyse.log')
-    formatStr = ('%(asctime)s %(filename)s[line:%(lineno)d] '
-                 '%(levelname)s %(message)s')
-    logging.basicConfig(level=logging.DEBUG,
-                        format=formatStr,
-                        # datefmt = '%Y-%m-%d %H:%M:%S +0000',
-                        filename=logfilename,
-                        filemode='a')
-
-    ##########################################################################
-    # 定义一个StreamHandler，将INFO级别或更高的日志信息打印到标准错误，并将其添加到当前的日志处理对象#
-    console = logging.StreamHandler()
-    console.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
-    console.setFormatter(formatter)
-    logging.getLogger('').addHandler(console)
-    ##########################################################################
-
-    logging.info('===================start=====================')
-    timec = dt.datetime.now()
-#     timea = dt.datetime.now()
-    testStockID = u'000333'
-    testStockList = ['000001', '600519', '000651']
-# #     engine = getEngine()
-    startDate = u'2016-04-30'
-    endDate = u'2016-04-29'
-#      df = getHist(stockID, start, end)
-#     klineDf = downloadKlineWorker(testStockID, startDate, endDate)
-#     print klineDf
-
-#
-# 下载雅虎数据
-#     df = getHist(stockID)
-#     timea = dt.datetime.now()
-#     df = yahoodata.getKline(stockID)
-#     timeb = dt.datetime.now()
-#     logging.info('yahoodata.getKline took %s' % (timeb - timea))
-#     print df
-#     quickWriteSQLB(stockID, df)
-
-# 重定义Kline表结构
-#     alterKline()
-
-# 更新Kline表总市值
-#     result = updateKlineMarketValue(testStockID, startDate)
-#     print result
-
-# 更新Kline表TTM利润
-#     updateKlineTTMLirun(stockID)
-
-# 更新TTM利润增长率
-#     for date in dateList(20131, 20161):
-#         print date
-#         calTTMLirunIncRate(date)
-
-# 更新Kline表TTMPE
-#     updateKlineEXTData(testStockID)
-#     updateKlineEXTData(testStockID, '1990-01-01')
-#     result = updateKlineTTMPE(testStockID, startDate)
-#     print result
-
-# 更新利润表
-#     print 'ffffffffffffffff'
-#     dataList = lirunFileToList(stockID)
-#     if dataList:
-#         tableName = 'lirun'
-#         writeSQL(dataList, tableName)
-#     date = 20154
-#     df = downloadLirunFromTushare(date)
-
-
-# 更新单个股票股本信息
-#     df = eastmoneydata.getGuben(stockID)
-#     writeGuben(stockID, df)
-#     quickWriteSQL(stockID, df)
-#     downloadGuben(stockID)
-#     downGubenToSQL(testStockID)
-#     gubenDf = gubenFileToDf(testStockID)
-#     gubenDf = gubenURLToDf(stockID)
-#     print gubenDf
-#     writeGuben(stockID, gubenDf)
-
-# 下载指定季度利润信息（tushare模块试验）
-#     df = ts.get_report_data(2014, 3)
-#     for idx, row in df.iterrows():
-# #         print idx
-# #         print '--------'
-# #         print row[0]
-#         if row['code'] == '600519':
-#             print row['code'], row['net_profits']
-#         pass
-
-#     lirun = downloadLirun(20151)
-#     print lirun
-
-# 更新指定季度利润信息
-#     year = 2009
-#     quarter = 4
-#     df = getLirun(year, quarter)
-#     print df.head(5)
-#     writeLirun(df)
-#     updateLirun()
-
-# 更新TTM利润信息
-#     date = 20161
-#     result = downloadTTMLirun(date)
-#     for date in datatrans.dateList(20143, 20153):
-#         print date
-#         result = calAllTTMLirun(date)
-#     print result
-#     print calAllTTMLirun(20164)
-
-# 更新TTM市盈率
-#     updateKlineEXTData(testStockID, startDate)
-#     updateKlineEXTData(testStockID)
-#     updateKlineEXTData('600519')
-
-# 更新股票列表
-#     createStockList()
-#     updateStockList()
-
-#     url = 'http://218.244.146.57/static/all.csv'
-#     filename = './stocklisttest.csv'
-#     downloadDataToFile(url, filename)
-#     df = getStockBasicsFromCSV()
-#     print df.head(5)
-
-# 删除所有表
-#     engine = getEngine()
-#     tableNames = getAllTableName(engine)
-#     print tableNames
-#     for i in tableNames:
-#         print i
-#         dropTable(engine, i[0])
-
-# 读股本信息
-#     df = readGuben(testStockID, startDate)
-#     print df
-
-# 读取TTM利润信息
-#     df = readTTMLirunForStockID(testStockID, startDate)
-#     print df
-#     pe = readCurrentTTMPE(testStockID)
-#     stockClose = readCurrentClose(testStockID)
-#     peg = readCurrentPEG(testStockID)
-#     print testStockID, stockClose, pe, peg
-#     test()
-
-#     pe = readCurrentTTMPEs(testStockList)
-#     print pe
-
-# 取股票最后更新日期
-#     getKlineLastUpdateDate(stockID)
-
-# 行业分类
-# standard: sina 新浪行业， sw 申万行业
-#     t = downloadClassified()
-#     print t
-#     downHYToSQL()
-#     downHYNameToSQL()
-#     downHYFile()
-    updateHYFile()
-
-# 生成pelirunincrease表的数据
-#     savePELirunIncrease()
-
-# 取最近几期TTM利润数据
-#     df = readLastTTMLirunForStockID('600519', 6)
-#     print df
-#     stockList = ['000001', '600000', '600519']
-#     limit = 6
-#     TTMLirunList = readLastTTMLirun(stockList, limit)
-#     print TTMLirunList
-
-# 清除K线图数据中交易量为0的数据
-#     dropNAData()
-
-    timed = dt.datetime.now()
-    logging.info('datamanage test took %s' % (timed - timec))
-    logging.info('===================end=====================')
-#     print timeb - timea
-#     print timea
-#     print timec
-#     print timed
+    pass
+#    hylist = getHYList()

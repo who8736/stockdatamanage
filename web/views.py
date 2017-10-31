@@ -5,15 +5,18 @@ Created on 2016年12月14日
 @author: who8736
 '''
 
+import numpy as np
 from flask import render_template, redirect, url_for
 from flask import send_file
 # from flask_login import login_required, current_user
 from report import report1 as guzhiReport
+from report import reportValuation
 from sqlrw import getChiguList, getGuzhiList, getYouzhiList
-from sqlrw import saveChigu, readStockIDsFromSQL
+from sqlrw import readStockIDsFromSQL, writeChigu
 from sqlrw import getStockName, readCurrentTTMPE
 from sqlrw import readCurrentClose, readCurrentPEG
 from sqlrw import readPERate
+from sqlrw import readValuationSammary, readValuation
 from plot import plotKline
 
 from . import app
@@ -58,7 +61,7 @@ def setStockList():
                 break
         if checkFlag:
             print 'all ok'
-            saveChigu(stockList)
+            writeChigu(stockList)
             return redirect(url_for('index'))
     return render_template('stocklist.html',
                            form=form,
@@ -92,6 +95,37 @@ def reportView(stockid):
 #     reportstr = reportstr[:20]
 #     reportstr = 'test'
     return render_template('report.html',
+                           stock=stockItem)
+
+
+@app.route('/valuationtype/<typeid>')
+def valuationNav(typeid):
+    stocksDf = readValuationSammary()
+    if typeid == 'chigu':
+        stocksDf = stocksDf[stocksDf['stockid'].isin(getChiguList())]
+    elif typeid == 'youzhi':
+        stocksDf = stocksDf[(stocksDf.pf >= 5) &
+                            (stocksDf.pe < 30)]
+#        sql = 'select stockid, name, pf, pe, peg, pe200, pe1000'
+
+    stockReportList = np.array(stocksDf).tolist()
+#    for stockID in stockList:
+#        stockName = getStockName(stockID)
+#        stockClose = readCurrentClose(stockID)
+#        pe = readCurrentTTMPE(stockID)
+#        peg = readCurrentPEG(stockID)
+#        pe200, pe1000 = readPERate(stockID)
+#        stockReportList.append([stockID, stockName,
+#                                stockClose, pe, peg, pe200, pe1000])
+    return render_template('valuationnav.html', stockList=stockReportList)
+
+
+@app.route('/valuation/<stockid>')
+def valuationView(stockid):
+    stockItem = reportValuation(stockid)
+#     reportstr = reportstr[:20]
+#     reportstr = 'test'
+    return render_template('valuation.html',
                            stock=stockItem)
 
 

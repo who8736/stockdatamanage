@@ -68,10 +68,16 @@ def parse_ymd(s):
 
 
 def transDateToQuarter(date):
+    """ 将datetime.datetime类型的日期转换为季度格式
+    # 2015年4月7日，返回20152
+    """
     return date.year * 10 + int((date.month + 2) / 3)
 
 
 def getLastQuarter():
+    """ 返回当前日期的上一个季度
+    # 如今天是2015年4月7日，返回20151
+    """
     curQuarter = transDateToQuarter(datetime.today())
     return quarterSub(curQuarter, 1)
 
