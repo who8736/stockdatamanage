@@ -66,7 +66,7 @@ def startUpdate():
 #     updateMainTable(stockList, threadNum)
     updateGhuzhiData()
     updateHYData()
-    valuation.calpf()
+    updatePf
 #     logging.info('--------全部更新完成--------')
 
 
@@ -123,6 +123,13 @@ def updateGubenSingleThread():
     for stockID in stockList:
         downGuben(stockID)
         time.sleep(5)
+
+
+@logfun
+def updatePf():
+    """ 重算评分
+    """
+    valuation.calpf()
 
 #
 # def updateDataTest(stockList):
