@@ -18,6 +18,7 @@ import datatrans
 import hyanalyse
 import dataanalyse
 import sqlrw
+import valuation
 from download import downGuben, downGuzhi, downKline
 from download import downMainTable, downloadLirun, downStockList
 
@@ -64,7 +65,8 @@ def startUpdate():
 #     updateMainTableSingleThread(stockList, threadNum)
 #     updateMainTable(stockList, threadNum)
     updateGhuzhiData()
-
+    updateHYData()
+    valuation.calpf()
 #     logging.info('--------全部更新完成--------')
 
 

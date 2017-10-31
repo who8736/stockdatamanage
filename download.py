@@ -469,6 +469,7 @@ def _get_report_data(year, quarter, pageNo, dataArr,
         url = ct.REPORT_URL % (ct.P_TYPE['http'], ct.DOMAINS['vsf'],
                                ct.PAGES['fd'], year, quarter,
                                pageNo, ct.PAGE_NUM[1])
+        url += '&order=code%7C2'
 #         url = ('http://vip.stock.finance.sina.com.cn/q/go.php/'
 #                'vFinanceAnalyze/kind/mainindex/index.phtml?'
 #                's_i=&s_a=&s_c=&reportdate=%s&quarter=%s&p=1&num=60' %
