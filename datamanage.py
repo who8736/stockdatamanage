@@ -65,6 +65,7 @@ def startUpdate():
 #     updateMainTableSingleThread(stockList, threadNum)
 #     updateMainTable(stockList, threadNum)
     updateGhuzhiData()
+
     updateHYData()
     updatePf
 #     logging.info('--------全部更新完成--------')
@@ -95,6 +96,7 @@ def updateLirun():
         if not df.empty:
             sqlrw.writeLirun(df)
             sqlrw.calAllTTMLirun(date)
+            updateHYData(date)
 
 
 @logfun
@@ -177,8 +179,8 @@ def updateMainTableSingleThread(stockList):
 
 
 @logfun
-def updateHYData():
-    hyanalyse.calAllHYTTMLirun(20173)
+def updateHYData(date):
+    hyanalyse.calAllHYTTMLirun(date)
 
 
 @logfun
