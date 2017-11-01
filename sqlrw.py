@@ -126,7 +126,7 @@ def writeKline(stockID, df):
     tableName = tablenameKline(stockID)
     if not initsql.existTable(tableName):
         initsql.createKlineTable(stockID)
-    writeSQL(df, tableName)
+    return writeSQL(df, tableName)
 
 
 def lirunFileToList(stockID, date):
@@ -531,6 +531,7 @@ def readValuationSammary():
     stocks = pd.read_sql(sql, engine)
     return stocks
 
+
 def readValuation(stockID):
     sql = ('select * from valuation where stockid="%(stockID)s"') % locals()
     result = engine.execute(sql).fetchone()
@@ -887,8 +888,8 @@ def getLirunUpdateStartQuarter():
 #     sql = (u'select min(maxdate) from (SELECT stockid, max(date) as maxdate '
 #            u'FROM stockdata.lirun group by stockid) as temp;')
     sql = (u'select min(maxdate) from (SELECT stockid, max(date) as maxdate '
-           u'FROM stockdata.lirun group by stockid having stockid '
-           u'in (select stockid from stocklist)) as temp;')
+           u'FROM stockdata.lirun group by stockid '
+           u'having stockid in (select stockid from stocklist)) as temp;')
 
     result = engine.execute(sql)
     lastQuarter = result.first()[0]

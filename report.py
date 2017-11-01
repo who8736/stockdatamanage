@@ -164,6 +164,10 @@ def reportValuation(stockID):
     myItem.lowpez200 = myStockValuation[21]
     myItem.lowpez1000 = myStockValuation[23]
 
+    # 当前TTMPE在近200、1000个工作日中的Z值
+    myItem.pez200 = myStockValuation[20]
+    myItem.pez1000 = myStockValuation[22]
+
     # 当前TTMPE
     myItem.curTTMPE = myStockValuation[3]
     myItem.peg = myStockValuation[16]

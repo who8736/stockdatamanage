@@ -37,10 +37,15 @@
     		{{ stock.curTTMPE }}</td>
 			{% if stock.lowhype==1 %}<td class="success">{% else %}<td>{% endif %}
     		{{ stock.hype }}</td>
-    		<td>{{ stock.lowpeg }}</td>
-    		<td>{{ stock.wdzz }}</td>
-    		<td>{{ stock.lowpez200 }}</td>
-    		<td>{{ stock.lowpez1000 }}</td>
+			{% if stock.lowpeg==1 %}<td class="success">{% else %}<td>{% endif %}
+    		{{ stock.peg }}</td>
+			{% if stock.wdzz==1 %}<td class="success">{% else %}<td>{% endif %}
+    		{{ stock.profitsIncAvg }}</td>
+			{% if stock.lowpez200==1 %}<td class="success">{% else %}<td>{% endif %}
+    		{{ stock.pez200 }}</td>
+			{% if stock.lowpez1000==1 %}<td class="success">{% else %}<td>{% endif %}
+    		{{ stock.pez1000 }}</td>
+    		</tr>
 	  </table>
     <p>未来三年PE预计:</p>
     <table class="table">

@@ -62,7 +62,7 @@ def wdzz1(stock):
     avg = stock[1:].mean()
     std = stock[1:].std()
     stdrate = std / avg
-    return 1 if stdrate < 0.6 else 0
+    return 1 if stdrate < 0.6 and avg > 10 else 0
 
 
 def peZ(stock, dayCount):
@@ -120,8 +120,8 @@ def calpf():
     sectionNum = 6  # 取6个季度
     incDf = sqlrw.readLastTTMLirun(stocks.stockid.tolist(), sectionNum)
     stocks = pd.merge(stocks, incDf, on='stockid', how='left')
-    stocks['avg'] = incDf.mean(axis=1)
-    stocks['std'] = incDf.std(axis=1)
+    stocks['avg'] = incDf.mean(axis=1).round(2)
+    stocks['std'] = incDf.std(axis=1).round(2)
     stocks['wdzz'] = incDf.apply(wdzz, axis=1)
 
     # 利润增长的平均标准差与平均增长率的比值， 小于1时判断为增长稳定
@@ -130,14 +130,17 @@ def calpf():
 
     # 根据过去6季度TTM利润平均增长率与TTMPE计算PEG
     stocks['peg'] = stocks['pe'] / stocks['avg']
+    stocks['peg'] = stocks['peg'].round(2)
     stocks['lowpeg'] = stocks.apply(lowPEG, axis=1)
 
     # 200天Z值小于-1
     stocks['pez200'] = stocks.apply(peZ, axis=1, args=(200, ))
+    stocks['pez200'] = stocks['pez200'].round(2)
     stocks['lowpez200'] = stocks.apply(lowPEZ200, axis=1)
 
     # 1000天Z值小于-1
     stocks['pez1000'] = stocks.apply(peZ, axis=1, args=(1000, ))
+    stocks['pez1000'] = stocks['pez1000'].round(2)
     stocks['lowpez1000'] = stocks.apply(lowPEZ1000, axis=1)
 
     # 计算pe200与pe1000

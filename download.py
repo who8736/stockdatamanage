@@ -291,7 +291,7 @@ def downGuzhi(stockID):
     return dataToFile(url, filename)
 
 
-def downKline(stockID, startDate=None, endDate=None, retry_count=20):
+def downKline(stockID, startDate=None, endDate=None, retry_count=6):
     """下载单个股票K线历史写入数据库"""
     logging.debug('download kline: %s', stockID)
     if startDate is None:  # startDate为空时取股票最后更新日期
@@ -311,7 +311,9 @@ def downKline(stockID, startDate=None, endDate=None, retry_count=20):
             if (df is None) or df.empty:
                 return None
             else:
-                writeKline(stockID, df)
+                if writeKline(stockID, df):
+                    return
+
     logging.error('fail download %s Kline data!', stockID)
 
 
