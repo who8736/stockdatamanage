@@ -1205,3 +1205,4 @@ def getStockName(stockID):
 if __name__ == '__main__':
     pass
 #    hylist = getHYList()
+    print readCurrentTTMPE('002508')

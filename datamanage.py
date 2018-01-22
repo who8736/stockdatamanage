@@ -66,7 +66,7 @@ def startUpdate():
 #     updateMainTable(stockList, threadNum)
     updateGhuzhiData()
 
-    updatePf
+    updatePf()
 #     logging.info('--------全部更新完成--------')
 
 

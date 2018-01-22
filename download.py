@@ -313,7 +313,6 @@ def downKline(stockID, startDate=None, endDate=None, retry_count=6):
             else:
                 if writeKline(stockID, df):
                     return
-
     logging.error('fail download %s Kline data!', stockID)
 
 
