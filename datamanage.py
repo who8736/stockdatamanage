@@ -67,7 +67,7 @@ def startUpdate():
     updateGhuzhiData()
 
     updatePf()
-#     logging.info('--------全部更新完成--------')
+#       logging.info('--------全部更新完成--------')
 
 
 @logfun
