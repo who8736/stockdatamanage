@@ -163,11 +163,11 @@ def calpf():
 #                        'avgrate', 'madrate', 'stdrate', 'pe200', 'pe1000'
 #                        ]]
 
-    mystocks = ['002508', '600261', '002285', '000488',
-                '002573', '300072', '000910']
-    mystockspf = stocks[stocks['stockid'].isin(mystocks)]
-    mystockspf.set_index(['stockid'], inplace=True)
-    mystockspf.to_csv('./data/valuationmystocks.csv')
+#     mystocks = ['002508', '600261', '002285', '000488',
+#                 '002573', '300072', '000910']
+#     mystockspf = stocks[stocks['stockid'].isin(mystocks)]
+#     mystockspf.set_index(['stockid'], inplace=True)
+#     mystockspf.to_csv('./data/valuationmystocks.csv')
 
     # 保存评价结果
     stocks.set_index(['stockid'], inplace=True)
