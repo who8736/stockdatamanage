@@ -14,7 +14,8 @@ import matplotlib
 matplotlib.use('Agg')  # @UndefinedVariable
 
 import matplotlib.pyplot as plt  # @IgnorePep8
-from matplotlib.finance import candlestick_ohlc  # @IgnorePep8
+# from matplotlib.finance import candlestick_ohlc  # @IgnorePep8
+from mpl_finance import candlestick_ohlc  # @IgnorePep8
 import matplotlib.gridspec as gs  # @IgnorePep8
 from matplotlib.dates import DateFormatter, MonthLocator  # @IgnorePep8
 from matplotlib.ticker import FixedLocator  # @IgnorePep8
