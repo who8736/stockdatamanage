@@ -7,8 +7,9 @@ Created on 2016年12月14日
 from flask import Flask
 import sys
 from flask_bootstrap import Bootstrap
+import importlib
 
-reload(sys)
+importlib.reload(sys)
 sys.setdefaultencoding('utf-8')  # @UndefinedVariable
 
 app = Flask(__name__)
@@ -16,5 +17,5 @@ app.config.from_object('config')
 app.debug = True
 Bootstrap(app)
 
-import views  # @IgnorePep8
+from . import views  # @IgnorePep8
 # 现在通过app.config["VAR_NAME"]，我们可以访问到对应的变量

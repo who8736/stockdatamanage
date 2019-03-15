@@ -10,7 +10,7 @@ Created on Thu Oct 26 21:12:40 2017
 import logging
 import zipfile
 import socket
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import time
 import re
 from lxml import etree
@@ -122,7 +122,7 @@ def downHYFile(timeout=10):
     gubenURL = ('http://www.csindex.com.cn/zh-CN/downloads/'
                 'industry-price-earnings-ratio')
     req = getreq(gubenURL)
-    htmlresult = urllib2.urlopen(req).read()
+    htmlresult = urllib.request.urlopen(req).read()
     myTree = etree.HTML(htmlresult)
     dateStr = myTree.xpath('''//html//body//div//div//div//div
                                 //div//form//label//input//@value''')
@@ -134,14 +134,14 @@ def downHYFile(timeout=10):
 
     # 下载并解压行业数据文件
     HYFileUrl = 'http://115.29.204.48/syl/csi%s.zip' % dateStr
-    print HYFileUrl
+    print(HYFileUrl)
     HYZipFilename = './data/csi%s.zip' % dateStr
     HYDataFilename = 'csi%s.xls' % dateStr
     HYDataPath = './data/csi%s.xls' % dateStr
     dataToFile(HYFileUrl, HYZipFilename)
 
     zfile = zipfile.ZipFile(HYZipFilename, 'r')
-    file(HYDataPath, 'wb').write(zfile.read(HYDataFilename))
+    open(HYDataPath, 'wb').write(zfile.read(HYDataFilename))
     return HYDataFilename
 
 
@@ -160,9 +160,9 @@ def getreq(url, includeHeader=False):
                    'DNT': '1',
                    'Upgrade-Insecure-Requests': '1',
                    }
-        return urllib2.Request(url, headers=headers)
+        return urllib.request.Request(url, headers=headers)
     else:
-        return urllib2.Request(url)
+        return urllib.request.Request(url)
 
 
 def downloadData(url, timeout=10, retry_count=3):
@@ -179,9 +179,9 @@ def downloadData(url, timeout=10, retry_count=3):
                                       'Windows NT 6.1;'
                                       'en-US;rv:1.9.1.6) Gecko/20091201 '
                                       'Firefox/3.5.6')}
-            req = urllib2.Request(url, headers=headers)
-            content = urllib2.urlopen(req).read()
-        except IOError, e:
+            req = urllib.request.Request(url, headers=headers)
+            content = urllib.request.urlopen(req).read()
+        except IOError as e:
             logging.warning('[%s]fail to download data, retry url:%s',
                             e, url)
             time.sleep(1)
@@ -198,7 +198,7 @@ def dataToFile(url, filename, timeout=10, retry_count=3):
     try:
         mainFile = open(filename, 'wb')
         mainFile.write(data)
-    except IOError, e:
+    except IOError as e:
         logging.error('[%s]写文件失败： %s', e, filename)
         return False
     else:
@@ -231,14 +231,14 @@ def downGuben(stockID, retry=3, timeout=10):
 
     for _ in range(retry):
         try:
-            guben = urllib2.urlopen(req).read()
-        except IOError, e:
+            guben = urllib.request.urlopen(req).read()
+        except IOError as e:
             logging.warning('[%s]:download %s guben data, retry...',
                             e, stockID)
 #             print type(e)
             errorString = '%s' % e
             if errorString == 'HTTP Error 456: ':
-                print 'sleep 60 seconds...'
+                print('sleep 60 seconds...')
                 time.sleep(60)
         else:
             gubenDf = datatrans.gubenDataToDf(stockID, guben)
@@ -274,7 +274,7 @@ def downGuzhi_del(stockID):
     try:
         mainFile = open(filename, 'wb')
         mainFile.write(data)
-    except IOError, e:
+    except IOError as e:
         logging.error('[%s]写文件失败： %s', e, filename)
 #         return False
     finally:
@@ -422,7 +422,7 @@ def get_stock_basics():
 #     proxy = urllib2.ProxyHandler({'http': '127.0.0.1:8087'})
 #     opener = urllib2.build_opener(proxy)
 #     urllib2.install_opener(opener)
-    text = urllib2.urlopen(req, timeout=30).read()
+    text = urllib.request.urlopen(req, timeout=30).read()
     text = text.decode('GBK')
     text = text.replace('--', '')
     df = pd.read_csv(StringIO(text), dtype={'code': 'object'})
@@ -476,14 +476,14 @@ def _get_report_data(year, quarter, pageNo, dataArr,
 #                's_i=&s_a=&s_c=&reportdate=%s&quarter=%s&p=1&num=60' %
 #                (year, quarter))
 #         request = getreq(url)
-        request = urllib2.Request(url)
+        request = urllib.request.Request(url)
 #         print
 #         print url
         try:
-            text = urllib2.urlopen(request, timeout=timeout).read()
+            text = urllib.request.urlopen(request, timeout=timeout).read()
 #             print repr(text)
 #             print text
-        except IOError, e:
+        except IOError as e:
             logging.warning('[%s] fail to down, retry: %s', e, url)
         else:
             text = text.decode('GBK')
@@ -516,15 +516,15 @@ def gubenURLToDf(stockID):
     gubenURL = urlGuben(stockID)
     timeout = 6
     try:
-        print u'开始下载数据。。。'
+        print('开始下载数据。。。')
         socket.setdefaulttimeout(timeout)
 #         sock = urllib.urlopen(gubenURL)
 #         guben = sock.read()
         req = getreq(gubenURL)
-        guben = urllib2.urlopen(req).read()
-    except IOError, e:
-        print e
-        print u'数据下载失败： %s' % stockID
+        guben = urllib.request.urlopen(req).read()
+    except IOError as e:
+        print(e)
+        print('数据下载失败： %s' % stockID)
         return None
     else:
         #         sock.close()

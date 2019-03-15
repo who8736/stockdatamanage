@@ -27,7 +27,7 @@ def readChiguInfo():
         msgList.append(stockmsg)
 
     msg = '\n' + '\n'.join(msgList)
-    print msg
+    print(msg)
     return msg
 
 

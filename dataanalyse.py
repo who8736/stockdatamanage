@@ -151,23 +151,23 @@ def calHistoryStatus(stockID):
         #         print i
         result = _calHistoryStatus(stockID, TTMLirunDf, date)
         integrity, seculargrowth, growthmadrate, averageincrement = result
-        sql = (u'insert ignore into guzhihistorystatus (`stockid`, `date`, '
-               u'`integrity`, `seculargrowth`, `growthmadrate`, '
-               u'`averageincrement`) '
-               u'values ("%(stockID)s", "%(date)s", %(integrity)r, '
-               u'%(seculargrowth)r, "%(growthmadrate)s", '
-               u'"%(averageincrement)s");') % locals()
-        print sql
+        sql = ('insert ignore into guzhihistorystatus (`stockid`, `date`, '
+               '`integrity`, `seculargrowth`, `growthmadrate`, '
+               '`averageincrement`) '
+               'values ("%(stockID)s", "%(date)s", %(integrity)r, '
+               '%(seculargrowth)r, "%(growthmadrate)s", '
+               '"%(averageincrement)s");') % locals()
+        print(sql)
         sqlrw.engine.execute(sql)
 
 
 def _calHistoryStatus(stockID, TTMLirunDf, date):
     startDate = datatrans.quarterSub(date, 11)
-    print '_calHistoryStatus, current date: %s, start date: %s' % (date,
-                                                                   startDate)
+    print('_calHistoryStatus, current date: %s, start date: %s' % (date,
+                                                                   startDate))
     _TTMLirunDf = TTMLirunDf[(TTMLirunDf.date >= startDate) &
                              (TTMLirunDf.date <= date)]
-    print len(_TTMLirunDf)
+    print(len(_TTMLirunDf))
     if len(_TTMLirunDf) == 12:
         integrity = True
     else:
@@ -184,8 +184,8 @@ def _calHistoryStatus(stockID, TTMLirunDf, date):
     lirunAverage = _TTMLirunDf['incrate'].mean()
     # 计算利润增长率的平均绝对离差率
     growthmadrate = round(lirunMad / abs(lirunAverage), 2)
-    print integrity, seculargrowth, growthmadrate
-    print _TTMLirunDf[_TTMLirunDf.date == date]
+    print(integrity, seculargrowth, growthmadrate)
+    print(_TTMLirunDf[_TTMLirunDf.date == date])
     return [integrity, seculargrowth, growthmadrate, lirunAverage]
 
 
@@ -266,12 +266,12 @@ def testChigu():
 #     df = calGuzhi()
 #    dfToCsvFile(df, outFilename)
     df.to_csv(outFilename)
-    sqlrw.engine.execute(u'TRUNCATE TABLE chiguguzhi')
+    sqlrw.engine.execute('TRUNCATE TABLE chiguguzhi')
 #     df.index.name = 'stockid'
 #     clearStockList()
 #     df.set_index('stockid', inplace=True)
 #     print df.head()
-    sqlrw.writeSQL(df, u'chiguguzhi')
+    sqlrw.writeSQL(df, 'chiguguzhi')
 #     df.to_sql(u'chiguguzhi',
 #               sqlrw.engine,
 #               if_exists=u'append')
@@ -280,18 +280,18 @@ def testChigu():
 def testShaixuan():
     stockList = sqlrw.readStockListDf().stockid.values
     df = calGuzhi(stockList)
-    sqlrw.engine.execute(u'TRUNCATE TABLE guzhiresult')
-    sqlrw.writeSQL(df, u'guzhiresult')
+    sqlrw.engine.execute('TRUNCATE TABLE guzhiresult')
+    sqlrw.writeSQL(df, 'guzhiresult')
     df = youzhiSelect(df)
-    print 'youzhiSelect result:'
-    print df.head()
+    print('youzhiSelect result:')
+    print(df.head())
     outFilename = './data/youzhi.csv'
 #    dfToCsvFile(df, outFilename)
     df.to_csv(outFilename)
 #     outFilename = './data/youzhiid.txt'
 #     sqlrw.writeStockIDListToFile(df['stockid'], outFilename)
-    sqlrw.engine.execute(u'TRUNCATE TABLE youzhiguzhi')
-    sqlrw.writeSQL(df, u'youzhiguzhi')
+    sqlrw.engine.execute('TRUNCATE TABLE youzhiguzhi')
+    sqlrw.writeSQL(df, 'youzhiguzhi')
 
 
 if __name__ == '__main__':
@@ -315,9 +315,9 @@ if __name__ == '__main__':
 
     timec = dt.datetime.now()
 #    testStockID = u'601398'
-    testStockID = u'000153'
-    startDate = u'2016-04-30'
-    endDate = u'2016-04-29'
+    testStockID = '000153'
+    startDate = '2016-04-30'
+    endDate = '2016-04-29'
     logging.info('===================start=====================')
 
     # 测试持股估值

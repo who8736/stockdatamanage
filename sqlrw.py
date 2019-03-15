@@ -97,19 +97,19 @@ def writeGuzhiToSQL(stockID, data):
 #     writeSQLUpdate(guzhiDict, 'guzhi')
 #     print guzhiDict
     tablename = 'guzhi'
-    if 'peg' in guzhiDict.keys():
+    if 'peg' in list(guzhiDict.keys()):
         peg = guzhiDict['peg']
     else:
         peg = 'null'
-    if 'next1YearPE' in guzhiDict.keys():
+    if 'next1YearPE' in list(guzhiDict.keys()):
         next1YearPE = guzhiDict['next1YearPE']
     else:
         next1YearPE = 'null'
-    if 'next2YearPE' in guzhiDict.keys():
+    if 'next2YearPE' in list(guzhiDict.keys()):
         next2YearPE = guzhiDict['next2YearPE']
     else:
         next2YearPE = 'null'
-    if 'next3YearPE' in guzhiDict.keys():
+    if 'next3YearPE' in list(guzhiDict.keys()):
         next3YearPE = guzhiDict['next3YearPE']
     else:
         next3YearPE = 'null'
@@ -144,7 +144,7 @@ def lirunFileToList(stockID, date):
         return []
 
     profitsList = lirunData[42].split()
-    if profitsList[0].decode('gbk') != u'归属于母公司所有者的净利润':
+    if profitsList[0].decode('gbk') != '归属于母公司所有者的净利润':
         logging.error('lirunFileToList read %s error', stockID)
         return []
 
@@ -347,7 +347,7 @@ def updateKlineMarketValue(stockID, startDate='1990-01-01', endDate=None):
         startDate = gubenDf['date'][i]
         try:
             endDate = gubenDf['date'][i + 1]
-        except KeyError, e:
+        except KeyError as e:
             endDate = None
 #             print e
         totalShares = gubenDf['totalshares'][i]
@@ -416,9 +416,9 @@ def writeGuben(stockID, df):
 
 def writeStockList(stockList):
     clearStockList()
-    stockList.to_sql(u'stocklist',
+    stockList.to_sql('stocklist',
                      engine,
-                     if_exists=u'append')
+                     if_exists='append')
 
 
 def writeSQL(data, tableName, insertType='IGNORE'):
@@ -491,9 +491,9 @@ def gubenFileToDf(stockID):
         gubenFile = open(filename, 'r')
         guben = gubenFile.read()
         gubenFile.close()
-    except IOError, e:
-        print e
-        print u'读取总股本文件失败： %s' % stockID
+    except IOError as e:
+        print(e)
+        print(('读取总股本文件失败： %s' % stockID))
         return False
     return datatrans.gubenDataToDf(stockID, guben)
 
@@ -521,7 +521,7 @@ def readGuzhiSQLToDf(stockList):
     sql = 'select * from guzhi where stockid in (%s);' % listStr
 #     result = engine.execute(sql)
     df = pd.read_sql(sql, engine)
-    print df
+    print(df)
     return df
 
 
@@ -566,9 +566,9 @@ def readPERate(stockID):
     """ 读取一只股票的PE历史水平，
     # 返回PE200， PE1000两个数值，分别代表该股票当前PE值在过去200、1000个交易日中的水平
     """
-    sql = (u'select pe200, pe1000 from guzhiresult '
-           u'where stockid="%(stockID)s" limit 1' % locals())
-    print sql
+    sql = ('select pe200, pe1000 from guzhiresult '
+           'where stockid="%(stockID)s" limit 1' % locals())
+    print(sql)
     # 指定日期（含）前无TTM利润数据的，查询起始日期设定为startDate
     # 否则设定为最近一次数据日期
     result = engine.execute(sql).fetchone()
@@ -592,20 +592,20 @@ def readTTMLirunForStockID(stockID,
     DataFrame: 返回DataFrame格式TTM利润
     """
     # 指定日期（含）前最近一次利润变动日期
-    sql = (u'select max(reportdate) from ttmlirun '
-           u'where stockid="%(stockID)s" '
-           u'and reportdate<="%(startDate)s"' % locals())
+    sql = ('select max(reportdate) from ttmlirun '
+           'where stockid="%(stockID)s" '
+           'and reportdate<="%(startDate)s"' % locals())
 #     print sql
     # 指定日期（含）前无TTM利润数据的，查询起始日期设定为startDate
     # 否则设定为最近一次数据日期
     result = engine.execute(sql).fetchone()
     if result[0] is not None:
         startDate = result[0]
-    sql = (u'select * from ttmlirun where stockid = "%(stockID)s"'
-           u' and `reportdate` >= "%(startDate)s"' % locals())
+    sql = ('select * from ttmlirun where stockid = "%(stockID)s"'
+           ' and `reportdate` >= "%(startDate)s"' % locals())
 #     print sql
     if endDate is not None:
-        sql += u' and `date` <= "%s"' % endDate
+        sql += ' and `date` <= "%s"' % endDate
     df = pd.read_sql(sql, engine)
 
     # 指定日期（含）前存在股本变动数据的，重设第1次变动日期为startDate，
@@ -627,10 +627,10 @@ def readLastTTMLirunForStockID(stockID, limit=1):
     --------
     list: 返回list格式TTM利润
     """
-    sql = (u'select incrate from ttmlirun '
-           u'where stockid="%(stockID)s" '
-           u'order by date desc '
-           u'limit %(limit)s' % locals())
+    sql = ('select incrate from ttmlirun '
+           'where stockid="%(stockID)s" '
+           'order by date desc '
+           'limit %(limit)s' % locals())
 #     print sql
     result = engine.execute(sql).fetchall()
     result = [i[0] for i in reversed(result)]
@@ -669,8 +669,8 @@ def readTTMLirunForDate(date):
     date: 格式YYYYQ, 4位年+1位季度，利润所属日期
     return: 返回DataFrame格式TTM利润
     """
-    sql = (u'select * from ttmlirun where '
-           u'`date` = "%(date)s"' % locals())
+    sql = ('select * from ttmlirun where '
+           '`date` = "%(date)s"' % locals())
     df = pd.read_sql(sql, engine)
     return df
 
@@ -680,8 +680,8 @@ def readLirunForDate(date):
     date: 格式YYYYQ, 4位年+1位季度，利润所属日期
     return: 返回DataFrame格式利润
     """
-    sql = (u'select * from lirun where '
-           u'`date` = "%(date)s"' % locals())
+    sql = ('select * from lirun where '
+           '`date` = "%(date)s"' % locals())
     df = pd.read_sql(sql, engine)
     return df
 
@@ -730,9 +730,9 @@ def alterKline():
         try:
             result = engine.execute(sql, tablename)
 #             result = result.fetchall()
-            print tablename
-        except sqlalchemy.exc.OperationalError, e:
-            print e
+            print(tablename)
+        except sqlalchemy.exc.OperationalError as e:
+            print(e)
     return
 
 
@@ -764,7 +764,7 @@ def calAllTTMLirun(date, incrementUpdate=True):
         # 上年第四季度利润, 仅取利润字段并更名为profits1
         lastYearEnd = (date / 10 - 1) * 10 + 4
         lirunLastYearEnd = readLirunForDate(lastYearEnd)
-        print 'lirunLastYearEnd.head():', lirunLastYearEnd.head()
+        print(('lirunLastYearEnd.head():', lirunLastYearEnd.head()))
         lirunLastYearEnd = lirunLastYearEnd[['stockid', 'profits']]
         lirunLastYearEnd.columns = ['stockid', 'profits1']
 
@@ -781,7 +781,7 @@ def calAllTTMLirun(date, incrementUpdate=True):
         TTMLirun['ttmprofits'] = (TTMLirun.profits +
                                   TTMLirun.profits1 - TTMLirun.profits2)
         TTMLirun = TTMLirun[['stockid', 'date', 'ttmprofits', 'reportdate']]
-    print 'TTMLirun.head():', TTMLirun.head()
+    print(('TTMLirun.head():', TTMLirun.head()))
 
     # 写入ttmlirun表后，重算TTM利润增长率
     writeSQL(TTMLirun, 'ttmlirun')
@@ -809,10 +809,10 @@ def calTTMLirunIncRate(date, incrementUpdate=True):
     for i in TTMLirunCur.values:
         stockID = i[0]
         incRate = round(i[4], 2)
-        sql = (u'update ttmlirun '
-               u'set incrate = %(incRate)s'
-               u' where stockid = "%(stockID)s"'
-               u'and `date` = %(date)s' % locals())
+        sql = ('update ttmlirun '
+               'set incrate = %(incRate)s'
+               ' where stockid = "%(stockID)s"'
+               'and `date` = %(date)s' % locals())
         engine.execute(sql)
     return
 
@@ -854,7 +854,7 @@ def updateKlineEXTData(stockID, startDate=None):
         updateKlineTTMLirun(stockID, startDate)
         endDate = updateKlineTTMPE(stockID, startDate)
         setKlineTTMPELastUpdate(stockID, endDate)
-    except Exception, e:
+    except Exception as e:
         logging.error('fail to updateKlineEXTData: %s,[%s]', stockID, e)
 
 
@@ -868,8 +868,8 @@ def getTTMPELastUpdate(stockID):
     --------
     datetime：TTMPE最近更新日期
     """
-    sql = (u'select ttmpe from lastupdate '
-           u'where stockid="%(stockID)s"' % locals())
+    sql = ('select ttmpe from lastupdate '
+           'where stockid="%(stockID)s"' % locals())
     return getLastUpdate(sql)
 
 
@@ -887,9 +887,9 @@ def getLirunUpdateStartQuarter():
     """
 #     sql = (u'select min(maxdate) from (SELECT stockid, max(date) as maxdate '
 #            u'FROM stockdata.lirun group by stockid) as temp;')
-    sql = (u'select min(maxdate) from (SELECT stockid, max(date) as maxdate '
-           u'FROM stockdata.lirun group by stockid '
-           u'having stockid in (select stockid from stocklist)) as temp;')
+    sql = ('select min(maxdate) from (SELECT stockid, max(date) as maxdate '
+           'FROM stockdata.lirun group by stockid '
+           'having stockid in (select stockid from stocklist)) as temp;')
 
     result = engine.execute(sql)
     lastQuarter = result.first()[0]
@@ -1065,9 +1065,9 @@ def readGuben(stockID, startDate='1990-01-01', endDate=None):
         totalshares: 变动后总股本
     """
     # 指定日期（含）前最近一次股本变动日期
-    sql = (u'select max(date) from guben '
-           u'where stockid="%(stockID)s" '
-           u'and date<="%(startDate)s"' % locals())
+    sql = ('select max(date) from guben '
+           'where stockid="%(stockID)s" '
+           'and date<="%(startDate)s"' % locals())
     result = engine.execute(sql)
     lastUpdate = result.fetchone()[0]
 
@@ -1078,11 +1078,11 @@ def readGuben(stockID, startDate='1990-01-01', endDate=None):
     else:
         gubenStartDate = lastUpdate
 
-    sql = (u'select date, totalshares from guben '
-           u'where stockid = "%(stockID)s"'
-           u' and `date` >= "%(gubenStartDate)s"' % locals())
+    sql = ('select date, totalshares from guben '
+           'where stockid = "%(stockID)s"'
+           ' and `date` >= "%(gubenStartDate)s"' % locals())
     if endDate:
-        sql += u' and `date` <= "%s"' % endDate
+        sql += ' and `date` <= "%s"' % endDate
     df = pd.read_sql(sql, engine)
 
     # 指定日期（含）前存在股本变动数据的，重设第1次变动日期为startDate，
@@ -1095,16 +1095,16 @@ def readGuben(stockID, startDate='1990-01-01', endDate=None):
 def readGubenUpdateList():
     """ 比较股票已存股本数据与最新股数据，不相同时则表示需要更新的股票
     """
-    sql = u'select stockid, totals as totalsnew from stocklist;'
+    sql = 'select stockid, totals as totalsnew from stocklist;'
     dfNew = pd.read_sql(sql, engine)
 
 #     dfNew = ts.get_stock_basics()
 #     dfNew = dfNew.reset_index()
 #     dfNew = dfNew[['code', 'totals']]
 #     dfNew.columns = ['stockid', 'totalsnew']
-    sql = (u'SELECT stockid, totalshares as totalsold '
-           u'FROM (select * from stockdata.guben order by date desc) '
-           u'as tablea group by stockid;')
+    sql = ('SELECT stockid, totalshares as totalsold '
+           'FROM (select * from stockdata.guben order by date desc) '
+           'as tablea group by stockid;')
     dfOld = pd.read_sql(sql, engine)
     dfOld.totalsold = dfOld.totalsold / 100000000
     dfOld = dfOld.round(2)
@@ -1205,4 +1205,4 @@ def getStockName(stockID):
 if __name__ == '__main__':
     pass
 #    hylist = getHYList()
-    print readCurrentTTMPE('002508')
+    print((readCurrentTTMPE('002508')))

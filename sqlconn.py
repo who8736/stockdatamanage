@@ -5,7 +5,7 @@ Created on 2016年11月21日
 @author: who8736
 '''
 import os
-import ConfigParser
+import configparser
 import logging
 
 from sqlalchemy import create_engine
@@ -19,23 +19,23 @@ class SQLConn():
         user = self.user
         password = self.password
         ip = self.ip
-        connectStr = (u'mysql://%(user)s:%(password)s@%(ip)s'
-                      u'/stockdata?charset=utf8' % locals())
+        connectStr = ('mysql://%(user)s:%(password)s@%(ip)s'
+                      '/stockdata?charset=utf8' % locals())
         self.engine = create_engine(connectStr,
-                                    strategy=u'threadlocal', echo=False)
+                                    strategy='threadlocal', echo=False)
         self.Session = scoped_session(
             sessionmaker(bind=self.engine, autoflush=False))
 
     def loadSQLConf(self):
         if not os.path.isfile('sql.conf'):
-            self.user = u'root'
-            self.password = u'password'
+            self.user = 'root'
+            self.password = 'password'
             self.ip = '127.0.0.1'
             self.saveConf()
             return
 
         try:
-            cf = ConfigParser.ConfigParser()
+            cf = configparser.ConfigParser()
             cf.read('sql.conf')
             if cf.has_option('main', 'user'):
                 self.user = cf.get('main', 'user')
@@ -43,12 +43,12 @@ class SQLConn():
                 self.password = cf.get('main', 'password')
             if cf.has_option('main', 'ip'):
                 self.ip = cf.get('main', 'ip')
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
             logging.error('read conf file error.')
 
     def saveConf(self):
-        cf = ConfigParser.ConfigParser()
+        cf = configparser.ConfigParser()
         # add section / set option & key
         cf.add_section('main')
         cf.set('main', 'user', self.user)

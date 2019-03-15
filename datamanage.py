@@ -191,7 +191,7 @@ def updateGhuzhiData():
 def readStockListFromFile(filename):
     stockFile = open(filename, 'r')
     stockList = [i[:6] for i in stockFile.readlines()]
-    print stockList
+    print(stockList)
     return stockList
 
 
@@ -212,8 +212,8 @@ def readStockListFromFile(filename):
 
 if __name__ == '__main__':
     logfilename = os.path.join(os.path.abspath(os.curdir), 'datamanage.log')
-    print os.path.abspath(os.curdir)
-    print logfilename
+    print(os.path.abspath(os.curdir))
+    print(logfilename)
     formatStr = ('%(asctime)s %(filename)s[line:%(lineno)d] '
                  '%(levelname)s %(message)s')
     logging.basicConfig(level=logging.DEBUG,

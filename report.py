@@ -18,61 +18,61 @@ class reportItem():
 
 
 def report(stockID):
-    reportStr = u'股票代码: %s\n' % stockID
-    reportStr += u'股票名称: %s\n\n' % sqlrw.getStockName(stockID)
+    reportStr = '股票代码: %s\n' % stockID
+    reportStr += '股票名称: %s\n\n' % sqlrw.getStockName(stockID)
 
-    reportStr += u'估值数据：\n' + u'-' * 20 + u'\n'
+    reportStr += '估值数据：\n' + '-' * 20 + '\n'
 #     return reportStr
     guzhiData = sqlrw.getGuzhi(stockID)
-    print guzhiData
-    reportStr += u'当前TTMPE： %+6.2f\n' % guzhiData[2]
-    reportStr += u'PEG：       %+6.2f\n' % guzhiData[3]
-    reportStr += (u'未来三年PE预计： %+10.2f%+10.2f%+10.2f\n' %
+    print(guzhiData)
+    reportStr += '当前TTMPE： %+6.2f\n' % guzhiData[2]
+    reportStr += 'PEG：       %+6.2f\n' % guzhiData[3]
+    reportStr += ('未来三年PE预计： %+10.2f%+10.2f%+10.2f\n' %
                   (guzhiData[4], guzhiData[5], guzhiData[6]))
-    reportStr += (u'最近6个季度TTM利润增长率：'
-                  u'%+10.2f%+10.2f%+10.2f%+10.2f%+10.2f%+10.2f\n' %
+    reportStr += ('最近6个季度TTM利润增长率：'
+                  '%+10.2f%+10.2f%+10.2f%+10.2f%+10.2f%+10.2f\n' %
                   (guzhiData[7], guzhiData[8], guzhiData[9],
                    guzhiData[10], guzhiData[11], guzhiData[12]))
-    reportStr += u'最近6个季度TTM利润平均增长率： %+6.2f\n' % guzhiData[13]
-    reportStr += u'根据平均绝对离差计算的增长率差异水平： %+6.2f\n' % guzhiData[14]
-    reportStr += u'根据标准差计算的增长率差异水平： %+6.2f\n' % guzhiData[15]
-    reportStr += u'当前TTMPE参考最近200个工作日水平： %+6.2f\n' % guzhiData[16]
-    reportStr += u'当前TTMPE参考最近1000个工作日水平： %+6.2f\n' % guzhiData[17]
+    reportStr += '最近6个季度TTM利润平均增长率： %+6.2f\n' % guzhiData[13]
+    reportStr += '根据平均绝对离差计算的增长率差异水平： %+6.2f\n' % guzhiData[14]
+    reportStr += '根据标准差计算的增长率差异水平： %+6.2f\n' % guzhiData[15]
+    reportStr += '当前TTMPE参考最近200个工作日水平： %+6.2f\n' % guzhiData[16]
+    reportStr += '当前TTMPE参考最近1000个工作日水平： %+6.2f\n' % guzhiData[17]
 
     hyIDlv4 = hyanalyse.getHYIDForStock(stockID)
     hyIDlv3 = hyIDlv4[:6]
     hyIDlv2 = hyIDlv4[:4]
     hyIDlv1 = hyIDlv4[:2]
-    reportStr += u'=' * 20 + u'\n\n'
-    reportStr += u'行业比较：\n' + u'-' * 20 + u'\n'
-    reportStr += (u'最近三年TTM利润增长率水平：%+10.2f%+10.2f%+10.2f\n\n' %
+    reportStr += '=' * 20 + '\n\n'
+    reportStr += '行业比较：\n' + '-' * 20 + '\n'
+    reportStr += ('最近三年TTM利润增长率水平：%+10.2f%+10.2f%+10.2f\n\n' %
                   hyanalyse.getStockProfitsIncRates(stockID))
 
-    reportStr += u'所属一级行业：%s\n' % hyanalyse.getHYName(hyIDlv1)
-    reportStr += (u'最近三年TTM利润增长率水平：%+10.2f%+10.2f%+10.2f\n\n' %
+    reportStr += '所属一级行业：%s\n' % hyanalyse.getHYName(hyIDlv1)
+    reportStr += ('最近三年TTM利润增长率水平：%+10.2f%+10.2f%+10.2f\n\n' %
                   hyanalyse.getHYProfitsIncRates(hyIDlv1))
-    reportStr += u'所属二级行业：%s\n' % hyanalyse.getHYName(hyIDlv2)
-    reportStr += (u'最近三年TTM利润增长率水平：%+10.2f%+10.2f%+10.2f\n\n' %
+    reportStr += '所属二级行业：%s\n' % hyanalyse.getHYName(hyIDlv2)
+    reportStr += ('最近三年TTM利润增长率水平：%+10.2f%+10.2f%+10.2f\n\n' %
                   hyanalyse.getHYProfitsIncRates(hyIDlv2))
-    reportStr += u'所属三级行业：%s\n' % hyanalyse.getHYName(hyIDlv3)
-    reportStr += (u'最近三年TTM利润增长率水平：%+10.2f%+10.2f%+10.2f\n\n' %
+    reportStr += '所属三级行业：%s\n' % hyanalyse.getHYName(hyIDlv3)
+    reportStr += ('最近三年TTM利润增长率水平：%+10.2f%+10.2f%+10.2f\n\n' %
                   hyanalyse.getHYProfitsIncRates(hyIDlv3))
-    reportStr += u'所属四级行业：%s\n' % hyanalyse.getHYName(hyIDlv4)
-    reportStr += (u'最近三年TTM利润增长率水平：%+10.2f%+10.2f%+10.2f\n\n' %
+    reportStr += '所属四级行业：%s\n' % hyanalyse.getHYName(hyIDlv4)
+    reportStr += ('最近三年TTM利润增长率水平：%+10.2f%+10.2f%+10.2f\n\n' %
                   hyanalyse.getHYProfitsIncRates(hyIDlv4))
 
     stockList = hyanalyse.getStockListForHY(hyIDlv4)
-    print stockList
+    print(stockList)
     for sameHYStockID in stockList:
         if sameHYStockID[0] not in ['0', '3', '6']:
             continue
-        print u'sameHYStockID:', sameHYStockID
-        reportStr += u'同行业股票代码: %s\t' % sameHYStockID
-        reportStr += u'股票名称: %s\n\n' % sqlrw.getStockName(sameHYStockID)
-        reportStr += (u'最近三年TTM利润增长率水平：%+10.2s%+10.2s%+10.2s\n\n' %
+        print('sameHYStockID:', sameHYStockID)
+        reportStr += '同行业股票代码: %s\t' % sameHYStockID
+        reportStr += '股票名称: %s\n\n' % sqlrw.getStockName(sameHYStockID)
+        reportStr += ('最近三年TTM利润增长率水平：%+10.2s%+10.2s%+10.2s\n\n' %
                       hyanalyse.getStockProfitsIncRates(sameHYStockID))
 
-    outFilename = u'./data/report%s.txt' % stockID
+    outFilename = './data/report%s.txt' % stockID
     outfile = codecs.open(outFilename, 'wb', 'utf-8')
     outfile.write(reportStr)
     outfile.close()
@@ -238,5 +238,5 @@ def reportValuation(stockID):
     return myItem
 
 if __name__ == '__main__':
-    stockID = u'000002'
+    stockID = '000002'
     report(stockID)

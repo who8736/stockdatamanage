@@ -28,7 +28,7 @@ from datatrans import dateStrList  # @IgnorePep8
 def scatter(startDate, endDate):
     dateList = dateStrList(startDate, endDate)
     for date in dateList:
-        print date
+        print(date)
         sql = ('select pe, lirunincrease from pelirunincrease '
                'where date="%(date)s";' % locals())
         result = engine.execute(sql)
@@ -67,8 +67,8 @@ def plotKlineOld(stockID):
         dates.append(time.mktime(date.timetuple()))
         peDatas.append(ttmpe)
 
-    print dates
-    print peDatas
+    print(dates)
+    print(peDatas)
     gs1 = gs.GridSpec(3, 1)
     gs1.update(hspace=0)
     fig = plt.figure()
@@ -105,7 +105,7 @@ def plotKline(stockID):
     klineDatas = []
     dates = []
     peDatas = []
-    indexes = range(len(stockDatas))
+    indexes = list(range(len(stockDatas)))
     for i in indexes:
         date, _open, high, low, close, ttmpe = stockDatas[i]
         klineDatas.append([i, _open, high, low, close])
@@ -155,7 +155,7 @@ def test():
     df = tushare.get_k_data('600000')
     df = df[-200:]
     ax = plt.subplot(111)
-    print df.head()
+    print(df.head())
     ax.plot(df.index, df.close)
     monthIndex = getMonthIndex(df.date)
     tickerIndex = df.index[monthIndex]

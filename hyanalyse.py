@@ -89,7 +89,7 @@ def getSubHY(hyID, subLevel):
 
 
 def getHYName(hyID):
-    print 'getHYName(hyID):hyID: ', hyID
+    print('getHYName(hyID):hyID: ', hyID)
     sql = ('select hyname from hangyename where hyid="%(hyID)s";'
            % locals())
     result = sqlrw.engine.execute(sql).fetchone()
@@ -114,7 +114,7 @@ def getHYProfitsIncRate(hyID, quarter):
     sql = ('select profitsIncRate from hyprofits '
            'where hyid="%(hyID)s" and date="%(quarter)s";'
            % locals())
-    print sql
+    print(sql)
     result = sqlrw.engine.execute(sql).fetchone()
     if result is None:
         return None
@@ -152,7 +152,7 @@ def getStockProfitsIncRates(stockID):
     incRate1 = getStockProfitsIncRate(stockID, lastYearQuarter1)
     incRate2 = getStockProfitsIncRate(stockID, lastYearQuarter2)
     incRate3 = getStockProfitsIncRate(stockID, lastYearQuarter3)
-    print (incRate1, incRate2, incRate3)
+    print((incRate1, incRate2, incRate3))
     return (incRate1, incRate2, incRate3)
 
 
@@ -255,9 +255,9 @@ def calAllHYTTMLirun(date):
         result = sqlrw.engine.execute(sql)
         hyIDList = result.fetchall()
         hyIDList = [i[0] for i in hyIDList]
-        print hyIDList
+        print(hyIDList)
         for hyID in hyIDList:
-            print hyID
+            print(hyID)
             calHYTTMLirun(hyID, date)
 
 
@@ -275,7 +275,7 @@ def getHYQuarters():
         hyLirunCount = getHYLirunCount(hyID, lastQuarter)
         if hyStockCount == 0:
             continue
-        print hyID, float(hyLirunCount) / hyStockCount
+        print(hyID, float(hyLirunCount) / hyStockCount)
         if float(hyLirunCount) / hyStockCount > 0.8:
             hyQuarters[hyID] = lastQuarter
         else:
@@ -344,7 +344,7 @@ def test1():
         hyID = getHYIDForStock(stockID)
         hyName = getHYName(hyID)
         hyCount = getHYStockCount(hyID)
-        print stockID, stockName, hyID, hyName, hyCount
+        print(stockID, stockName, hyID, hyName, hyCount)
 
 
 def test2():
@@ -353,7 +353,7 @@ def test2():
     for hyID in hyList:
         pe = getHYPE(hyID, '20171027')
         hyPEs[hyID] = pe
-        print hyID, pe
+        print(hyID, pe)
 
 
 # def getHYIDName(stockID):

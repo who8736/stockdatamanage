@@ -50,17 +50,17 @@ def setStockList():
 #     form.stockList = stockListStr
     if form.validate_on_submit():
         stockListStr = form.stockList.data
-        print stockListStr
+        print(stockListStr)
         stockList = stockListStr.split("|")
         allStockID = readStockIDsFromSQL()
         checkFlag = True
         for stockID in stockList:
             if stockID not in allStockID:
                 checkFlag = False
-                print '%s is not a valid stockid' % stockID
+                print('%s is not a valid stockid' % stockID)
                 break
         if checkFlag:
-            print 'all ok'
+            print('all ok')
             writeChigu(stockList)
             return redirect(url_for('index'))
     return render_template('stocklist.html',

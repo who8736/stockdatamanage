@@ -101,7 +101,7 @@ def gubenDataToDf(stockID, guben):
 #     print t
     try:
         totalshares = [float(i[:-2]) * 10000 for i in totalshares]
-    except ValueError, e:
+    except ValueError as e:
         logging.error('stockID:%s, %s', stockID, e)
 #     print totalshares
     gubenDf = DataFrame({'stockid': stockID,
@@ -199,6 +199,6 @@ if __name__ == '__main__':
     subNum = 6
 
     q = quarterSub(quarterDate, subNum - 1)
-    print q
-    print dateList(q, quarterDate)
-    print len(dateList(q, quarterDate))
+    print(q)
+    print((dateList(q, quarterDate)))
+    print((len(dateList(q, quarterDate))))
