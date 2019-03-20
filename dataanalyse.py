@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 2016年5月4日
 
 @author: who8736
-'''
+"""
 
 import logging
 import os
@@ -147,25 +147,28 @@ def calGuzhi(stockList=None):
 def calHistoryStatus(stockID):
     TTMLirunDf = sqlrw.readTTMLirunForStockID(stockID)
     dates = TTMLirunDf['date']
-    for date in dates:
+    for _date in dates:
         #         print i
-        result = _calHistoryStatus(stockID, TTMLirunDf, date)
+        result = _calHistoryStatus(stockID, TTMLirunDf, _date)
         integrity, seculargrowth, growthmadrate, averageincrement = result
         sql = ('insert ignore into guzhihistorystatus (`stockid`, `date`, '
                '`integrity`, `seculargrowth`, `growthmadrate`, '
                '`averageincrement`) '
-               'values ("%(stockID)s", "%(date)s", %(integrity)r, '
+               'values ("%(stockID)s", "%(_date)s", %(integrity)r, '
                '%(seculargrowth)r, "%(growthmadrate)s", '
                '"%(averageincrement)s");') % locals()
         print(sql)
         sqlrw.engine.execute(sql)
 
 
-def _calHistoryStatus(stockID, TTMLirunDf, date):
-    startDate = datatrans.quarterSub(date, 11)
+# def _calHistoryStatus(stockID, TTMLirunDf, date):
+def _calHistoryStatus(TTMLirunDf, date) -> List[Union[Union[bool, float], Any]]:
+    """
+    """
+    _startDate = datatrans.quarterSub(date, 11)
     print('_calHistoryStatus, current date: %s, start date: %s' % (date,
-                                                                   startDate))
-    _TTMLirunDf = TTMLirunDf[(TTMLirunDf.date >= startDate) &
+                                                                   _startDate))
+    _TTMLirunDf = TTMLirunDf[(TTMLirunDf.date >= _startDate) &
                              (TTMLirunDf.date <= date)]
     print(len(_TTMLirunDf))
     if len(_TTMLirunDf) == 12:

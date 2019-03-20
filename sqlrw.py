@@ -144,7 +144,8 @@ def lirunFileToList(stockID, date):
         return []
 
     profitsList = lirunData[42].split()
-    if profitsList[0].decode('gbk') != '归属于母公司所有者的净利润':
+    # if profitsList[0].decode('gbk') != '归属于母公司所有者的净利润':
+    if profitsList[0] != '归属于母公司所有者的净利润':
         logging.error('lirunFileToList read %s error', stockID)
         return []
 
@@ -231,7 +232,7 @@ def getStockBasicsFromCSV():
     """
     csvFile = open('all.csv')
     text = csvFile.read()
-    text = text.decode('GBK')
+    # text = text.decode('GBK')
     text = text.replace('--', '')
     df = pd.read_csv(StringIO(text), dtype={'code': 'object'})
     df = df.set_index('code')
@@ -360,7 +361,8 @@ def updateKlineMarketValue(stockID, startDate='1990-01-01', endDate=None):
         engine.execute(sql)
 
 
-def updateKlineTTMLirun(stockID, startDate='1990-01-01', endDate='2099-12-31'):
+# def updateKlineTTMLirun(stockID, startDate='1990-01-01', endDate='2099-12-31'):
+def updateKlineTTMLirun(stockID, startDate='1990-01-01'):
     """
     a更新Kline表TTM利润
     """
@@ -399,7 +401,8 @@ def writeGuben(stockID, df):
 
     tableName = 'guben'
     if not initsql.existTable(tableName):
-        initsql.createGubenTable(stockID)
+        # initsql.createGubenTable(stockID)
+        initsql.createGubenTable()
 
     session = Session()
     metadata = MetaData(bind=engine)
