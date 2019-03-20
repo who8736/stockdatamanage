@@ -183,26 +183,26 @@ def createStockList():
     pb,市净率
     timeToMarket,上市日期"""
     metadata = MetaData()
-    unusedTable = Table('stocklist', metadata,
-                        Column('code', String(6), primary_key=True),
-                        Column('name', String(10)),
-                        Column('industry', String(10)),
-                        Column('area', String(10)),
-                        Column('pe', DECIMAL(precision=10, scale=3)),
-                        Column('outstanding', DECIMAL(precision=20, scale=3)),
-                        Column('totals', DECIMAL(precision=20, scale=3)),
-                        Column('totalAssets', DECIMAL(precision=20, scale=3)),
-                        Column('liquidAssets', DECIMAL(precision=20, scale=3)),
-                        Column('fixedAssets', DECIMAL(precision=20, scale=3)),
-                        Column('reserved', DECIMAL(precision=20, scale=3)),
-                        Column(
-                            'reservedPerShare',
-                            DECIMAL(precision=10, scale=3)),
-                        Column('esp', DECIMAL(precision=10, scale=3)),
-                        Column('bvps', DECIMAL(precision=10, scale=3)),
-                        Column('pb', DECIMAL(precision=10, scale=3)),
-                        Column('timeToMarket', DATE)
-                        )
+    _ = Table('stocklist', metadata,
+              Column('code', String(6), primary_key=True),
+              Column('name', String(10)),
+              Column('industry', String(10)),
+              Column('area', String(10)),
+              Column('pe', DECIMAL(precision=10, scale=3)),
+              Column('outstanding', DECIMAL(precision=20, scale=3)),
+              Column('totals', DECIMAL(precision=20, scale=3)),
+              Column('totalAssets', DECIMAL(precision=20, scale=3)),
+              Column('liquidAssets', DECIMAL(precision=20, scale=3)),
+              Column('fixedAssets', DECIMAL(precision=20, scale=3)),
+              Column('reserved', DECIMAL(precision=20, scale=3)),
+              Column(
+                  'reservedPerShare',
+                  DECIMAL(precision=10, scale=3)),
+              Column('esp', DECIMAL(precision=10, scale=3)),
+              Column('bvps', DECIMAL(precision=10, scale=3)),
+              Column('pb', DECIMAL(precision=10, scale=3)),
+              Column('timeToMarket', DATE)
+              )
     metadata.create_all(engine)
 
 
@@ -481,7 +481,7 @@ def writeSQL(data, tableName, insertType='IGNORE'):
 
 def writeStockIDListToFile(stockIDList, filename):
     stockFile = open(filename, 'wb')
-    stockFile.write('\n'.join(stockIDList))
+    stockFile.write(bytes('\n').join(stockIDList))
     stockFile.close()
 
 
@@ -533,7 +533,7 @@ def readValuationSammary():
 
 
 def readValuation(stockID):
-    sql = ('select * from valuation where stockid="%(stockID)s"') % locals()
+    sql = 'select * from valuation where stockid="%(stockID)s"' % locals()
     result = engine.execute(sql).fetchone()
     return result
 
@@ -573,7 +573,7 @@ def readPERate(stockID):
     # 否则设定为最近一次数据日期
     result = engine.execute(sql).fetchone()
     if result is None:
-        return (None, None)
+        return None, None
     else:
         return result
 
@@ -728,7 +728,7 @@ def alterKline():
         tablename = i[0]
         sql = 'call stockdata.alterkline(%s)'
         try:
-            result = engine.execute(sql, tablename)
+            engine.execute(sql, tablename)
 #             result = result.fetchall()
             print(tablename)
         except sqlalchemy.exc.OperationalError as e:
