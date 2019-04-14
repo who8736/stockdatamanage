@@ -13,27 +13,27 @@ from pandas.core.frame import DataFrame
 from lxml import etree
 
 
-def quarterSub(quarterDate, subNum):
+def quarterSub(_quarterDate, subNum):
     """
     # 从quarterDate中减去subNum个季度
     quarterDate: YYYYQ格式， 4位表示年，1表示季度
 
     """
-    return quarterAdd(quarterDate, -subNum)
+    return quarterAdd(_quarterDate, -subNum)
 
 
-def quarterAdd(quarterDate, addNum):
+def quarterAdd(_quarterDate, addNum):
     """
     # 从quarterDate中加上subNum个季度
     quarterDate: YYYYQ格式， 4位表示年，1表示季度
 
     """
-    quarters = int(quarterDate / 10) * 4 + (quarterDate % 10)
+    quarters = int(_quarterDate / 10) * 4 + (_quarterDate % 10)
     quarters = quarters + addNum
-    year = (quarters - 1) / 4
+    year = (quarters - 1) // 4
 #     print year
-    quarterDate = year * 10 + (quarters - year * 4)
-    return quarterDate
+    _quarterDate = year * 10 + (quarters - year * 4)
+    return _quarterDate
 
 
 def dateList(startDate, endDate):
@@ -129,7 +129,7 @@ def gubenDfToList(df):
 
 
 def transLirunDf(df, year, quarter):
-    date = [year * 10 + quarter for unusedi in range(df['code'].count())]
+    date = [year * 10 + quarter for _ in range(df['code'].count())]
     stockid = df['code']
     profits = df['net_profits']
     if quarter == 4:

@@ -368,7 +368,7 @@ def downloadLirunFromTushare(date):
         net_profits,净利润(万元)
         report_date,发布日期
     """
-    year = date / 10
+    year = date // 10
     quarter = date % 10
 #     df = ts.get_report_data(year, quarter)
     # 因tushare的利润下载函数不支持重试和指定超时值，使用下面的改进版本
