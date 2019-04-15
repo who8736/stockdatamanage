@@ -162,7 +162,7 @@ def calHistoryStatus(stockID):
 
 
 # def _calHistoryStatus(stockID, TTMLirunDf, date):
-def _calHistoryStatus(TTMLirunDf, date) -> List[Union[Union[bool, float], Any]]:
+def _calHistoryStatus(TTMLirunDf, date):
     """
     """
     _startDate = datatrans.quarterSub(date, 11)
