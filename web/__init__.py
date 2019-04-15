@@ -10,7 +10,7 @@ from flask_bootstrap import Bootstrap
 import importlib
 
 importlib.reload(sys)
-sys.setdefaultencoding('utf-8')  # @UndefinedVariable
+# sys.setdefaultencoding('utf-8')  # @UndefinedVariable
 
 app = Flask(__name__)
 app.config.from_object('config')

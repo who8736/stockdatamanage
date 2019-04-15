@@ -241,6 +241,7 @@ if __name__ == '__main__':
 #     updateDataTest()
 
     startUpdate()
+    # updateLirun()
 
 #     stockList = sqlrw.readStockIDsFromSQL()
 #     updateGubenSingleThread()
