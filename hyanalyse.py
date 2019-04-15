@@ -74,7 +74,7 @@ def getHYList(level=4):
 def getSubHY(hyID, subLevel):
     """ 查询指定行业包含的下级行业代码
     """
-    level = len(hyID) / 2
+    level = len(hyID) // 2
     sql = ('select hyid from hangyename '
            'where hylevel%(level)sid="%(hyID)s" and '
            'hylevel="%(subLevel)s";') % locals()
@@ -160,6 +160,7 @@ def calHYTTMLirun(hyID, date):
     """ 计算指定行业的TTMLirun
     date: 格式YYYYQ, 4位年+1位季度，利润所属日期
     """
+    print("calHTTTMLirun hyID: %s, date: %d" % (hyID, date))
     if len(hyID) == 8:
         return calHYTTMLirunLowLevel(hyID, date)
     else:
@@ -169,7 +170,7 @@ def calHYTTMLirun(hyID, date):
 def calHYTTMLirunHighLevel(hyID, date):
     """ 计算第1、2、3级行业的TTM利润
     """
-    level = len(hyID) / 2
+    level = len(hyID) // 2
     subHyIDList = getSubHY(hyID, level + 1)
     if subHyIDList is None:
         return None
@@ -369,11 +370,11 @@ if __name__ == '__main__':
     #    hyquarters = getHYQuarters()
     #    test1()
     #    test2()
-    hypedf = getHYsPE()
+#    hypedf = getHYsPE()
     #    getHYPE('01010801', '20171027')
 
     #     calAllHYTTMLirun(20154)
-    #     hyID = '000101'
-    #     calHYTTMLirun(hyID, 20154)
+    hyID = '000101'
+    calHYTTMLirun(hyID, 20184)
     #     calHYTTMLirun(hyID, 20162)
     #     stockList = ['000732', '', '', '', '', '', '', ]
