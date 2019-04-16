@@ -49,5 +49,13 @@ def urlMainTable(stockID, tableType):
     return url
 
 
+def longStockID(stockID):
+    if(len(stockID) == 9):
+        return stockID
+    if(stockID[0] == '6'):
+        return 'sh.%s' % stockID
+    else:
+        return 'sz.%s' % stockID
+
 if __name__ == '__main__':
     pass

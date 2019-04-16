@@ -121,12 +121,12 @@ def writeGuzhiToSQL(stockID, data):
     return engine.execute(sql)
 
 
-def writeKline(stockID, df):
+def writeKline(stockID, df, insertType='IGNORE'):
     """股票K线历史写入数据库"""
     tableName = tablenameKline(stockID)
     if not initsql.existTable(tableName):
         initsql.createKlineTable(stockID)
-    return writeSQL(df, tableName)
+    return writeSQL(df, tableName, insertType)
 
 
 def lirunFileToList(stockID, date):
@@ -446,7 +446,13 @@ def writeSQL(data, tableName, insertType='IGNORE'):
     session = Session()
     metadata = MetaData(bind=engine)
     mytable = Table(tableName, metadata, autoload=True)
-    session.execute(mytable.insert().prefix_with(insertType), data)
+    if(insertType == 'IGNORE'):
+        session.execute(mytable.insert().prefix_with(insertType), data)
+    elif(insertType == 'REPLACE'):
+        # mytable(data)
+        session.add(mytable)
+        # session.execute(mytable.replace(), data)
+        session.merge(data)
     session.commit()
     session.close()
     return True

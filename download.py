@@ -22,6 +22,7 @@ import pandas as pd
 from pandas.core.frame import DataFrame
 from pandas.compat import StringIO
 from tushare.stock import cons as ct
+import baostock as bs
 
 from misc import urlGuben, urlGuzhi, urlMainTable
 from misc import filenameGuben, filenameMainTable, filenameGuzhi
@@ -292,7 +293,51 @@ def downGuzhi(stockID):
 
 
 def downKline(stockID, startDate=None, endDate=None, retry_count=6):
-    """下载单个股票K线历史写入数据库"""
+    """ 下载单个股票K线历史写入数据库, 通过调用不同下载函数选择不同的数据源
+    """
+    logging.debug('download kline: %s', stockID)
+
+    # 数据源：　baostock
+    downKlineFromBaostock(stockID, startDate, endDate, retry_count)
+
+    # 数据源：　tushare
+    # downKlineFromTushare(stockID, startDate, endDate, retry_count)
+
+def downKlineFromBaostock(stockID, startDate=None, endDate=None, retry_count=6):
+    """下载单个股票K线历史写入数据库, 下载源为baostock"""
+    if startDate is None:  # startDate为空时取股票最后更新日期
+        startDate = klineUpdateDate(stockID)
+    #         print stockID, startDate
+    startDate = startDate.strftime('%Y-%m-%d')
+    if endDate is None:
+        endDate = dt.datetime.today().strftime('%Y-%m-%d')
+    #     retryCount = 0
+    for cur_retry in range(1, retry_count + 1):
+        try:
+            fieldsStr = "date,open,high,close,low,volume,peTTM,tradestatus"
+            fields = ['date','open','high','close','low','volume','ttmpe']
+            rs = bs.query_history_k_data_plus(stockID, fieldsStr, startDate, endDate)
+            dataList = []
+            while rs.next():
+                dataList.append(rs.get_row_data())
+            df = pd.DataFrame(dataList, columns=rs.fields)
+            df = df[df.tradestatus == '1'].copy()
+            df = df.rename({'peTTM': 'ttmpe'})
+            df = df.iloc[0:, :-1]
+            # df = ts.get_hist_data(stockID, startDate, endDate, retry_count=1)
+        except IOError:
+            logging.warning('fail download %s Kline data %d times, retry....',
+                            stockID, cur_retry)
+        else:
+            if (df is None) or df.empty:
+                return None
+            else:
+                if writeKline(stockID, df):
+                    return
+    logging.error('fail download %s Kline data!', stockID)
+
+def downKlineFromTushare(stockID, startDate=None, endDate=None, retry_count=6))
+    """下载单个股票K线历史写入数据库, 下载源为tushare"""
     logging.debug('download kline: %s', stockID)
     if startDate is None:  # startDate为空时取股票最后更新日期
         startDate = klineUpdateDate(stockID)
@@ -534,3 +579,6 @@ def gubenURLToDf(stockID):
 
 if __name__ == '__main__':
     pass
+    stockID = '000651'
+    startDate = '2019-04-01'
+    downKlineFromBaostock(stockID, startDate)

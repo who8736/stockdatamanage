@@ -13,6 +13,7 @@ import time
 from multiprocessing.dummy import Pool as ThreadPool
 from functools import wraps
 import datetime as dt
+import baostock as bs
 
 import datatrans
 import hyanalyse
@@ -43,6 +44,13 @@ def logfun(func):
 def startUpdate():
     """自动更新全部数据，包括K线历史数据、利润数据、K线表中的TTM市盈率
     """
+
+    # 使用baostock数据源时需先做登录操作
+    lg = bs.login()
+    if lg.error_code != '0':
+        logging.error('login baostock failed')
+        return
+
     # 更新股票列表与行业列表
     downStockList()
     stockList = sqlrw.readStockIDsFromSQL()
@@ -240,8 +248,8 @@ if __name__ == '__main__':
 
 #     updateDataTest()
 
-    # startUpdate()
-    updateLirun()
+    startUpdate()
+    # updateLirun()
 
 #     stockList = sqlrw.readStockIDsFromSQL()
 #     updateGubenSingleThread()
