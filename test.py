@@ -15,6 +15,15 @@ def downGubenFromEastmoney():
     url: 
     """
     pass
+    stockID = '600000'
+    startDate = '2019-04-01'
+    bs.login()
+    from misc import usrlGubenEastmoney
+    from misc import urlGubenEastmoney
+    urlGubenEastmoney('600000')
+    gubenURL = urlGubenEastmoney(stockID)
+    req = getreq(gubenURL)
+    guben = urllib.request.urlopen(req).read()
 
 
 def urlGuben(stockID):

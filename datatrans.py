@@ -86,7 +86,13 @@ def getCurYear():
     return datetime.today().year
 
 
-def gubenDataToDf(stockID, guben):
+def gubenDataToDfSina(stockID, guben):
+    """
+    新浪的股本数据转换为DataFrame格式
+    :param stockID: 股本代码， 600000
+    :param guben: 下载股本数据, html格式
+    :return: 股本数据， DataFrame格式
+    """
     gubenTree = etree.HTML(guben)
     gubenData = gubenTree.xpath('''//html//body//div//div
                                 //div//div//table//tr//td
@@ -109,6 +115,34 @@ def gubenDataToDf(stockID, guben):
                          'totalshares': totalshares})
     return gubenDf
 
+def gubenDataToDfEastymoney(stockID, guben):
+    """
+    东方财富的股本数据转换为DataFrame格式
+    :param stockID: 股本代码， 600000
+    :param guben: 下载股本数据, html格式
+    :return: 股本数据， DataFrame格式
+    """
+    gubenTree = etree.HTML(guben)
+    gubenData = gubenTree.xpath('''//html//body//div//div
+                                //div//div//table//tr//td
+                                //table//tr//td//table//tr//td''')
+    date = [gubenData[i][0].text for i in range(0, len(gubenData), 2)]
+    date = [datetime.strptime(d, '%Y-%m-%d') for d in date]
+    #     print date
+    totalshares = [
+        gubenData[i + 1][0].text for i in range(0, len(gubenData), 2)]
+    #     print totalshares
+    #     t = [i[:-2] for i in totalshares]
+    #     print t
+    try:
+        totalshares = [float(i[:-2]) * 10000 for i in totalshares]
+    except ValueError as e:
+        logging.error('stockID:%s, %s', stockID, e)
+    #     print totalshares
+    gubenDf = DataFrame({'stockid': stockID,
+                         'date': date,
+                         'totalshares': totalshares})
+    return gubenDf
 
 def gubenDfToList(df):
     timea = datetime.now()

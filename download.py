@@ -26,7 +26,7 @@ import baostock as bs
 
 from misc import urlGuben, urlGuzhi, urlMainTable
 from misc import filenameGuben, filenameMainTable, filenameGuzhi
-# from misc import  filenameLirun
+from misc import longStockID
 import datatrans
 import hyanalyse
 import sqlrw
@@ -218,9 +218,10 @@ def downloadClassified():
 
 def downGuben(stockID, retry=3, timeout=10):
     """下载单个股票股本数据写入数据库"""
+    # //*[@id="lngbbd_Table"]/tbody/tr[1]
     logging.debug('downGubenToSQL: %s', stockID)
     socket.setdefaulttimeout(timeout)
-    gubenURL = urlGuben(stockID)
+    gubenURL = urlGubenEastmoney(stockID)
     req = getreq(gubenURL)
 #     downloadStat = False
     gubenDf = pd.DataFrame()
@@ -312,11 +313,13 @@ def downKlineFromBaostock(stockID, startDate=None, endDate=None, retry_count=6):
     if endDate is None:
         endDate = dt.datetime.today().strftime('%Y-%m-%d')
     #     retryCount = 0
+    longID = longStockID(stockID)
+
     for cur_retry in range(1, retry_count + 1):
         try:
             fieldsStr = "date,open,high,close,low,volume,peTTM,tradestatus"
             fields = ['date','open','high','close','low','volume','ttmpe']
-            rs = bs.query_history_k_data_plus(stockID, fieldsStr, startDate, endDate)
+            rs = bs.query_history_k_data_plus(longID, fieldsStr, startDate, endDate)
             dataList = []
             while rs.next():
                 dataList.append(rs.get_row_data())
@@ -336,7 +339,7 @@ def downKlineFromBaostock(stockID, startDate=None, endDate=None, retry_count=6):
                     return
     logging.error('fail download %s Kline data!', stockID)
 
-def downKlineFromTushare(stockID, startDate=None, endDate=None, retry_count=6))
+def downKlineFromTushare(stockID, startDate=None, endDate=None, retry_count=6):
     """下载单个股票K线历史写入数据库, 下载源为tushare"""
     logging.debug('download kline: %s', stockID)
     if startDate is None:  # startDate为空时取股票最后更新日期

@@ -36,11 +36,24 @@ def urlGuzhi(stockID):
     return url
 
 
-def urlGuben(stockID):
+def urlGubenSina(stockID):
+    """
+    股本数据地址，数据源：sina
+    """
     return ('http://vip.stock.finance.sina.com.cn/corp/go.php'
             '/vCI_StockStructureHistory/stockid'
             '/%s/stocktype/TotalStock.phtml' % stockID)
 
+def urlGubenEastmoney(stockID):
+    """
+    股本数据地址，数据源：eastmoney
+    """
+    if(stockID[0] == '6'):
+        flag = 'sh'
+    else:
+        flag = 'sz'
+    return('http://f10.eastmoney.com/f10_v2/CapitalStockStructure.aspx?'
+           'code=%(flag)s%(stockID)s#lngbbd-0' % locals())
 
 def urlMainTable(stockID, tableType):
     url = ('http://money.finance.sina.com.cn/corp/go.php'
