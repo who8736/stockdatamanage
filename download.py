@@ -24,7 +24,7 @@ from pandas.compat import StringIO
 from tushare.stock import cons as ct
 import baostock as bs
 
-from misc import urlGuben, urlGuzhi, urlMainTable
+from misc import urlGubenSina, urlGubenEastmoney, urlGuzhi, urlMainTable
 from misc import filenameGuben, filenameMainTable, filenameGuzhi
 from misc import longStockID
 import datatrans

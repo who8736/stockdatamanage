@@ -5,9 +5,16 @@ Created on Mon Apr 15 15:27:38 2019
 @author: ff
 """
 
-#from sqlrw import 
-import baostock as bs
 import pandas as pd
+from pandas import DataFrame
+from urllib.request import urlopen
+from lxml import etree
+from datetime import datetime
+
+import baostock as bs
+
+from download import getreq
+from misc import urlGubenEastmoney
 
 
 def downGubenFromEastmoney():
@@ -18,13 +25,34 @@ def downGubenFromEastmoney():
     stockID = '600000'
     startDate = '2019-04-01'
     bs.login()
-    from misc import usrlGubenEastmoney
-    from misc import urlGubenEastmoney
-    urlGubenEastmoney('600000')
+    # from misc import usrlGubenEastmoney
+    # urlGubenEastmoney('600000')
     gubenURL = urlGubenEastmoney(stockID)
     req = getreq(gubenURL)
-    guben = urllib.request.urlopen(req).read()
+    guben = urlopen(req).read()
 
+    gubenTree = etree.HTML(guben)
+    gubenData = gubenTree.xpath('''//html//body//div//div
+                                //div//div//table//tr//td
+                                //table//tr//td//table//tr//td''')
+    date = [gubenData[i][0].text for i in range(0, len(gubenData), 2)]
+    date = [datetime.strptime(d, '%Y-%m-%d') for d in date]
+    #     print date
+    totalshares = [
+        gubenData[i + 1][0].text for i in range(0, len(gubenData), 2)]
+    #     print totalshares
+    #     t = [i[:-2] for i in totalshares]
+    #     print t
+    try:
+        totalshares = [float(i[:-2]) * 10000 for i in totalshares]
+    except ValueError as e:
+        # logging.error('stockID:%s, %s', stockID, e)
+        print('stockID:%s, %s', stockID, e)
+    #     print totalshares
+    gubenDf = DataFrame({'stockid': stockID,
+                         'date': date,
+                         'totalshares': totalshares})
+    return gubenDf
 
 def urlGuben(stockID):
     return ('http://vip.stock.finance.sina.com.cn/corp/go.php'
