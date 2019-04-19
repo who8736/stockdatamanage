@@ -53,7 +53,7 @@ def urlGubenEastmoney(stockID):
     else:
         flag = 'sz'
     return('http://f10.eastmoney.com/f10_v2/CapitalStockStructure.aspx?'
-           'code=%(flag)s%(stockID)s#lngbbd-0' % locals())
+           'code=%(flag)s%(stockID)s' % locals())
 
 def urlMainTable(stockID, tableType):
     url = ('http://money.finance.sina.com.cn/corp/go.php'

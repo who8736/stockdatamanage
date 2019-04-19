@@ -155,7 +155,7 @@ def getreq(url, includeHeader=False):
                                   'rv:49.0) Gecko/20100101 Firefox/49.0'),
                    'Accept': ('text/html,application/xhtml+xml,'
                               'application/xml;q=0.9,*/*;q=0.8'),
-                   'Accept-Encoding': 'gzip, deflate',
+                   # 'Accept-Encoding': 'gzip, deflate',
                    'Accept-Language': 'zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3',
                    'Connection': 'keep-alive',
                    'DNT': '1',
@@ -252,12 +252,12 @@ def downGuben(stockID, retry=3, timeout=10):
     return None
 
 
-def downloadGuben(stockID):
+# def downloadGuben(stockID):
     """ 下载股本并保存到文件， 确认为无用函数后可删除
     """
-    url = urlGuben(stockID)
-    filename = filenameGuben(stockID)
-    return dataToFile(url, filename)
+    # url = urlGuben(stockID)
+    # filename = filenameGuben(stockID)
+    # return dataToFile(url, filename)
 
 
 def downGuzhi_del(stockID):
@@ -558,26 +558,26 @@ def _get_report_data(year, quarter, pageNo, dataArr,
                 return dataArr
 
 
-def gubenURLToDf(stockID):
-    """ 确认无用后可删除
-    """
-    gubenURL = urlGuben(stockID)
-    timeout = 6
-    try:
-        print('开始下载数据。。。')
-        socket.setdefaulttimeout(timeout)
-#         sock = urllib.urlopen(gubenURL)
-#         guben = sock.read()
-        req = getreq(gubenURL)
-        guben = urllib.request.urlopen(req).read()
-    except IOError as e:
-        print(e)
-        print('数据下载失败： %s' % stockID)
-        return None
-    else:
-        #         sock.close()
-        #     print guben
-        return datatrans.gubenDataToDf(stockID, guben)
+# def gubenURLToDf(stockID):
+#     """ 确认无用后可删除
+#     """
+#     gubenURL = urlGuben(stockID)
+#     timeout = 6
+#     try:
+#         print('开始下载数据。。。')
+#         socket.setdefaulttimeout(timeout)
+# #         sock = urllib.urlopen(gubenURL)
+# #         guben = sock.read()
+#         req = getreq(gubenURL)
+#         guben = urllib.request.urlopen(req).read()
+#     except IOError as e:
+#         print(e)
+#         print('数据下载失败： %s' % stockID)
+#         return None
+#     else:
+#         #         sock.close()
+#         #     print guben
+#         return datatrans.gubenDataToDf(stockID, guben)
 
 
 if __name__ == '__main__':

@@ -13,7 +13,9 @@ from datetime import datetime
 
 import baostock as bs
 
-from download import getreq
+# from download import getreq
+from download import *
+
 from misc import urlGubenEastmoney
 
 
@@ -28,10 +30,13 @@ def downGubenFromEastmoney():
     # from misc import usrlGubenEastmoney
     # urlGubenEastmoney('600000')
     gubenURL = urlGubenEastmoney(stockID)
+    # req = getreq(gubenURL, includeHeader=True)
     req = getreq(gubenURL)
     guben = urlopen(req).read()
 
     gubenTree = etree.HTML(guben)
+    # //*[@id="lngbbd_Table"]/tbody/tr[1]/th[3]
+    gubenData = gubenTree.xpath('//tr')
     gubenData = gubenTree.xpath('''//html//body//div//div
                                 //div//div//table//tr//td
                                 //table//tr//td//table//tr//td''')
@@ -81,4 +86,6 @@ def downLiutongGubenFromBaostock():
 if __name__ == "__main__":
     """072497"""
     pass
-    df = downLiutongGubenFromBaostock()
+    # df = downLiutongGubenFromBaostock()
+    df = get_stock_basics()
+    print(df.head)
