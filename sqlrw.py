@@ -30,6 +30,8 @@ import sqlalchemy
 from pandas.core.frame import DataFrame
 # from tushare.stock import cons as ct
 import xlrd
+import tushare as ts
+
 
 import datatrans
 import initsql
@@ -82,10 +84,49 @@ def writeGubenToSQL(stockID, gubenDf):
     """单个股票股本数据写入数据库"""
     tablename = 'guben'
     lastUpdate = gubenUpdateDate(stockID)
-    gubenDf = gubenDf[gubenDf.date > lastUpdate]
+    # gubenDf = gubenDf[pd.Timestamp(gubenDf.date) > lastUpdate]
+    gubenDf = gubenDf[gubenDf.date > pd.Timestamp(lastUpdate)]
     if not gubenDf.empty:
         return writeSQL(gubenDf, tablename)
 
+def checkGuben(tradeDate='20190419'):
+    """ 以下方法用于从tushare.pro下载日频信息中的股本数据
+        与数据库保存的股本数据比较，某股票的总股本存在差异时说明股本有变动
+        返回需更新的股票列表
+    """
+    pro = ts.pro_api()
+    dfFromTushare = pro.daily_basic(ts_code='', trade_date=tradeDate,
+                         fields='ts_code,total_share')
+    dfFromTushare['stockid'] = dfFromTushare['ts_code'].str[:6]
+
+    sql = """ select a.stockid, a.date, a.totalshares from guben as a, 
+            (SELECT stockid, max(date) as maxdate FROM stockdata.guben 
+            group by stockid) as b 
+            where a.stockid=b.stockid and a.date = b.maxdate;
+            """
+    dfFromSQL = pd.read_sql(sql, con=engine)
+    df = pd.merge(dfFromTushare, dfFromSQL, how='left', on='stockid')
+    df.loc[0:, 'cha'] = df.apply(
+        lambda x: abs(x['total_share'] * 10000 - x['totalshares']) / (
+                    x['total_share'] * 10000), axis=1)
+
+    chaRate = 0.0001
+    dfUpdate = df[df.cha>=chaRate]
+    # print(dfUpdate)
+    # for stockID in dfUpdate['stockid']:
+    #     sql = ('select max(date) from guben where stockid="%s" limit 1;'
+    #           % stockID)
+    #     dateA = getLastUpdate(sql)
+    #     setGubenLastUpdate(stockID, dateA)
+
+    # 对于无需更新股本的股票，将其更新日期修改为上一交易日
+    dfFinished = df[df.cha<chaRate]
+    date = '%s-%s-%s' % (tradeDate[:4], tradeDate[4:6], tradeDate[6:])
+    for stockID in dfFinished['stockid']:
+        setGubenLastUpdate(stockID, date)
+    # print(df3)
+    # 返回需更新股本的股票
+    return dfUpdate
 
 def writeGuzhiToSQL(stockID, data):
     """下载单个股票估值数据写入数据库"""
@@ -283,7 +324,8 @@ def klineUpdateDate(stockID):
 
 
 def gubenUpdateDate(stockID):
-    sql = 'select max(date) from guben where stockid="%s" limit 1;' % stockID
+    # sql = 'select max(date) from guben where stockid="%s" limit 1;' % stockID
+    sql = 'select guben from lastupdate where stockid="%s";' % stockID
     return getLastUpdate(sql)
 
 
@@ -361,7 +403,6 @@ def updateKlineMarketValue(stockID, startDate='1990-01-01', endDate=None):
         engine.execute(sql)
 
 
-# def updateKlineTTMLirun(stockID, startDate='1990-01-01', endDate='2099-12-31'):
 def updateKlineTTMLirun(stockID, startDate='1990-01-01'):
     """
     a更新Kline表TTM利润
@@ -426,7 +467,6 @@ def writeStockList(stockList):
 
 def writeSQL(data, tableName, insertType='IGNORE'):
     """insetType: IGNORE 忽略重复主键；
-
     """
     logging.debug('start writeSQL %s' % tableName)
 
@@ -446,9 +486,9 @@ def writeSQL(data, tableName, insertType='IGNORE'):
     session = Session()
     metadata = MetaData(bind=engine)
     mytable = Table(tableName, metadata, autoload=True)
-    if(insertType == 'IGNORE'):
+    if insertType == 'IGNORE':
         session.execute(mytable.insert().prefix_with(insertType), data)
-    elif(insertType == 'REPLACE'):
+    elif insertType == 'REPLACE':
         # mytable(data)
         session.add(mytable)
         # session.execute(mytable.replace(), data)
@@ -856,7 +896,7 @@ def updateKlineEXTData(stockID, startDate=None):
     """
     logging.debug('updateKlineEXTData: %s', stockID)
     if startDate is None:
-        startDate = getTTMPELastUpdate(stockID)
+        startDate = getTTMPELastUpdate(stockID) + dt.timedelta(days=1)
         startDate = startDate.strftime('%Y-%m-%d')
     try:
         updateKlineMarketValue(stockID, startDate)
@@ -922,16 +962,17 @@ def getLastUpdate(sql):
     --------
     datetime：datetime
     """
-    lastUpdateDate = engine.execute(sql).first()
+    lastUpdateDate = engine.execute(sql).first()[0]
     if lastUpdateDate is None:
         return dt.datetime.strptime('1990-01-01', '%Y-%m-%d')
 
-    lastUpdateDate = lastUpdateDate[0]
+    # lastUpdateDate = lastUpdateDate[0]
     if isinstance(lastUpdateDate, dt.date):
-        return lastUpdateDate + dt.timedelta(days=1)
+        return lastUpdateDate
+        # return lastUpdateDate + dt.timedelta(days=1)
     else:
-        logging.debug('lastUpdateDate is: %s', type(lastUpdateDate))
-        return dt.datetime.strptime('1990-01-01', '%Y-%m-%d')
+        logging.debug('lastUpdateDate type is: %s', type(lastUpdateDate))
+        return dt.datetime.strptime(lastUpdateDate, '%Y-%m-%d')
 
 
 def writeChigu(stockList):
@@ -981,6 +1022,12 @@ def setKlineTTMPELastUpdate(stockID, endDate):
     result = engine.execute(sql)
     return result
 
+def setGubenLastUpdate(stockID, endDate):
+    sql = ('insert into lastupdate (`stockid`, `guben`) '
+           'values ("%(stockID)s", "%(endDate)s") '
+           'on duplicate key update `guben`="%(endDate)s";' % locals())
+    result = engine.execute(sql)
+    return result
 
 def updateKlineTTMPE(stockID, startDate='1990-01-01', endDate=None):
     """

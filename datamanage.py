@@ -9,17 +9,21 @@ Created on 2016年1月10日
 import os
 import logging
 import time
+import configparser
+from datetime import datetime, timedelta
 # import ConfigParser
 from multiprocessing.dummy import Pool as ThreadPool
 from functools import wraps
 import datetime as dt
 import baostock as bs
+import tushare as ts
 
 import datatrans
 import hyanalyse
 import dataanalyse
 import sqlrw
 import valuation
+from sqlrw import checkGuben, setGubenLastUpdate
 from download import downGuben, downGuzhi, downKline
 from download import downMainTable, downloadLirun, downStockList
 
@@ -45,19 +49,13 @@ def startUpdate():
     """自动更新全部数据，包括K线历史数据、利润数据、K线表中的TTM市盈率
     """
 
-    # 使用baostock数据源时需先做登录操作
-    lg = bs.login()
-    if lg.error_code != '0':
-        logging.error('login baostock failed')
-        return
-
     # 更新股票列表与行业列表
     downStockList()
     stockList = sqlrw.readStockIDsFromSQL()
 #     stockList = stockList[:10]
 
     # 更新股票交易与估值数据
-    threadNum = 20
+    threadNum = 10
     updateKlineBaseData(stockList, threadNum)
     updateLirun()
 
@@ -128,10 +126,28 @@ def updateGuben(stockList, threadNum):
 def updateGubenSingleThread():
     """ 更新股本单线程版
     """
-    stockList = sqlrw.readGubenUpdateList()
-    for stockID in stockList:
+    # stockList = sqlrw.readGubenUpdateList()
+    # for stockID in stockList:
+    #     downGuben(stockID)
+    #     time.sleep(5)
+    # 以上代码为原股本下载代码
+
+    endTime = datetime.now()
+    # 选择要提前的天数
+    startTime = endTime + timedelta(days=-10)
+    # 格式化处理
+    startDate = startTime.strftime('%Y%m%d')
+    endDate = endTime.strftime('%Y%m%d')
+
+    pro = ts.pro_api()
+    df = pro.trade_cal(exchange='SSE', start_date=startDate,
+                       end_date=endDate)
+    date = df[df.is_open == 1].cal_date.max()
+    gubenUpdateDf = checkGuben(date)
+    for stockID in gubenUpdateDf['stockid']:
         downGuben(stockID)
-        time.sleep(5)
+        setGubenLastUpdate(stockID, date)
+        time.sleep(1)
 
 
 @logfun
@@ -219,9 +235,14 @@ def readStockListFromFile(filename):
 
 
 if __name__ == '__main__':
-    logfilename = os.path.join(os.path.abspath(os.curdir), 'datamanage.log')
+    # 取得当前年份，按年记录日志
+    nowTime = datetime.now()
+    logDate = nowTime.strftime('%Y')
+    logfilename = 'datamanage%s.log' % logDate
+    logfilename = os.path.join(os.path.abspath(os.curdir), logfilename)
     print(os.path.abspath(os.curdir))
     print(logfilename)
+
     formatStr = ('%(asctime)s %(filename)s[line:%(lineno)d] '
                  '%(levelname)s %(message)s')
     logging.basicConfig(level=logging.DEBUG,
@@ -246,9 +267,25 @@ if __name__ == '__main__':
 #     logging.info('This is info message')
 #     logging.warning('This is warning message')
 
+    # 使用baostock数据源时需先做登录操作
+    lg = bs.login()
+    if lg.error_code != '0':
+        logging.error('login baostock failed')
+
+    # 加载tushare.pro用户的token,需事先在sql.conf文件中设置
+    cf = configparser.ConfigParser()
+    cf.read('sql.conf')
+    if cf.has_option('main', 'token'):
+        token = cf.get('main', 'token')
+    else:
+        token = ''
+    ts.set_token(token)
+    print(token)
+
 #     updateDataTest()
 
     startUpdate()
+
     # updateLirun()
 
 #     stockList = sqlrw.readStockIDsFromSQL()

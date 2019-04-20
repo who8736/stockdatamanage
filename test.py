@@ -10,13 +10,15 @@ from pandas import DataFrame
 from urllib.request import urlopen
 from lxml import etree
 from datetime import datetime
-
 import baostock as bs
+import tushare as ts
 
 # from download import getreq
 from download import *
-
+from sqlrw import *
+from sqlconn import engine
 from misc import urlGubenEastmoney
+from misc import *
 
 
 def downGubenFromEastmoney():
@@ -83,9 +85,101 @@ def downLiutongGubenFromBaostock():
     bs.logout()
     return result
 
+def checkGuben(date='2019-04-19'):
+    """ 以下方法用于从tushare.pro下载日频信息中的股本数据
+        与数据库保存的股本数据比较，某股票的总股本存在差异时说明股本有变动
+        返回需更新的股票列表
+    """
+    pro = ts.pro_api()
+    tradeDate = '%s%s%s' % (date[:4], date[5:7], date[8:])
+    dfFromTushare = pro.daily_basic(ts_code='', trade_date=tradeDate,
+                         fields='ts_code,total_share')
+    dfFromTushare['stockid'] = dfFromTushare['ts_code'].str[:6]
+
+    sql = """ select a.stockid, a.date, a.totalshares from guben as a, 
+            (SELECT stockid, max(date) as maxdate FROM stockdata.guben 
+            group by stockid) as b 
+            where a.stockid=b.stockid and a.date = b.maxdate;
+            """
+    dfFromSQL = pd.read_sql(sql, con=engine)
+    df = pd.merge(dfFromTushare, dfFromSQL, how='left', on='stockid')
+    df.loc[0:, 'cha'] = df.apply(
+        lambda x: abs(x['total_share'] * 10000 - x['totalshares']) / (
+                    x['total_share'] * 10000), axis=1)
+
+    chaRate = 0.0001
+    dfUpdate = df[df.cha>=chaRate]
+    print(dfUpdate)
+    for stockID in dfUpdate['stockid']:
+        sql = ('select max(date) from guben where stockid="%s" limit 1;'
+              % stockID)
+        dateA = getLastUpdate(sql)
+        setGubenLastUpdate(stockID, dateA)
+
+    # 对于需更新股本的股票，逐个更新股本并修改更新日期
+    # 对于无需更新股本的股票，将其更新日期修改为上一交易日
+    dfFinished = df[df.cha<chaRate]
+    for stockID in dfFinished['stockid']:
+        setGubenLastUpdate(stockID, date)
+    # print(df3)
+    return dfUpdate
+
+
+def downGubenShuju(stockID='300445', date='2019-04-19'):
+    print('start update guben: %s' % stockID)
+    updateDate = gubenUpdateDate(stockID)
+    # print(type(updateDate))
+    # print(updateDate.strftime('%Y%m%d'))
+    startDate = updateDate.strftime('%Y%m%d')
+    pro = ts.pro_api()
+    code = tsCode(stockID)
+    # print(code)
+    df = pro.daily_basic(ts_code=code, start_date=startDate,
+                              fields='trade_date,total_share')
+    # print(df)
+    gubenDate = []
+    gubenValue = []
+    for idx in reversed(df.index):
+        if idx > 0 and df.total_share[idx] != df.total_share[idx - 1]:
+            # print(type(idx), idx, df.trade_date[idx], df.total_share[idx])
+            # print(type(idx - 1), idx, df.trade_date[idx - 1], df.total_share[idx - 1])
+            gubenDate.append(datetime.strptime(df.trade_date[idx - 1],
+                                               '%Y%m%d'))
+            gubenValue.append(df.total_share[idx - 1] * 10000)
+    resultDf = pd.DataFrame({'stockid': stockID,
+                             'date': gubenDate,
+                             'totalshares': gubenValue})
+    print(resultDf)
+    writeGubenToSQL(stockID, resultDf)
+    return resultDf
+
+
+
+def downGubenTest():
+    """ 仅做测试用，下载单个股本数据，验证股本下载函数是否正确"""
+    downGuben('300445')
+
+
 if __name__ == "__main__":
     """072497"""
     pass
     # df = downLiutongGubenFromBaostock()
-    df = get_stock_basics()
-    print(df.head)
+
+    # downGubenTest()
+    # df['stockid'].apply(downGuben)
+
+    # 检查股本信息，找出需要更新的股票
+    # df = checkGuben()
+
+    # print(df)
+
+    # 下载指定股票股本信息
+    date = '2019-04-19'
+    gubenUpdateDf = checkGuben(date)
+    for stockID in gubenUpdateDf['stockid']:
+        downGubenShuju(stockID)
+        setGubenLastUpdate(stockID, date)
+        time.sleep(1)  # tushare.pro每分钟最多访问接口200次
+        # downGubenShuju('000157')
+
+

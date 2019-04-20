@@ -260,7 +260,7 @@ def youzhiSelect(pegDf):
 def testChigu():
     #     youzhiSelect()
     #     inFilename = './data/chigustockid.txt'
-    outFilename = './data/chiguguzhi.csv'
+    # outFilename = './data/chiguguzhi.csv'
 #     testStockList = ['600519', '600999', '000651', '000333']
 #     testStockList = sqlrw.readStockListFromFile(inFilename)
     stockList = sqlrw.loadChigu()
@@ -268,7 +268,7 @@ def testChigu():
     df = calGuzhi(stockList)
 #     df = calGuzhi()
 #    dfToCsvFile(df, outFilename)
-    df.to_csv(outFilename)
+#     df.to_csv(outFilename)
     sqlrw.engine.execute('TRUNCATE TABLE chiguguzhi')
 #     df.index.name = 'stockid'
 #     clearStockList()

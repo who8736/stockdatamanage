@@ -16,6 +16,7 @@ import re
 from lxml import etree
 import lxml
 import datetime as dt
+from datetime import datetime
 
 import tushare as ts
 import pandas as pd
@@ -26,13 +27,14 @@ import baostock as bs
 
 from misc import urlGubenSina, urlGubenEastmoney, urlGuzhi, urlMainTable
 from misc import filenameGuben, filenameMainTable, filenameGuzhi
-from misc import longStockID
+from misc import longStockID, tsCode
 import datatrans
 import hyanalyse
 import sqlrw
 from sqlrw import klineUpdateDate, lirunFileToList
 from sqlrw import writeKline, writeStockList
 from sqlrw import writeHYToSQL, writeHYNameToSQL
+from sqlrw import gubenUpdateDate, writeGubenToSQL
 
 
 # def downGubenToSQL(stockID, retry=3, timeout=10):
@@ -216,12 +218,17 @@ def downloadClassified():
     return classifiedDf
 
 
-def downGuben(stockID, retry=3, timeout=10):
-    """下载单个股票股本数据写入数据库"""
+def downGubenOld(stockID, retry=3, timeout=10):
+    """ 本函数待废除，如果新的downGuben正常
+        下载单个股票股本数据写入数据库
+
+    """
     # //*[@id="lngbbd_Table"]/tbody/tr[1]
     logging.debug('downGubenToSQL: %s', stockID)
+    print('downGubenToSQL: %s' % stockID)
     socket.setdefaulttimeout(timeout)
-    gubenURL = urlGubenEastmoney(stockID)
+    # gubenURL = urlGubenEastmoney(stockID)
+    gubenURL = urlGubenSina(stockID)
     req = getreq(gubenURL)
 #     downloadStat = False
     gubenDf = pd.DataFrame()
@@ -243,7 +250,7 @@ def downGuben(stockID, retry=3, timeout=10):
                 print('sleep 60 seconds...')
                 time.sleep(60)
         else:
-            gubenDf = datatrans.gubenDataToDf(stockID, guben)
+            gubenDf = datatrans.gubenDataToDfSina(stockID, guben)
             if sqlrw.writeGubenToSQL(stockID, gubenDf):
                 logging.debug('download %s guben data final.', stockID)
                 return
@@ -299,15 +306,15 @@ def downKline(stockID, startDate=None, endDate=None, retry_count=6):
     logging.debug('download kline: %s', stockID)
 
     # 数据源：　baostock
-    downKlineFromBaostock(stockID, startDate, endDate, retry_count)
+    # downKlineFromBaostock(stockID, startDate, endDate, retry_count)
 
     # 数据源：　tushare
-    # downKlineFromTushare(stockID, startDate, endDate, retry_count)
+    downKlineFromTushare(stockID, startDate, endDate, retry_count)
 
 def downKlineFromBaostock(stockID, startDate=None, endDate=None, retry_count=6):
     """下载单个股票K线历史写入数据库, 下载源为baostock"""
     if startDate is None:  # startDate为空时取股票最后更新日期
-        startDate = klineUpdateDate(stockID)
+        startDate = klineUpdateDate(stockID) + dt.timedelta(days=1)
     #         print stockID, startDate
     startDate = startDate.strftime('%Y-%m-%d')
     if endDate is None:
@@ -343,12 +350,14 @@ def downKlineFromTushare(stockID, startDate=None, endDate=None, retry_count=6):
     """下载单个股票K线历史写入数据库, 下载源为tushare"""
     logging.debug('download kline: %s', stockID)
     if startDate is None:  # startDate为空时取股票最后更新日期
-        startDate = klineUpdateDate(stockID)
+        startDate = klineUpdateDate(stockID) + dt.timedelta(days=1)
 #         print stockID, startDate
         startDate = startDate.strftime('%Y-%m-%d')
     if endDate is None:
         endDate = dt.datetime.today().strftime('%Y-%m-%d')
 #     retryCount = 0
+    if startDate > endDate:
+        return
     for cur_retry in range(1, retry_count + 1):
         try:
             df = ts.get_hist_data(stockID, startDate, endDate, retry_count=1)
@@ -426,6 +435,33 @@ def downloadLirunFromTushare(date):
     df = df.loc[:, ['code', 'net_profits', 'report_date']]
     return datatrans.transLirunDf(df, year, quarter)
 
+def downGuben(stockID='300445', date='2019-04-19'):
+    print('start update guben: %s' % stockID)
+    updateDate = gubenUpdateDate(stockID)
+    # print(type(updateDate))
+    # print(updateDate.strftime('%Y%m%d'))
+    startDate = updateDate.strftime('%Y%m%d')
+    pro = ts.pro_api()
+    code = tsCode(stockID)
+    # print(code)
+    df = pro.daily_basic(ts_code=code, start_date=startDate,
+                              fields='trade_date,total_share')
+    # print(df)
+    gubenDate = []
+    gubenValue = []
+    for idx in reversed(df.index):
+        if idx > 0 and df.total_share[idx] != df.total_share[idx - 1]:
+            # print(type(idx), idx, df.trade_date[idx], df.total_share[idx])
+            # print(type(idx - 1), idx, df.trade_date[idx - 1], df.total_share[idx - 1])
+            gubenDate.append(datetime.strptime(df.trade_date[idx - 1],
+                                               '%Y%m%d'))
+            gubenValue.append(df.total_share[idx - 1] * 10000)
+    resultDf = pd.DataFrame({'stockid': stockID,
+                             'date': gubenDate,
+                             'totalshares': gubenValue})
+    print(resultDf)
+    writeGubenToSQL(stockID, resultDf)
+    return resultDf
 
 def downMainTable(stockID):
     mainTableType = ['BalanceSheet', 'ProfitStatement', 'CashFlow']

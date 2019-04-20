@@ -63,12 +63,26 @@ def urlMainTable(stockID, tableType):
 
 
 def longStockID(stockID):
-    if(len(stockID) == 9):
-        return stockID
+    """ 转换股票代码格式为baostock格式
+        600000->sh.600000
+        000651->sz.000651
+    """
     if(stockID[0] == '6'):
         return 'sh.%s' % stockID
     else:
         return 'sz.%s' % stockID
+
+def tsCode(stockID):
+    """ 转换股票代码格式为tushare.pro格式
+        600000->600000.SH
+        000651->000651.SZ
+    """
+    if(len(stockID) == 9):
+        return stockID
+    if(stockID[0] == '6'):
+        return '%s.SH' % stockID
+    else:
+        return '%s.SZ' % stockID
 
 if __name__ == '__main__':
     pass

@@ -31,6 +31,7 @@ class SQLConn():
             self.user = 'root'
             self.password = 'password'
             self.ip = '127.0.0.1'
+            self.token = ''
             self.saveConf()
             return
 
