@@ -535,17 +535,17 @@ def writeStockIDListToFile(stockIDList, filename):
     stockFile.close()
 
 
-def gubenFileToDf(stockID):
-    filename = filenameGuben(stockID)
-    try:
-        gubenFile = open(filename, 'r')
-        guben = gubenFile.read()
-        gubenFile.close()
-    except IOError as e:
-        print(e)
-        print(('读取总股本文件失败： %s' % stockID))
-        return False
-    return datatrans.gubenDataToDf(stockID, guben)
+# def gubenFileToDf(stockID):
+#     filename = filenameGuben(stockID)
+#     try:
+#         gubenFile = open(filename, 'r')
+#         guben = gubenFile.read()
+#         gubenFile.close()
+#     except IOError as e:
+#         print(e)
+#         print(('读取总股本文件失败： %s' % stockID))
+#         return False
+#     return datatrans.gubenDataToDf(stockID, guben)
 
 
 def readGuzhiFileToDict(stockID):
@@ -1263,4 +1263,9 @@ if __name__ == '__main__':
     initlog()
     pass
 #    hylist = getHYList()
-    print(readCurrentTTMPE('002508'))
+#     print(readCurrentTTMPE('002508'))
+
+    # 测试updateKlineEXTData
+    stockID = '000651'
+    startDate = '2016-01-01'
+    updateKlineEXTData(stockID, startDate)

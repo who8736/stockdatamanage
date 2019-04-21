@@ -259,10 +259,10 @@ if __name__ == '__main__':
 
 #     updateDataTest()
 
-    # startUpdate()
+    startUpdate()
 
     # updateLirun()
-    updatePf()
+    # updatePf()
 
 #     stockList = sqlrw.readStockIDsFromSQL()
 #     updateGubenSingleThread()

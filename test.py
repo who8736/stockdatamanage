@@ -161,6 +161,20 @@ def downGubenTest():
     downGuben('300445')
 
 
+def resetKlineExtData():
+    """
+
+    :return:
+    """
+    stockList = sqlrw.readStockIDsFromSQL()
+    print(type(stockList))
+    print(stockList)
+    for stockID in stockList:
+        updateKlineEXTData(stockID, '2016-01-01')
+
+    # for()
+
+
 if __name__ == "__main__":
     initlog()
     """072497"""
@@ -176,12 +190,12 @@ if __name__ == "__main__":
     # print(df)
 
     # 下载指定股票股本信息
-    date = '2019-04-19'
-    gubenUpdateDf = checkGuben(date)
-    for stockID in gubenUpdateDf['stockid']:
-        downGubenShuju(stockID)
-        setGubenLastUpdate(stockID, date)
-        time.sleep(1)  # tushare.pro每分钟最多访问接口200次
+    # date = '2019-04-19'
+    # gubenUpdateDf = checkGuben(date)
+    # for stockID in gubenUpdateDf['stockid']:
+    #     downGubenShuju(stockID)
+    #     setGubenLastUpdate(stockID, date)
+    #     time.sleep(1)  # tushare.pro每分钟最多访问接口200次
         # downGubenShuju('000157')
 
-
+    resetKlineExtData()
