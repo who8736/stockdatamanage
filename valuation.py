@@ -175,6 +175,7 @@ def calpf():
 #    print stocks
     if initsql.existTable('valuation'):
         engine.execute('TRUNCATE TABLE valuation')
+    stocks = stocks.dropna()
     stocks.to_sql('valuation', engine, if_exists='append')
     return stocks
 

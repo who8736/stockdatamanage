@@ -37,6 +37,7 @@ import datatrans
 import initsql
 from sqlconn import SQLConn
 from misc import filenameGuben, filenameLirun, filenameGuzhi
+from initlog import initlog
 # from download import downHYFile
 
 # from bokeh.sampledata import stocks
@@ -372,10 +373,10 @@ def readStockListDf():
     stockNames = []
     for i in stockList:
         stockIDs.append(i[0])
-        name = i[1].encode('utf-8')
+        # name = i[1].encode('utf-8')
 #         print type(i[1]), i[1], name
 #         name = i[1]
-        stockNames.append(name)
+        stockNames.append(i[1])
     stockListDf = DataFrame({'stockid': stockIDs,
                              'name': stockNames})
     return stockListDf
@@ -1259,6 +1260,7 @@ def getStockName(stockID):
 
 
 if __name__ == '__main__':
+    initlog()
     pass
 #    hylist = getHYList()
     print(readCurrentTTMPE('002508'))

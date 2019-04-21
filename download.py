@@ -35,6 +35,7 @@ from sqlrw import klineUpdateDate, lirunFileToList
 from sqlrw import writeKline, writeStockList
 from sqlrw import writeHYToSQL, writeHYNameToSQL
 from sqlrw import gubenUpdateDate, writeGubenToSQL
+from initlog import initlog
 
 
 # def downGubenToSQL(stockID, retry=3, timeout=10):
@@ -617,6 +618,8 @@ def _get_report_data(year, quarter, pageNo, dataArr,
 
 
 if __name__ == '__main__':
+    initlog()
+
     pass
     stockID = '000651'
     startDate = '2019-04-01'

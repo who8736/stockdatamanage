@@ -15,6 +15,7 @@ import pandas as pd
 # import datamanage as dm
 import datatrans
 import sqlrw
+from initlog import initlog
 
 
 # def getLowPEStockList(maxPE=40):
@@ -95,7 +96,7 @@ def calGuzhi(stockList=None):
 #     print pegDf.head()
     # 平均利润增长率
     endfield = 'incrate%s' % (sectionNum - 1)
-    guzhiDf['avgrate'] = guzhiDf.ix[:,
+    guzhiDf['avgrate'] = guzhiDf.loc[:,
                                     'incrate0':endfield].mean(axis=1).round(2)
 #     pegDf = pegDf.round(2)
 #     f = partial(Series.round, decimals=2)
@@ -108,14 +109,14 @@ def calGuzhi(stockList=None):
 #     pegDf['avgrate'] /= sectionNum
 
     # 计算每行指定列的平均绝对离差
-    lirunmad = guzhiDf.ix[:, 'incrate0':endfield].mad(axis=1)
+    lirunmad = guzhiDf.loc[:, 'incrate0':endfield].mad(axis=1)
     # 计算每行指定列的平均值
-#     lirunmean = df.ix[:, 'incrate0':'incrate5'].mean(axis=1).head()
+#     lirunmean = df.loc[:, 'incrate0':'incrate5'].mean(axis=1).head()
     # 计算每行指定列的平均绝对离差率
     guzhiDf['madrate'] = lirunmad / abs(guzhiDf['avgrate'])
     guzhiDf['madrate'] = guzhiDf['madrate'].round(2)
     # 计算每行指定列的平均绝对离差率
-    lirunstd = guzhiDf.ix[:, 'incrate0':endfield].std(axis=1)
+    lirunstd = guzhiDf.loc[:, 'incrate0':endfield].std(axis=1)
     guzhiDf['stdrate'] = lirunstd / abs(guzhiDf['avgrate'])
     guzhiDf['stdrate'] = guzhiDf['stdrate'].round(2)
 #     print type(lirunstd / pegDf['avgrate'])
@@ -283,6 +284,7 @@ def testChigu():
 def testShaixuan():
     stockList = sqlrw.readStockListDf().stockid.values
     df = calGuzhi(stockList)
+    df = df.dropna()
     sqlrw.engine.execute('TRUNCATE TABLE guzhiresult')
     sqlrw.writeSQL(df, 'guzhiresult')
     df = youzhiSelect(df)
@@ -298,23 +300,7 @@ def testShaixuan():
 
 
 if __name__ == '__main__':
-    logfilename = os.path.join(os.path.abspath(os.curdir),
-                               'stockanalyse.log')
-    formatStr = ('%(asctime)s %(filename)s[line:%(lineno)d] '
-                 '%(levelname)s %(message)s')
-    logging.basicConfig(level=logging.DEBUG,
-                        format=formatStr,
-                        filename=logfilename,
-                        filemode='a')
-
-    ##########################################################################
-    # 定义一个StreamHandler，将INFO级别或更高的日志信息打印到标准错误，并将其添加到当前的日志处理对象#
-    console = logging.StreamHandler()
-    console.setLevel(logging.INFO)
-    formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
-    console.setFormatter(formatter)
-    logging.getLogger('').addHandler(console)
-    ##########################################################################
+    initlog()
 
     timec = dt.datetime.now()
 #    testStockID = u'601398'

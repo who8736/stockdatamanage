@@ -11,6 +11,7 @@ import logging
 import pandas as pd
 from pandas.core.frame import DataFrame
 from lxml import etree
+from initlog import initlog
 
 
 def quarterSub(_quarterDate, subNum):
@@ -229,6 +230,7 @@ def transQuarterToDate(date):
 
 
 if __name__ == '__main__':
+    initlog()
     quarterDate = 20161
     subNum = 6
 

@@ -19,6 +19,7 @@ from sqlrw import *
 from sqlconn import engine
 from misc import urlGubenEastmoney
 from misc import *
+from initlog import initlog
 
 
 def downGubenFromEastmoney():
@@ -161,6 +162,7 @@ def downGubenTest():
 
 
 if __name__ == "__main__":
+    initlog()
     """072497"""
     pass
     # df = downLiutongGubenFromBaostock()
