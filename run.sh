@@ -1,3 +1,3 @@
 #! /bin/bash
-python datamanage.py
+python3 datamanage.py
 
