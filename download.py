@@ -304,7 +304,7 @@ def downGuzhi(stockID):
 def downKline(stockID, startDate=None, endDate=None, retry_count=6):
     """ 下载单个股票K线历史写入数据库, 通过调用不同下载函数选择不同的数据源
     """
-    logging.debug('download kline: %s', stockID)
+    # logging.debug('download kline: %s', stockID)
 
     # 数据源：　baostock
     # downKlineFromBaostock(stockID, startDate, endDate, retry_count)
@@ -349,7 +349,7 @@ def downKlineFromBaostock(stockID, startDate=None, endDate=None, retry_count=6):
 
 def downKlineFromTushare(stockID, startDate=None, endDate=None, retry_count=6):
     """下载单个股票K线历史写入数据库, 下载源为tushare"""
-    logging.debug('download kline: %s', stockID)
+    # logging.debug('download kline: %s', stockID)
     if startDate is None:  # startDate为空时取股票最后更新日期
         startDate = klineUpdateDate(stockID) + dt.timedelta(days=1)
 #         print stockID, startDate
