@@ -59,59 +59,59 @@ def calGuzhi(stockList=None):
     if stockList is None:
         stockList = sqlrw.getLowPEStockList().stockid.values
 
-#     print stockList.head()
-#     print type(stockList)
+    #     print stockList.head()
+    #     print type(stockList)
     # pe数据
     peDf = sqlrw.readCurrentTTMPEs(stockList)
     # 估值数据
-#     pegDf = sqlrw.readGuzhiFilesToDf(stockList)
-#     pegDf = sqlrw.readGuzhiSQLToDf(stockList)
-#     pegDf = pd.merge(peDf, pegDf, on='stockid', how='left')
-#     print pegDf.head()
+    #     pegDf = sqlrw.readGuzhiFilesToDf(stockList)
+    #     pegDf = sqlrw.readGuzhiSQLToDf(stockList)
+    #     pegDf = pd.merge(peDf, pegDf, on='stockid', how='left')
+    #     print pegDf.head()
 
     # TODO:　假设当前为第2季度，但第1季度上市公司的财务报告未公布，导致缺少数据如何处理
     sectionNum = 6  # 取6个季度
-# 新取TTM利润方法，取每支股票最后N季度数据
+    # 新取TTM利润方法，取每支股票最后N季度数据
     incDf = sqlrw.readLastTTMLirun(stockList, sectionNum)
-#     print 'incDf:'
-#     print incDf
+    #     print 'incDf:'
+    #     print incDf
     guzhiDf = pd.merge(peDf, incDf, on='stockid', how='left')
 
-# 原取TTM利润方法，按当前日期计算取前N季度数据， 但第1季度上市公司的财务报告未公布，导致缺少数据无法处理
-#     endDate = datatrans.getLastQuarter()
-#     startDate = datatrans.quarterSub(endDate, sectionNum - 1)
-#     quarter  = (int(endDate / 10) * 4 + (endDate % 10)) - sectionNum
-#     dateList = datatrans.dateList(startDate, endDate)
-#     print dateList
+    # 原取TTM利润方法，按当前日期计算取前N季度数据， 但第1季度上市公司的财务报告未公布，导致缺少数据无法处理
+    #     endDate = datatrans.getLastQuarter()
+    #     startDate = datatrans.quarterSub(endDate, sectionNum - 1)
+    #     quarter  = (int(endDate / 10) * 4 + (endDate % 10)) - sectionNum
+    #     dateList = datatrans.dateList(startDate, endDate)
+    #     print dateList
 
     # 过去N个季度TTM利润增长率
-#     for i in range(sectionNum):
-#         incDf = sqlrw.readTTMLirunForDate(dateList[i])
-#         incDf = incDf[['stockid', 'incrate']]
-#         incDf.columns = ['stockid', 'incrate%d' % i]
-#         print incDf.head()
-#         pegDf = pd.merge(pegDf, incDf, on='stockid', how='left')
-#         pegDf = pd.merge(pegDf, incDf, on='stockid')
+    #     for i in range(sectionNum):
+    #         incDf = sqlrw.readTTMLirunForDate(dateList[i])
+    #         incDf = incDf[['stockid', 'incrate']]
+    #         incDf.columns = ['stockid', 'incrate%d' % i]
+    #         print incDf.head()
+    #         pegDf = pd.merge(pegDf, incDf, on='stockid', how='left')
+    #         pegDf = pd.merge(pegDf, incDf, on='stockid')
 
-#     print pegDf.head()
+    #     print pegDf.head()
     # 平均利润增长率
     endfield = 'incrate%s' % (sectionNum - 1)
     guzhiDf['avgrate'] = guzhiDf.loc[:,
-                                    'incrate0':endfield].mean(axis=1).round(2)
-#     pegDf = pegDf.round(2)
-#     f = partial(Series.round, decimals=2)
-#     df.apply(f)
+                         'incrate0':endfield].mean(axis=1).round(2)
+    #     pegDf = pegDf.round(2)
+    #     f = partial(Series.round, decimals=2)
+    #     df.apply(f)
 
     # 平均利润增长率（另一种计算方法）
-#     pegDf['avgrate'] = 0
-#     for i in range(sectionNum):
-#         pegDf['avgrate'] += pegDf['incrate%d' % i]
-#     pegDf['avgrate'] /= sectionNum
+    #     pegDf['avgrate'] = 0
+    #     for i in range(sectionNum):
+    #         pegDf['avgrate'] += pegDf['incrate%d' % i]
+    #     pegDf['avgrate'] /= sectionNum
 
     # 计算每行指定列的平均绝对离差
     lirunmad = guzhiDf.loc[:, 'incrate0':endfield].mad(axis=1)
     # 计算每行指定列的平均值
-#     lirunmean = df.loc[:, 'incrate0':'incrate5'].mean(axis=1).head()
+    #     lirunmean = df.loc[:, 'incrate0':'incrate5'].mean(axis=1).head()
     # 计算每行指定列的平均绝对离差率
     guzhiDf['madrate'] = lirunmad / abs(guzhiDf['avgrate'])
     guzhiDf['madrate'] = guzhiDf['madrate'].round(2)
@@ -119,16 +119,16 @@ def calGuzhi(stockList=None):
     lirunstd = guzhiDf.loc[:, 'incrate0':endfield].std(axis=1)
     guzhiDf['stdrate'] = lirunstd / abs(guzhiDf['avgrate'])
     guzhiDf['stdrate'] = guzhiDf['stdrate'].round(2)
-#     print type(lirunstd / pegDf['avgrate'])
+    #     print type(lirunstd / pegDf['avgrate'])
     # 增加股票名称
     nameDf = sqlrw.readStockListDf()
     guzhiDf = pd.merge(guzhiDf, nameDf, on='stockid', how='left')
-#     print pegDf
+    #     print pegDf
 
     # 计算pe200与pe1000
     guzhiDf['pe200'] = peHistRate(stockList, 200)
     guzhiDf['pe1000'] = peHistRate(stockList, 1000)
-#     print pegDf
+    #     print pegDf
     # 设置输出列与列顺序
     # 因无法取得数据，删除'peg', 'next1YearPE',  'next2YearPE',  'next3YearPE'
     guzhiDf = guzhiDf[['stockid', 'name', 'pe',
@@ -136,12 +136,12 @@ def calGuzhi(stockList=None):
                        'incrate3', 'incrate4', 'incrate5',
                        'avgrate', 'madrate', 'stdrate', 'pe200', 'pe1000'
                        ]]
-#     guzhiDf = guzhiDf[['stockid', 'name', 'pe', 'peg',
-#                        'next1YearPE',  'next2YearPE',  'next3YearPE',
-#                        'incrate0', 'incrate1', 'incrate2',
-#                        'incrate3', 'incrate4', 'incrate5',
-#                        'avgrate', 'madrate', 'stdrate', 'pe200', 'pe1000'
-#                        ]]
+    #     guzhiDf = guzhiDf[['stockid', 'name', 'pe', 'peg',
+    #                        'next1YearPE',  'next2YearPE',  'next3YearPE',
+    #                        'incrate0', 'incrate1', 'incrate2',
+    #                        'incrate3', 'incrate4', 'incrate5',
+    #                        'avgrate', 'madrate', 'stdrate', 'pe200', 'pe1000'
+    #                        ]]
     return guzhiDf
 
 
@@ -198,22 +198,23 @@ def peHistRate(stockList, dayCount):
         # 最低为0，最高为100
         # 历史交易天数不足时，PE水平为-1
     """
-#     print dayCount, stockList
+    #     print dayCount, stockList
     perates = []
     for stockID in stockList:
+        print(stockID)
         sql = ('select ttmpe from kline%(stockID)s order by `date` desc '
                'limit %(dayCount)s;' % locals())
         result = sqlrw.engine.execute(sql)
         peList = result.fetchall()
         # 如果历史交易天数不足，则历史PE水平为-1
-        if len(peList) != dayCount:
+        if len(peList) != dayCount or peList[0] is None:
             perates.append(-1)
         else:
             peList = [i[0] for i in peList]
             peCur = peList[0]
             perate = float(
-                sum(1 for i in peList if i < peCur)) / dayCount * 100
-#             print stockID, perate, peList
+                sum(1 for i in peList if i is not None and i < peCur)) / dayCount * 100
+            #             print stockID, perate, peList
             perates.append(perate)
     return perates
 
@@ -233,23 +234,23 @@ def youzhiSelect(pegDf):
 
     # 2017-07-28：　因无法取得peg数据， 临时取消peg筛选条件
     """
-#     print pegDf.head()
+    #     print pegDf.head()
     pegDf = pegDf.dropna()
-#     pegDf = pegDf[pegDf.peg.notnull()]
-#     pegDf = pegDf[(pegDf.peg > 0) & (pegDf.peg < 1) & (pegDf.avgrate > 0)]
+    #     pegDf = pegDf[pegDf.peg.notnull()]
+    #     pegDf = pegDf[(pegDf.peg > 0) & (pegDf.peg < 1) & (pegDf.avgrate > 0)]
     pegDf = pegDf[pegDf.avgrate > 0]
     pegDf = pegDf[pegDf.pe < 30]
     pegDf = pegDf[(pegDf.pe200 < 20) & (pegDf.pe1000 < 30)]
     pegDf = pegDf[pegDf.madrate < 0.6]
     pegDf = pegDf.sort_values(by='pe')
-#     pegDf = pegDf[['stockid', 'pe', 'peg',
-#                    'next1YearPE',  'next2YearPE',  'next3YearPE',
-#                    'incrate0', 'incrate1', 'incrate2',
-#                    'incrate3', 'incrate4', 'incrate5',
-#                    'avgrate'
-#                    ]]
-#     print pegDf.head()
-#     print len(pegDf)
+    #     pegDf = pegDf[['stockid', 'pe', 'peg',
+    #                    'next1YearPE',  'next2YearPE',  'next3YearPE',
+    #                    'incrate0', 'incrate1', 'incrate2',
+    #                    'incrate3', 'incrate4', 'incrate5',
+    #                    'avgrate'
+    #                    ]]
+    #     print pegDf.head()
+    #     print len(pegDf)
     return pegDf
 
 
@@ -262,20 +263,22 @@ def testChigu():
     #     youzhiSelect()
     #     inFilename = './data/chigustockid.txt'
     # outFilename = './data/chiguguzhi.csv'
-#     testStockList = ['600519', '600999', '000651', '000333']
-#     testStockList = sqlrw.readStockListFromFile(inFilename)
+    #     testStockList = ['600519', '600999', '000651', '000333']
+    #     testStockList = sqlrw.readStockListFromFile(inFilename)
     stockList = sqlrw.loadChigu()
-#     print testStockList
+    #     print testStockList
     df = calGuzhi(stockList)
-#     df = calGuzhi()
-#    dfToCsvFile(df, outFilename)
-#     df.to_csv(outFilename)
+    #     df = calGuzhi()
+    #    dfToCsvFile(df, outFilename)
+    #     df.to_csv(outFilename)
     sqlrw.engine.execute('TRUNCATE TABLE chiguguzhi')
-#     df.index.name = 'stockid'
-#     clearStockList()
-#     df.set_index('stockid', inplace=True)
-#     print df.head()
+    #     df.index.name = 'stockid'
+    #     clearStockList()
+    #     df.set_index('stockid', inplace=True)
+    #     print df.head()
     sqlrw.writeSQL(df, 'chiguguzhi')
+
+
 #     df.to_sql(u'chiguguzhi',
 #               sqlrw.engine,
 #               if_exists=u'append')
@@ -291,10 +294,10 @@ def testShaixuan():
     print('youzhiSelect result:')
     print(df.head())
     outFilename = './data/youzhi.csv'
-#    dfToCsvFile(df, outFilename)
+    #    dfToCsvFile(df, outFilename)
     df.to_csv(outFilename)
-#     outFilename = './data/youzhiid.txt'
-#     sqlrw.writeStockIDListToFile(df['stockid'], outFilename)
+    #     outFilename = './data/youzhiid.txt'
+    #     sqlrw.writeStockIDListToFile(df['stockid'], outFilename)
     sqlrw.engine.execute('TRUNCATE TABLE youzhiguzhi')
     sqlrw.writeSQL(df, 'youzhiguzhi')
 
@@ -303,39 +306,39 @@ if __name__ == '__main__':
     initlog()
 
     timec = dt.datetime.now()
-#    testStockID = u'601398'
+    #    testStockID = u'601398'
     testStockID = '000153'
     startDate = '2016-04-30'
     endDate = '2016-04-29'
     logging.info('===================start=====================')
 
     # 测试持股估值
-#     testChigu()
+    #     testChigu()
 
     # 测试筛选估值
     testShaixuan()
 
     # 测试TTMPE直方图、概率分布
-#     ttmdf = sqlrw.readTTMPE(testStockID)
-#     ttmdf = ttmdf[-200:]
-#     ttmdf.plot()
-#     print ttmdf.head()
-#     print ttmdf.tail()
-#
-#     a = ttmdf.plot(kind='kde')
-#     print 'type a :', type(a)
-#
-#     b = ttmdf.hist(bins=20)
-#     print 'type b :', type(b)
+    #     ttmdf = sqlrw.readTTMPE(testStockID)
+    #     ttmdf = ttmdf[-200:]
+    #     ttmdf.plot()
+    #     print ttmdf.head()
+    #     print ttmdf.tail()
+    #
+    #     a = ttmdf.plot(kind='kde')
+    #     print 'type a :', type(a)
+    #
+    #     b = ttmdf.hist(bins=20)
+    #     print 'type b :', type(b)
 
-#    c = ttmdf.hist().get_figure()
-#    print 'type c :', type(c)
+    #    c = ttmdf.hist().get_figure()
+    #    print 'type c :', type(c)
 
     # 生成历史估值状态
-#     calHistoryStatus('000333')
+    #     calHistoryStatus('000333')
 
     # 测试估值计算函数
-#     calGuzhi()
+    #     calGuzhi()
 
     timed = dt.datetime.now()
     logging.info('datamanage test took %s' % (timed - timec))

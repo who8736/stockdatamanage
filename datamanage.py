@@ -55,26 +55,28 @@ def startUpdate():
     stockList = sqlrw.readStockIDsFromSQL()
 #     stockList = stockList[:10]
 
-    # 更新股票交易与估值数据
+    # 更新股票交易与利润数据
     threadNum = 10
     updateKlineBaseData(stockList, threadNum)
     updateLirun()
 
+    # 更新股本
     # 因新浪反爬虫策略，更新股本数据改用单线程
 #     updateGuben(stockList, threadNum)
     updateGubenSingleThread()
 
     updateKlineEXTData(stockList, threadNum)
-#     updateGuzhi(stockList, threadNum)   # 待删除
 
     # 因新浪反爬虫策略，更新股本数据改用单线程, 20170903
     # 主表数据暂时没用，停止更新， 20170904
 #     updateMainTableSingleThread(stockList, threadNum)
 #     updateMainTable(stockList, threadNum)
+
+    # 更新股票估值
     updateGhuzhiData()
 
+    # 更新股票评分
     updatePf()
-#       logging.info('--------全部更新完成--------')
 
 
 @logfun
@@ -134,6 +136,7 @@ def updateGubenSingleThread():
     # 以上代码为原股本下载代码
 
     endTime = datetime.now()
+    endTime = endTime + timedelta(days=-1)
     # 选择要提前的天数
     startTime = endTime + timedelta(days=-10)
     # 格式化处理

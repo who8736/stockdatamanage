@@ -75,11 +75,12 @@ from initlog import initlog
 
 
 def downStockList(retry=10):
+    """ 更新股票列表与行业列表
+    """
     sl = pd.DataFrame()
     for _ in range(retry):
         try:
             sl = ts.get_stock_basics().fillna(value=0)
-#             sl = getStockBasicsFromCSV().fillna(value=0)
         except socket.timeout:
             logging.warning('updateStockList timeout!!!')
         else:
@@ -90,10 +91,6 @@ def downStockList(retry=10):
         return False
     sl.index.name = 'stockid'
     writeStockList(sl)
-#     clearStockList()
-#     sl.to_sql(u'stocklist',
-#               engine,
-#               if_exists=u'append')
 
     # 读取行业表中的股票代码，与当前获取的股票列表比较，
     # 如果存在部分股票未列入行业表，则更新行业列表数据
@@ -101,7 +98,6 @@ def downStockList(retry=10):
     result = sqlrw.engine.execute(sql)
     hystock = result.fetchall()
     hystock = [i[0] for i in hystock]
-#     hystock = hyanalyse.getHYStock()
     noinhy = [i for i in sl if i not in hystock]
     # 股票列表中上市日期不为0，即为已上市
     # 且不在行业列表中，表示需更新行业数据
@@ -219,45 +215,45 @@ def downloadClassified():
     return classifiedDf
 
 
-def downGubenOld(stockID, retry=3, timeout=10):
-    """ 本函数待废除，如果新的downGuben正常
-        下载单个股票股本数据写入数据库
-
-    """
-    # //*[@id="lngbbd_Table"]/tbody/tr[1]
-    logging.debug('downGubenToSQL: %s', stockID)
-    print('downGubenToSQL: %s' % stockID)
-    socket.setdefaulttimeout(timeout)
-    # gubenURL = urlGubenEastmoney(stockID)
-    gubenURL = urlGubenSina(stockID)
-    req = getreq(gubenURL)
-#     downloadStat = False
-    gubenDf = pd.DataFrame()
-
-    # 使用代理抓取数据
-#     proxy_handler = urllib2.ProxyHandler({"http": 'http://127.0.0.1:8087'})
-#     opener = urllib2.build_opener(proxy_handler)
-#     urllib2.install_opener(opener)
-
-    for _ in range(retry):
-        try:
-            guben = urllib.request.urlopen(req).read()
-        except IOError as e:
-            logging.warning('[%s]:download %s guben data, retry...',
-                            e, stockID)
-#             print type(e)
-            errorString = '%s' % e
-            if errorString == 'HTTP Error 456: ':
-                print('sleep 60 seconds...')
-                time.sleep(60)
-        else:
-            gubenDf = datatrans.gubenDataToDfSina(stockID, guben)
-            if sqlrw.writeGubenToSQL(stockID, gubenDf):
-                logging.debug('download %s guben data final.', stockID)
-                return
-#             return gubenDf
-    logging.error('fail download %s guben data.', stockID)
-    return None
+# def downGubenOld(stockID, retry=3, timeout=10):
+#     """ 本函数待废除，如果新的downGuben正常
+#         下载单个股票股本数据写入数据库
+#
+#     """
+#     # //*[@id="lngbbd_Table"]/tbody/tr[1]
+#     logging.debug('downGubenToSQL: %s', stockID)
+#     print('downGubenToSQL: %s' % stockID)
+#     socket.setdefaulttimeout(timeout)
+#     # gubenURL = urlGubenEastmoney(stockID)
+#     gubenURL = urlGubenSina(stockID)
+#     req = getreq(gubenURL)
+# #     downloadStat = False
+#     gubenDf = pd.DataFrame()
+#
+#     # 使用代理抓取数据
+# #     proxy_handler = urllib2.ProxyHandler({"http": 'http://127.0.0.1:8087'})
+# #     opener = urllib2.build_opener(proxy_handler)
+# #     urllib2.install_opener(opener)
+#
+#     for _ in range(retry):
+#         try:
+#             guben = urllib.request.urlopen(req).read()
+#         except IOError as e:
+#             logging.warning('[%s]:download %s guben data, retry...',
+#                             e, stockID)
+# #             print type(e)
+#             errorString = '%s' % e
+#             if errorString == 'HTTP Error 456: ':
+#                 print('sleep 60 seconds...')
+#                 time.sleep(60)
+#         else:
+#             gubenDf = datatrans.gubenDataToDfSina(stockID, guben)
+#             if sqlrw.writeGubenToSQL(stockID, gubenDf):
+#                 logging.debug('download %s guben data final.', stockID)
+#                 return
+# #             return gubenDf
+#     logging.error('fail download %s guben data.', stockID)
+#     return None
 
 
 # def downloadGuben(stockID):
@@ -304,7 +300,7 @@ def downGuzhi(stockID):
 def downKline(stockID, startDate=None, endDate=None, retry_count=6):
     """ 下载单个股票K线历史写入数据库, 通过调用不同下载函数选择不同的数据源
     """
-    # logging.debug('download kline: %s', stockID)
+    logging.debug('download kline: %s', stockID)
 
     # 数据源：　baostock
     # downKlineFromBaostock(stockID, startDate, endDate, retry_count)

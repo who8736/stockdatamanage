@@ -963,7 +963,11 @@ def getLastUpdate(sql):
     --------
     datetime：datetime
     """
-    lastUpdateDate = engine.execute(sql).first()[0]
+    result = engine.execute(sql).first()
+    if result is None:
+        return dt.datetime.strptime('1990-01-01', '%Y-%m-%d')
+
+    lastUpdateDate = result[0]
     if lastUpdateDate is None:
         return dt.datetime.strptime('1990-01-01', '%Y-%m-%d')
 
