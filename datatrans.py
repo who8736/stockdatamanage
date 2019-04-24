@@ -228,6 +228,11 @@ def transQuarterToDate(date):
     day = days[month]
     return '%(year)d-%(month)02d-%(day)d' % locals()
 
+def transTushareDateToQuarter(date):
+    year = int(date[:4])
+    qdic = {'03': 1, '06': 2, '09': 3, '12': 4}
+    quarter = qdic[date[4:6]]
+    return year * 10 + quarter
 
 if __name__ == '__main__':
     initlog()

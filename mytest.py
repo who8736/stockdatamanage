@@ -174,6 +174,23 @@ def resetKlineExtData():
 
     # for()
 
+def resetLirun():
+    stockID = '002087'
+    startDate = '1990-01-01'
+    fields = 'ts_code,ann_date,end_date,total_profit,n_income,n_income_attr_p'
+    pro = ts.pro_api()
+
+    stockID = tsCode(stockID)
+    df = pro.income(ts_code=stockID, start_date=startDate, fields=fields)
+    df['date'] = df['end_date'].apply(transTushareDateToQuarter)
+    df['stockid'] = df['ts_code'].apply(lamba
+    x: x[:6])
+    df['stockid'] = df['ts_code'].apply(lambda x: x[:6])
+    df['reportdate'] = df['ann_date'].apply(lambda x: '%s-%s-%s' % (x[:4], x[4:6], x[6:]))
+    df.columns
+    df.rename(columns={'n_income_attr_p': 'profits'})
+    return df
+
 
 if __name__ == "__main__":
     initlog()
@@ -198,4 +215,10 @@ if __name__ == "__main__":
     #     time.sleep(1)  # tushare.pro每分钟最多访问接口200次
         # downGubenShuju('000157')
 
-    resetKlineExtData()
+    # resetKlineExtData()
+
+    # 重算TTMlirun
+    # calAllTTMLirun(20114)
+
+    # 重新下载lirun数据
+    df = resetLirun()
