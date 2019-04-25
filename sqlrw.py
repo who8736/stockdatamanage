@@ -812,7 +812,7 @@ def calAllTTMLirun(date, incrementUpdate=True):
             lirunCur = lirunCur[~lirunCur.stockid.isin(TTMLirunCur.stockid)]
 
         # 上年第四季度利润, 仅取利润字段并更名为profits1
-        lastYearEnd = (date / 10 - 1) * 10 + 4
+        lastYearEnd = (date // 10 - 1) * 10 + 4
         lirunLastYearEnd = readLirunForDate(lastYearEnd)
         print(('lirunLastYearEnd.head():', lirunLastYearEnd.head()))
         lirunLastYearEnd = lirunLastYearEnd[['stockid', 'profits']]
@@ -849,6 +849,7 @@ def calTTMLirunIncRate(date, incrementUpdate=True):
     TTMLirunLastYear = readTTMLirunForDate(date - 10)
     TTMLirunLastYear = TTMLirunLastYear[['stockid', 'ttmprofits']]
     TTMLirunLastYear.columns = ['stockid', 'ttmprofits1']
+    TTMLirunLastYear = TTMLirunLastYear[TTMLirunLastYear.ttmprofits1!=0]
 
     # 整合以上2个表，stockid为整合键
     TTMLirunCur = pd.merge(TTMLirunCur, TTMLirunLastYear, on='stockid')

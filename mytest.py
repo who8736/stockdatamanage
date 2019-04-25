@@ -20,6 +20,8 @@ from sqlconn import engine
 from misc import urlGubenEastmoney
 from misc import *
 from initlog import initlog
+from datatrans import *
+from hyanalyse import *
 
 
 def downGubenFromEastmoney():
@@ -175,21 +177,30 @@ def resetKlineExtData():
     # for()
 
 def resetLirun():
-    stockID = '002087'
+    """
+    下载所有股票的利润数据更新到数据库， 主要用于修复库内历史数据缺失的情况
+    :return:
+    """
     startDate = '1990-01-01'
     fields = 'ts_code,ann_date,end_date,total_profit,n_income,n_income_attr_p'
     pro = ts.pro_api()
 
-    stockID = tsCode(stockID)
-    df = pro.income(ts_code=stockID, start_date=startDate, fields=fields)
-    df['date'] = df['end_date'].apply(transTushareDateToQuarter)
-    df['stockid'] = df['ts_code'].apply(lamba
-    x: x[:6])
-    df['stockid'] = df['ts_code'].apply(lambda x: x[:6])
-    df['reportdate'] = df['ann_date'].apply(lambda x: '%s-%s-%s' % (x[:4], x[4:6], x[6:]))
-    df.columns
-    df.rename(columns={'n_income_attr_p': 'profits'})
-    return df
+    stockList = readStockListFromSQL()
+    for stockID, stockName in stockList:
+        print(stockID, stockName)
+        # stockID = '002087'
+        stockID = tsCode(stockID)
+        df = pro.income(ts_code=stockID, start_date=startDate, fields=fields)
+        df['date'] = df['end_date'].apply(transTushareDateToQuarter)
+        df['stockid'] = df['ts_code'].apply(lambda x: x[:6])
+        df['reportdate'] = df['ann_date'].apply(lambda x: '%s-%s-%s' % (x[:4], x[4:6], x[6:]))
+        df.rename(columns={'n_income_attr_p': 'profits'}, inplace=True)
+        df1 = df[['stockid', 'date', 'profits', 'reportdate']]
+        if not df1.empty:
+            writeSQL(df1, 'lirun')
+
+        # tushare每分钟最多访问接口80次
+        time.sleep(0.4)
 
 
 if __name__ == "__main__":
@@ -218,7 +229,12 @@ if __name__ == "__main__":
     # resetKlineExtData()
 
     # 重算TTMlirun
-    # calAllTTMLirun(20114)
+    dates = datatrans.dateList(20061, 20191)
+    for date in dates:
+        print('cal ttmlirun: %d' % date)
+        # calAllTTMLirun(date)
+        calAllHYTTMLirun(date)
+    # calAllTTMLirun(20102)
 
     # 重新下载lirun数据
-    df = resetLirun()
+    # resetLirun()
