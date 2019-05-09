@@ -5,21 +5,21 @@ Created on Mon Apr 15 15:27:38 2019
 @author: ff
 """
 
-import pandas as pd
-from pandas import DataFrame
+# import pandas as pd
+# from pandas import DataFrame
 from urllib.request import urlopen
-from lxml import etree
-from datetime import datetime
-import baostock as bs
-import tushare as ts
+# from lxml import etree
+# from datetime import datetime
+# import baostock as bs
+# import tushare as ts
 
 # from download import getreq
 from download import *
 from sqlrw import *
 from sqlconn import engine
-from misc import urlGubenEastmoney
+# from misc import urlGubenEastmoney
 from misc import *
-from initlog import initlog
+# from initlog import initlog
 from datatrans import *
 from hyanalyse import *
 
@@ -41,7 +41,7 @@ def downGubenFromEastmoney():
 
     gubenTree = etree.HTML(guben)
     # //*[@id="lngbbd_Table"]/tbody/tr[1]/th[3]
-    gubenData = gubenTree.xpath('//tr')
+    # gubenData = gubenTree.xpath('//tr')
     gubenData = gubenTree.xpath('''//html//body//div//div
                                 //div//div//table//tr//td
                                 //table//tr//td//table//tr//td''')
@@ -64,10 +64,12 @@ def downGubenFromEastmoney():
                          'totalshares': totalshares})
     return gubenDf
 
+
 def urlGuben(stockID):
     return ('http://vip.stock.finance.sina.com.cn/corp/go.php'
             '/vCI_StockStructureHistory/stockid'
             '/%s/stocktype/TotalStock.phtml' % stockID)
+
 
 def downLiutongGubenFromBaostock():
     """ 从baostock下载每日K线数据，并根据成交量与换手率计算流通总股本
@@ -78,15 +80,17 @@ def downLiutongGubenFromBaostock():
     fields = "date,code,close,volume,turn,peTTM,tradestatus"
 
     lg = bs.login()
+    print('baostock login code: ', lg.error_code)
     rs = bs.query_history_k_data_plus(code, fields, startDate, endDate)
     dataList = []
     while rs.next():
         dataList.append(rs.get_row_data())
     result = pd.DataFrame(dataList, columns=rs.fields)
     print(result)
-#    lg.logout()
+    #    lg.logout()
     bs.logout()
     return result
+
 
 def checkGuben(date='2019-04-19'):
     """ 以下方法用于从tushare.pro下载日频信息中的股本数据
@@ -96,7 +100,7 @@ def checkGuben(date='2019-04-19'):
     pro = ts.pro_api()
     tradeDate = '%s%s%s' % (date[:4], date[5:7], date[8:])
     dfFromTushare = pro.daily_basic(ts_code='', trade_date=tradeDate,
-                         fields='ts_code,total_share')
+                                    fields='ts_code,total_share')
     dfFromTushare['stockid'] = dfFromTushare['ts_code'].str[:6]
 
     sql = """ select a.stockid, a.date, a.totalshares from guben as a, 
@@ -108,20 +112,20 @@ def checkGuben(date='2019-04-19'):
     df = pd.merge(dfFromTushare, dfFromSQL, how='left', on='stockid')
     df.loc[0:, 'cha'] = df.apply(
         lambda x: abs(x['total_share'] * 10000 - x['totalshares']) / (
-                    x['total_share'] * 10000), axis=1)
+                x['total_share'] * 10000), axis=1)
 
     chaRate = 0.0001
-    dfUpdate = df[df.cha>=chaRate]
+    dfUpdate = df[df.cha >= chaRate]
     print(dfUpdate)
     for stockID in dfUpdate['stockid']:
         sql = ('select max(date) from guben where stockid="%s" limit 1;'
-              % stockID)
+               % stockID)
         dateA = getLastUpdate(sql)
         setGubenLastUpdate(stockID, dateA)
 
     # 对于需更新股本的股票，逐个更新股本并修改更新日期
     # 对于无需更新股本的股票，将其更新日期修改为上一交易日
-    dfFinished = df[df.cha<chaRate]
+    dfFinished = df[df.cha < chaRate]
     for stockID in dfFinished['stockid']:
         setGubenLastUpdate(stockID, date)
     # print(df3)
@@ -130,6 +134,7 @@ def checkGuben(date='2019-04-19'):
 
 def downGubenShuju(stockID='300445', date='2019-04-19'):
     print('start update guben: %s' % stockID)
+    print('guben date: ', date)
     updateDate = gubenUpdateDate(stockID)
     # print(type(updateDate))
     # print(updateDate.strftime('%Y%m%d'))
@@ -138,7 +143,7 @@ def downGubenShuju(stockID='300445', date='2019-04-19'):
     code = tsCode(stockID)
     # print(code)
     df = pro.daily_basic(ts_code=code, start_date=startDate,
-                              fields='trade_date,total_share')
+                         fields='trade_date,total_share')
     # print(df)
     gubenDate = []
     gubenValue = []
@@ -155,7 +160,6 @@ def downGubenShuju(stockID='300445', date='2019-04-19'):
     print(resultDf)
     writeGubenToSQL(stockID, resultDf)
     return resultDf
-
 
 
 def downGubenTest():
@@ -175,6 +179,7 @@ def resetKlineExtData():
         updateKlineEXTData(stockID, '2016-01-01')
 
     # for()
+
 
 def resetLirun():
     """
@@ -224,7 +229,7 @@ if __name__ == "__main__":
     #     downGubenShuju(stockID)
     #     setGubenLastUpdate(stockID, date)
     #     time.sleep(1)  # tushare.pro每分钟最多访问接口200次
-        # downGubenShuju('000157')
+    # downGubenShuju('000157')
 
     # resetKlineExtData()
 

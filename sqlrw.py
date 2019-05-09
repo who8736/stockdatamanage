@@ -36,7 +36,8 @@ import tushare as ts
 import datatrans
 import initsql
 from sqlconn import SQLConn
-from misc import filenameGuben, filenameLirun, filenameGuzhi
+# from misc import filenameGuben, filenameLirun, filenameGuzhi
+from misc import filenameLirun, filenameGuzhi
 from initlog import initlog
 # from download import downHYFile
 
@@ -549,6 +550,12 @@ def writeStockIDListToFile(stockIDList, filename):
 
 
 def readGuzhiFileToDict(stockID):
+    """
+    读取估值文件
+    :rtype: dict
+    :type stockID: string
+    :return dict
+    """
     guzhiFilename = filenameGuzhi(stockID)
     guzhiFile = open(guzhiFilename)
     guzhiData = guzhiFile.read()

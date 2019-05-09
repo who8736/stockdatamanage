@@ -25,11 +25,13 @@ from pandas.compat import StringIO
 from tushare.stock import cons as ct
 import baostock as bs
 
-from misc import urlGubenSina, urlGubenEastmoney, urlGuzhi, urlMainTable
-from misc import filenameGuben, filenameMainTable, filenameGuzhi
+# from misc import urlGubenSina, urlGubenEastmoney
+from misc import urlGuzhi, urlMainTable
+# from misc import filenameGuben
+from misc import filenameMainTable, filenameGuzhi
 from misc import longStockID, tsCode
 import datatrans
-import hyanalyse
+# import hyanalyse
 import sqlrw
 from sqlrw import klineUpdateDate, lirunFileToList
 from sqlrw import writeKline, writeStockList
@@ -102,7 +104,7 @@ def downStockList(retry=10):
     # 股票列表中上市日期不为0，即为已上市
     # 且不在行业列表中，表示需更新行业数据
     slnoinhy = sl[(sl.timeToMarket != 0) & (sl.index.isin(noinhy))]
-#     sl2 = sl1[sl1.index.isin(noinhy)]
+    #     sl2 = sl1[sl1.index.isin(noinhy)]
     if not slnoinhy.empty:
         HYDataFilename = downHYFile()
         writeHYToSQL(HYDataFilename)
@@ -127,10 +129,10 @@ def downHYFile(timeout=10):
     dateStr = myTree.xpath('''//html//body//div//div//div//div
                                 //div//form//label//input//@value''')
     dateStr = dateStr[0]
-#     print dateStr
-#     print dateStr.split('-')
+    #     print dateStr
+    #     print dateStr.split('-')
     dateStr = ''.join(dateStr.split('-'))
-#     print dateStr
+    #     print dateStr
 
     # 下载并解压行业数据文件
     HYFileUrl = 'http://115.29.204.48/syl/csi%s.zip' % dateStr
@@ -168,8 +170,8 @@ def getreq(url, includeHeader=False):
 def downloadData(url, timeout=10, retry_count=3):
     """ 通用下载函数
     """
-#         proxy_handler = urllib2.ProxyHandler({"http": 'http://127.0.0.1:8087'
-#                                               })
+    #         proxy_handler = urllib2.ProxyHandler({"http": 'http://127.0.0.1:8087'
+    #                                               })
     #     opener = urllib2.build_opener(proxy_handler)
     #     urllib2.install_opener(opener)
     for _ in range(retry_count):
@@ -214,51 +216,49 @@ def downloadClassified():
     classifiedDf.columns = ['stockid', 'cname']
     return classifiedDf
 
+    # def downGubenOld(stockID, retry=3, timeout=10):
+    #     """ 本函数待废除，如果新的downGuben正常
+    #         下载单个股票股本数据写入数据库
+    #
+    #     """
+    #     # //*[@id="lngbbd_Table"]/tbody/tr[1]
+    #     logging.debug('downGubenToSQL: %s', stockID)
+    #     print('downGubenToSQL: %s' % stockID)
+    #     socket.setdefaulttimeout(timeout)
+    #     # gubenURL = urlGubenEastmoney(stockID)
+    #     gubenURL = urlGubenSina(stockID)
+    #     req = getreq(gubenURL)
+    # #     downloadStat = False
+    #     gubenDf = pd.DataFrame()
+    #
+    #     # 使用代理抓取数据
+    # #     proxy_handler = urllib2.ProxyHandler({"http": 'http://127.0.0.1:8087'})
+    # #     opener = urllib2.build_opener(proxy_handler)
+    # #     urllib2.install_opener(opener)
+    #
+    #     for _ in range(retry):
+    #         try:
+    #             guben = urllib.request.urlopen(req).read()
+    #         except IOError as e:
+    #             logging.warning('[%s]:download %s guben data, retry...',
+    #                             e, stockID)
+    # #             print type(e)
+    #             errorString = '%s' % e
+    #             if errorString == 'HTTP Error 456: ':
+    #                 print('sleep 60 seconds...')
+    #                 time.sleep(60)
+    #         else:
+    #             gubenDf = datatrans.gubenDataToDfSina(stockID, guben)
+    #             if sqlrw.writeGubenToSQL(stockID, gubenDf):
+    #                 logging.debug('download %s guben data final.', stockID)
+    #                 return
+    # #             return gubenDf
+    #     logging.error('fail download %s guben data.', stockID)
+    #     return None
 
-# def downGubenOld(stockID, retry=3, timeout=10):
-#     """ 本函数待废除，如果新的downGuben正常
-#         下载单个股票股本数据写入数据库
-#
-#     """
-#     # //*[@id="lngbbd_Table"]/tbody/tr[1]
-#     logging.debug('downGubenToSQL: %s', stockID)
-#     print('downGubenToSQL: %s' % stockID)
-#     socket.setdefaulttimeout(timeout)
-#     # gubenURL = urlGubenEastmoney(stockID)
-#     gubenURL = urlGubenSina(stockID)
-#     req = getreq(gubenURL)
-# #     downloadStat = False
-#     gubenDf = pd.DataFrame()
-#
-#     # 使用代理抓取数据
-# #     proxy_handler = urllib2.ProxyHandler({"http": 'http://127.0.0.1:8087'})
-# #     opener = urllib2.build_opener(proxy_handler)
-# #     urllib2.install_opener(opener)
-#
-#     for _ in range(retry):
-#         try:
-#             guben = urllib.request.urlopen(req).read()
-#         except IOError as e:
-#             logging.warning('[%s]:download %s guben data, retry...',
-#                             e, stockID)
-# #             print type(e)
-#             errorString = '%s' % e
-#             if errorString == 'HTTP Error 456: ':
-#                 print('sleep 60 seconds...')
-#                 time.sleep(60)
-#         else:
-#             gubenDf = datatrans.gubenDataToDfSina(stockID, guben)
-#             if sqlrw.writeGubenToSQL(stockID, gubenDf):
-#                 logging.debug('download %s guben data final.', stockID)
-#                 return
-# #             return gubenDf
-#     logging.error('fail download %s guben data.', stockID)
-#     return None
-
-
-# def downloadGuben(stockID):
-    """ 下载股本并保存到文件， 确认为无用函数后可删除
-    """
+    # def downloadGuben(stockID):
+    # """ 下载股本并保存到文件， 确认为无用函数后可删除
+    # """
     # url = urlGuben(stockID)
     # filename = filenameGuben(stockID)
     # return dataToFile(url, filename)
@@ -277,12 +277,12 @@ def downGuzhi_del(stockID):
 
     # 保存至文件
     filename = filenameGuzhi(stockID)
+    mainFile = open(filename, 'wb')
     try:
-        mainFile = open(filename, 'wb')
         mainFile.write(data)
     except IOError as e:
         logging.error('[%s]写文件失败： %s', e, filename)
-#         return False
+    #         return False
     finally:
         mainFile.close()
     return data
@@ -308,7 +308,9 @@ def downKline(stockID, startDate=None, endDate=None, retry_count=6):
     # 数据源：　tushare
     downKlineFromTushare(stockID, startDate, endDate, retry_count)
 
-def downKlineFromBaostock(stockID, startDate=None, endDate=None, retry_count=6):
+
+def downKlineFromBaostock(stockID, startDate=None,
+                          endDate=None, retry_count=6):
     """下载单个股票K线历史写入数据库, 下载源为baostock"""
     if startDate is None:  # startDate为空时取股票最后更新日期
         startDate = klineUpdateDate(stockID) + dt.timedelta(days=1)
@@ -322,12 +324,13 @@ def downKlineFromBaostock(stockID, startDate=None, endDate=None, retry_count=6):
     for cur_retry in range(1, retry_count + 1):
         try:
             fieldsStr = "date,open,high,close,low,volume,peTTM,tradestatus"
-            fields = ['date','open','high','close','low','volume','ttmpe']
+            # fields = ['date', 'open', 'high', 'close', 'low', 'volume', 'ttmpe']
             rs = bs.query_history_k_data_plus(longID, fieldsStr, startDate, endDate)
             dataList = []
             while rs.next():
                 dataList.append(rs.get_row_data())
             df = pd.DataFrame(dataList, columns=rs.fields)
+            # assert isinstance(df, pd.DataFrame), 'df is not pd.DataFrame'
             df = df[df.tradestatus == '1'].copy()
             df = df.rename({'peTTM': 'ttmpe'})
             df = df.iloc[0:, :-1]
@@ -343,16 +346,17 @@ def downKlineFromBaostock(stockID, startDate=None, endDate=None, retry_count=6):
                     return
     logging.error('fail download %s Kline data!', stockID)
 
+
 def downKlineFromTushare(stockID, startDate=None, endDate=None, retry_count=6):
     """下载单个股票K线历史写入数据库, 下载源为tushare"""
     # logging.debug('download kline: %s', stockID)
     if startDate is None:  # startDate为空时取股票最后更新日期
         startDate = klineUpdateDate(stockID) + dt.timedelta(days=1)
-#         print stockID, startDate
+        #         print stockID, startDate
         startDate = startDate.strftime('%Y-%m-%d')
     if endDate is None:
         endDate = dt.datetime.today().strftime('%Y-%m-%d')
-#     retryCount = 0
+    #     retryCount = 0
     if startDate > endDate:
         return
     for cur_retry in range(1, retry_count + 1):
@@ -375,17 +379,19 @@ def downloadLirun(date):
     # 获取业绩报表数据
     """
     return downloadLirunFromTushare(date)
+
+
 #     return downloadLirunFromEastmoney(date)
 
 
 def downloadLirunFromEastmoney(stockList, date):
     """
-    a获取业绩报表数据,数据源为Eastmoney
+    获取业绩报表数据,数据源为Eastmoney
     Parameters
     --------
-    year:int 年度 e.g:2014
-    quarter:int 季度 :1、2、3、4，只能输入这4个季度
-    a说明：由于是从网站获取的数据，需要一页页抓取，速度取决于您当前网络速度
+    stockList: list 股票代码列表
+    date: int 年度季度 e.g 20191表示2019年1季度
+    说明：由于是从网站获取的数据，需要一页页抓取，速度取决于您当前网络速度
 
     Return
     --------
@@ -403,17 +409,18 @@ def downloadLirunFromEastmoney(stockList, date):
         if lirun:
             lirunList.append(lirun)
     return DataFrame(lirunList)
+
+
 #     return lirunList
 
 
 def downloadLirunFromTushare(date):
     """
-    a获取业绩报表数据,数据源为Tushare
+    获取业绩报表数据,数据源为Tushare
     Parameters
     --------
-    year:int 年度 e.g:2014
-    quarter:int 季度 :1、2、3、4，只能输入这4个季度
-    a说明：由于是从网站获取的数据，需要一页页抓取，速度取决于您当前网络速度
+    date: int 年度季度 e.g 20191表示2019年1季度
+    说明：由于是从网站获取的数据，需要一页页抓取，速度取决于您当前网络速度
 
     Return
     --------
@@ -424,7 +431,7 @@ def downloadLirunFromTushare(date):
     """
     year = date // 10
     quarter = date % 10
-#     df = ts.get_report_data(year, quarter)
+    #     df = ts.get_report_data(year, quarter)
     # 因tushare的利润下载函数不支持重试和指定超时值，使用下面的改进版本
     df = get_report_data(year, quarter)
     if df is None:
@@ -432,7 +439,9 @@ def downloadLirunFromTushare(date):
     df = df.loc[:, ['code', 'net_profits', 'report_date']]
     return datatrans.transLirunDf(df, year, quarter)
 
-def downGuben(stockID='300445', date='2019-04-19'):
+
+# def downGuben(stockID='300445', date='2019-04-19'):
+def downGuben(stockID='300445'):
     print('start update guben: %s' % stockID)
     updateDate = gubenUpdateDate(stockID)
     # print(type(updateDate))
@@ -442,7 +451,7 @@ def downGuben(stockID='300445', date='2019-04-19'):
     code = tsCode(stockID)
     # print(code)
     df = pro.daily_basic(ts_code=code, start_date=startDate,
-                              fields='trade_date,total_share')
+                         fields='trade_date,total_share')
     # print(df)
     gubenDate = []
     gubenValue = []
@@ -460,8 +469,10 @@ def downGuben(stockID='300445', date='2019-04-19'):
     writeGubenToSQL(stockID, resultDf)
     return resultDf
 
+
 def downMainTable(stockID):
     mainTableType = ['BalanceSheet', 'ProfitStatement', 'CashFlow']
+    result = None
     for tableType in mainTableType:
         url = urlMainTable(stockID, tableType)
         filename = filenameMainTable(stockID, tableType)
@@ -500,9 +511,9 @@ def get_stock_basics():
     """
     url = ct.ALL_STOCK_BASICS_FILE
     req = getreq(url)
-#     proxy = urllib2.ProxyHandler({'http': '127.0.0.1:8087'})
-#     opener = urllib2.build_opener(proxy)
-#     urllib2.install_opener(opener)
+    #     proxy = urllib2.ProxyHandler({'http': '127.0.0.1:8087'})
+    #     opener = urllib2.build_opener(proxy)
+    #     urllib2.install_opener(opener)
     text = urllib.request.urlopen(req, timeout=30).read()
     text = text.decode('GBK')
     text = text.replace('--', '')
@@ -552,18 +563,18 @@ def _get_report_data(year, quarter, pageNo, dataArr,
                                ct.PAGES['fd'], year, quarter,
                                pageNo, ct.PAGE_NUM[1])
         url += '&order=code%7C2'
-#         url = ('http://vip.stock.finance.sina.com.cn/q/go.php/'
-#                'vFinanceAnalyze/kind/mainindex/index.phtml?'
-#                's_i=&s_a=&s_c=&reportdate=%s&quarter=%s&p=1&num=60' %
-#                (year, quarter))
-#         request = getreq(url)
+        #         url = ('http://vip.stock.finance.sina.com.cn/q/go.php/'
+        #                'vFinanceAnalyze/kind/mainindex/index.phtml?'
+        #                's_i=&s_a=&s_c=&reportdate=%s&quarter=%s&p=1&num=60' %
+        #                (year, quarter))
+        #         request = getreq(url)
         request = urllib.request.Request(url)
-#         print
-#         print url
+        #         print
+        #         print url
         try:
             text = urllib.request.urlopen(request, timeout=timeout).read()
-#             print repr(text)
-#             print text
+        #             print repr(text)
+        #             print text
         except IOError as e:
             logging.warning('[%s] fail to down, retry: %s', e, url)
         else:
@@ -577,7 +588,7 @@ def _get_report_data(year, quarter, pageNo, dataArr,
                 sarr = [etree.tostring(node) for node in res]
             sarr = ''.join(sarr)
             sarr = '<table>%s</table>' % sarr
-#             print sarr
+            #             print sarr
             df = pd.read_html(sarr)[0]
             df = df.drop(11, axis=1)
             df.columns = ct.REPORT_COLS

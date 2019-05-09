@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 2016年1月10日
 
 @author: who8736
-'''
+"""
 
 # import sys  # python的系统调用模块
-import os
+# import os
 import logging
 import time
 import configparser

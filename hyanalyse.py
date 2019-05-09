@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 2016年12月2日
 
 @author: who8736
-'''
+
+"""
 
 import datetime as dt
 
-import pandas as pd
+# import pandas as pd
 from pandas.core.frame import DataFrame
 
 import sqlrw
@@ -130,7 +131,7 @@ def getHYProfitsIncRates(hyID):
     hyIncRate1 = getHYProfitsIncRate(hyID, lastYearQuarter1)
     hyIncRate2 = getHYProfitsIncRate(hyID, lastYearQuarter2)
     hyIncRate3 = getHYProfitsIncRate(hyID, lastYearQuarter3)
-    return (hyIncRate1, hyIncRate2, hyIncRate3)
+    return hyIncRate1, hyIncRate2, hyIncRate3
 
 
 def getStockProfitsIncRate(stockID, quarter):
@@ -152,8 +153,8 @@ def getStockProfitsIncRates(stockID):
     incRate1 = getStockProfitsIncRate(stockID, lastYearQuarter1)
     incRate2 = getStockProfitsIncRate(stockID, lastYearQuarter2)
     incRate3 = getStockProfitsIncRate(stockID, lastYearQuarter3)
-    print((incRate1, incRate2, incRate3))
-    return (incRate1, incRate2, incRate3)
+    print(incRate1, incRate2, incRate3)
+    return incRate1, incRate2, incRate3
 
 
 def calHYTTMLirun(hyID, date):
@@ -374,7 +375,7 @@ if __name__ == '__main__':
     #    hyquarters = getHYQuarters()
     #    test1()
     #    test2()
-#    hypedf = getHYsPE()
+    #    hypedf = getHYsPE()
     #    getHYPE('01010801', '20171027')
 
     #     calAllHYTTMLirun(20154)

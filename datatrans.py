@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 2016年5月6日
 
 @author: who8736
-'''
+"""
 # import datetime as dt
 from datetime import datetime, timedelta
 import logging
@@ -40,13 +40,13 @@ def quarterAdd(_quarterDate, addNum):
 def dateList(startDate, endDate):
     """ 生成从startDate到endDate的季度列表
     """
-    dates = []
+    _dateList = []
     while startDate <= endDate:
-        dates.append(startDate)
+        _dateList.append(startDate)
         startDate += 1
         if startDate % 10 > 4:
             startDate = (int(startDate / 10) + 1) * 10 + 1
-    return dates
+    return _dateList
 
 
 def dateStrList(startDate, endDate):
@@ -116,6 +116,7 @@ def gubenDataToDfSina(stockID, guben):
                          'totalshares': totalshares})
     return gubenDf
 
+
 def gubenDataToDfEastymoney(stockID, guben):
     """
     东方财富的股本数据转换为DataFrame格式
@@ -144,6 +145,7 @@ def gubenDataToDfEastymoney(stockID, guben):
                          'date': date,
                          'totalshares': totalshares})
     return gubenDf
+
 
 def gubenDfToList(df):
     timea = datetime.now()
@@ -228,11 +230,13 @@ def transQuarterToDate(date):
     day = days[month]
     return '%(year)d-%(month)02d-%(day)d' % locals()
 
+
 def transTushareDateToQuarter(date):
     year = int(date[:4])
     qdic = {'03': 1, '06': 2, '09': 3, '12': 4}
     quarter = qdic[date[4:6]]
     return year * 10 + quarter
+
 
 if __name__ == '__main__':
     initlog()
