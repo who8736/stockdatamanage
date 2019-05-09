@@ -1,3 +1,4 @@
+bokeh
 pandas==0.24.2
 matplotlib==3.0.3
 jpush==3.3.6

@@ -229,11 +229,11 @@ if __name__ == "__main__":
     # resetKlineExtData()
 
     # 重算TTMlirun
-    dates = datatrans.dateList(20061, 20191)
-    for date in dates:
-        print('cal ttmlirun: %d' % date)
-        # calAllTTMLirun(date)
-        calAllHYTTMLirun(date)
+    # dates = datatrans.dateList(20061, 20191)
+    # for date in dates:
+    #     print('cal ttmlirun: %d' % date)
+    #     # calAllTTMLirun(date)
+    #     calAllHYTTMLirun(date)
     # calAllTTMLirun(20102)
 
     # 重新下载lirun数据

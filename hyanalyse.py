@@ -329,8 +329,12 @@ def getHYsPE(date=None):
     return DataFrame({'hyid': hyIDs, 'hype': hyPEs})
 
 
-def test():
-    dates = datatrans.dateList(20173, 20173)
+def resetHYTTMLirun(startQuarter=20191, endQuarter=20191):
+    """
+    重算指定日期所有行业TTM利润
+    :return:
+    """
+    dates = datatrans.dateList(startQuarter, endQuarter)
     for date in dates:
         calAllHYTTMLirun(date)
 
