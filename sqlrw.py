@@ -489,7 +489,8 @@ def writeSQL(data, tableName, insertType='IGNORE'):
     metadata = MetaData(bind=engine)
     mytable = Table(tableName, metadata, autoload=True)
     if insertType == 'IGNORE':
-        session.execute(mytable.insert().prefix_with(insertType), data)
+        # session.execute(mytable.insert().prefix_with(insertType), data)
+        session.execute(mytable.insert(), data)
     elif insertType == 'REPLACE':
         # mytable(data)
         session.add(mytable)
@@ -809,9 +810,8 @@ def calAllTTMLirun(date, incrementUpdate=True):
     """
     lirunCur = readLirunForDate(date)
     if (date % 10) == 4:
-        TTMLirun = lirunCur
-        TTMLirun.columns = [['stockid', 'date',
-                             'ttmprofits', 'reportdate']]
+        TTMLirun = lirunCur.copy()
+        TTMLirun.columns = ['stockid', 'date', 'ttmprofits', 'reportdate']
 #         return writeSQL(TTMLirun, 'ttmlirun')
     else:
         if incrementUpdate:
@@ -838,7 +838,7 @@ def calAllTTMLirun(date, incrementUpdate=True):
         TTMLirun['ttmprofits'] = (TTMLirun.profits +
                                   TTMLirun.profits1 - TTMLirun.profits2)
         TTMLirun = TTMLirun[['stockid', 'date', 'ttmprofits', 'reportdate']]
-    print(('TTMLirun.head():', TTMLirun.head()))
+    print('TTMLirun.head():\n', TTMLirun.head())
 
     # 写入ttmlirun表后，重算TTM利润增长率
     writeSQL(TTMLirun, 'ttmlirun')
