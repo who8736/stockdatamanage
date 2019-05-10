@@ -245,5 +245,5 @@ if __name__ == '__main__':
 
     q = quarterSub(quarterDate, subNum - 1)
     print(q)
-    print((dateList(q, quarterDate)))
-    print((len(dateList(q, quarterDate))))
+    print(dateList(q, quarterDate))
+    print(len(dateList(q, quarterDate)))

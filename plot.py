@@ -11,7 +11,8 @@ from io import BytesIO
 
 import matplotlib
 
-matplotlib.use('Agg')  # @UndefinedVariable
+# matplotlib.use('Agg')  # @UndefinedVariable
+matplotlib.use('Qt5Agg')  # @UndefinedVariable
 
 import matplotlib.pyplot as plt  # @IgnorePep8
 # from matplotlib.finance import candlestick_ohlc  # @IgnorePep8
@@ -177,5 +178,5 @@ if __name__ == '__main__':
 #     k = dateStrList(startDate, endDate)
 #     print k
 #     scatter(startDate, endDate)
-    plotKline('002100')
+    plotKline('600801')
 #     test()
