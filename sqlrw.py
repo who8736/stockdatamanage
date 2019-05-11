@@ -489,8 +489,8 @@ def writeSQL(data, tableName, insertType='IGNORE'):
     metadata = MetaData(bind=engine)
     mytable = Table(tableName, metadata, autoload=True)
     if insertType == 'IGNORE':
-        # session.execute(mytable.insert().prefix_with(insertType), data)
-        session.execute(mytable.insert(), data)
+        session.execute(mytable.insert().prefix_with(insertType), data)
+        # session.execute(mytable.insert(), data)
     elif insertType == 'REPLACE':
         # mytable(data)
         session.add(mytable)
