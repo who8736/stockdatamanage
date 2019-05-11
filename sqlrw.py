@@ -485,19 +485,24 @@ def writeSQL(data, tableName, insertType='IGNORE'):
     if not data:
         return True
 
-    session = Session()
-    metadata = MetaData(bind=engine)
-    mytable = Table(tableName, metadata, autoload=True)
-    if insertType == 'IGNORE':
-        session.execute(mytable.insert().prefix_with(insertType), data)
-        # session.execute(mytable.insert(), data)
-    elif insertType == 'REPLACE':
-        # mytable(data)
-        session.add(mytable)
-        # session.execute(mytable.replace(), data)
-        session.merge(data)
-    session.commit()
-    session.close()
+    try:
+        session = Session()
+        metadata = MetaData(bind=engine)
+        mytable = Table(tableName, metadata, autoload=True)
+        if insertType == 'IGNORE':
+            session.execute(mytable.insert().prefix_with(insertType), data)
+            # session.execute(mytable.insert(), data)
+        elif insertType == 'REPLACE':
+            # mytable(data)
+            session.add(mytable)
+            # session.execute(mytable.replace(), data)
+            session.merge(data)
+        session.commit()
+        session.close()
+    except IOError as e:
+        print(e)
+        print('写表失败： %s' % tableName)
+        return False
     return True
 
 
