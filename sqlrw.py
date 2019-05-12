@@ -467,7 +467,7 @@ def writeStockList(stockList):
                      if_exists='append')
 
 
-def writeSQL(data, tableName, insertType='IGNORE'):
+def writeSQL(dfdata, tableName, insertType='IGNORE'):
     """insetType: IGNORE 忽略重复主键；
     """
     logging.debug('start writeSQL %s' % tableName)
@@ -476,11 +476,13 @@ def writeSQL(data, tableName, insertType='IGNORE'):
         logging.error('not exist %s' % tableName)
         return False
 
-    if isinstance(data, DataFrame):
-        if data.empty:
+    if isinstance(dfdata, DataFrame):
+        if dfdata.empty:
             return True
-        data = data.where(pd.notnull(data), None)
-        data = datatrans.transDfToList(data)
+        dfdata = dfdata.where(pd.notnull(dfdata), None)
+        data = datatrans.transDfToList(dfdata)
+    else:
+        data = dfdata
 
     if not data:
         return True
@@ -499,7 +501,7 @@ def writeSQL(data, tableName, insertType='IGNORE'):
             session.merge(data)
         session.commit()
         session.close()
-    except IOError as e:
+    except Exception as e:
         print(e)
         print('写表失败： %s' % tableName)
         return False

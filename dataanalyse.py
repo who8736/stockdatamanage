@@ -11,6 +11,7 @@ import datetime as dt
 # from functools import partial
 
 import pandas as pd
+import numpy as np
 
 # import datamanage as dm
 import datatrans
@@ -120,6 +121,11 @@ def calGuzhi(stockList=None):
     guzhiDf['stdrate'] = lirunstd / abs(guzhiDf['avgrate'])
     guzhiDf['stdrate'] = guzhiDf['stdrate'].round(2)
     #     print type(lirunstd / pegDf['avgrate'])
+
+    # 当avgrate为0时，madrate和stdrate将无法计算，结果存为inf
+    # 将inf替换为-9999
+    guzhiDf.replace([np.inf, -np.inf], -9999)
+
     # 增加股票名称
     nameDf = sqlrw.readStockListDf()
     guzhiDf = pd.merge(guzhiDf, nameDf, on='stockid', how='left')

@@ -8,7 +8,7 @@ Created on Mon Apr 15 15:27:38 2019
 # import pandas as pd
 # from pandas import DataFrame
 from urllib.request import urlopen
-# from lxml import etree
+from lxml import etree
 # from datetime import datetime
 # import baostock as bs
 # import tushare as ts
@@ -22,6 +22,7 @@ from misc import *
 # from initlog import initlog
 from datatrans import *
 from hyanalyse import *
+import dataanalyse
 
 
 def downGubenFromEastmoney():
@@ -243,3 +244,7 @@ if __name__ == "__main__":
 
     # 重新下载lirun数据
     # resetLirun()
+
+    dataanalyse.testShaixuan()
+    print('程序正常退出')
+
