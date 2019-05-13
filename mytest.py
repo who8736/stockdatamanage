@@ -23,6 +23,7 @@ from misc import *
 from datatrans import *
 from hyanalyse import *
 import dataanalyse
+from valuation import calpf
 
 
 def downGubenFromEastmoney():
@@ -245,6 +246,11 @@ if __name__ == "__main__":
     # 重新下载lirun数据
     # resetLirun()
 
-    dataanalyse.testShaixuan()
+    # 估值筛选
+    # dataanalyse.testShaixuan()
+
+    # 计算评分
+    calpf()
+
     print('程序正常退出')
 

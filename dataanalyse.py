@@ -124,7 +124,7 @@ def calGuzhi(stockList=None):
 
     # 当avgrate为0时，madrate和stdrate将无法计算，结果存为inf
     # 将inf替换为-9999
-    guzhiDf.replace([np.inf, -np.inf], -9999)
+    guzhiDf.replace([np.inf, -np.inf], -9999, inplace=True)
 
     # 增加股票名称
     nameDf = sqlrw.readStockListDf()

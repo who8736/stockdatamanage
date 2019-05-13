@@ -13,6 +13,7 @@ Created on Wed Oct 25 21:30:01 2017
 """
 
 import pandas as pd
+import numpy as np
 
 import initsql
 import hyanalyse
@@ -28,13 +29,13 @@ LOWPE = 20
 def lowpe(stock):
     """ 判断某支股票为低市盈率时返回1，否则返回0
     """
-    return 1 if stock.pe > 0 and stock.pe <= LOWPE else 0
+    return 1 if 0 < stock.pe <= LOWPE else 0
 
 
 def lowhype(stock):
     """ 判断某支股票低于行业市盈率时返回1，否则返回0
     """
-    return 1 if stock.pe > 0 and stock.pe < stock.hype else 0
+    return 1 if 0 < stock.pe < stock.hype else 0
 
 
 def wdzz(stock):
@@ -176,6 +177,11 @@ def calpf():
     if initsql.existTable('valuation'):
         engine.execute('TRUNCATE TABLE valuation')
     stocks = stocks.dropna()
+
+    # 当计算peg时，如果平均增长率为0，则结果为inf
+    # 将inf替换为-9999
+    stocks.replace([np.inf, -np.inf], -9999, inplace=True)
+
     stocks.to_sql('valuation', engine, if_exists='append')
     return stocks
 

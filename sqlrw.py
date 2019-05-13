@@ -32,13 +32,13 @@ from pandas.core.frame import DataFrame
 import xlrd
 import tushare as ts
 
-
 import datatrans
 import initsql
 from sqlconn import SQLConn
 # from misc import filenameGuben, filenameLirun, filenameGuzhi
 from misc import filenameLirun, filenameGuzhi
 from initlog import initlog
+
 # from download import downHYFile
 
 # from bokeh.sampledata import stocks
@@ -91,6 +91,7 @@ def writeGubenToSQL(stockID, gubenDf):
     if not gubenDf.empty:
         return writeSQL(gubenDf, tablename)
 
+
 def checkGuben(tradeDate='20190419'):
     """ 以下方法用于从tushare.pro下载日频信息中的股本数据
         与数据库保存的股本数据比较，某股票的总股本存在差异时说明股本有变动
@@ -98,7 +99,7 @@ def checkGuben(tradeDate='20190419'):
     """
     pro = ts.pro_api()
     dfFromTushare = pro.daily_basic(ts_code='', trade_date=tradeDate,
-                         fields='ts_code,total_share')
+                                    fields='ts_code,total_share')
     dfFromTushare['stockid'] = dfFromTushare['ts_code'].str[:6]
 
     sql = """ select a.stockid, a.date, a.totalshares from guben as a, 
@@ -110,10 +111,10 @@ def checkGuben(tradeDate='20190419'):
     df = pd.merge(dfFromTushare, dfFromSQL, how='left', on='stockid')
     df.loc[0:, 'cha'] = df.apply(
         lambda x: abs(x['total_share'] * 10000 - x['totalshares']) / (
-                    x['total_share'] * 10000), axis=1)
+                x['total_share'] * 10000), axis=1)
 
     chaRate = 0.0001
-    dfUpdate = df[df.cha>=chaRate]
+    dfUpdate = df[df.cha >= chaRate]
     # print(dfUpdate)
     # for stockID in dfUpdate['stockid']:
     #     sql = ('select max(date) from guben where stockid="%s" limit 1;'
@@ -122,7 +123,7 @@ def checkGuben(tradeDate='20190419'):
     #     setGubenLastUpdate(stockID, dateA)
 
     # 对于无需更新股本的股票，将其更新日期修改为上一交易日
-    dfFinished = df[df.cha<chaRate]
+    dfFinished = df[df.cha < chaRate]
     date = '%s-%s-%s' % (tradeDate[:4], tradeDate[4:6], tradeDate[6:])
     for stockID in dfFinished['stockid']:
         setGubenLastUpdate(stockID, date)
@@ -130,15 +131,16 @@ def checkGuben(tradeDate='20190419'):
     # 返回需更新股本的股票
     return dfUpdate
 
+
 def writeGuzhiToSQL(stockID, data):
     """下载单个股票估值数据写入数据库"""
     guzhiDict = datatrans.transGuzhiDataToDict(data)
     if guzhiDict is None:
         return True
     # print guzhiDict
-#     guzhiDf = DataFrame(guzhiDict, index=[0])
-#     writeSQLUpdate(guzhiDict, 'guzhi')
-#     print guzhiDict
+    #     guzhiDf = DataFrame(guzhiDict, index=[0])
+    #     writeSQLUpdate(guzhiDict, 'guzhi')
+    #     print guzhiDict
     tablename = 'guzhi'
     if 'peg' in list(guzhiDict.keys()):
         peg = guzhiDict['peg']
@@ -290,7 +292,7 @@ def dropNAData():
     """ 清除K线图数据中交易量为0的数据
     """
     stockList = readStockIDsFromSQL()
-#     stockList = ['002100']
+    #     stockList = ['002100']
     for stockID in stockList:
         tablename = tablenameKline(stockID)
         sql = 'delete from %(tablename)s where volume=0;' % locals()
@@ -375,8 +377,8 @@ def readStockListDf():
     for i in stockList:
         stockIDs.append(i[0])
         # name = i[1].encode('utf-8')
-#         print type(i[1]), i[1], name
-#         name = i[1]
+        #         print type(i[1]), i[1], name
+        #         name = i[1]
         stockNames.append(i[1])
     stockListDf = DataFrame({'stockid': stockIDs,
                              'name': stockNames})
@@ -394,7 +396,7 @@ def updateKlineMarketValue(stockID, startDate='1990-01-01', endDate=None):
             endDate = gubenDf['date'][i + 1]
         except KeyError as e:
             endDate = None
-#             print e
+        #             print e
         totalShares = gubenDf['totalshares'][i]
 
         sql = ('update %(klineTablename)s '
@@ -584,7 +586,7 @@ def readGuzhiFilesToDf(stockList):
 def readGuzhiSQLToDf(stockList):
     listStr = ','.join(stockList)
     sql = 'select * from guzhi where stockid in (%s);' % listStr
-#     result = engine.execute(sql)
+    #     result = engine.execute(sql)
     df = pd.read_sql(sql, engine)
     print(df)
     return df
@@ -601,6 +603,7 @@ def readValuation(stockID):
     sql = 'select * from valuation where stockid="%(stockID)s"' % locals()
     result = engine.execute(sql).fetchone()
     return result
+
 
 # def downloadKline(stockID, startDate=None, endDate=None):
 #     if startDate is None:  # startDate为空时取股票最后更新日期
@@ -660,7 +663,7 @@ def readTTMLirunForStockID(stockID,
     sql = ('select max(reportdate) from ttmlirun '
            'where stockid="%(stockID)s" '
            'and reportdate<="%(startDate)s"' % locals())
-#     print sql
+    #     print sql
     # 指定日期（含）前无TTM利润数据的，查询起始日期设定为startDate
     # 否则设定为最近一次数据日期
     result = engine.execute(sql).fetchone()
@@ -668,16 +671,16 @@ def readTTMLirunForStockID(stockID,
         startDate = result[0]
     sql = ('select * from ttmlirun where stockid = "%(stockID)s"'
            ' and `reportdate` >= "%(startDate)s"' % locals())
-#     print sql
+    #     print sql
     if endDate is not None:
         sql += ' and `date` <= "%s"' % endDate
     df = pd.read_sql(sql, engine)
 
     # 指定日期（含）前存在股本变动数据的，重设第1次变动日期为startDate，
     # 减少更新Kline表中总市值所需计算量
-#     if TTMLirunStartDate != startDate:
-#         df.loc[df.reportdate == TTMLirunStartDate,
-#                u'reportdate'] = startDate
+    #     if TTMLirunStartDate != startDate:
+    #         df.loc[df.reportdate == TTMLirunStartDate,
+    #                u'reportdate'] = startDate
     return df
 
 
@@ -696,10 +699,11 @@ def readLastTTMLirunForStockID(stockID, limit=1):
            'where stockid="%(stockID)s" '
            'order by date desc '
            'limit %(limit)s' % locals())
-#     print sql
+    #     print sql
     result = engine.execute(sql).fetchall()
     result = [i[0] for i in reversed(result)]
     return result
+
 
 #     df = pd.read_sql(sql, engine)
 #     return df
@@ -722,7 +726,7 @@ def readLastTTMLirun(stockList, limit=1):
         TTMLirun.insert(0, stockID)
         TTMLirunList.append(TTMLirun)
 
-#     print TTMLirunList
+    #     print TTMLirunList
     columns = ['incrate%s' % i for i in range(limit)]
     columns.insert(0, 'stockid')
     TTMLirunDf = DataFrame(TTMLirunList, columns=columns)
@@ -794,7 +798,7 @@ def alterKline():
         sql = 'call stockdata.alterkline(%s)'
         try:
             engine.execute(sql, tablename)
-#             result = result.fetchall()
+            #             result = result.fetchall()
             print(tablename)
         except sqlalchemy.exc.OperationalError as e:
             print(e)
@@ -819,7 +823,7 @@ def calAllTTMLirun(date, incrementUpdate=True):
     if (date % 10) == 4:
         TTMLirun = lirunCur.copy()
         TTMLirun.columns = ['stockid', 'date', 'ttmprofits', 'reportdate']
-#         return writeSQL(TTMLirun, 'ttmlirun')
+    #         return writeSQL(TTMLirun, 'ttmlirun')
     else:
         if incrementUpdate:
             TTMLirunCur = readTTMLirunForDate(date)
@@ -863,7 +867,7 @@ def calTTMLirunIncRate(date, incrementUpdate=True):
     TTMLirunLastYear = readTTMLirunForDate(date - 10)
     TTMLirunLastYear = TTMLirunLastYear[['stockid', 'ttmprofits']]
     TTMLirunLastYear.columns = ['stockid', 'ttmprofits1']
-    TTMLirunLastYear = TTMLirunLastYear[TTMLirunLastYear.ttmprofits1!=0]
+    TTMLirunLastYear = TTMLirunLastYear[TTMLirunLastYear.ttmprofits1 != 0]
 
     # 整合以上2个表，stockid为整合键
     TTMLirunCur = pd.merge(TTMLirunCur, TTMLirunLastYear, on='stockid')
@@ -950,8 +954,8 @@ def getLirunUpdateStartQuarter():
     --------
     startQuarter：YYYYQ 起始更新日期
     """
-#     sql = (u'select min(maxdate) from (SELECT stockid, max(date) as maxdate '
-#            u'FROM stockdata.lirun group by stockid) as temp;')
+    #     sql = (u'select min(maxdate) from (SELECT stockid, max(date) as maxdate '
+    #            u'FROM stockdata.lirun group by stockid) as temp;')
     sql = ('select min(maxdate) from (SELECT stockid, max(date) as maxdate '
            'FROM stockdata.lirun group by stockid '
            'having stockid in (select stockid from stocklist)) as temp;')
@@ -1032,6 +1036,8 @@ def savePELirunIncrease(startDate='2007-01-01', endDate=None):
             if endDate_ is not None:
                 sql += (' and date<"%(endDate_)s"' % locals())
             engine.execute(sql)
+
+
 #         break
 
 
@@ -1042,12 +1048,14 @@ def setKlineTTMPELastUpdate(stockID, endDate):
     result = engine.execute(sql)
     return result
 
+
 def setGubenLastUpdate(stockID, endDate):
     sql = ('insert into lastupdate (`stockid`, `guben`) '
            'values ("%(stockID)s", "%(endDate)s") '
            'on duplicate key update `guben`="%(endDate)s";' % locals())
     result = engine.execute(sql)
     return result
+
 
 def updateKlineTTMPE(stockID, startDate='1990-01-01', endDate=None):
     """
@@ -1122,7 +1130,7 @@ def readTTMLirunFromDf(df, date):
         return None
     d = d[d.reportdate == d['reportdate'].max()]
     ttmLirun = d[d.date == d['date'].max(), 'ttmprofits']
-#     ttmLirun = d.iat[0, 3]
+    #     ttmLirun = d.iat[0, 3]
     return ttmLirun
 
 
@@ -1174,10 +1182,10 @@ def readGubenUpdateList():
     sql = 'select stockid, totals as totalsnew from stocklist;'
     dfNew = pd.read_sql(sql, engine)
 
-#     dfNew = ts.get_stock_basics()
-#     dfNew = dfNew.reset_index()
-#     dfNew = dfNew[['code', 'totals']]
-#     dfNew.columns = ['stockid', 'totalsnew']
+    #     dfNew = ts.get_stock_basics()
+    #     dfNew = dfNew.reset_index()
+    #     dfNew = dfNew[['code', 'totals']]
+    #     dfNew.columns = ['stockid', 'totalsnew']
     sql = ('SELECT stockid, totalshares as totalsold '
            'FROM (select * from stockdata.guben order by date desc) '
            'as tablea group by stockid;')
@@ -1248,6 +1256,8 @@ def getGuzhiList():
     sql = 'select stockid from youzhiguzhi'
     result = engine.execute(sql)
     return [stockid[0] for stockid in result.fetchall()]
+
+
 #     return result.fetchall()
 
 
@@ -1281,8 +1291,8 @@ def getStockName(stockID):
 if __name__ == '__main__':
     initlog()
     pass
-#    hylist = getHYList()
-#     print(readCurrentTTMPE('002508'))
+    #    hylist = getHYList()
+    #     print(readCurrentTTMPE('002508'))
 
     # 测试updateKlineEXTData
     stockID = '000651'

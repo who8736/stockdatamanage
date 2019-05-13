@@ -11,8 +11,8 @@ from io import BytesIO
 
 import matplotlib
 
-# matplotlib.use('Agg')  # @UndefinedVariable
-matplotlib.use('Qt5Agg')  # @UndefinedVariable
+matplotlib.use('Agg')  # @UndefinedVariable
+# matplotlib.use('Qt5Agg')  # @UndefinedVariable
 
 import matplotlib.pyplot as plt  # @IgnorePep8
 # from matplotlib.finance import candlestick_ohlc  # @IgnorePep8
