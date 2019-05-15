@@ -21,8 +21,11 @@ import matplotlib.gridspec as gs  # @IgnorePep8
 from matplotlib.dates import DateFormatter, MonthLocator  # @IgnorePep8
 from matplotlib.ticker import FixedLocator  # @IgnorePep8
 import tushare  # @IgnorePep8
+from bokeh.plotting import figure, show, output_file
+from bokeh.layouts import column
+from bokeh.models import ColumnDataSource, RangeTool
 
-from sqlrw import engine  # @IgnorePep8
+from sqlrw import engine, readKlineDf  # @IgnorePep8
 from datatrans import dateStrList  # @IgnorePep8
 
 
@@ -170,6 +173,90 @@ def test():
 #     plt.savefig('testplot.png')
     plt.legend()
     plt.show()
+
+
+def plotCandlestick(p, df):
+    inc = df.close > df.open
+    dec = df.open > df.close
+    incSor = ColumnDataSource(df[inc])
+    decSor = ColumnDataSource(df[dec])
+
+    p.segment(x0='index', y0='high', x1='index', y1='low', source=incSor, color="red")
+    p.segment(x0='index', y0='high', x1='index', y1='low', source=decSor, color="green")
+    w = 0.6
+    p.vbar(x='index', bottom='open', top='close',
+           width=w, source=incSor,
+           fill_color='red', line_color='red')
+    p.vbar(x='index', bottom='close', top='open',
+           width=w, source=decSor,
+           fill_color='green', line_color='green')
+
+
+def plotPE(p, source):
+    p.line(x='index', y='pe', source=source)
+
+
+def plotKlineBokeh(stockID, days=1000):
+    """
+    绘制K线,pe走势图
+    :param stockID: string, 股票代码, 600619
+    :param days: int, 走势图显示的总天数
+    :return:
+    """
+    df = readKlineDf(stockID, days)
+    source = ColumnDataSource(df)
+    TOOLS = "pan,wheel_zoom,box_zoom,reset,save"
+    width = 1000
+    klineHeight = int(width / 16 * 6)
+    peHeight = int(width / 16 * 3)
+    selectHeight = int(width / 16 * 1)
+
+    # 绘制K线图
+    dataLen = df.shape[0]
+    tooltips = [('date', '@date'), ('close', '@close')]
+    pkline = figure(x_axis_type="datetime", tools=TOOLS,
+                    plot_height=klineHeight,
+                    plot_width=width,
+                    x_axis_location="above",
+                    title="kline: %s" % stockID,
+                    tooltips=tooltips,
+                    x_range=(dataLen - 200, dataLen - 1))
+    pkline.xaxis.major_label_overrides = df['date'].to_dict()
+    plotCandlestick(pkline, df)
+    print(type(pkline.y_range))
+    print(pkline.y_range)
+
+    tooltips = [('pe', '@pe')]
+    ppe = figure(x_axis_type="datetime", tools=TOOLS,
+                 plot_height=peHeight, plot_width=width,
+                 tooltips=tooltips,
+                 # x_axis_location=None,
+                 # x_axis_location="bottom",
+                 x_range=pkline.x_range)
+    ppe.xaxis.major_label_overrides = df['date'].to_dict()
+    plotPE(ppe, source)
+
+    select = figure(
+        # title="Drag the middle and edges of the selection box to change the range above",
+        plot_height=selectHeight,
+        plot_width=width,
+        # y_range=ppe.y_range,
+        # x_axis_type="datetime",
+        y_axis_type=None,
+        tools="", toolbar_location=None, background_fill_color="#efefef")
+    select.xaxis.major_label_overrides = df['date'].to_dict()
+    plotPE(select, source)
+
+    range_tool = RangeTool(x_range=pkline.x_range)
+    range_tool.overlay.fill_color = "navy"
+    range_tool.overlay.fill_alpha = 0.2
+    select.add_tools(range_tool)
+    select.toolbar.active_multi = range_tool
+
+    column_layout = column([pkline, ppe, select])
+    return column_layout
+    # output_file("kline.html", title="kline plot test")
+    # show(column_layout)  # open a browser
 
 
 if __name__ == '__main__':

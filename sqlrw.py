@@ -1288,6 +1288,38 @@ def getStockName(stockID):
         return None
 
 
+def readKlineDf(stockID, days):
+    sql = ('select date, open, high, low, close, ttmpe '
+           'from kline%(stockID)s '
+           'order by date desc limit %(days)s;' % locals())
+    result = engine.execute(sql).fetchall()
+    stockDatas = [i for i in reversed(result)]
+    # klineDatas = []
+    dateList = []
+    openList = []
+    closeList = []
+    highList = []
+    lowList = []
+    peList = []
+    indexes = list(range(len(result)))
+    for i in indexes:
+        date, _open, high, low, close, ttmpe = stockDatas[i]
+        dateList.append(date.strftime("%Y-%m-%d"))
+        # dateList.append(date)
+        openList.append(_open)
+        closeList.append(close)
+        highList.append(high)
+        lowList.append(low)
+        peList.append(ttmpe)
+    klineDf = pd.DataFrame({'date': dateList,
+                            'open': openList,
+                            'close': closeList,
+                            'high': highList,
+                            'low': lowList,
+                            'pe': peList})
+    return klineDf
+
+
 if __name__ == '__main__':
     initlog()
     pass

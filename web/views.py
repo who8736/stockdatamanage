@@ -8,32 +8,19 @@ Created on 2016年12月14日
 import numpy as np
 from flask import render_template, redirect, url_for
 from flask import send_file
-# from flask_login import login_required, current_user
+from bokeh.embed import components
+
+from plot import plotKline, plotKlineBokeh
 from report import report1 as guzhiReport
 from report import reportValuation
 from sqlrw import getChiguList, getGuzhiList, getYouzhiList
-from sqlrw import readStockIDsFromSQL, writeChigu
 from sqlrw import getStockName, readCurrentTTMPE
 from sqlrw import readCurrentClose, readCurrentPEG
 from sqlrw import readPERate
-from sqlrw import readValuationSammary, readValuation
-from plot import plotKline
-
+from sqlrw import readStockIDsFromSQL, writeChigu
+from sqlrw import readValuationSammary
 from . import app
 from .forms import StockListForm
-# import sys
-#
-# sys.setdefaultencoding('utf-8')
-# reload(sys)
-
-
-class testobj():
-
-    def __init__(self):
-        self.t1 = 'testtext1'
-        self.t2 = 'testtext2'
-        self.t3 = 'testtext3'
-        self.t4 = ['t401', 't402', 't403', 't404', ]
 
 
 @app.route('/')
@@ -136,3 +123,10 @@ def klineimg(stockID):
     return send_file(plotImg,
                      attachment_filename='img.png',
                      as_attachment=True)
+
+
+@app.route('/klineimgnew/<stockID>')
+def klineimgnew(stockID):
+    plotImg = plotKlineBokeh(stockID)
+    scripts, div = components(plotImg)
+    return render_template("plotkline.html", the_div=div, the_script=scripts)
