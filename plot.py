@@ -280,7 +280,7 @@ class BokehPlot:
         self.pkline.xaxis.major_label_overrides = self.df['date'].to_dict()
         self.plotCandlestick()
 
-        tooltips = [('pe', '@pe')]
+        tooltips = [('date', '@date'), ('pe', '@pe')]
         self.ppe = figure(x_axis_type="datetime", tools=TOOLS,
                           plot_height=peHeight, plot_width=width,
                           tooltips=tooltips,
@@ -308,15 +308,15 @@ class BokehPlot:
                                 step=1, value=self.df.high.max())
         self.sliderMin = Slider(start=self.df.low.min(), end=self.df.high.max(),
                                 step=1, value=self.df.high.min())
-        self.sliderMax.js_link('value', self.pkline.y_range, 'end')
-        self.sliderMin.js_link('value', self.pkline.y_range, 'start')
+        # self.sliderMax.js_link('value', self.pkline.y_range, 'end')
+        # self.sliderMin.js_link('value', self.pkline.y_range, 'start')
         self.column_layout = column([self.pkline, self.ppe, self.select,
                                      self.sliderMin, self.sliderMax])
 
         self.pkline.x_range.on_change('start', self.update)
         self.pkline.x_range.on_change('end', self.update)
         output_file("kline.html", title="kline plot test")
-        show(self.column_layout)  # open a browser
+        # show(self.column_layout)  # open a browser
         # return self.column_layout
 
     def plot(self):

@@ -9,8 +9,10 @@ import numpy as np
 from flask import render_template, redirect, url_for
 from flask import send_file
 from bokeh.embed import components
+from bokeh.resources import INLINE
+from bokeh.util.string import encode_utf8
 
-from plot import plotKline, plotKlineBokeh
+from plot import plotKline, BokehPlot
 from report import report1 as guzhiReport
 from report import reportValuation
 from sqlrw import getChiguList, getGuzhiList, getYouzhiList
@@ -34,7 +36,7 @@ def setStockList():
     stockList = getChiguList()
     stockListStr = "|".join([i for i in stockList])
     form = StockListForm()
-#     form.stockList = stockListStr
+    #     form.stockList = stockListStr
     if form.validate_on_submit():
         stockListStr = form.stockList.data
         print(stockListStr)
@@ -79,8 +81,8 @@ def reportnav(typeid):
 @app.route('/report/<stockid>')
 def reportView(stockid):
     stockItem = guzhiReport(stockid)
-#     reportstr = reportstr[:20]
-#     reportstr = 'test'
+    #     reportstr = reportstr[:20]
+    #     reportstr = 'test'
     return render_template('report.html',
                            stock=stockItem)
 
@@ -93,25 +95,25 @@ def valuationNav(typeid):
     elif typeid == 'youzhi':
         stocksDf = stocksDf[(stocksDf.pf >= 5) &
                             (stocksDf.pe < 30)]
-#        sql = 'select stockid, name, pf, pe, peg, pe200, pe1000'
+    #        sql = 'select stockid, name, pf, pe, peg, pe200, pe1000'
 
     stockReportList = np.array(stocksDf).tolist()
-#    for stockID in stockList:
-#        stockName = getStockName(stockID)
-#        stockClose = readCurrentClose(stockID)
-#        pe = readCurrentTTMPE(stockID)
-#        peg = readCurrentPEG(stockID)
-#        pe200, pe1000 = readPERate(stockID)
-#        stockReportList.append([stockID, stockName,
-#                                stockClose, pe, peg, pe200, pe1000])
+    #    for stockID in stockList:
+    #        stockName = getStockName(stockID)
+    #        stockClose = readCurrentClose(stockID)
+    #        pe = readCurrentTTMPE(stockID)
+    #        peg = readCurrentPEG(stockID)
+    #        pe200, pe1000 = readPERate(stockID)
+    #        stockReportList.append([stockID, stockName,
+    #                                stockClose, pe, peg, pe200, pe1000])
     return render_template('valuationnav.html', stockList=stockReportList)
 
 
 @app.route('/valuation/<stockid>')
 def valuationView(stockid):
     stockItem = reportValuation(stockid)
-#     reportstr = reportstr[:20]
-#     reportstr = 'test'
+    #     reportstr = reportstr[:20]
+    #     reportstr = 'test'
     return render_template('valuation.html',
                            stock=stockItem)
 
@@ -127,6 +129,18 @@ def klineimg(stockID):
 
 @app.route('/klineimgnew/<stockID>')
 def klineimgnew(stockID):
-    plotImg = plotKlineBokeh(stockID)
-    scripts, div = components(plotImg)
-    return render_template("plotkline.html", the_div=div, the_script=scripts)
+    # grab the static resources
+    js_resources = INLINE.render_js()
+    css_resources = INLINE.render_css()
+
+    plotImg = BokehPlot(stockID)
+    scripts, div = components(plotImg.plot())
+    # return render_template("plotkline.html", the_div=div, the_script=scripts)
+    html = render_template(
+        'plotkline.html',
+        plot_script=scripts,
+        plot_div=div,
+        js_resources=js_resources,
+        css_resources=css_resources,
+    )
+    return encode_utf8(html)
