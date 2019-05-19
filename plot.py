@@ -333,12 +333,30 @@ class BokehPlot:
                             """)
         self.sliderPEMin.js_on_change('value', callback)
 
+        code = """
+                var xstart = ppe.x_range.start;
+                var xend = ppe.x_range.end;
+                var pedata = source.data['pe'];
+                var ymax = pedata[xstart];
+                for (var i = xstart + 1; i < xend; i++) {
+                    ymax =  Math.max(ymax, pedata[i]);
+                    console.log(pedata[i]);
+                }
+                ppe.y_range.end = ymax;
+                console.log(ymax);
+                """
+        # code = """
+        #         ppe.y_range.end = 30
+        #        """
+        callback = CustomJS(args=dict(ppe=self.ppe, source=self.source), code=code)
+        self.ppe.x_range.js_on_change('start', callback)
+
         self.column_layout = column([self.pkline, self.ppe, self.select,
                                      self.sliderKlineMin, self.sliderKlineMax,
                                      self.sliderPEMin, self.sliderPEMax])
 
-        self.pkline.x_range.on_change('start', self.update)
-        self.pkline.x_range.on_change('end', self.update)
+        # self.pkline.x_range.on_change('end',
+        #                               callback=CustomJS.from_py_func(self.update))
         # output_file("kline.html", title="kline plot test")
         # show(self.column_layout)  # open a browser
         # return self.column_layout
@@ -369,8 +387,8 @@ class BokehPlot:
     def plotPE(self, p):
         p.line(x='index', y='pe', source=self.source)
 
-    def update(self, attr, old, new):
-        print(attr, old, new)
+    def update(self):
+        # print(attr, old, new)
         df = self.df[self.pkline.x_range.start:self.pkline.x_range.end + 1]
         klineMin = df.low.min()
         klineMax = df.low.max()
