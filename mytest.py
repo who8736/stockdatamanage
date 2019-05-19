@@ -16,12 +16,16 @@ from lxml import etree
 # from download import getreq
 from download import *
 from sqlrw import *
+from bokeh.plotting import show, output_file
+
 from sqlconn import engine
 # from misc import urlGubenEastmoney
 from misc import *
 # from initlog import initlog
 from datatrans import *
 from hyanalyse import *
+from plot import BokehPlot
+
 import dataanalyse
 from valuation import calpf
 
@@ -209,6 +213,13 @@ def resetLirun():
         # tushare每分钟最多访问接口80次
         time.sleep(0.4)
 
+def testBokeh():
+    b = BokehPlot('000651')
+    p = b.plot()
+    output_file("kline.html", title="kline plot test")
+    show(p)  # open a browser
+
+
 
 if __name__ == "__main__":
     initlog()
@@ -250,7 +261,10 @@ if __name__ == "__main__":
     # dataanalyse.testShaixuan()
 
     # 计算评分
-    calpf()
+    # calpf()
+
+    # bokeh绘图
+    testBokeh()
 
     print('程序正常退出')
 

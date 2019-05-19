@@ -21,12 +21,14 @@ import tushare  # @IgnorePep8
 from bokeh.plotting import figure, show, output_file
 from bokeh.layouts import column
 from bokeh.models import ColumnDataSource, RangeTool
-from bokeh.models import Slider
+from bokeh.models import Slider, CustomJS
 
 from sqlrw import engine, readKlineDf  # @IgnorePep8
 from datatrans import dateStrList  # @IgnorePep8
 
 matplotlib.use('Agg')  # @UndefinedVariable
+
+
 # matplotlib.use('Qt5Agg')  # @UndefinedVariable
 
 
@@ -304,19 +306,41 @@ class BokehPlot:
         self.select.toolbar.active_multi = range_tool
 
         # 绘制滑条，用来控制k线上、下限
-        self.sliderMax = Slider(start=self.df.low.min(), end=self.df.high.max(),
-                                step=1, value=self.df.high.max())
-        self.sliderMin = Slider(start=self.df.low.min(), end=self.df.high.max(),
-                                step=1, value=self.df.high.min())
-        self.sliderMax.js_link('value', self.pkline.y_range, 'end')
-        self.sliderMin.js_link('value', self.pkline.y_range, 'start')
+        self.sliderKlineMax = Slider(start=self.df.high.min(), end=self.df.high.max(),
+                                     step=0.1, value=self.df.high.max())
+        self.sliderKlineMin = Slider(start=self.df.low.min(), end=self.df.low.max(),
+                                     step=0.1, value=self.df.low.min())
+        callback = CustomJS(args=dict(pkline=self.pkline), code="""
+                            pkline.y_range.end = cb_obj.value
+                            """)
+        self.sliderKlineMax.js_on_change('value', callback)
+        callback = CustomJS(args=dict(pkline=self.pkline), code="""
+                            pkline.y_range.start = cb_obj.value
+                            """)
+        self.sliderKlineMin.js_on_change('value', callback)
+
+        # 绘制滑条，用来控制pe线上、下限
+        self.sliderPEMax = Slider(start=self.df.pe.min(), end=self.df.pe.max(),
+                                  step=0.1, value=self.df.pe.max())
+        self.sliderPEMin = Slider(start=self.df.pe.min(), end=self.df.pe.max(),
+                                  step=0.1, value=self.df.pe.min())
+        callback = CustomJS(args=dict(ppe=self.ppe), code="""
+                            ppe.y_range.end = cb_obj.value
+                            """)
+        self.sliderPEMax.js_on_change('value', callback)
+        callback = CustomJS(args=dict(ppe=self.ppe), code="""
+                            ppe.y_range.start = cb_obj.value
+                            """)
+        self.sliderPEMin.js_on_change('value', callback)
+
         self.column_layout = column([self.pkline, self.ppe, self.select,
-                                     self.sliderMin, self.sliderMax])
+                                     self.sliderKlineMin, self.sliderKlineMax,
+                                     self.sliderPEMin, self.sliderPEMax])
 
         self.pkline.x_range.on_change('start', self.update)
         self.pkline.x_range.on_change('end', self.update)
-        output_file("kline.html", title="kline plot test")
-        show(self.column_layout)  # open a browser
+        # output_file("kline.html", title="kline plot test")
+        # show(self.column_layout)  # open a browser
         # return self.column_layout
 
     def plot(self):
