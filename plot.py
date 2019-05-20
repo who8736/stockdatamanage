@@ -292,6 +292,7 @@ class BokehPlot:
 
         self.select = figure(plot_height=selectHeight,
                              plot_width=width,
+                             x_range=(0, days - 1),
                              y_axis_type=None,
                              tools="",
                              toolbar_location=None,

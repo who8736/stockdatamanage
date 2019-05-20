@@ -20,10 +20,28 @@
 	<a href="http://stockpage.10jqka.com.cn/{{ stock.stockID }}"
 		class="btn btn-large btn-info" target="_blank">
 		同花顺</a>
-	<p><img src="/klineimg/{{ stock.stockID }}"></p>
-    <p><iframe src="/klineimgnew/{{ stock.stockID }}" width="1100" height="800"
-        frameborder="0"  name="kline bokeh plot" scrolling="auto">
+<!--	<p><img src="/klineimg/{{ stock.stockID }}"></p>-->
+    <p><iframe src="/klineimgnew/{{ stock.stockID }}" id="bokehplot"
+        frameborder="0"  name="kline bokeh plot" scrolling="no"
+		onload="this.height=100">
     </iframe></p>
+        <script type="text/javascript">
+            function reinitIframe(){
+                var iframe = document.getElementById("bokehplot");
+                try{
+                    var bHeight = iframe.contentWindow.document.body.scrollHeight;
+                    var dHeight = iframe.contentWindow.document.documentElement.scrollHeight;
+                    var height = Math.max(bHeight, dHeight);
+                    iframe.height = height;
+                    var bWidth = iframe.contentWindow.document.body.scrollWidth;
+                    var dWidth = iframe.contentWindow.document.documentElement.scrollWidth;
+                    var width = Math.max(bWidth, dWidth);
+                    iframe.width = width;
+                    console.log(width);
+                }catch (ex){}
+            }
+            window.setInterval("reinitIframe()", 200);
+        </script>
     <p class="lead">当前TTMPE: {{ stock.curTTMPE }}</p>
     <p class="lead">peg: {{ stock.peg }}</p>
     <p class="lead">评分: {{ stock.pf }}</p>
