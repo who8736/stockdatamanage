@@ -8,7 +8,7 @@ Created on Mon Apr 15 15:27:38 2019
 # import pandas as pd
 # from pandas import DataFrame
 from urllib.request import urlopen
-from lxml import etree
+# from lxml import etree
 # from datetime import datetime
 # import baostock as bs
 # import tushare as ts
@@ -26,8 +26,9 @@ from datatrans import *
 from hyanalyse import *
 from plot import BokehPlot
 
-import dataanalyse
-from valuation import calpf
+
+# import dataanalyse
+# from valuation import calpf
 
 
 def downGubenFromEastmoney():
@@ -36,7 +37,7 @@ def downGubenFromEastmoney():
     """
     pass
     stockID = '600000'
-    startDate = '2019-04-01'
+    # startDate = '2019-04-01'
     bs.login()
     # from misc import usrlGubenEastmoney
     # urlGubenEastmoney('600000')
@@ -213,12 +214,87 @@ def resetLirun():
         # tushare每分钟最多访问接口80次
         time.sleep(0.4)
 
+
 def testBokeh():
     b = BokehPlot('000651')
     p = b.plot()
     output_file("kline.html", title="kline plot test")
     show(p)  # open a browser
 
+
+def gatherKline():
+    stockID = '000002'
+    sql = """
+          insert ignore stockdata.kline(`stockid`, `date`, `open`, `high`, `close`, `low`, 
+                                      `volume`, `totalmarketvalue`, `ttmprofits`, `ttmpe`)
+          select '%s', s.`date`, s.`open`, s.`high`, s.`close`, s.`low`, s.`volume`,
+                 s.`totalmarketvalue`, s.`ttmprofits`, s.`ttmpe` from kline%s as s;
+          """ % (stockID, stockID)
+    print('process stockID: ', stockID)
+    print(sql)
+    engine.execute(sql)
+
+    """
+    CREATE TABLE `kline` (
+  `stockid` varchar(6) NOT NULL,
+  `date` date NOT NULL,
+  `open` float DEFAULT NULL,
+  `high` float DEFAULT NULL,
+  `close` float DEFAULT NULL,
+  `low` float DEFAULT NULL,
+  `volume` double DEFAULT NULL,
+  `totalmarketvalue` double DEFAULT NULL,
+  `ttmprofits` double DEFAULT NULL,
+  `ttmpe` float DEFAULT NULL,
+  PRIMARY KEY (`stockid`,`date`),
+  KEY `index_stockid` (`stockid`),
+  KEY `index_date` (`date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
+/*!50100 PARTITION BY RANGE (year(`date`))
+(PARTITION p00 VALUES LESS THAN (2000) ENGINE = InnoDB,
+ PARTITION p01 VALUES LESS THAN (2001) ENGINE = InnoDB,
+ PARTITION p02 VALUES LESS THAN (2002) ENGINE = InnoDB,
+ PARTITION p03 VALUES LESS THAN (2003) ENGINE = InnoDB,
+ PARTITION p04 VALUES LESS THAN (2004) ENGINE = InnoDB,
+ PARTITION p05 VALUES LESS THAN (2005) ENGINE = InnoDB,
+ PARTITION p06 VALUES LESS THAN (2006) ENGINE = InnoDB,
+ PARTITION p07 VALUES LESS THAN (2007) ENGINE = InnoDB,
+ PARTITION p08 VALUES LESS THAN (2008) ENGINE = InnoDB,
+ PARTITION p09 VALUES LESS THAN (2009) ENGINE = InnoDB,
+ PARTITION p10 VALUES LESS THAN (2010) ENGINE = InnoDB,
+ PARTITION p11 VALUES LESS THAN (2011) ENGINE = InnoDB,
+ PARTITION p12 VALUES LESS THAN (2012) ENGINE = InnoDB,
+ PARTITION p13 VALUES LESS THAN (2013) ENGINE = InnoDB,
+ PARTITION p14 VALUES LESS THAN (2014) ENGINE = InnoDB,
+ PARTITION p15 VALUES LESS THAN (2015) ENGINE = InnoDB,
+ PARTITION p16 VALUES LESS THAN (2016) ENGINE = InnoDB,
+ PARTITION p17 VALUES LESS THAN (2017) ENGINE = InnoDB,
+ PARTITION p18 VALUES LESS THAN (2018) ENGINE = InnoDB,
+ PARTITION p19 VALUES LESS THAN (2019) ENGINE = InnoDB,
+ PARTITION p20 VALUES LESS THAN (2020) ENGINE = InnoDB,
+ PARTITION p21 VALUES LESS THAN (2021) ENGINE = InnoDB,
+ PARTITION p22 VALUES LESS THAN (2022) ENGINE = InnoDB,
+ PARTITION p23 VALUES LESS THAN (2023) ENGINE = InnoDB,
+ PARTITION p24 VALUES LESS THAN (2024) ENGINE = InnoDB,
+ PARTITION p25 VALUES LESS THAN (2025) ENGINE = InnoDB,
+ PARTITION p26 VALUES LESS THAN (2026) ENGINE = InnoDB,
+ PARTITION pnow VALUES LESS THAN MAXVALUE ENGINE = InnoDB) */;
+
+
+insert into stockdata.kline(`stockid`, `date`, `open`, `high`, `close`, `low`, `volume`, `totalmarketvalue`, `ttmprofits`, `ttmpe`)
+select '000001',
+		s.`date`,
+		s.`open`,
+		s.`high`,
+		s.`close`,
+		s.`low`,
+		s.`volume`,
+		s.`totalmarketvalue`,
+		s.`ttmprofits`,
+		s.`ttmpe`
+from kline000001 as s;
+
+    """
 
 
 if __name__ == "__main__":
@@ -264,7 +340,9 @@ if __name__ == "__main__":
     # calpf()
 
     # bokeh绘图
-    testBokeh()
+    # testBokeh()
+
+    # kline分表汇总
+    gatherKline()
 
     print('程序正常退出')
-
