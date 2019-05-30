@@ -77,7 +77,7 @@ def readKlineDf(stockID, days):
     for i in indexes:
         date, _open, high, low, close, ttmpe = stockDatas[i]
         dateList.append(date.strftime("%Y-%m-%d"))
-        # dateList.append(date)
+        # QuarterList.append(date)
         openList.append(_open)
         closeList.append(close)
         highList.append(high)

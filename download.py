@@ -10,7 +10,7 @@ Created on Thu Oct 26 21:12:40 2017
 import logging
 import zipfile
 import socket
-import urllib.request, urllib.error, urllib.parse
+from urllib import request, error, parse
 import time
 import re
 from lxml import etree
@@ -33,7 +33,8 @@ from misc import longStockID, tsCode
 import datatrans
 # import hyanalyse
 import sqlrw
-from sqlrw import klineUpdateDate, lirunFileToList
+from sqlrw import getKlineUpdateDate, lirunFileToList
+from sqlrw import writeSQL
 from sqlrw import writeKline, writeStockList
 from sqlrw import writeHYToSQL, writeHYNameToSQL
 from sqlrw import gubenUpdateDate, writeGubenToSQL
@@ -94,18 +95,25 @@ def downStockList(retry=10):
     sl.index.name = 'stockid'
     writeStockList(sl)
 
-    # 读取行业表中的股票代码，与当前获取的股票列表比较，
-    # 如果存在部分股票未列入行业表，则更新行业列表数据
+
+def downHYList():
+    """
+    更新行业列表数据
+    读取行业表中的股票代码，与当前获取的股票列表比较，
+    如果存在部分股票未列入行业表，则更新行业列表数据
+    """
+    sql = 'select stockid from stocklist where timeToMarkey!=0;'
+    result = sqlrw.engine.execute(sql)
+    stockList = [i[0] for i in result.fetchall()]
+
     sql = 'select stockid from hangyestock;'
     result = sqlrw.engine.execute(sql)
-    hystock = result.fetchall()
-    hystock = [i[0] for i in hystock]
-    noinhy = [i for i in sl if i not in hystock]
+    hystock = [i[0] for i in result.fetchall()]
+
+    noinhy = [i for i in stockList if i not in hystock]
     # 股票列表中上市日期不为0，即为已上市
     # 且不在行业列表中，表示需更新行业数据
-    slnoinhy = sl[(sl.timeToMarket != 0) & (sl.index.isin(noinhy))]
-    #     sl2 = sl1[sl1.index.isin(noinhy)]
-    if not slnoinhy.empty:
+    if not noinhy:
         HYDataFilename = downHYFile()
         writeHYToSQL(HYDataFilename)
         writeHYNameToSQL(HYDataFilename)
@@ -124,7 +132,7 @@ def downHYFile(timeout=10):
     gubenURL = ('http://www.csindex.com.cn/zh-CN/downloads/'
                 'industry-price-earnings-ratio')
     req = getreq(gubenURL)
-    htmlresult = urllib.request.urlopen(req).read()
+    htmlresult = request.urlopen(req).read()
     myTree = etree.HTML(htmlresult)
     dateStr = myTree.xpath('''//html//body//div//div//div//div
                                 //div//form//label//input//@value''')
@@ -162,9 +170,9 @@ def getreq(url, includeHeader=False):
                    'DNT': '1',
                    'Upgrade-Insecure-Requests': '1',
                    }
-        return urllib.request.Request(url, headers=headers)
+        return request.Request(url, headers=headers)
     else:
-        return urllib.request.Request(url)
+        return request.Request(url)
 
 
 def downloadData(url, timeout=10, retry_count=3):
@@ -181,8 +189,8 @@ def downloadData(url, timeout=10, retry_count=3):
                                       'Windows NT 6.1;'
                                       'en-US;rv:1.9.1.6) Gecko/20091201 '
                                       'Firefox/3.5.6')}
-            req = urllib.request.Request(url, headers=headers)
-            content = urllib.request.urlopen(req).read()
+            req = request.Request(url, headers=headers)
+            content = request.urlopen(req).read()
         except IOError as e:
             logging.warning('[%s]fail to download data, retry url:%s',
                             e, url)
@@ -297,8 +305,28 @@ def downGuzhi(stockID):
     return dataToFile(url, filename)
 
 
-def downKline(stockID, startDate=None, endDate=None, retry_count=6):
-    """ 下载单个股票K线历史写入数据库, 通过调用不同下载函数选择不同的数据源
+def downKline(tradeDate):
+    """
+    使用tushare下载日交易数据
+    :return:
+    """
+    tradeDate = tradeDate[:4] + tradeDate[5:7] + tradeDate[8:]
+    logging.debug('downKline: ', tradeDate)
+    try:
+        pro = ts.pro_api()
+        df = pro.daily(trade_date=tradeDate)
+        df.stockid = df['ts_code'].str[:6]
+        df.rename(columns={'trade_date': 'date', 'vol': 'volumn'})
+        writeSQL(df, 'kline')
+    except Exception as e:
+        print(e)
+        logging.error(e)
+
+
+def __downKline(stockID, startDate=None, endDate=None, retry_count=6):
+    """
+    待删除函数，改用tushare按日下载数据的方案
+    下载单个股票K线历史写入数据库, 通过调用不同下载函数选择不同的数据源
     """
     logging.debug('download kline: %s', stockID)
 
@@ -313,7 +341,7 @@ def downKlineFromBaostock(stockID, startDate=None,
                           endDate=None, retry_count=6):
     """下载单个股票K线历史写入数据库, 下载源为baostock"""
     if startDate is None:  # startDate为空时取股票最后更新日期
-        startDate = klineUpdateDate(stockID) + dt.timedelta(days=1)
+        startDate = getKlineUpdateDate(stockID) + dt.timedelta(days=1)
     #         print stockID, startDate
     startDate = startDate.strftime('%Y-%m-%d')
     if endDate is None:
@@ -347,11 +375,11 @@ def downKlineFromBaostock(stockID, startDate=None,
     logging.error('fail download %s Kline data!', stockID)
 
 
-def downKlineFromTushare(stockID, startDate=None, endDate=None, retry_count=6):
+def downKlineFromTushare(stockID: str, startDate=None, endDate=None, retry_count=6):
     """下载单个股票K线历史写入数据库, 下载源为tushare"""
     # logging.debug('download kline: %s', stockID)
     if startDate is None:  # startDate为空时取股票最后更新日期
-        startDate = klineUpdateDate(stockID) + dt.timedelta(days=1)
+        startDate = getKlineUpdateDate(stockID) + dt.timedelta(days=1)
         #         print stockID, startDate
         startDate = startDate.strftime('%Y-%m-%d')
     if endDate is None:
@@ -514,7 +542,7 @@ def get_stock_basics():
     #     proxy = urllib2.ProxyHandler({'http': '127.0.0.1:8087'})
     #     opener = urllib2.build_opener(proxy)
     #     urllib2.install_opener(opener)
-    text = urllib.request.urlopen(req, timeout=30).read()
+    text = request.urlopen(req, timeout=30).read()
     text = text.decode('GBK')
     text = text.replace('--', '')
     df = pd.read_csv(StringIO(text), dtype={'code': 'object'})
@@ -568,11 +596,11 @@ def _get_report_data(year, quarter, pageNo, dataArr,
         #                's_i=&s_a=&s_c=&reportdate=%s&quarter=%s&p=1&num=60' %
         #                (year, quarter))
         #         request = getreq(url)
-        request = urllib.request.Request(url)
+        request = request.Request(url)
         #         print
         #         print url
         try:
-            text = urllib.request.urlopen(request, timeout=timeout).read()
+            text = request.urlopen(request, timeout=timeout).read()
         #             print repr(text)
         #             print text
         except IOError as e:

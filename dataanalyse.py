@@ -82,12 +82,12 @@ def calGuzhi(stockList=None):
     #     endDate = datatrans.getLastQuarter()
     #     startDate = datatrans.quarterSub(endDate, sectionNum - 1)
     #     quarter  = (int(endDate / 10) * 4 + (endDate % 10)) - sectionNum
-    #     dateList = datatrans.dateList(startDate, endDate)
-    #     print dateList
+    #     QuarterList = datatrans.QuarterList(startDate, endDate)
+    #     print QuarterList
 
     # 过去N个季度TTM利润增长率
     #     for i in range(sectionNum):
-    #         incDf = sqlrw.readTTMLirunForDate(dateList[i])
+    #         incDf = sqlrw.readTTMLirunForDate(QuarterList[i])
     #         incDf = incDf[['stockid', 'incrate']]
     #         incDf.columns = ['stockid', 'incrate%d' % i]
     #         print incDf.head()

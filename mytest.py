@@ -18,6 +18,7 @@ from download import *
 from sqlrw import *
 from bokeh.plotting import show, output_file
 
+from datamanage import updateKline
 from sqlconn import engine
 # from misc import urlGubenEastmoney
 from misc import *
@@ -25,6 +26,7 @@ from misc import *
 from datatrans import *
 from hyanalyse import *
 from plot import BokehPlot
+from sqlrw import _getLastUpdate
 
 
 # import dataanalyse
@@ -127,7 +129,7 @@ def checkGuben(date='2019-04-19'):
     for stockID in dfUpdate['stockid']:
         sql = ('select max(date) from guben where stockid="%s" limit 1;'
                % stockID)
-        dateA = getLastUpdate(sql)
+        dateA = _getLastUpdate(sql)
         setGubenLastUpdate(stockID, dateA)
 
     # 对于需更新股本的股票，逐个更新股本并修改更新日期
@@ -223,16 +225,20 @@ def testBokeh():
 
 
 def gatherKline():
-    stockID = '000002'
-    sql = """
-          insert ignore stockdata.kline(`stockid`, `date`, `open`, `high`, `close`, `low`, 
-                                      `volume`, `totalmarketvalue`, `ttmprofits`, `ttmpe`)
-          select '%s', s.`date`, s.`open`, s.`high`, s.`close`, s.`low`, s.`volume`,
-                 s.`totalmarketvalue`, s.`ttmprofits`, s.`ttmpe` from kline%s as s;
-          """ % (stockID, stockID)
-    print('process stockID: ', stockID)
-    print(sql)
-    engine.execute(sql)
+    stockList = readStockIDsFromSQL()
+    for stockID in stockList:
+        # stockID = '000002'
+        sql = """
+              insert ignore stockdata.kline(`stockid`, `date`, `open`, `high`, `close`, `low`, 
+                                          `volume`, `totalmarketvalue`, `ttmprofits`, `ttmpe`)
+              select '%s', s.`date`, s.`open`, s.`high`, s.`close`, s.`low`, s.`volume`,
+                     s.`totalmarketvalue`, s.`ttmprofits`, s.`ttmpe` from kline%s as s;
+              """ % (stockID, stockID)
+        print('process stockID: ', stockID)
+        # print(sql)
+        engine.execute(sql)
+        # if stockID > '000020':
+        #     break
 
     """
     CREATE TABLE `kline` (
@@ -323,7 +329,7 @@ if __name__ == "__main__":
     # resetKlineExtData()
 
     # 重算TTMlirun
-    # dates = datatrans.dateList(20061, 20191)
+    # dates = datatrans.QuarterList(20061, 20191)
     # for date in dates:
     #     print('cal ttmlirun: %d' % date)
     #     # calAllTTMLirun(date)
@@ -344,5 +350,8 @@ if __name__ == "__main__":
 
     # kline分表汇总
     gatherKline()
+
+    # tushare.pro下载日交易数据
+    # updateKline()
 
     print('程序正常退出')

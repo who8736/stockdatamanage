@@ -23,10 +23,12 @@ import hyanalyse
 import dataanalyse
 import sqlrw
 import valuation
-from sqlrw import checkGuben, setGubenLastUpdate
+from sqlrw import checkGuben, setGubenLastUpdate, getKlineUpdateDate
 from download import downGuben, downGuzhi, downKline
 from download import downMainTable, downloadLirun, downStockList
+from download import downHYList
 from initlog import initlog
+from datatrans import dateList
 
 
 def logfun(func):
@@ -50,21 +52,26 @@ def startUpdate():
     """自动更新全部数据，包括K线历史数据、利润数据、K线表中的TTM市盈率
     """
 
-    # 更新股票列表与行业列表
+    # 更新股票列表
     downStockList()
-    stockList = sqlrw.readStockIDsFromSQL()
 #     stockList = stockList[:10]
 
-    # 更新股票交易与利润数据
-    threadNum = 10
-    updateKlineBaseData(stockList, threadNum)
+    # 更新行业列表
+    downHYList()
+
+    # 更新股票利润数据
     updateLirun()
 
     # 更新股本
     # 因新浪反爬虫策略，更新股本数据改用单线程
-#     updateGuben(stockList, threadNum)
+    #     updateGuben(stockList, threadNum)
     updateGubenSingleThread()
 
+    # 更新股票日交易数据
+    threadNum = 10
+    stockList = sqlrw.readStockIDsFromSQL()
+    # updateKlineBaseData(stockList, threadNum)
+    updateKline()
     updateKlineEXTData(stockList, threadNum)
 
     # 因新浪反爬虫策略，更新股本数据改用单线程, 20170903
@@ -84,7 +91,7 @@ def updateLirun():
     startQuarter = sqlrw.getLirunUpdateStartQuarter()
     endQuarter = sqlrw.getLirunUpdateEndQuarter()
 
-    dates = datatrans.dateList(startQuarter, endQuarter)
+    dates = datatrans.QuarterList(startQuarter, endQuarter)
     for date in dates:
         #         print date
         logging.debug('updateLirun: %s', date)
@@ -184,6 +191,16 @@ def updateKlineBaseData(stockList, threadNum):
     pool.map(downKline, stockList)
     pool.close()
     pool.join()
+
+
+@logfun
+def updateKline():
+    """ 更新日交易数据
+    """
+    startDate = getKlineUpdateDate() + timedelta(days=1)
+    endDate = datetime.today() - timedelta(days=1)
+    for tradeDate in dateList(startDate, endDate):
+        downKline(tradeDate)
 
 
 @logfun

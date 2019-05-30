@@ -335,7 +335,7 @@ def resetHYTTMLirun(startQuarter=20191, endQuarter=20191):
     重算指定日期所有行业TTM利润
     :return:
     """
-    dates = datatrans.dateList(startQuarter, endQuarter)
+    dates = datatrans.QuarterList(startQuarter, endQuarter)
     for date in dates:
         calAllHYTTMLirun(date)
 

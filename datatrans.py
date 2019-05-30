@@ -37,7 +37,7 @@ def quarterAdd(_quarterDate, addNum):
     return _quarterDate
 
 
-def dateList(startDate, endDate):
+def QuarterList(startDate, endDate):
     """ 生成从startDate到endDate的季度列表
     """
     _dateList = []
@@ -52,13 +52,22 @@ def dateList(startDate, endDate):
 def dateStrList(startDate, endDate):
     """ 生成从startDate到endDate的日期列表，日期样式为"2016-01-01"
     """
-    sDate = parse_ymd(startDate)
-    eDate = parse_ymd(endDate)
+    # sDate = parse_ymd(startDate)
+    # eDate = parse_ymd(endDate)
     dateList = []
     while sDate <= eDate:
         dateList.append(sDate.strftime('%Y-%m-%d'))
         sDate = sDate + timedelta(days=1)
     return dateList
+
+
+def dateList(startDate, endDate):
+    dateList = []
+    curDate = startDate
+    while curDate <= endDate:
+        dateList.append(curDate)
+        curDate = curDate + timedelta(day=1)
+    return curDate
 
 
 def parse_ymd(s):
@@ -245,5 +254,5 @@ if __name__ == '__main__':
 
     q = quarterSub(quarterDate, subNum - 1)
     print(q)
-    print(dateList(q, quarterDate))
-    print(len(dateList(q, quarterDate)))
+    print(QuarterList(q, quarterDate))
+    print(len(QuarterList(q, quarterDate)))
