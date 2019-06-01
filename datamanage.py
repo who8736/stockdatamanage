@@ -198,7 +198,7 @@ def updateKline():
     """ 更新日交易数据
     """
     startDate = getKlineUpdateDate() + timedelta(days=1)
-    endDate = datetime.today() - timedelta(days=1)
+    endDate = datetime.today().date() - timedelta(days=1)
     for tradeDate in dateList(startDate, endDate):
         downKline(tradeDate)
 

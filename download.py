@@ -102,7 +102,7 @@ def downHYList():
     读取行业表中的股票代码，与当前获取的股票列表比较，
     如果存在部分股票未列入行业表，则更新行业列表数据
     """
-    sql = 'select stockid from stocklist where timeToMarkey!=0;'
+    sql = 'select stockid from stocklist where timeToMarket!=0;'
     result = sqlrw.engine.execute(sql)
     stockList = [i[0] for i in result.fetchall()]
 
@@ -596,11 +596,11 @@ def _get_report_data(year, quarter, pageNo, dataArr,
         #                's_i=&s_a=&s_c=&reportdate=%s&quarter=%s&p=1&num=60' %
         #                (year, quarter))
         #         request = getreq(url)
-        request = request.Request(url)
+        result = request.Request(url)
         #         print
         #         print url
         try:
-            text = request.urlopen(request, timeout=timeout).read()
+            text = request.urlopen(result, timeout=timeout).read()
         #             print repr(text)
         #             print text
         except IOError as e:

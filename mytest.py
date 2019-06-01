@@ -14,11 +14,17 @@ from urllib.request import urlopen
 # import tushare as ts
 
 # from download import getreq
+from xml import etree
+
 from download import *
 from sqlrw import *
 from bokeh.plotting import show, output_file
 
 from datamanage import updateKline
+from datamanage import updateKlineEXTData
+from datamanage import startUpdate
+from sqlrw import _getLastUpdate
+from sqlrw import readStockIDsFromSQL
 from sqlconn import engine
 # from misc import urlGubenEastmoney
 from misc import *
@@ -26,7 +32,6 @@ from misc import *
 from datatrans import *
 from hyanalyse import *
 from plot import BokehPlot
-from sqlrw import _getLastUpdate
 
 
 # import dataanalyse
@@ -228,79 +233,54 @@ def gatherKline():
     stockList = readStockIDsFromSQL()
     for stockID in stockList:
         # stockID = '000002'
-        sql = """
-              insert ignore stockdata.kline(`stockid`, `date`, `open`, `high`, `close`, `low`, 
-                                          `volume`, `totalmarketvalue`, `ttmprofits`, `ttmpe`)
-              select '%s', s.`date`, s.`open`, s.`high`, s.`close`, s.`low`, s.`volume`,
-                     s.`totalmarketvalue`, s.`ttmprofits`, s.`ttmpe` from kline%s as s;
-              """ % (stockID, stockID)
+        sql = ("insert ignore stockdata.kline(`stockid`, `date`, `open`, "
+               "                              `high`, `close`, `low`, "
+               "                              `volume`, `totalmarketvalue`, "
+               "                              `ttmprofits`, `ttmpe`) "
+               "select '%s', s.`date`, s.`open`, s.`high`, s.`close`, s.`low`, "
+               "       s.`volume`, s.`totalmarketvalue`, s.`ttmprofits`, "
+               "       s.`ttmpe` from kline%s as s;\n") % (stockID, stockID)
         print('process stockID: ', stockID)
         # print(sql)
         engine.execute(sql)
         # if stockID > '000020':
         #     break
 
-    """
-    CREATE TABLE `kline` (
-  `stockid` varchar(6) NOT NULL,
-  `date` date NOT NULL,
-  `open` float DEFAULT NULL,
-  `high` float DEFAULT NULL,
-  `close` float DEFAULT NULL,
-  `low` float DEFAULT NULL,
-  `volume` double DEFAULT NULL,
-  `totalmarketvalue` double DEFAULT NULL,
-  `ttmprofits` double DEFAULT NULL,
-  `ttmpe` float DEFAULT NULL,
-  PRIMARY KEY (`stockid`,`date`),
-  KEY `index_stockid` (`stockid`),
-  KEY `index_date` (`date`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8
-/*!50100 PARTITION BY RANGE (year(`date`))
-(PARTITION p00 VALUES LESS THAN (2000) ENGINE = InnoDB,
- PARTITION p01 VALUES LESS THAN (2001) ENGINE = InnoDB,
- PARTITION p02 VALUES LESS THAN (2002) ENGINE = InnoDB,
- PARTITION p03 VALUES LESS THAN (2003) ENGINE = InnoDB,
- PARTITION p04 VALUES LESS THAN (2004) ENGINE = InnoDB,
- PARTITION p05 VALUES LESS THAN (2005) ENGINE = InnoDB,
- PARTITION p06 VALUES LESS THAN (2006) ENGINE = InnoDB,
- PARTITION p07 VALUES LESS THAN (2007) ENGINE = InnoDB,
- PARTITION p08 VALUES LESS THAN (2008) ENGINE = InnoDB,
- PARTITION p09 VALUES LESS THAN (2009) ENGINE = InnoDB,
- PARTITION p10 VALUES LESS THAN (2010) ENGINE = InnoDB,
- PARTITION p11 VALUES LESS THAN (2011) ENGINE = InnoDB,
- PARTITION p12 VALUES LESS THAN (2012) ENGINE = InnoDB,
- PARTITION p13 VALUES LESS THAN (2013) ENGINE = InnoDB,
- PARTITION p14 VALUES LESS THAN (2014) ENGINE = InnoDB,
- PARTITION p15 VALUES LESS THAN (2015) ENGINE = InnoDB,
- PARTITION p16 VALUES LESS THAN (2016) ENGINE = InnoDB,
- PARTITION p17 VALUES LESS THAN (2017) ENGINE = InnoDB,
- PARTITION p18 VALUES LESS THAN (2018) ENGINE = InnoDB,
- PARTITION p19 VALUES LESS THAN (2019) ENGINE = InnoDB,
- PARTITION p20 VALUES LESS THAN (2020) ENGINE = InnoDB,
- PARTITION p21 VALUES LESS THAN (2021) ENGINE = InnoDB,
- PARTITION p22 VALUES LESS THAN (2022) ENGINE = InnoDB,
- PARTITION p23 VALUES LESS THAN (2023) ENGINE = InnoDB,
- PARTITION p24 VALUES LESS THAN (2024) ENGINE = InnoDB,
- PARTITION p25 VALUES LESS THAN (2025) ENGINE = InnoDB,
- PARTITION p26 VALUES LESS THAN (2026) ENGINE = InnoDB,
- PARTITION pnow VALUES LESS THAN MAXVALUE ENGINE = InnoDB) */;
+
+def calAllPEHistory(startDate=None, endDate=None):
+    startDate = datetime.strptime('2019-04-19', '%Y-%m-%d')
+    endDate = datetime.strptime('2019-06-07', '%Y-%m-%d')
+    stockList = readStockIDsFromSQL()
+    # print(stockList)
+    for curDate in dateList(startDate, endDate):
+        print('cal date: ', curDate)
+        _calAllPEHistory(curDate)
 
 
-insert into stockdata.kline(`stockid`, `date`, `open`, `high`, `close`, `low`, `volume`, `totalmarketvalue`, `ttmprofits`, `ttmpe`)
-select '000001',
-		s.`date`,
-		s.`open`,
-		s.`high`,
-		s.`close`,
-		s.`low`,
-		s.`volume`,
-		s.`totalmarketvalue`,
-		s.`ttmprofits`,
-		s.`ttmpe`
-from kline000001 as s;
-
-    """
+def _calAllPEHistory(curDate):
+    sql = ('select stockid, totalmarketvalue, ttmprofits '
+           'from stockdata.kline '
+           'where date="%(curDate)s" and ttmprofits>0;'
+           % locals())
+    result = engine.execute(sql).fetchall()
+    if result:
+        print(result)
+        for i in result:
+            print(i[0], i[1]/1, i[2]/1)
+        data = list(zip(*result))
+        value = sum(data[1])
+        ttmprofits = sum(data[2])
+        pe = round(value / ttmprofits, 2)
+        print(value)
+        print(ttmprofits)
+        print(pe)
+        sql = ('insert ignore pehistory(name, date, pe) '
+               'values("all", "%(curDate)s", %(pe)s);' % locals())
+        print(sql)
+        engine.execute(sql)
+        # resultzip = zip(result)
+        # for i in resultzip:
+        #     print(i)
 
 
 if __name__ == "__main__":
@@ -349,9 +329,21 @@ if __name__ == "__main__":
     # testBokeh()
 
     # kline分表汇总
-    gatherKline()
+    # gatherKline()
 
     # tushare.pro下载日交易数据
     # updateKline()
+
+    # 更新全部股票数据
+    # startUpdate()
+
+    # 更新股票日交易数据
+    # threadNum = 10
+    # stockList = sqlrw.readStockIDsFromSQL()
+    # print(stockList)
+    # updateKlineEXTData(stockList, threadNum)
+
+    # 计算全市场PE历史
+    calAllPEHistory()
 
     print('程序正常退出')

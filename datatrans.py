@@ -66,8 +66,8 @@ def dateList(startDate, endDate):
     curDate = startDate
     while curDate <= endDate:
         dateList.append(curDate)
-        curDate = curDate + timedelta(day=1)
-    return curDate
+        curDate = curDate + timedelta(days=1)
+    return dateList
 
 
 def parse_ymd(s):
