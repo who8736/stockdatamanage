@@ -92,8 +92,32 @@ def writeGubenToSQL(stockID, gubenDf):
         return writeSQL(gubenDf, tablename)
 
 
-def checkGuben(tradeDate='20190419'):
-    """ 以下方法用于从tushare.pro下载日频信息中的股本数据
+def checkGuben():
+    """
+        股票列表中的股本与数据库保存的股本数据比较，
+        某股票的总股本存在差异时说明股本有变动
+        返回需更新的股票列表
+    :return:
+    """
+    sql = """SELECT d.stockid, d.totals, c.totalshares
+            FROM stockdata.stocklist AS d,
+                (SELECT a.stockid AS stockid,
+                        a.date AS date,
+                    ROUND(a.totalshares / 100000000, 2) AS totalshares
+                FROM stockdata.guben AS a, 
+                    (SELECT stockid, MAX(date) AS maxdate
+                    FROM stockdata.guben
+                    GROUP BY stockid) AS b
+                    WHERE a.stockid = b.stockid AND a.date = b.maxdate) AS c
+            WHERE d.stockid = c.stockid AND d.totals != c.totalshares;
+        """
+    dfFromSQL = pd.read_sql(sql, con=engine)
+    return dfFromSQL
+
+def _checkGuben_del(tradeDate='20190419'):
+    """
+        确认无用后删除，有新方法替代
+        以下方法用于从tushare.pro下载日频信息中的股本数据
         与数据库保存的股本数据比较，某股票的总股本存在差异时说明股本有变动
         返回需更新的股票列表
     """
