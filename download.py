@@ -311,13 +311,21 @@ def downKline(tradeDate):
     使用tushare下载日交易数据
     :return:
     """
-    tradeDate = tradeDate[:4] + tradeDate[5:7] + tradeDate[8:]
-    logging.debug('downKline: ', tradeDate)
+    strDate = tradeDate.strftime('%Y%m%d')
+    logging.debug('downKline: %s', strDate)
     try:
         pro = ts.pro_api()
-        df = pro.daily(trade_date=tradeDate)
-        df.stockid = df['ts_code'].str[:6]
-        df.rename(columns={'trade_date': 'date', 'vol': 'volumn'})
+        df = pro.daily(trade_date=strDate)
+        df['stockid'] = df['ts_code'].str[:6]
+        # df.date = (df['trade_date'].str[:4] + '-'
+        #            + df['trade_date'].str[4:6] + '-'
+        #            +df['trade_date'].str[6:])
+        df['trade_date'] = df['trade_date'].map(lambda x:
+                                          x[:4] + '-' + x[4:6] + '-' + x[6:])
+        # df['treade_date'].map(lambda x: x[:4] + '-' + x[4:6] + '-' + x[6:])
+        df.rename(columns={'trade_date': 'date', 'vol': 'volume'},
+                  inplace=True)
+        df = df[['stockid', 'date', 'open', 'high', 'close', 'low', 'volume']]
         writeSQL(df, 'kline')
     except Exception as e:
         print(e)
@@ -471,7 +479,8 @@ def downloadLirunFromTushare(date):
 
 # def downGuben(stockID='300445', date='2019-04-19'):
 def downGuben(stockID='300445'):
-    _downGubenSina(stockID)
+    # _downGubenSina(stockID)
+    _downGubenTusharePro(stockID)
 
 def _downGubenTusharePro(stockID='300445'):
     """

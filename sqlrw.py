@@ -92,13 +92,14 @@ def writeGubenToSQL(stockID, gubenDf):
         return writeSQL(gubenDf, tablename)
 
 
-def checkGuben():
+def checkGuben(tradeDate='20190419'):
     """
         股票列表中的股本与数据库保存的股本数据比较，
         某股票的总股本存在差异时说明股本有变动
         返回需更新的股票列表
     :return:
     """
+    return _checkGuben_del(tradeDate)
     sql = """SELECT d.stockid, d.totals, c.totalshares
             FROM stockdata.stocklist AS d,
                 (SELECT a.stockid AS stockid,
@@ -798,10 +799,9 @@ def readTTMPE(stockID):
 
 
 def readCurrentTTMPE(stockID):
-    sql = ('select ttmpe from kline%(stockID)s '
-           'where kline%(stockID)s.date=('
-           'select max(`date`) from kline%(stockID)s'
-           ')' % locals())
+    sql = ('select ttmpe from kline where stockid="%(stockID)s" and date=('
+           'select max(`date`) from kline where stockid="%(stockID)s")'
+           % locals())
 
     result = engine.execute(sql).fetchone()
     if result is None:
@@ -992,7 +992,8 @@ def getLirunUpdateStartQuarter():
     #            u'FROM stockdata.lirun group by stockid) as temp;')
     sql = ('select min(maxdate) from (SELECT stockid, max(date) as maxdate '
            'FROM stockdata.lirun group by stockid '
-           'having stockid in (select stockid from stocklist)) as temp;')
+           'having stockid in (select stockid from stocklist WHERE '
+           'LEFT(name, 1) != "*")) as temp;')
 
     result = engine.execute(sql)
     lastQuarter = result.first()[0]

@@ -294,8 +294,8 @@ if __name__ == "__main__":
     # df['stockid'].apply(downGuben)
 
     # 检查股本信息，找出需要更新的股票
-    df = checkGuben()
-    print(df)
+    # df = checkGuben()
+    # print(df)
 
     # 下载指定股票股本信息
     # date = '2019-04-19'
@@ -338,7 +338,7 @@ if __name__ == "__main__":
     # startUpdate()
 
     # 更新股本数据
-    # updateGubenSingleThread()
+    updateGubenSingleThread()
 
     # 更新股票日交易数据
     # threadNum = 10
