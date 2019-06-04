@@ -23,6 +23,7 @@ from bokeh.plotting import show, output_file
 from datamanage import updateKline
 from datamanage import updateKlineEXTData
 from datamanage import startUpdate
+from datamanage import updateGubenSingleThread
 from sqlrw import _getLastUpdate
 from sqlrw import readStockIDsFromSQL
 from sqlconn import engine
@@ -337,6 +338,9 @@ if __name__ == "__main__":
     # 更新全部股票数据
     # startUpdate()
 
+    # 更新股本数据
+    updateGubenSingleThread()
+
     # 更新股票日交易数据
     # threadNum = 10
     # stockList = sqlrw.readStockIDsFromSQL()
@@ -344,6 +348,6 @@ if __name__ == "__main__":
     # updateKlineEXTData(stockList, threadNum)
 
     # 计算全市场PE历史
-    calAllPEHistory()
+    # calAllPEHistory()
 
     print('程序正常退出')

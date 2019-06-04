@@ -24,9 +24,10 @@ import dataanalyse
 import sqlrw
 import valuation
 from sqlrw import checkGuben, setGubenLastUpdate, getKlineUpdateDate
+import download
 from download import downGuben, downGuzhi, downKline
 from download import downMainTable, downloadLirun, downStockList
-from download import downHYList
+# from download import downHYList
 from initlog import initlog
 from datatrans import dateList
 
@@ -84,6 +85,11 @@ def startUpdate():
 
     # 更新股票评分
     updatePf()
+
+
+@logfun
+def downHYList():
+    download.downHYList()
 
 
 @logfun

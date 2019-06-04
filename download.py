@@ -25,7 +25,8 @@ from pandas.compat import StringIO
 from tushare.stock import cons as ct
 import baostock as bs
 
-# from misc import urlGubenSina, urlGubenEastmoney
+from misc import urlGubenSina
+# from misc import urlGubenEastmoney
 from misc import urlGuzhi, urlMainTable
 # from misc import filenameGuben
 from misc import filenameMainTable, filenameGuzhi
@@ -470,6 +471,14 @@ def downloadLirunFromTushare(date):
 
 # def downGuben(stockID='300445', date='2019-04-19'):
 def downGuben(stockID='300445'):
+    _downGubenSina(stockID)
+
+def _downGubenTusharePro(stockID='300445'):
+    """
+    从tushare.pro下载股本数据
+    :param stockID:
+    :return:
+    """
     print('start update guben: %s' % stockID)
     updateDate = gubenUpdateDate(stockID)
     # print(type(updateDate))
@@ -630,26 +639,26 @@ def _get_report_data(year, quarter, pageNo, dataArr,
                 return dataArr
 
 
-# def gubenURLToDf(stockID):
-#     """ 确认无用后可删除
-#     """
-#     gubenURL = urlGuben(stockID)
-#     timeout = 6
-#     try:
-#         print('开始下载数据。。。')
-#         socket.setdefaulttimeout(timeout)
-# #         sock = urllib.urlopen(gubenURL)
-# #         guben = sock.read()
-#         req = getreq(gubenURL)
-#         guben = urllib.request.urlopen(req).read()
-#     except IOError as e:
-#         print(e)
-#         print('数据下载失败： %s' % stockID)
-#         return None
-#     else:
-#         #         sock.close()
-#         #     print guben
-#         return datatrans.gubenDataToDf(stockID, guben)
+def _downGubenSina(stockID):
+    """ 从新浪网下载股本数据
+    """
+    gubenURL = urlGubenSina(stockID)
+    timeout = 6
+    try:
+        print('开始下载数据。。。')
+        socket.setdefaulttimeout(timeout)
+#         sock = urllib.urlopen(gubenURL)
+#         guben = sock.read()
+        req = getreq(gubenURL)
+        guben = request.urlopen(req).read()
+    except IOError as e:
+        print(e)
+        print('数据下载失败： %s' % stockID)
+        return None
+    else:
+        #         sock.close()
+        #     print guben
+        return datatrans.gubenDataToDfSina(stockID, guben)
 
 
 if __name__ == '__main__':
