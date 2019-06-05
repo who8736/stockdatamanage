@@ -48,8 +48,8 @@ def wdzz(stock):
     avg = stock[1:].mean()
     std = stock[1:].std()
     z = (stock[1:] - avg).abs() / std
-    print(stock.stockid)
-    print(z)
+    # print(stock.stockid)
+    # print(z)
     return 1 if all(z < 1.5) else 0
 
 
@@ -71,9 +71,9 @@ def peZ(stock, dayCount):
         # 历史交易天数不足时，PE水平为-1
     """
     stockID = stock.stockid
-    sql = ('select ttmpe from kline%(stockID)s order by `date` desc '
-           'limit %(dayCount)s;') % locals()
-    print(sql)
+    sql = ('select ttmpe from kline where stockid="%(stockID)s"'
+           'order by `date` desc limit %(dayCount)s;') % locals()
+    # print(sql)
     peDf = pd.read_sql(sql, engine)
     # 如果历史交易天数不足，则本项指标为0
     if len(peDf.index) != dayCount:
@@ -103,7 +103,7 @@ def calpf():
     """
 #    stocks = readStockListDf()[:10]
     stocks = readStockListDf()
-    print(stocks)
+    # print(stocks)
     # 低市盈率
     peDf = readCurrentTTMPEs(stocks.stockid.tolist())
     stocks = pd.merge(stocks, peDf, on='stockid', how='left')

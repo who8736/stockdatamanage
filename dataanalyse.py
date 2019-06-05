@@ -208,8 +208,8 @@ def peHistRate(stockList, dayCount):
     perates = []
     for stockID in stockList:
         print(stockID)
-        sql = ('select ttmpe from kline%(stockID)s order by `date` desc '
-               'limit %(dayCount)s;' % locals())
+        sql = ('select ttmpe from kline where stockid="%(stockID)s" '
+               'order by `date` desc limit %(dayCount)s;' % locals())
         result = sqlrw.engine.execute(sql)
         peList = result.fetchall()
         # 如果历史交易天数不足，则历史PE水平为-1

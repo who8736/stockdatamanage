@@ -27,6 +27,7 @@ from datamanage import updateGubenSingleThread
 from sqlrw import _getLastUpdate
 from sqlrw import readStockIDsFromSQL
 from sqlconn import engine
+from dataanalyse import testChigu, testShaixuan
 # from misc import urlGubenEastmoney
 from misc import *
 # from initlog import initlog
@@ -36,7 +37,7 @@ from plot import BokehPlot
 
 
 # import dataanalyse
-# from valuation import calpf
+from valuation import calpf
 
 
 def downGubenFromEastmoney():
@@ -338,7 +339,7 @@ if __name__ == "__main__":
     # startUpdate()
 
     # 更新股本数据
-    updateGubenSingleThread()
+    # updateGubenSingleThread()
 
     # 更新股票日交易数据
     # threadNum = 10
@@ -348,5 +349,12 @@ if __name__ == "__main__":
 
     # 计算全市场PE历史
     # calAllPEHistory()
+
+    # 更新估值数据
+    # testChigu()
+    # testShaixuan()
+
+    # 更新股票评分
+    calpf()
 
     print('程序正常退出')
