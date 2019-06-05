@@ -27,6 +27,7 @@ from datamanage import updateGubenSingleThread
 from sqlrw import _getLastUpdate
 from sqlrw import readStockIDsFromSQL
 from sqlconn import engine
+from initsql import dropKlineTable
 from dataanalyse import testChigu, testShaixuan
 # from misc import urlGubenEastmoney
 from misc import *
@@ -241,7 +242,7 @@ def gatherKline():
                "                              `ttmprofits`, `ttmpe`) "
                "select '%s', s.`date`, s.`open`, s.`high`, s.`close`, s.`low`, "
                "       s.`volume`, s.`totalmarketvalue`, s.`ttmprofits`, "
-               "       s.`ttmpe` from kline%s as s;\n") % (stockID, stockID)
+               "       s.`ttmpe` from kline where stockid='%s' as s;\n") % (stockID, stockID)
         print('process stockID: ', stockID)
         # print(sql)
         engine.execute(sql)
@@ -355,6 +356,9 @@ if __name__ == "__main__":
     # testShaixuan()
 
     # 更新股票评分
-    calpf()
+    # calpf()
+
+    # 删除名称中包含股票代码的日K线表
+    dropKlineTable()
 
     print('程序正常退出')

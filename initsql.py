@@ -13,6 +13,16 @@ def existTable(tablename):
     return False if result.rowcount == 0 else True
 
 
+def dropKlineTable():
+    stockList = sqlrw.readStockIDsFromSQL()
+    for id in stockList:
+        tablename = 'kline%s' % id
+        print(tablename)
+        if existTable(tablename):
+            sql = 'drop table %s;' % tablename
+            sqlrw.engine.execute(sql)
+
+
 def createChiguGuzhiTable():
     sql = ('CREATE TABLE chiguguzhi('
            'stockid VARCHAR(6),'
@@ -149,10 +159,10 @@ def createChiguTable():
     return sqlrw.engine.execute(sql)
 
 
-def createKlineTable(stockID):
-    tableName = 'kline%s' % stockID
-    sql = 'create table %s like klinesample' % tableName
-    return sqlrw.engine.execute(sql)
+# def createKlineTable(stockID):
+#     tableName = 'kline%s' % stockID
+#     sql = 'create table %s like klinesample' % tableName
+#     return sqlrw.engine.execute(sql)
 
 
 def createStocklist():

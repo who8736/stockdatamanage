@@ -226,8 +226,8 @@ def lirunFileToList(stockID, date):
             }
 
 
-def tablenameKline(stockID):
-    return 'kline%s' % stockID
+# def tablenameKline(stockID):
+#     return 'kline%s' % stockID
 
 
 def loadChigu():
@@ -793,7 +793,8 @@ def readLirunForDate(date):
 def readTTMPE(stockID):
     """ 读取某支股票的全部TTMPE
     """
-    sql = 'select date, ttmpe from kline%s' % stockID
+    sql = ('select date, ttmpe from kline where stockid="%(stockID)s";'
+           % locals())
     df = pd.read_sql(sql, engine)
     return df
 
@@ -822,21 +823,21 @@ def readCurrentTTMPEs(stockList):
     return DataFrame({'stockid': stockList, 'pe': peList})
 
 
-def alterKline():
-    sql = 'show tables like %s'
-    result = engine.execute(sql, 'kline%')
-    result = result.fetchall()
-
-    for i in result:
-        tablename = i[0]
-        sql = 'call stockdata.alterkline(%s)'
-        try:
-            engine.execute(sql, tablename)
-            #             result = result.fetchall()
-            print(tablename)
-        except sqlalchemy.exc.OperationalError as e:
-            print(e)
-    return
+# def alterKline():
+#     sql = 'show tables like %s'
+#     result = engine.execute(sql, 'kline%')
+#     result = result.fetchall()
+#
+#     for i in result:
+#         tablename = i[0]
+#         sql = 'call stockdata.alterkline(%s)'
+#         try:
+#             engine.execute(sql, tablename)
+#             #             result = result.fetchall()
+#             print(tablename)
+#         except sqlalchemy.exc.OperationalError as e:
+#             print(e)
+#     return
 
 
 def calAllTTMLirun(date, incrementUpdate=True):
@@ -1054,7 +1055,7 @@ def savePELirunIncrease(startDate='2007-01-01', endDate=None):
 
         TTMLirunDf = readTTMLirunForStockID(stockID, startDate)
         TTMLirunDf = TTMLirunDf.dropna().reset_index(drop=True)
-        klineTablename = 'kline%s' % stockID
+        klineTablename = 'kline'
         TTMLirunCount = len(TTMLirunDf)
         for i in range(TTMLirunCount):
             incrate = TTMLirunDf['incrate'].iloc[i]
@@ -1235,15 +1236,16 @@ def readGubenUpdateList():
 
 
 def readClose(stockID):
-    sql = 'select date, close from kline%s' % stockID
+    sql = ('select date, close from kline where stockid="%(stockID)s";' \
+          % locals())
     df = pd.read_sql(sql, engine)
     return df
 
 
 def readCurrentClose(stockID):
-    sql = ('select close from kline%(stockID)s '
-           'where kline%(stockID)s.date=('
-           'select max(`date`) from kline%(stockID)s'
+    sql = ('select close from kline where stockid="%(stockID)s" '
+           'and date=('
+           'select max(`date`) from kline where stockid="%(stockID)s"'
            ')' % locals())
     result = engine.execute(sql)
     return result.fetchone()[0]
@@ -1325,7 +1327,7 @@ def getStockName(stockID):
 
 def readKlineDf(stockID, days):
     sql = ('select date, open, high, low, close, ttmpe '
-           'from kline%(stockID)s '
+           'from kline where stockid="%(stockID)s" '
            'order by date desc limit %(days)s;' % locals())
     result = engine.execute(sql).fetchall()
     stockDatas = [i for i in reversed(result)]

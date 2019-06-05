@@ -62,7 +62,7 @@ def plotKlineOld(stockID):
     #     return plotKline(stockID)
     #     ax2 = fig.add_subplot(2, 1, 2)
     sql = ('select date, open, high, low, close, ttmpe '
-           'from kline%(stockID)s '
+           'from kline where stockid="%(stockID)s" '
            'order by date desc limit 1000;' % locals())
     result = engine.execute(sql)
     stockDatas = result.fetchall()
@@ -109,7 +109,7 @@ def plotKline(stockID):
     """ 绘制K线与TTMPE图
     """
     sql = ('select date, open, high, low, close, ttmpe '
-           'from kline%(stockID)s '
+           'from kline where stockid="%(stockID)s" '
            'order by date desc limit 1000;' % locals())
     result = engine.execute(sql).fetchall()
     stockDatas = [i for i in reversed(result)]
