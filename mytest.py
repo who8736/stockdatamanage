@@ -35,6 +35,7 @@ from misc import *
 from datatrans import *
 from hyanalyse import *
 from plot import BokehPlot
+from download import downKline
 
 
 # import dataanalyse
@@ -359,6 +360,16 @@ if __name__ == "__main__":
     # calpf()
 
     # 删除名称中包含股票代码的日K线表
-    dropKlineTable()
+    # dropKlineTable()
+
+    # 下载k线
+    # downKline(datetime.strptime('2015-10-07', '%Y-%m-%d'))
+
+    # 更新股票市值与PE
+    stockList = sqlrw.readStockIDsFromSQL()
+    for stockID in stockList:
+        print(stockID)
+        sqlrw.updateKlineEXTData(stockID,
+                                 datetime.strptime('2010-01-01', '%Y-%m-%d'))
 
     print('程序正常退出')

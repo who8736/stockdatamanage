@@ -26,7 +26,7 @@ from pandas.compat import StringIO
 from sqlalchemy import MetaData, Table, Column
 from sqlalchemy import DATE, DECIMAL, String
 # from sqlalchemy.orm import sessionmaker, scoped_session
-import sqlalchemy
+# import sqlalchemy
 from pandas.core.frame import DataFrame
 # from tushare.stock import cons as ct
 import xlrd
@@ -92,28 +92,28 @@ def writeGubenToSQL(stockID, gubenDf):
         return writeSQL(gubenDf, tablename)
 
 
-def checkGuben(tradeDate='20190419'):
+def checkGuben():
     """
         股票列表中的股本与数据库保存的股本数据比较，
         某股票的总股本存在差异时说明股本有变动
         返回需更新的股票列表
     :return:
     """
-    return _checkGuben_del(tradeDate)
-    sql = """SELECT d.stockid, d.totals, c.totalshares
-            FROM stockdata.stocklist AS d,
-                (SELECT a.stockid AS stockid,
-                        a.date AS date,
-                    ROUND(a.totalshares / 100000000, 2) AS totalshares
-                FROM stockdata.guben AS a, 
-                    (SELECT stockid, MAX(date) AS maxdate
-                    FROM stockdata.guben
-                    GROUP BY stockid) AS b
-                    WHERE a.stockid = b.stockid AND a.date = b.maxdate) AS c
-            WHERE d.stockid = c.stockid AND d.totals != c.totalshares;
-        """
+    # return _checkGuben_del(tradeDate)
+    sql = ('SELECT d.stockid, d.totals, c.totalshares\n'
+           'FROM stockdata.stocklist AS d,\n'
+           '    (SELECT a.stockid AS stockid,\n'
+           '            a.date AS date,\n'
+           '            ROUND(a.totalshares / 100000000, 2) AS totalshares\n'
+           '    FROM stockdata.guben AS a, \n'
+           '        (SELECT stockid, MAX(date) AS maxdate\n'
+           '        FROM stockdata.guben\n'
+           '        GROUP BY stockid) AS b\n'
+           '    WHERE a.stockid = b.stockid AND a.date = b.maxdate) AS c\n'
+           'WHERE d.stockid = c.stockid AND d.totals != c.totalshares;\n')
     dfFromSQL = pd.read_sql(sql, con=engine)
     return dfFromSQL
+
 
 def _checkGuben_del(tradeDate='20190419'):
     """
@@ -191,12 +191,12 @@ def writeGuzhiToSQL(stockID, data):
     return engine.execute(sql)
 
 
-def writeKline(stockID, df, insertType='IGNORE'):
-    """股票K线历史写入数据库"""
-    tableName = tablenameKline(stockID)
-    if not initsql.existTable(tableName):
-        initsql.createKlineTable(stockID)
-    return writeSQL(df, tableName, insertType)
+# def writeKline(stockID, df, insertType='IGNORE'):
+#     """股票K线历史写入数据库"""
+#     tableName = tablenameKline(stockID)
+#     if not initsql.existTable(tableName):
+#         initsql.createKlineTable(stockID)
+#     return writeSQL(df, tableName, insertType)
 
 
 def lirunFileToList(stockID, date):
@@ -316,12 +316,13 @@ def dropTable(tableName):
 def dropNAData():
     """ 清除K线图数据中交易量为0的数据
     """
-    stockList = readStockIDsFromSQL()
+    # stockList = readStockIDsFromSQL()
     #     stockList = ['002100']
-    for stockID in stockList:
-        tablename = tablenameKline(stockID)
-        sql = 'delete from %(tablename)s where volume=0;' % locals()
-        engine.execute(sql)
+    # for stockID in stockList:
+    # tablename = tablenameKline(stockID)
+    # sql = 'delete from %(tablename)s where volume=0;' % locals()
+    sql = 'delete from kline where volume=0;'
+    engine.execute(sql)
 
 
 def getLowPEStockList(maxPE=40):
@@ -348,18 +349,18 @@ def getKlineUpdateDate():
     return _getLastUpdate(sql)
 
 
-def __klineUpdateDate(stockID):
+def __klineUpdateDate():
     """
     待删除函数, kline改为分区表后无需按股票代码查询更新日期
-    :param stockID:
     :return:
     """
-    tablename = tablenameKline(stockID)
-    if not initsql.existTable(tablename):
-        initsql.createKlineTable(stockID)
-        return dt.datetime.strptime('1990-01-01', '%Y-%m-%d')
-    sql = 'select max(date) from %s' % tablename
-    return _getLastUpdate(sql)
+    pass
+    # tablename = tablenameKline(stockID)
+    # if not initsql.existTable(tablename):
+    #     initsql.createKlineTable(stockID)
+    #     return dt.datetime.strptime('1990-01-01', '%Y-%m-%d')
+    # sql = 'select max(date) from %s' % tablename
+    # return _getLastUpdate(sql)
 
 
 def gubenUpdateDate(stockID):
@@ -420,7 +421,9 @@ def readStockListDf():
     return stockListDf
 
 
-def updateKlineMarketValue(stockID, startDate='1990-01-01', endDate=None):
+def updateKlineMarketValue(stockID, startDate=None, endDate=None):
+    if startDate is None:
+        return
     gubenDf = readGuben(stockID, startDate)
     klineTablename = 'kline'
     gubenCount = gubenDf['date'].count()
@@ -436,16 +439,19 @@ def updateKlineMarketValue(stockID, startDate='1990-01-01', endDate=None):
 
         sql = ('update %(klineTablename)s '
                'set totalmarketvalue = close * %(totalShares)s'
-               ' where stockid="%(stockID)s" and date>="%(startDate)s"' % locals())
+               ' where stockid="%(stockID)s" and date>="%(startDate)s"'
+               % locals())
         if endDate:
             sql += ' and date < "%s"' % endDate
         engine.execute(sql)
 
 
-def updateKlineTTMLirun(stockID, startDate='1990-01-01'):
+def updateKlineTTMLirun(stockID, startDate=None):
     """
-    a更新Kline表TTM利润
+    更新Kline表TTM利润
     """
+    if startDate is None:
+        return
     TTMLirunDf = readTTMLirunForStockID(stockID, startDate)
     klineTablename = 'kline'
     TTMLirunCount = TTMLirunDf['date'].count()
@@ -458,8 +464,9 @@ def updateKlineTTMLirun(stockID, startDate='1990-01-01'):
             endDate = None
         TTMLirun = TTMLirunDf['ttmprofits'][i]
 
-        sql = ('update %(klineTablename)s set ttmprofits = %(TTMLirun)s' 
-               ' where stockid="%(stockID)s" and date>="%(startDate)s"' % locals())
+        sql = ('update %(klineTablename)s set ttmprofits = %(TTMLirun)s'
+               ' where stockid="%(stockID)s" and date>="%(startDate)s"'
+               % locals())
         if endDate:
             sql += ' and date < "%s"' % endDate
         engine.execute(sql)
@@ -681,8 +688,7 @@ def readPERate(stockID):
         return result
 
 
-def readTTMLirunForStockID(stockID,
-                           startDate='1990-01-01', endDate=None):
+def readTTMLirunForStockID(stockID, startDate=None, endDate=None):
     """取指定股票一段日间的TTM利润，startDate当日无数据时，取之前最近一次数据
     Parameters
     --------
@@ -695,20 +701,23 @@ def readTTMLirunForStockID(stockID,
     DataFrame: 返回DataFrame格式TTM利润
     """
     # 指定日期（含）前最近一次利润变动日期
+    if startDate is None:
+        return
+    startDateStr = startDate.strftime('%Y-%m-%d')
     sql = ('select max(reportdate) from ttmlirun '
            'where stockid="%(stockID)s" '
-           'and reportdate<="%(startDate)s"' % locals())
+           'and reportdate<="%(startDateStr)s"' % locals())
     #     print sql
     # 指定日期（含）前无TTM利润数据的，查询起始日期设定为startDate
     # 否则设定为最近一次数据日期
     result = engine.execute(sql).fetchone()
     if result[0] is not None:
-        startDate = result[0]
+        startDateStr = result[0]
     sql = ('select * from ttmlirun where stockid = "%(stockID)s"'
            ' and `reportdate` >= "%(startDate)s"' % locals())
     #     print sql
     if endDate is not None:
-        sql += ' and `date` <= "%s"' % endDate
+        sql += ' and `date` <= "%s"' % endDate.strftime('%Y-%m-%d')
     df = pd.read_sql(sql, engine)
 
     # 指定日期（含）前存在股本变动数据的，重设第1次变动日期为startDate，
@@ -937,7 +946,7 @@ def calTTMLirun(stockdf, date):
     return [stockID, date, lirun, reportdate]
 
 
-def updateKlineEXTData(stockID, startDate=None):
+def updateKlineEXTData(stockID, startDate):
     """
     # 更新Kline表MarketValue、TTMPE等附加数据
     Parameters
@@ -949,10 +958,10 @@ def updateKlineEXTData(stockID, startDate=None):
     --------
     # 无返回值
     """
-    logging.debug('updateKlineEXTData: %s', stockID)
     if startDate is None:
         startDate = getTTMPELastUpdate(stockID) + dt.timedelta(days=1)
-        # startDate = startDate.strftime('%Y-%m-%d')
+    # startDateStr = startDate.strftime('%Y-%m-%d')
+    logging.debug('updateKlineEXTData: %s', stockID)
     try:
         updateKlineMarketValue(stockID, startDate)
         updateKlineTTMLirun(stockID, startDate)
@@ -989,8 +998,6 @@ def getLirunUpdateStartQuarter():
     --------
     startQuarter：YYYYQ 起始更新日期
     """
-    #     sql = (u'select min(maxdate) from (SELECT stockid, max(date) as maxdate '
-    #            u'FROM stockdata.lirun group by stockid) as temp;')
     sql = ('select min(maxdate) from (SELECT stockid, max(date) as maxdate '
            'FROM stockdata.lirun group by stockid '
            'having stockid in (select stockid from stocklist WHERE '
@@ -1085,7 +1092,7 @@ def setKlineTTMPELastUpdate(stockID, endDate):
     return result
 
 
-def setGubenLastUpdate(stockID, endDate):
+def setGubenLastUpdate(stockID, endDate=None):
     sql = ('insert into lastupdate (`stockid`, `guben`) '
            'values ("%(stockID)s", "%(endDate)s") '
            'on duplicate key update `guben`="%(endDate)s";' % locals())
@@ -1093,15 +1100,20 @@ def setGubenLastUpdate(stockID, endDate):
     return result
 
 
-def updateKlineTTMPE(stockID, startDate='1990-01-01', endDate=None):
+def updateKlineTTMPE(stockID, startDate, endDate=None):
     """
     # 更新Kline表TTMPE
     """
     #     engine = getEngine()
+    if startDate is None:
+        return
+
+    startDateStr = startDate.strftime('%Y-%m-%d')
     klineTablename = 'kline'
     sql = ('update %(klineTablename)s '
            'set ttmpe = round(totalmarketvalue / ttmprofits, 2)'
-           ' where stockid="%(stockID)s" and date>="%(startDate)s"' % locals())
+           ' where stockid="%(stockID)s" and date>="%(startDateStr)s"'
+           % locals())
     if endDate:
         sql += ' and date < "%s"' % endDate
     sql += ' and totalmarketvalue is not null'
@@ -1170,7 +1182,7 @@ def readTTMLirunFromDf(df, date):
     return ttmLirun
 
 
-def readGuben(stockID, startDate='1990-01-01', endDate=None):
+def readGuben(stockID, startDate=None, endDate=None):
     """取指定股票一段日间的股本变动数据，startDate当日无数据时，取之前最近一次变动数据
     Parameters
     --------
@@ -1185,30 +1197,33 @@ def readGuben(stockID, startDate='1990-01-01', endDate=None):
         totalshares: 变动后总股本
     """
     # 指定日期（含）前最近一次股本变动日期
+    if startDate is None:
+        return
+    startDateStr = startDate.strftime('%Y-%m-%d')
     sql = ('select max(date) from guben '
            'where stockid="%(stockID)s" '
-           'and date<="%(startDate)s"' % locals())
+           'and date<="%(startDateStr)s"' % locals())
     result = engine.execute(sql)
     lastUpdate = result.fetchone()[0]
 
     # 指定日期（含）前无股本变动数据的，查询起始日期设定为startDate
     # 否则设定为最近一次变动日期
     if lastUpdate is None:
-        gubenStartDate = startDate
+        gubenStartDate = startDate.strftime('%Y-%m-%d')
     else:
-        gubenStartDate = lastUpdate
+        gubenStartDate = lastUpdate.strftime('%Y-%m-%d')
 
     sql = ('select date, totalshares from guben '
            'where stockid = "%(stockID)s"'
            ' and `date` >= "%(gubenStartDate)s"' % locals())
     if endDate:
-        sql += ' and `date` <= "%s"' % endDate
+        sql += ' and `date` <= "%s"' % endDate.strftime('%Y-%m-%d')
     df = pd.read_sql(sql, engine)
 
     # 指定日期（含）前存在股本变动数据的，重设第1次变动日期为startDate，
     # 减少更新Kline表中总市值所需计算量
     if lastUpdate is not None:
-        df.loc[df.date == gubenStartDate, 'date'] = startDate
+        df.loc[df.date == gubenStartDate, 'date'] = gubenStartDate
     return df
 
 
@@ -1236,8 +1251,8 @@ def readGubenUpdateList():
 
 
 def readClose(stockID):
-    sql = ('select date, close from kline where stockid="%(stockID)s";' \
-          % locals())
+    sql = ('select date, close from kline where stockid="%(stockID)s";'
+           % locals())
     df = pd.read_sql(sql, engine)
     return df
 
