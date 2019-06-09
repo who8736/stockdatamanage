@@ -8,14 +8,16 @@ Created on 2016年5月4日
 import logging
 import os
 import datetime as dt
+from datetime import datetime
 # from functools import partial
 
 import pandas as pd
 import numpy as np
 
-# import datamanage as dm
 import datatrans
+from datatrans import dateList
 import sqlrw
+from sqlrw import engine, Session
 from initlog import initlog
 
 
@@ -200,14 +202,14 @@ def _calHistoryStatus(TTMLirunDf, date):
 
 
 def peHistRate(stockList, dayCount):
-    """ 计算一组股票指定日期PE在过去一段时期内的水平，
+    """ 计算一组股票在过去指定天数内的PE水平，
         # 最低为0，最高为100
         # 历史交易天数不足时，PE水平为-1
     """
-    #     print dayCount, stockList
+    print('peHistRate: %(dayCount)s' % locals())
     perates = []
     for stockID in stockList:
-        print(stockID)
+        # print(stockID)
         sql = ('select ttmpe from kline where stockid="%(stockID)s" '
                'order by `date` desc limit %(dayCount)s;' % locals())
         result = sqlrw.engine.execute(sql)
@@ -218,8 +220,8 @@ def peHistRate(stockList, dayCount):
         else:
             peList = [i[0] for i in peList]
             peCur = peList[0]
-            perate = float(
-                sum(1 for i in peList if i is not None and i < peCur)) / dayCount * 100
+            perate = float(sum(1 for i in peList if
+                               i is not None and i < peCur)) / dayCount * 100
             #             print stockID, perate, peList
             perates.append(perate)
     return perates
@@ -306,6 +308,30 @@ def testShaixuan():
     #     sqlrw.writeStockIDListToFile(df['stockid'], outFilename)
     sqlrw.engine.execute('TRUNCATE TABLE youzhiguzhi')
     sqlrw.writeSQL(df, 'youzhiguzhi')
+
+
+def calAllPEHistory(startDate=None, endDate=None):
+    startDate = datetime.strptime('2010-01-01', '%Y-%m-%d').date()
+    endDate = datetime.today().date()
+    session = Session()
+    for tradeDate in dateList(startDate, endDate):
+        sql = 'call calallpe("%(tradeDate)s");' % locals()
+        print(sql)
+        session.execute(sql)
+    session.commit()
+    session.close()
+
+
+def cal180PEHistory():
+    startDate = datetime.strptime('2010-01-01', '%Y-%m-%d').date()
+    endDate = datetime.today().date()
+    session = Session()
+    for tradeDate in dateList(startDate, endDate):
+        sql = 'call calchengfenpe("sse180", "%(tradeDate)s");' % locals()
+        print(sql)
+        session.execute(sql)
+    session.commit()
+    session.close()
 
 
 if __name__ == '__main__':

@@ -10,7 +10,7 @@ Created on Thu Oct 26 21:12:40 2017
 import logging
 import zipfile
 import socket
-from urllib import request, error, parse
+from urllib import request
 import time
 import re
 from lxml import etree
@@ -34,9 +34,10 @@ from misc import longStockID, tsCode
 import datatrans
 # import hyanalyse
 import sqlrw
+from sqlrw import engine
 from sqlrw import getKlineUpdateDate, lirunFileToList
 from sqlrw import writeSQL
-from sqlrw import writeKline, writeStockList
+from sqlrw import writeStockList
 from sqlrw import writeHYToSQL, writeHYNameToSQL
 from sqlrw import gubenUpdateDate, writeGubenToSQL
 from initlog import initlog
@@ -297,6 +298,16 @@ def downGuzhi_del(stockID):
     return data
 
 
+def downChengfen180():
+    url ='http://www.csindex.com.cn/uploads/file/autofile/cons/000010cons.xls'
+    filename = './data/000010cons.xls'
+    if dataToFile(url, filename):
+        df = pd.read_excel(filename)
+        df1 = pd.DataFrame({'name': 'sse180', 'stockid': df.iloc[:, 4]})
+        writeSQL(df1, 'chengfen')
+
+
+
 def downGuzhi(stockID):
     """ 下载单个股票估值数据， 保存并返回估值数据
     """
@@ -369,6 +380,7 @@ def downKlineFromBaostock(stockID, startDate=None,
             df = pd.DataFrame(dataList, columns=rs.fields)
             # assert isinstance(df, pd.DataFrame), 'df is not pd.DataFrame'
             df = df[df.tradestatus == '1'].copy()
+            df['stockid'] = stockID
             df = df.rename({'peTTM': 'ttmpe'})
             df = df.iloc[0:, :-1]
             # df = ts.get_hist_data(stockID, startDate, endDate, retry_count=1)
@@ -379,8 +391,8 @@ def downKlineFromBaostock(stockID, startDate=None,
             if (df is None) or df.empty:
                 return None
             else:
-                if writeKline(stockID, df):
-                    return
+                writeSQL(df, 'kline')
+                return
     logging.error('fail download %s Kline data!', stockID)
 
 
@@ -406,8 +418,9 @@ def downKlineFromTushare(stockID: str, startDate=None, endDate=None, retry_count
             if (df is None) or df.empty:
                 return None
             else:
-                if writeKline(stockID, df):
-                    return
+                df['stockid'] = stockID
+                writeSQL(df, 'kline')
+                return
     logging.error('fail download %s Kline data!', stockID)
 
 
@@ -479,8 +492,15 @@ def downloadLirunFromTushare(date):
 
 # def downGuben(stockID='300445', date='2019-04-19'):
 def downGuben(stockID='300445'):
-    # _downGubenSina(stockID)
-    _downGubenTusharePro(stockID)
+    """
+    下载股本数据并保存到数据库
+    2个可选数据源，tushare.pro和新浪财经
+    tushare.pro数据错误，改用新浪数据
+    :param stockID:
+    :return:
+    """
+    _downGubenSina(stockID)
+    # _downGubenTusharePro(stockID)
 
 def _downGubenTusharePro(stockID='300445'):
     """
@@ -498,22 +518,32 @@ def _downGubenTusharePro(stockID='300445'):
     # print(code)
     df = pro.daily_basic(ts_code=code, start_date=startDate,
                          fields='trade_date,total_share')
-    # print(df)
+    if df.empty:
+        return
+
+    sql = ('select date, totalshares from guben where stockid="%(stockID)s" '
+           ' order by date desc limit 1;' % locals())
+    result = engine.execute(sql).fetchone()
+
     gubenDate = []
     gubenValue = []
+    pos = 0
+    if result is None:
+        gubenDate.append(df.trade_date[len(df) - 1])
+        gubenValue.append(df.total_share[len(df) - 1])
+    else:
+        gubenDate.append(result[0])
+        gubenValue.append(result[1])
     for idx in reversed(df.index):
-        if idx > 0 and df.total_share[idx] != df.total_share[idx - 1]:
-            # print(type(idx), idx, df.trade_date[idx], df.total_share[idx])
-            # print(type(idx - 1), idx, df.trade_date[idx - 1], df.total_share[idx - 1])
+        if df.total_share[idx] != gubenValue[pos]:
             gubenDate.append(datetime.strptime(df.trade_date[idx - 1],
                                                '%Y%m%d'))
             gubenValue.append(df.total_share[idx - 1] * 10000)
+            pos += 1
     resultDf = pd.DataFrame({'stockid': stockID,
                              'date': gubenDate,
                              'totalshares': gubenValue})
-    print(resultDf)
     writeGubenToSQL(stockID, resultDf)
-    return resultDf
 
 
 def downMainTable(stockID):
@@ -667,7 +697,8 @@ def _downGubenSina(stockID):
     else:
         #         sock.close()
         #     print guben
-        return datatrans.gubenDataToDfSina(stockID, guben)
+        df = datatrans.gubenDataToDfSina(stockID, guben)
+    writeGubenToSQL(stockID, df)
 
 
 if __name__ == '__main__':

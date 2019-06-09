@@ -26,9 +26,10 @@ from datamanage import startUpdate
 from datamanage import updateGubenSingleThread
 from sqlrw import _getLastUpdate
 from sqlrw import readStockIDsFromSQL
-from sqlconn import engine
+from sqlconn import engine, Session
 from initsql import dropKlineTable
 from dataanalyse import testChigu, testShaixuan
+from dataanalyse import cal180PEHistory, calAllPEHistory
 # from misc import urlGubenEastmoney
 from misc import *
 # from initlog import initlog
@@ -150,39 +151,11 @@ def downLiutongGubenFromBaostock():
 #     return dfUpdate
 
 
-def downGubenShuju(stockID='300445', date='2019-04-19'):
-    print('start update guben: %s' % stockID)
-    print('guben date: ', date)
-    updateDate = gubenUpdateDate(stockID)
-    # print(type(updateDate))
-    # print(updateDate.strftime('%Y%m%d'))
-    startDate = updateDate.strftime('%Y%m%d')
-    pro = ts.pro_api()
-    code = tsCode(stockID)
-    # print(code)
-    df = pro.daily_basic(ts_code=code, start_date=startDate,
-                         fields='trade_date,total_share')
-    # print(df)
-    gubenDate = []
-    gubenValue = []
-    for idx in reversed(df.index):
-        if idx > 0 and df.total_share[idx] != df.total_share[idx - 1]:
-            # print(type(idx), idx, df.trade_date[idx], df.total_share[idx])
-            # print(type(idx - 1), idx, df.trade_date[idx - 1], df.total_share[idx - 1])
-            gubenDate.append(datetime.strptime(df.trade_date[idx - 1],
-                                               '%Y%m%d'))
-            gubenValue.append(df.total_share[idx - 1] * 10000)
-    resultDf = pd.DataFrame({'stockid': stockID,
-                             'date': gubenDate,
-                             'totalshares': gubenValue})
-    print(resultDf)
-    writeGubenToSQL(stockID, resultDf)
-    return resultDf
-
-
 def downGubenTest():
     """ 仅做测试用，下载单个股本数据，验证股本下载函数是否正确"""
-    downGuben('300445')
+    stockIDs = ["300539"]
+    for stockID in stockIDs:
+        downGuben(stockID)
 
 
 def resetKlineExtData():
@@ -199,16 +172,31 @@ def resetKlineExtData():
     # for()
 
 
+def resetTTMLirun():
+    """
+    重算TTM利润
+    :return:
+    """
+    startQuarter = 20174
+    endQuarter = 20191
+    dates = datatrans.QuarterList(startQuarter, endQuarter)
+    for date in dates:
+        logging.debug('updateLirun: %s', date)
+        calAllTTMLirun(date, incrementUpdate=False)
+        calAllHYTTMLirun(date)
+
+
 def resetLirun():
     """
     下载所有股票的利润数据更新到数据库， 主要用于修复库内历史数据缺失的情况
     :return:
     """
-    startDate = '1990-01-01'
+    startDate = '2018-01-01'
     fields = 'ts_code,ann_date,end_date,total_profit,n_income,n_income_attr_p'
     pro = ts.pro_api()
 
-    stockList = readStockListFromSQL()
+    # stockList = readStockListFromSQL()
+    stockList = [['600306', 'aaa']]
     for stockID, stockName in stockList:
         print(stockID, stockName)
         # stockID = '002087'
@@ -251,49 +239,14 @@ def gatherKline():
         #     break
 
 
-def calAllPEHistory(startDate=None, endDate=None):
-    startDate = datetime.strptime('2019-04-19', '%Y-%m-%d')
-    endDate = datetime.strptime('2019-06-07', '%Y-%m-%d')
-    stockList = readStockIDsFromSQL()
-    # print(stockList)
-    for curDate in dateList(startDate, endDate):
-        print('cal date: ', curDate)
-        _calAllPEHistory(curDate)
-
-
-def _calAllPEHistory(curDate):
-    sql = ('select stockid, totalmarketvalue, ttmprofits '
-           'from stockdata.kline '
-           'where date="%(curDate)s" and ttmprofits>0;'
-           % locals())
-    result = engine.execute(sql).fetchall()
-    if result:
-        print(result)
-        for i in result:
-            print(i[0], i[1]/1, i[2]/1)
-        data = list(zip(*result))
-        value = sum(data[1])
-        ttmprofits = sum(data[2])
-        pe = round(value / ttmprofits, 2)
-        print(value)
-        print(ttmprofits)
-        print(pe)
-        sql = ('insert ignore pehistory(name, date, pe) '
-               'values("all", "%(curDate)s", %(pe)s);' % locals())
-        print(sql)
-        engine.execute(sql)
-        # resultzip = zip(result)
-        # for i in resultzip:
-        #     print(i)
-
-
 if __name__ == "__main__":
     initlog()
     """072497"""
     pass
     # df = downLiutongGubenFromBaostock()
 
-    # downGubenTest()
+    # gh fa
+    downGubenTest()
     # df['stockid'].apply(downGuben)
 
     # 检查股本信息，找出需要更新的股票
@@ -304,10 +257,9 @@ if __name__ == "__main__":
     # date = '2019-04-19'
     # gubenUpdateDf = checkGuben(date)
     # for stockID in gubenUpdateDf['stockid']:
-    #     downGubenShuju(stockID)
+    #     downGuben(stockID)
     #     setGubenLastUpdate(stockID, date)
     #     time.sleep(1)  # tushare.pro每分钟最多访问接口200次
-    # downGubenShuju('000157')
 
     # resetKlineExtData()
 
@@ -363,13 +315,33 @@ if __name__ == "__main__":
     # dropKlineTable()
 
     # 下载k线
-    # downKline(datetime.strptime('2015-10-07', '%Y-%m-%d'))
+    # startDate = datetime.strptime('2018-01-27', '%Y-%m-%d')
+    # endDate = datetime.strptime('2018-03-29', '%Y-%m-%d')
+    # for tradeDate in dateList(startDate, endDate):
+    #     downKline(tradeDate)
 
     # 更新股票市值与PE
-    stockList = sqlrw.readStockIDsFromSQL()
-    for stockID in stockList:
-        print(stockID)
-        sqlrw.updateKlineEXTData(stockID,
-                                 datetime.strptime('2010-01-01', '%Y-%m-%d'))
+    # stockList = sqlrw.readStockIDsFromSQL()
+    # for stockID in stockList:
+    #     print(stockID)
+    # stockID = '600306'
+    # stockIDs = ["002953", "002955", "300770", "300771",
+    #             "300772", "300773", "300775", "300776", "300777",
+    #             "300778", "300779", "300780", "300781", "600989",
+    #             "603267", "603327", "603697", "603967", "603982", ]
+    # for stockID in stockIDs:
+    #     sqlrw.updateKlineEXTData(stockID,
+    #                              datetime.strptime('2016-01-26', '%Y-%m-%d'))
+
+    # 重算TTMLirun
+    # resetTTMLirun()
+
+    # 下载上证180成份股列表
+    # downChengfen180()
+
+    # 计算上证180指数PE
+    # cal180PEHistory()
+
+
 
     print('程序正常退出')

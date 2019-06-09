@@ -127,7 +127,6 @@ def calpf():
 
     # 利润增长的平均标准差与平均增长率的比值， 小于1时判断为增长稳定
     stocks['wdzz1'] = incDf.apply(wdzz1, axis=1)
-    pass
 
     # 根据过去6季度TTM利润平均增长率与TTMPE计算PEG
     stocks['peg'] = stocks['pe'] / stocks['avg']
