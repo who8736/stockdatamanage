@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 2016年11月30日
 
 @author: who8736
-'''
+"""
 import sqlrw
 
 
@@ -15,8 +15,8 @@ def existTable(tablename):
 
 def dropKlineTable():
     stockList = sqlrw.readStockIDsFromSQL()
-    for id in stockList:
-        tablename = 'kline%s' % id
+    for stockID in stockList:
+        tablename = 'kline%s' % stockID
         print(tablename)
         if existTable(tablename):
             sql = 'drop table %s;' % tablename

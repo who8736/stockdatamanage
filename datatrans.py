@@ -56,8 +56,8 @@ def dateStrList(startDate, endDate):
     # eDate = parse_ymd(endDate)
     dateList = []
     while startDate <= endDate:
-        dateList.append(sDate.strftime('%Y-%m-%d'))
-        sDate = sDate + timedelta(days=1)
+        dateList.append(startDate.strftime('%Y-%m-%d'))
+        startDate = startDate + timedelta(days=1)
     return dateList
 
 

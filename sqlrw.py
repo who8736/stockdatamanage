@@ -83,8 +83,10 @@ def writeHYNameToSQL(filename):
     writeSQL(hyNameDf, 'hangyename')
 
 
-def writeGubenToSQL(stockID, gubenDf):
-    """单个股票股本数据写入数据库"""
+def writeGubenToSQL(gubenDf):
+    """单个股票股本数据写入数据库
+    :type gubenDf: DataFrame
+    """
     tablename = 'guben'
     # lastUpdate = gubenUpdateDate(stockID)
     # gubenDf = gubenDf[pd.Timestamp(gubenDf.date) > lastUpdate]
