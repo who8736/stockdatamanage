@@ -316,34 +316,6 @@ class BokehPlot:
         self.select.add_tools(range_tool)
         self.select.toolbar.active_multi = range_tool
 
-        # 绘制滑条，用来控制k线上、下限
-        # self.sliderKlineMax = Slider(start=self.df.high.min(), end=self.df.high.max(),
-        #                              step=0.1, value=self.df.high.max())
-        # self.sliderKlineMin = Slider(start=self.df.low.min(), end=self.df.low.max(),
-        #                              step=0.1, value=self.df.low.min())
-        # callback = CustomJS(args=dict(pkline=self.pkline), code="""
-        #                     pkline.y_range.end = cb_obj.value
-        #                     """)
-        # self.sliderKlineMax.js_on_change('value', callback)
-        # callback = CustomJS(args=dict(pkline=self.pkline), code="""
-        #                     pkline.y_range.start = cb_obj.value
-        #                     """)
-        # self.sliderKlineMin.js_on_change('value', callback)
-
-        # 绘制滑条，用来控制pe线上、下限
-        # self.sliderPEMax = Slider(start=self.df.pe.min(), end=self.df.pe.max(),
-        #                           step=0.1, value=self.df.pe.max())
-        # self.sliderPEMin = Slider(start=self.df.pe.min(), end=self.df.pe.max(),
-        #                           step=0.1, value=self.df.pe.min())
-        # callback = CustomJS(args=dict(ppe=self.ppe), code="""
-        #                     ppe.y_range.end = cb_obj.value
-        #                     """)
-        # self.sliderPEMax.js_on_change('value', callback)
-        # callback = CustomJS(args=dict(ppe=self.ppe), code="""
-        #                     ppe.y_range.start = cb_obj.value
-        #                     """)
-        # self.sliderPEMin.js_on_change('value', callback)
-
         # kline和pe显示范围变动时自动更新y轴范围
         code = """
                 var xstart = parseInt(ppe.x_range.start);

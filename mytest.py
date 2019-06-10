@@ -37,6 +37,9 @@ from datatrans import *
 from hyanalyse import *
 from plot import BokehPlot
 from download import downKline
+from bokehtest import plotIndexPE, testPlotKline
+import bokehtest
+from bokehtest import BokehPlotPE
 
 
 # import dataanalyse
@@ -241,12 +244,12 @@ def gatherKline():
 
 if __name__ == "__main__":
     initlog()
-    """072497"""
-    pass
+    # """072497"""
+    # pass
     # df = downLiutongGubenFromBaostock()
 
     # gh fa
-    downGubenTest()
+    # downGubenTest()
     # df['stockid'].apply(downGuben)
 
     # 检查股本信息，找出需要更新的股票
@@ -341,6 +344,13 @@ if __name__ == "__main__":
 
     # 计算上证180指数PE
     # cal180PEHistory()
+
+    # 指数PE绘图
+    # plotIndexPE()
+    # testPlotKline('600519')
+    # bokehtest.test()
+    plotImg = BokehPlotPE()
+    fig = plotImg.plot()
 
 
 
