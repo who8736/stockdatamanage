@@ -151,7 +151,34 @@ def createPELirunIncreaseTable():
 
 
 def createGubenTable():
+    sql = ("CREATE TABLE `guben` ("
+           "`stockid` varchar(6) NOT NULL,"
+           " `date` date NOT NULL,"
+           "  `totalshares` double DEFAULT NULL,"
+           "  PRIMARY KEY (`stockid`,`date`),"
+           "  KEY `ix_guben_stockid` (`stockid`),"
+           "  KEY `ix_guben_date` (`date`)"
+           ") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
+           )
+    result = sqlrw.engine.execute(sql)
+    return result
+
+
+def createGubenTable():
     pass  # TODO: 创建总股本表
+    sql = ("CREATE TABLE `guben` ("
+           "`stockid` varchar(6) NOT NULL,"
+           " `date` date NOT NULL,"
+           "  `totalshares` double DEFAULT NULL,"
+           "  PRIMARY KEY (`stockid`,`date`),"
+           "  KEY `ix_guben_stockid` (`stockid`),"
+           "  KEY `ix_guben_date` (`date`)"
+           ") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
+
+
+def createChiguTable():
+    sql = 'CREATE TABLE chigu(stockid VARCHAR(6),PRIMARY KEY (stockid));'
+    return sqlrw.engine.execute(sql)
 
 
 def createChiguTable():
