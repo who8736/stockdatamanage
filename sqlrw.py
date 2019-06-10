@@ -1315,10 +1315,46 @@ def getStockName(stockID):
         return None
 
 
-def readKlineDf(stockID, days):
+def readStockKlineDf(stockID, days):
+    """
+    读取股票K线数据
+    :param stockID: str, 6位股票代码
+    :param days: int, 读取的天数
+    :return: Dataframe
+    klineDf = pd.DataFrame({'date': dateList,
+                            'open': openList,
+                            'close': closeList,
+                            'high': highList,
+                            'low': lowList,
+                            'pe': peList})
+    """
     sql = ('select date, open, high, low, close, ttmpe '
            'from kline where stockid="%(stockID)s" '
            'order by date desc limit %(days)s;' % locals())
+    return _readKlineDf(sql)
+
+
+def readIndexKlineDf(indexID, days):
+    """
+    读取股票K线数据
+    :param indexID: str, 9位指数代码
+    :param days: int, 读取的天数
+    :return: Dataframe
+    indexDf = pd.DataFrame({'date': dateList,
+                            'open': openList,
+                            'close': closeList,
+                            'high': highList,
+                            'low': lowList,
+                            'pe': peList})
+    """
+    sql = ('select date, open, high, low, close, ttmpe '
+           'from kline as a, pehistory as b '
+           'where stockid="%(indexID)s" '
+           'order by date desc limit %(days)s;' % locals())
+    return _readKlineDf(sql)
+
+
+def _readKlineDf(sql):
     result = engine.execute(sql).fetchall()
     stockDatas = [i for i in reversed(result)]
     # klineDatas = []

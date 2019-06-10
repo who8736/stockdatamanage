@@ -197,6 +197,42 @@ def createStocklist():
     return result
 
 
+def createPEHistory():
+    sql = ("CREATE TABLE `pehistory` ("
+           "`name` varchar(45) NOT NULL,"
+           "`date` date NOT NULL,"
+           "`pe` decimal(10,2) NOT NULL,"
+           "PRIMARY KEY (`name`,`date`),"
+           "KEY `ix_name` (`name`),"
+           "KEY `ix_date` (`date`)"
+           ") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
+           )
+    result = sqlrw.engine.execute(sql)
+    return result
+
+
+def createIndexKline():
+    sql = ("CREATE TABLE `indexkline` ("
+           "`stockid` varchar(9) COLLATE utf8mb4_bin NOT NULL,"
+           "`date` date NOT NULL,"
+           "`close` double DEFAULT NULL,"
+           "`open` double DEFAULT NULL,"
+           "`high` double DEFAULT NULL,"
+           "`low` double DEFAULT NULL,"
+           "`pre_close` double DEFAULT NULL,"
+           "`change` double DEFAULT NULL,"
+           "`pct_chg` double DEFAULT NULL,"
+           "`vol` double DEFAULT NULL,"
+           "`amount` double DEFAULT NULL,"
+           "PRIMARY KEY (`stockid`,`date`),"
+           "KEY `ix_stockid` (`stockid`) /*!80000 INVISIBLE */,"
+           "KEY `ix_date` (`date`)"
+           ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;"
+           )
+    result = sqlrw.engine.execute(sql)
+    return result
+
+
 if __name__ == '__main__':
     if not existTable('chiguguzhi'):
         createChiguGuzhiTable()
@@ -220,3 +256,7 @@ if __name__ == '__main__':
         createPELirunIncreaseTable()
     if not existTable('stocklist'):
         createStocklist()
+    if not existTable('pehistory'):
+        createPEHistory()
+    if not existTable('indexkline'):
+        createIndexKline

@@ -23,7 +23,7 @@ from bokeh.layouts import column
 from bokeh.models import ColumnDataSource, RangeTool
 from bokeh.models import Slider, CustomJS
 
-from sqlrw import engine, readKlineDf  # @IgnorePep8
+from sqlrw import engine, readStockKlineDf  # @IgnorePep8
 from datatrans import dateStrList  # @IgnorePep8
 
 matplotlib.use('Agg')  # @UndefinedVariable
@@ -189,7 +189,7 @@ def test():
 #     :param days: int, 走势图显示的总天数
 #     :return:
 #     """
-#     df = readKlineDf(stockID, days)
+#     df = readStockKlineDf(stockID, days)
 #     source = ColumnDataSource(df)
 #     TOOLS = "pan,wheel_zoom,box_zoom,reset,save"
 #     width = 1000
@@ -261,7 +261,7 @@ class BokehPlot:
     """
 
     def __init__(self, stockID, days=1000):
-        self.df = readKlineDf(stockID, days)
+        self.df = readStockKlineDf(stockID, days)
         self.source = ColumnDataSource(self.df)
 
         TOOLS = "pan,wheel_zoom,box_zoom,reset,save"
