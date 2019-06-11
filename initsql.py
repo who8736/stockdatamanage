@@ -164,43 +164,6 @@ def createGubenTable():
     return result
 
 
-def createGubenTable():
-    sql = ("CREATE TABLE `guben` ("
-           "`stockid` varchar(6) NOT NULL,"
-           " `date` date NOT NULL,"
-           "  `totalshares` double DEFAULT NULL,"
-           "  PRIMARY KEY (`stockid`,`date`),"
-           "  KEY `ix_guben_stockid` (`stockid`),"
-           "  KEY `ix_guben_date` (`date`)"
-           ") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
-           )
-    result = sqlrw.engine.execute(sql)
-    return result
-
-
-def createChiguTable():
-    sql = 'CREATE TABLE chigu(stockid VARCHAR(6),PRIMARY KEY (stockid));'
-    return sqlrw.engine.execute(sql)
-
-
-def createChiguTable():
-    sql = 'CREATE TABLE chigu(stockid VARCHAR(6),PRIMARY KEY (stockid));'
-    return sqlrw.engine.execute(sql)
-
-
-# def createKlineTable(stockID):
-#     tableName = 'kline%s' % stockID
-#     sql = 'create table %s like klinesample' % tableName
-#     return sqlrw.engine.execute(sql)
-
-
-
-
-def createChiguTable():
-    sql = 'CREATE TABLE chigu(stockid VARCHAR(6),PRIMARY KEY (stockid));'
-    return sqlrw.engine.execute(sql)
-
-
 def createChiguTable():
     sql = 'CREATE TABLE chigu(stockid VARCHAR(6),PRIMARY KEY (stockid));'
     return sqlrw.engine.execute(sql)
@@ -306,6 +269,6 @@ if __name__ == '__main__':
     if not existTable('pehistory'):
         createPEHistory()
     if not existTable('indexkline'):
-        createIndexKline
+        createIndexKline()
     if not existTable('guben'):
         createGubenTable()
