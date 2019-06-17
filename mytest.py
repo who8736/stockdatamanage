@@ -36,6 +36,7 @@ from misc import *
 from datatrans import *
 from hyanalyse import *
 from plot import BokehPlot
+import bokehtest
 from download import downKline
 from bokehtest import plotIndexPE, testPlotKline
 import bokehtest
@@ -242,6 +243,17 @@ def gatherKline():
         #     break
 
 
+def testBokehtest():
+    """
+    测试bokehtest中的功能
+    :return:
+    """
+    mybokeh = bokehtest.BokehPlotStock('000651', 1000)
+    myplot = mybokeh.plot()
+    output_file("kline.html", title="kline plot test")
+    show(myplot)  # open a browser
+
+
 if __name__ == "__main__":
     initlog()
     # """072497"""
@@ -349,9 +361,10 @@ if __name__ == "__main__":
     # plotIndexPE()
     # testPlotKline('600519')
     # bokehtest.test()
-    plotImg = BokehPlotPE()
-    fig = plotImg.plot()
+    # plotImg = BokehPlotPE()
+    # fig = plotImg.plot()
 
-
+    # 测试bokehtest模块中的功能
+    testBokehtest()
 
     print('程序正常退出')

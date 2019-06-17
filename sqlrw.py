@@ -411,7 +411,7 @@ def updateKlineMarketValue(stockID, startDate=None, endDate=None):
         totalShares = gubenDf['totalshares'][i]
 
         sql = ('update %(klineTablename)s '
-               'set totalmarketvalue = close * %(totalShares)s * 10000'
+               'set totalmarketvalue = close * %(totalShares)s'
                ' where stockid="%(stockID)s" and date>="%(gubenStartDate)s"'
                % locals())
         if endDate:
