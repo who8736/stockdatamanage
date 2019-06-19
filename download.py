@@ -695,11 +695,12 @@ def _downGubenSina(stockID):
     timeout = 6
     socket.setdefaulttimeout(timeout)
     gubenURL = urlGubenSina(stockID)
+    useragent = (r'Mozilla / 5.0(Windows NT 10.0; Win64; x64) '
+                 r'AppleWebKit / 537.36(KHTML, like Gecko) '
+                 r'Chrome / 74.0.3729.169 Safari / 537.36')
     headers = {
-        'User-Agent': r'Mozilla/5.0 (Windows NT 6.1; WOW64) '
-                      r'AppleWebKit/537.36 (KHTML, like Gecko) '
-                      r'Chrome/45.0.2454.85 Safari/537.36 115Browser/6.0.3',
-        'Referer': r'https://finance.sina.com.cn/stock/',
+        'User-Agent': useragent,
+        'Referer': gubenURL,
         'Connection': 'keep-alive'
     }
     try:
