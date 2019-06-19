@@ -164,7 +164,7 @@ def updateGubenSingleThread():
     for stockID in gubenUpdateDf['stockid']:
         downGuben(stockID)
         setGubenLastUpdate(stockID, date)
-        time.sleep(1)
+        time.sleep(2)
 
 
 @logfun

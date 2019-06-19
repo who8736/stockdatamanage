@@ -115,8 +115,9 @@ def gubenDataToDfSina(stockID, guben):
 #     print totalshares
 #     t = [i[:-2] for i in totalshares]
 #     print t
+    danwei = {'万股':10000, '亿股':100000000}
     try:
-        totalshares = [float(i[:-2]) * 10000 for i in totalshares]
+        totalshares = [float(i[:-2]) * danwei[i[-2:]] for i in totalshares]
     except ValueError as e:
         logging.error('stockID:%s, %s', stockID, e)
 #     print totalshares

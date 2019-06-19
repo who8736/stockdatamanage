@@ -5,6 +5,7 @@ Created on Mon Apr 15 15:27:38 2019
 @author: ff
 """
 
+import time
 # import pandas as pd
 # from pandas import DataFrame
 from urllib.request import urlopen
@@ -37,7 +38,7 @@ from datatrans import *
 from hyanalyse import *
 from plot import BokehPlot
 import bokehtest
-from download import downKline
+from download import downKline, _downGubenSina
 from bokehtest import plotIndexPE, testPlotKline
 import bokehtest
 from bokehtest import BokehPlotPE
@@ -157,9 +158,11 @@ def downLiutongGubenFromBaostock():
 
 def downGubenTest():
     """ 仅做测试用，下载单个股本数据，验证股本下载函数是否正确"""
-    stockIDs = ["300539"]
+    # stockIDs = ["300539"]
+    stockIDs = readStockIDsFromSQL()
     for stockID in stockIDs:
-        downGuben(stockID)
+        downGuben(stockID, replace=True)
+        time.sleep(1)
 
 
 def resetKlineExtData():
@@ -309,6 +312,8 @@ if __name__ == "__main__":
 
     # 更新股本数据
     # updateGubenSingleThread()
+    # downGuben('603970', replace=True)
+    downGubenTest()
 
     # 更新股票日交易数据
     # threadNum = 10
@@ -365,6 +370,6 @@ if __name__ == "__main__":
     # fig = plotImg.plot()
 
     # 测试bokehtest模块中的功能
-    testBokehtest()
+    # testBokehtest()
 
     print('程序正常退出')

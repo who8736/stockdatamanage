@@ -83,7 +83,7 @@ def writeHYNameToSQL(filename):
     writeSQL(hyNameDf, 'hangyename')
 
 
-def writeGubenToSQL(gubenDf):
+def writeGubenToSQL(gubenDf, replace=False):
     """单个股票股本数据写入数据库
     :type gubenDf: DataFrame
     """
@@ -91,7 +91,16 @@ def writeGubenToSQL(gubenDf):
     # lastUpdate = gubenUpdateDate(stockID)
     # gubenDf = gubenDf[pd.Timestamp(gubenDf.date) > lastUpdate]
     # gubenDf = gubenDf[gubenDf.date > lastUpdate]
-    if not gubenDf.empty:
+    if gubenDf.empty:
+        return None
+    if replace:
+        for index, row in gubenDf.iterrows():
+            sql = (('replace into guben'
+                    '(stockid, date, totalshares) '
+                    'values("%s", "%s", %s)')
+                   % (row['stockid'], row['date'], row['totalshares']))
+            engine.execute(sql)
+    else:
         return writeSQL(gubenDf, tablename)
 
 

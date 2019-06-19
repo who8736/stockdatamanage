@@ -331,7 +331,8 @@ def downKline(tradeDate):
         #            + df['trade_date'].str[4:6] + '-'
         #            +df['trade_date'].str[6:])
         df['trade_date'] = df['trade_date'].map(lambda x:
-                                                x[:4] + '-' + x[4:6] + '-' + x[6:])
+                                                x[:4] + '-' + x[4:6] + '-' + x[
+                                                                             6:])
         # df['treade_date'].map(lambda x: x[:4] + '-' + x[4:6] + '-' + x[6:])
         df.rename(columns={'trade_date': 'date', 'vol': 'volume'},
                   inplace=True)
@@ -377,7 +378,8 @@ def downKlineFromBaostock(stockID, startDate=None,
         try:
             fieldsStr = "date,open,high,close,low,volume,peTTM,tradestatus"
             # fields = ['date', 'open', 'high', 'close', 'low', 'volume', 'ttmpe']
-            rs = bs.query_history_k_data_plus(longID, fieldsStr, startDate, endDate)
+            rs = bs.query_history_k_data_plus(longID, fieldsStr, startDate,
+                                              endDate)
             dataList = []
             while rs.next():
                 dataList.append(rs.get_row_data())
@@ -400,7 +402,8 @@ def downKlineFromBaostock(stockID, startDate=None,
     logging.error('fail download %s Kline data!', stockID)
 
 
-def downKlineFromTushare(stockID: str, startDate=None, endDate=None, retry_count=6):
+def downKlineFromTushare(stockID: str, startDate=None, endDate=None,
+                         retry_count=6):
     """下载单个股票K线历史写入数据库, 下载源为tushare"""
     # logging.debug('download kline: %s', stockID)
     if startDate is None:  # startDate为空时取股票最后更新日期
@@ -495,7 +498,7 @@ def downloadLirunFromTushare(date):
 
 
 # def downGuben(stockID='300445', date='2019-04-19'):
-def downGuben(stockID='300445'):
+def downGuben(stockID='300445', replace=False):
     """
     下载股本数据并保存到数据库
     2个可选数据源，tushare.pro和新浪财经
@@ -503,8 +506,10 @@ def downGuben(stockID='300445'):
     :param stockID:
     :return:
     """
-    _downGubenSina(stockID)
-    # _downGubenTusharePro(stockID)
+    df = _downGubenSina(stockID)
+    # df = _downGubenTusharePro(stockID)
+    if df is not None:
+        writeGubenToSQL(df, replace)
 
 
 def _downGubenTusharePro(stockID='300445'):
@@ -548,7 +553,7 @@ def _downGubenTusharePro(stockID='300445'):
     resultDf = pd.DataFrame({'stockid': stockID,
                              'date': gubenDate,
                              'totalshares': gubenValue})
-    writeGubenToSQL(resultDf)
+    return resultDf
 
 
 def downMainTable(stockID):
@@ -686,24 +691,32 @@ def _get_report_data(year, quarter, pageNo, dataArr,
 def _downGubenSina(stockID):
     """ 从新浪网下载股本数据
     """
-    gubenURL = urlGubenSina(stockID)
+    print('开始下载股本数据：', stockID)
     timeout = 6
+    socket.setdefaulttimeout(timeout)
+    gubenURL = urlGubenSina(stockID)
+    headers = {
+        'User-Agent': r'Mozilla/5.0 (Windows NT 6.1; WOW64) '
+                      r'AppleWebKit/537.36 (KHTML, like Gecko) '
+                      r'Chrome/45.0.2454.85 Safari/537.36 115Browser/6.0.3',
+        'Referer': r'https://finance.sina.com.cn/stock/',
+        'Connection': 'keep-alive'
+    }
     try:
-        print('开始下载数据。。。')
-        socket.setdefaulttimeout(timeout)
         #         sock = urllib.urlopen(gubenURL)
         #         guben = sock.read()
-        req = getreq(gubenURL)
+        # req = getreq(gubenURL)
+        req = request.Request(gubenURL, headers=headers)
         guben = request.urlopen(req).read()
     except IOError as e:
         print(e)
         print('数据下载失败： %s' % stockID)
         return None
-    else:
-        #         sock.close()
-        #     print guben
-        df = datatrans.gubenDataToDfSina(stockID, guben)
-    writeGubenToSQL(df)
+    # else:
+    #         sock.close()
+    #     print guben
+    df = datatrans.gubenDataToDfSina(stockID, guben)
+    return df
 
 
 if __name__ == '__main__':
