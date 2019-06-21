@@ -71,7 +71,7 @@ def peZ(stock, dayCount):
         # 历史交易天数不足时，PE水平为-1
     """
     stockID = stock.stockid
-    sql = ('select ttmpe from kline where stockid="%(stockID)s"'
+    sql = ('select ttmpe from klinestock where stockid="%(stockID)s"'
            'order by `date` desc limit %(dayCount)s;') % locals()
     # print(sql)
     peDf = pd.read_sql(sql, engine)

@@ -10,7 +10,7 @@ import time
 from io import BytesIO
 
 import matplotlib
-
+import pandas as pd
 import matplotlib.pyplot as plt  # @IgnorePep8
 # from matplotlib.finance import candlestick_ohlc  # @IgnorePep8
 from mpl_finance import candlestick_ohlc  # @IgnorePep8
@@ -62,7 +62,7 @@ def plotKlineOld(stockID):
     #     return plotKline(stockID)
     #     ax2 = fig.add_subplot(2, 1, 2)
     sql = ('select date, open, high, low, close, ttmpe '
-           'from kline where stockid="%(stockID)s" '
+           'from klinestockstock where stockid="%(stockID)s" '
            'order by date desc limit 1000;' % locals())
     result = engine.execute(sql)
     stockDatas = result.fetchall()
@@ -105,12 +105,52 @@ def plotKlineOld(stockID):
 #     datetime.
 
 
-def plotKline(stockID):
+def plotKline(ID, type='stock', days=1000):
     """ 绘制K线与TTMPE图
     """
+    if type=='stock':
+        return plotKlineStock(ID, days)
+    elif type=='index':
+        return plotKlineIndex(ID, days)
+    else:
+        return None
+
+
+def plotKlineIndex(ID, days):
+    """
+
+    :param ID:
+    :param days:
+    :return:
+    """
     sql = ('select date, open, high, low, close, ttmpe '
-           'from kline where stockid="%(stockID)s" '
-           'order by date desc limit 1000;' % locals())
+           'from klinestockstock where stockid="%(ID)s" '
+           'order by date desc limit %(days)s;' % locals())
+    df = pd.read_sql(sql, engine)
+    print(df.head())
+    bokehplot = BokehPlot(ID, df)
+    return bokehplot.plot()
+
+
+def plotKlineStock(ID, days):
+    """
+
+    :param ID:
+    :param days:
+    :return:
+    """
+    sql = ('select date, open, high, low, close, ttmpe '
+           'from klinestockstock where stockid="%(ID)s" '
+           'order by date desc limit %(days)s;' % locals())
+    df = pd.read_sql(sql, engine)
+    print(df.head())
+    bokehplot = BokehPlot(ID, df)
+    return bokehplot.plot()
+
+def __del_plotKline():
+    sql = ('select date, open, high, low, close, ttmpe '
+           'from klinestock where stockid="%(stockID)s" '
+           'order by date desc limit %(days)s;' % locals())
     result = engine.execute(sql).fetchall()
     stockDatas = [i for i in reversed(result)]
     klineDatas = []
@@ -128,7 +168,7 @@ def plotKline(stockID):
     fig = plt.figure()
     ax1 = fig.add_subplot(gs1[0:2, :])
     candlestick_ohlc(ax1, klineDatas)
-    ax1.set_title(stockID)
+    # ax1.set_title(ID)
     plt.grid(True)
     ax2 = fig.add_subplot(gs1[2:3, :])
     ax2.plot(indexes, peDatas)
@@ -260,8 +300,9 @@ class BokehPlot:
     :return:
     """
 
-    def __init__(self, stockID, days=1000):
-        self.df = readStockKlineDf(stockID, days)
+    def __init__(self, ID, df):
+        self.df = df
+        days = df.shape[0]
         self.source = ColumnDataSource(self.df)
 
         TOOLS = "pan,wheel_zoom,box_zoom,reset,save"

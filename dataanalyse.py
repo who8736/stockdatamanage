@@ -210,7 +210,7 @@ def peHistRate(stockList, dayCount):
     perates = []
     for stockID in stockList:
         # print(stockID)
-        sql = ('select ttmpe from kline where stockid="%(stockID)s" '
+        sql = ('select ttmpe from klinestock where stockid="%(stockID)s" '
                'order by `date` desc limit %(dayCount)s;' % locals())
         result = sqlrw.engine.execute(sql)
         peList = result.fetchall()

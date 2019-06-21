@@ -16,7 +16,7 @@ import re
 from lxml import etree
 import lxml
 import datetime as dt
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import tushare as ts
 import pandas as pd
@@ -718,6 +718,34 @@ def _downGubenSina(stockID):
     #     print guben
     df = datatrans.gubenDataToDfSina(stockID, guben)
     return df
+
+
+def downIndex(ID, startDate, endDate=None):
+    """
+
+    :param ID:
+    :param startDate:
+    :param endDate:
+    :return:
+    """
+    # startDate = getKlineUpdateDate() + timedelta(days=1)
+    if endDate is None:
+        endDate = datetime.today().date()
+    pro = ts.pro_api()
+    df = pro.index_daily(ts_code=ID,
+                         start_date=startDate.strftime('%Y%m%d'),
+                         end_date=endDate.strftime('%Y%m%d'))
+    if df.empty:
+        return
+
+    # df = pro.index_daily(ts_code='399300.SZ', start_date='20180101',
+    #                      end_date='20181010')
+    df.rename(columns={'ts_code': 'id', 'trade_date': 'date', 'vol': 'volume'},
+              inplace=True)
+    df = df[['id', 'date', 'open', 'high', 'close', 'low', 'volume']]
+
+    print(df.head())
+    writeSQL(df, 'klineindex')
 
 
 if __name__ == '__main__':

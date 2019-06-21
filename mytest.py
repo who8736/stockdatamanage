@@ -36,7 +36,7 @@ from misc import *
 # from initlog import initlog
 from datatrans import *
 from hyanalyse import *
-from plot import BokehPlot
+from plot import BokehPlot, plotKlineStock
 import bokehtest
 from download import downKline, _downGubenSina
 from bokehtest import plotIndexPE, testPlotKline
@@ -238,7 +238,7 @@ def gatherKline():
                "                              `ttmprofits`, `ttmpe`) "
                "select '%s', s.`date`, s.`open`, s.`high`, s.`close`, s.`low`, "
                "       s.`volume`, s.`totalmarketvalue`, s.`ttmprofits`, "
-               "       s.`ttmpe` from kline where stockid='%s' as s;\n") % (stockID, stockID)
+               "       s.`ttmpe` from klinestockstock where stockid='%s' as s;\n") % (stockID, stockID)
         print('process stockID: ', stockID)
         # print(sql)
         engine.execute(sql)
@@ -258,19 +258,22 @@ def testBokehtest():
 
 
 if __name__ == "__main__":
+    """
+    本文件用于测试各模块功能
+    """
     initlog()
-    # """072497"""
-    # pass
-    # df = downLiutongGubenFromBaostock()
 
-    # gh fa
-    # downGubenTest()
-    # df['stockid'].apply(downGuben)
+    ##############################################
+    # 数据下载
+    ##############################################
+    # 下载k线
+    # startDate = datetime.strptime('2018-01-27', '%Y-%m-%d')
+    # endDate = datetime.strptime('2018-03-29', '%Y-%m-%d')
+    # for tradeDate in dateList(startDate, endDate):
+    #     downKline(tradeDate)
 
-    # 检查股本信息，找出需要更新的股票
-    # df = checkGuben()
-    # print(df)
-
+    # 股本
+    #-------------------------------
     # 下载指定股票股本信息
     # date = '2019-04-19'
     # gubenUpdateDf = checkGuben(date)
@@ -279,66 +282,18 @@ if __name__ == "__main__":
     #     setGubenLastUpdate(stockID, date)
     #     time.sleep(1)  # tushare.pro每分钟最多访问接口200次
 
-    # resetKlineExtData()
+    # 指数
+    #-------------------------------
+    # 下载上证180成份股列表
+    # downChengfen180()
 
-    # 重算TTMlirun
-    # dates = datatrans.QuarterList(20061, 20191)
-    # for date in dates:
-    #     print('cal ttmlirun: %d' % date)
-    #     # calAllTTMLirun(date)
-    #     calAllHYTTMLirun(date)
-    # calAllTTMLirun(20102)
+    # 下载指数K线数据
+    startDate = datetime.strptime('20100101', '%Y%m%d')
+    downIndex('000010.SH', startDate=startDate)
 
-    # 重新下载lirun数据
-    # resetLirun()
-
-    # 估值筛选
-    # dataanalyse.testShaixuan()
-
-    # 计算评分
-    # calpf()
-
-    # bokeh绘图
-    # testBokeh()
-
-    # kline分表汇总
-    # gatherKline()
-
-    # tushare.pro下载日交易数据
-    # updateKline()
-
-    # 更新全部股票数据
-    # startUpdate()
-
-    # 更新股本数据
-    # updateGubenSingleThread()
-    # downGuben('603970', replace=True)
-    downGubenTest()
-
-    # 更新股票日交易数据
-    # threadNum = 10
-    # stockList = sqlrw.readStockIDsFromSQL()
-    # print(stockList)
-    # updateKlineEXTData(stockList, threadNum)
-
-    # 计算全市场PE历史
-    # calAllPEHistory()
-
-    # 更新估值数据
-    # testChigu()
-    # testShaixuan()
-
-    # 更新股票评分
-    # calpf()
-
-    # 删除名称中包含股票代码的日K线表
-    # dropKlineTable()
-
-    # 下载k线
-    # startDate = datetime.strptime('2018-01-27', '%Y-%m-%d')
-    # endDate = datetime.strptime('2018-03-29', '%Y-%m-%d')
-    # for tradeDate in dateList(startDate, endDate):
-    #     downKline(tradeDate)
+    ##############################################
+    # 数据更新
+    ##############################################
 
     # 更新股票市值与PE
     # stockList = sqlrw.readStockIDsFromSQL()
@@ -353,14 +308,70 @@ if __name__ == "__main__":
     #     sqlrw.updateKlineEXTData(stockID,
     #                              datetime.strptime('2016-01-26', '%Y-%m-%d'))
 
-    # 重算TTMLirun
-    # resetTTMLirun()
+    # tushare.pro下载日交易数据
+    # updateKline()
 
-    # 下载上证180成份股列表
-    # downChengfen180()
+    # 更新全部股票数据
+    # startUpdate()
+
+    # 更新股本数据
+    # updateGubenSingleThread()
+    # downGuben('603970', replace=True)
+    # downGubenTest()
+
+    # 更新股票日交易数据
+    # threadNum = 10
+    # stockList = sqlrw.readStockIDsFromSQL()
+    # print(stockList)
+    # updateKlineEXTData(stockList, threadNum)
+
+    # 计算全市场PE历史
+    # calAllPEHistory()
 
     # 计算上证180指数PE
     # cal180PEHistory()
+
+    ##############################################
+    # 数据修复
+    ##############################################
+
+    # resetKlineExtData()
+
+    # 重算TTMlirun
+    # dates = datatrans.QuarterList(20061, 20191)
+    # for date in dates:
+    #     print('cal ttmlirun: %d' % date)
+    #     # calAllTTMLirun(date)
+    #     calAllHYTTMLirun(date)
+    # calAllTTMLirun(20102)
+
+    # 重新下载lirun数据
+    # resetLirun()
+
+    # 重算TTMLirun
+    # resetTTMLirun()
+
+    ##############################################
+    # 股票评分
+    ##############################################
+    # 估值筛选
+    # dataanalyse.testShaixuan()
+
+    # 计算评分
+    # calpf()
+
+    # 更新估值数据
+    # testChigu()
+    # testShaixuan()
+
+    # 更新股票评分
+    # calpf()
+
+    ##############################################
+    # 绘图
+    ##############################################
+    # bokeh绘图
+    # testBokeh()
 
     # 指数PE绘图
     # plotIndexPE()
@@ -368,6 +379,7 @@ if __name__ == "__main__":
     # bokehtest.test()
     # plotImg = BokehPlotPE()
     # fig = plotImg.plot()
+    # plotKlineStock('600519', days=1000)
 
     # 测试bokehtest模块中的功能
     # testBokehtest()
