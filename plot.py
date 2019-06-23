@@ -62,7 +62,7 @@ def plotKlineOld(stockID):
     #     return plotKline(stockID)
     #     ax2 = fig.add_subplot(2, 1, 2)
     sql = ('select date, open, high, low, close, ttmpe '
-           'from klinestockstock where stockid="%(stockID)s" '
+           'from klinestock where stockid="%(stockID)s" '
            'order by date desc limit 1000;' % locals())
     result = engine.execute(sql)
     stockDatas = result.fetchall()
@@ -124,7 +124,7 @@ def plotKlineIndex(ID, days):
     :return:
     """
     sql = ('select date, open, high, low, close, ttmpe '
-           'from klinestockstock where stockid="%(ID)s" '
+           'from klinestock where stockid="%(ID)s" '
            'order by date desc limit %(days)s;' % locals())
     df = pd.read_sql(sql, engine)
     print(df.head())
@@ -140,7 +140,7 @@ def plotKlineStock(ID, days):
     :return:
     """
     sql = ('select date, open, high, low, close, ttmpe '
-           'from klinestockstock where stockid="%(ID)s" '
+           'from klinestock where stockid="%(ID)s" '
            'order by date desc limit %(days)s;' % locals())
     df = pd.read_sql(sql, engine)
     print(df.head())

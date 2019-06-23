@@ -322,12 +322,13 @@ def calAllPEHistory(startDate=None, endDate=None):
     session.close()
 
 
-def cal180PEHistory():
-    startDate = datetime.strptime('2010-01-01', '%Y-%m-%d').date()
-    endDate = datetime.today().date()
+def calPEHistory(ID, startDate, endDate=None):
+    # startDate = datetime.strptime('2019-06-17', '%Y-%m-%d').date()
+    if endDate is None:
+        endDate = datetime.today().date()
     session = Session()
     for tradeDate in dateList(startDate, endDate):
-        sql = 'call calchengfenpe("sse180", "%(tradeDate)s");' % locals()
+        sql = 'call calchengfenpe("%(ID)s", "%(tradeDate)s");' % locals()
         print(sql)
         session.execute(sql)
     session.commit()

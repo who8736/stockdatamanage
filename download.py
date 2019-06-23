@@ -299,12 +299,41 @@ def downGuzhi_del(stockID):
 
 
 def downChengfen180():
+    """
+    从中证指数网下载指数成人股列表，考虑tushare仅提供月度数据，本函数暂时保留
+    :return:
+    """
     url = 'http://www.csindex.com.cn/uploads/file/autofile/cons/000010cons.xls'
     filename = './data/000010cons.xls'
     if dataToFile(url, filename):
         df = pd.read_excel(filename)
         df1 = pd.DataFrame({'name': 'sse180', 'stockid': df.iloc[:, 4]})
         writeSQL(df1, 'chengfen')
+
+
+def downChengfen(ID, startDate, endDate=None):
+    """
+    下载指数成份股，月度数据
+    :param ID:
+    :param startDate:
+    :param endDate:
+    :return:
+    """
+    if endDate is None:
+        endDate = datetime.today().date()
+    pro = ts.pro_api()
+    ID = ID + '.SH'
+    df = pro.index_weight(index_code=ID,
+                          # trade_date='20190105',
+                          start_date=startDate.strftime('%Y%m%d'),
+                          end_date=endDate.strftime('%Y%m%d'))
+    df['indexid'] = df.index_code.str[:6]
+    df['stockid'] = df.con_code.str[:6]
+    df.rename(columns={'trade_date': 'date', }, inplace=True)
+    df = df[['indexid', 'stockid', 'date', 'weight']]
+
+    print(df.head())
+    writeSQL(df, 'chengfen')
 
 
 def downGuzhi(stockID):
@@ -337,7 +366,7 @@ def downKline(tradeDate):
         df.rename(columns={'trade_date': 'date', 'vol': 'volume'},
                   inplace=True)
         df = df[['stockid', 'date', 'open', 'high', 'close', 'low', 'volume']]
-        writeSQL(df, 'kline')
+        writeSQL(df, 'klinestock')
     except Exception as e:
         print(e)
         logging.error(e)
@@ -397,7 +426,7 @@ def downKlineFromBaostock(stockID, startDate=None,
             if (df is None) or df.empty:
                 return None
             else:
-                writeSQL(df, 'kline')
+                writeSQL(df, 'klinestock')
                 return
     logging.error('fail download %s Kline data!', stockID)
 
@@ -426,7 +455,7 @@ def downKlineFromTushare(stockID: str, startDate=None, endDate=None,
                 return None
             else:
                 df['stockid'] = stockID
-                writeSQL(df, 'kline')
+                writeSQL(df, 'klinestock')
                 return
     logging.error('fail download %s Kline data!', stockID)
 
@@ -740,7 +769,8 @@ def downIndex(ID, startDate, endDate=None):
 
     # df = pro.index_daily(ts_code='399300.SZ', start_date='20180101',
     #                      end_date='20181010')
-    df.rename(columns={'ts_code': 'id', 'trade_date': 'date', 'vol': 'volume'},
+    df['id'] = df.ts_code.str[:6]
+    df.rename(columns={'trade_date': 'date', 'vol': 'volume'},
               inplace=True)
     df = df[['id', 'date', 'open', 'high', 'close', 'low', 'volume']]
 

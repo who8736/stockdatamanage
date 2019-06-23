@@ -18,7 +18,7 @@ from report import reportValuation
 from sqlrw import getChiguList, getGuzhiList, getYouzhiList
 from sqlrw import getStockName, readCurrentTTMPE
 from sqlrw import readCurrentClose, readCurrentPEG
-from sqlrw import readPERate
+from sqlrw import readPERate, readStockKlineDf
 from sqlrw import readStockIDsFromSQL, writeChigu
 from sqlrw import readValuationSammary
 from . import app
@@ -133,7 +133,8 @@ def klineimgnew(stockID):
     js_resources = INLINE.render_js()
     css_resources = INLINE.render_css()
 
-    plotImg = BokehPlot(stockID)
+    df = readStockKlineDf(stockID, days=1000)
+    plotImg = BokehPlot(stockID, df)
     scripts, div = components(plotImg.plot())
     # return render_template("plotkline.html", the_div=div, the_script=scripts)
     html = render_template(

@@ -30,7 +30,7 @@ from sqlrw import readStockIDsFromSQL
 from sqlconn import engine, Session
 from initsql import dropKlineTable
 from dataanalyse import testChigu, testShaixuan
-from dataanalyse import cal180PEHistory, calAllPEHistory
+from dataanalyse import calPEHistory, calAllPEHistory
 # from misc import urlGubenEastmoney
 from misc import *
 # from initlog import initlog
@@ -238,7 +238,7 @@ def gatherKline():
                "                              `ttmprofits`, `ttmpe`) "
                "select '%s', s.`date`, s.`open`, s.`high`, s.`close`, s.`low`, "
                "       s.`volume`, s.`totalmarketvalue`, s.`ttmprofits`, "
-               "       s.`ttmpe` from klinestockstock where stockid='%s' as s;\n") % (stockID, stockID)
+               "       s.`ttmpe` from klinestock where stockid='%s' as s;\n") % (stockID, stockID)
         print('process stockID: ', stockID)
         # print(sql)
         engine.execute(sql)
@@ -284,12 +284,18 @@ if __name__ == "__main__":
 
     # 指数
     #-------------------------------
-    # 下载上证180成份股列表
-    # downChengfen180()
+    # 下载指数成份股列表
+    # for year in range(2009, 2020):
+    #     ID = '000010'
+    #     startStr = '%s0101' % year
+    #     endStr = '%s1231' % year
+    #     startDate = datetime.strptime(startStr, '%Y%m%d').date()
+    #     endDate = datetime.strptime(endStr, '%Y%m%d').date()
+    #     downChengfen(ID, startDate, endDate)
 
     # 下载指数K线数据
-    startDate = datetime.strptime('20100101', '%Y%m%d')
-    downIndex('000010.SH', startDate=startDate)
+    # startDate = datetime.strptime('20100101', '%Y%m%d')
+    # downIndex('000010.SH', startDate=startDate)
 
     ##############################################
     # 数据更新
@@ -329,7 +335,8 @@ if __name__ == "__main__":
     # calAllPEHistory()
 
     # 计算上证180指数PE
-    # cal180PEHistory()
+    startDate = datetime.strptime('20100101', '%Y%m%d').date()
+    calPEHistory('000010', startDate)
 
     ##############################################
     # 数据修复

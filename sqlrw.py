@@ -302,7 +302,7 @@ def dropNAData():
     # for stockID in stockList:
     # tablename = tablenameKline(stockID)
     # sql = 'delete from %(tablename)s where volume=0;' % locals()
-    sql = 'delete from klinestockstock where volume=0;'
+    sql = 'delete from klinestock where volume=0;'
     engine.execute(sql)
 
 
@@ -326,7 +326,7 @@ def clearStockList():
 
 
 def getKlineUpdateDate():
-    sql = 'select max(date) from klinestockstock;'
+    sql = 'select max(date) from klinestock;'
     return _getLastUpdate(sql)
 
 
@@ -407,7 +407,7 @@ def updateKlineMarketValue(stockID, startDate=None, endDate=None):
     if startDate is None:
         return
     gubenDf = readGuben(stockID, startDate)
-    klineTablename = 'kline'
+    klineTablename = 'klinestock'
     gubenCount = gubenDf['date'].count()
 
     for i in range(gubenCount):
@@ -435,7 +435,7 @@ def updateKlineTTMLirun(stockID, startDate=None):
     if startDate is None:
         return
     TTMLirunDf = readTTMLirunForStockID(stockID, startDate)
-    klineTablename = 'kline'
+    klineTablename = 'klinestock'
     TTMLirunCount = TTMLirunDf['date'].count()
 
     for i in range(TTMLirunCount):
@@ -708,6 +708,38 @@ def readLastTTMLirunForStockID(stockID, limit=1):
 
 #     df = pd.read_sql(sql, engine)
 #     return df
+
+
+def readStockKlineDf(stockID, days):
+    sql = ('select date, open, high, low, close, ttmpe '
+           'from klinestock where stockid="%(stockID)s" '
+           'order by date desc limit %(days)s;' % locals())
+    result = engine.execute(sql).fetchall()
+    stockDatas = [i for i in reversed(result)]
+    # klineDatas = []
+    dateList = []
+    openList = []
+    closeList = []
+    highList = []
+    lowList = []
+    peList = []
+    indexes = list(range(len(result)))
+    for i in indexes:
+        date, _open, high, low, close, ttmpe = stockDatas[i]
+        dateList.append(date.strftime("%Y-%m-%d"))
+        # QuarterList.append(date)
+        openList.append(_open)
+        closeList.append(close)
+        highList.append(high)
+        lowList.append(low)
+        peList.append(ttmpe)
+    klineDf = pd.DataFrame({'date': dateList,
+                            'open': openList,
+                            'close': closeList,
+                            'high': highList,
+                            'low': lowList,
+                            'pe': peList})
+    return klineDf
 
 
 def readLastTTMLirun(stockList, limit=1):
@@ -1044,7 +1076,7 @@ def savePELirunIncrease(startDate='2007-01-01', endDate=None):
 
         TTMLirunDf = readTTMLirunForStockID(stockID, startDate)
         TTMLirunDf = TTMLirunDf.dropna().reset_index(drop=True)
-        klineTablename = 'kline'
+        klineTablename = 'klinestock'
         TTMLirunCount = len(TTMLirunDf)
         for i in range(TTMLirunCount):
             incrate = TTMLirunDf['incrate'].iloc[i]
@@ -1091,7 +1123,7 @@ def updateKlineTTMPE(stockID, startDate, endDate=None):
         return
 
     startDateStr = startDate.strftime('%Y-%m-%d')
-    klineTablename = 'kline'
+    klineTablename = 'klinestock'
     sql = ('update %(klineTablename)s '
            'set ttmpe = round(totalmarketvalue / ttmprofits, 2)'
            ' where stockid="%(stockID)s" and date>="%(startDateStr)s"'
