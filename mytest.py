@@ -335,7 +335,7 @@ if __name__ == "__main__":
     # calAllPEHistory()
 
     # 计算上证180指数PE
-    startDate = datetime.strptime('20100101', '%Y%m%d').date()
+    startDate = datetime.strptime('20190617', '%Y%m%d').date()
     calPEHistory('000010', startDate)
 
     ##############################################

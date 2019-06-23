@@ -1377,7 +1377,7 @@ def readStockKlineDf(stockID, days):
 
 def readIndexKlineDf(indexID, days):
     """
-    读取股票K线数据
+    读取指数K线数据
     :param indexID: str, 9位指数代码
     :param days: int, 读取的天数
     :return: Dataframe
@@ -1389,8 +1389,8 @@ def readIndexKlineDf(indexID, days):
                             'pe': peList})
     """
     sql = ('select date, open, high, low, close, ttmpe '
-           'from klinestock as a, pehistory as b '
-           'where stockid="%(indexID)s" '
+           'from klineindex '
+           'where id="%(indexID)s" '
            'order by date desc limit %(days)s;' % locals())
     return _readKlineDf(sql)
 

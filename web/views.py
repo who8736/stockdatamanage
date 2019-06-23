@@ -15,10 +15,11 @@ from bokeh.util.string import encode_utf8
 from plot import plotKline, BokehPlot
 from report import report1 as guzhiReport
 from report import reportValuation
+from report import reportIndex
 from sqlrw import getChiguList, getGuzhiList, getYouzhiList
 from sqlrw import getStockName, readCurrentTTMPE
 from sqlrw import readCurrentClose, readCurrentPEG
-from sqlrw import readPERate, readStockKlineDf
+from sqlrw import readPERate, readStockKlineDf, readIndexKlineDf
 from sqlrw import readStockIDsFromSQL, writeChigu
 from sqlrw import readValuationSammary
 from . import app
@@ -127,14 +128,22 @@ def klineimg(stockID):
                      as_attachment=True)
 
 
-@app.route('/klineimgnew/<stockID>')
-def klineimgnew(stockID):
+@app.route('/stockklineimgnew/<stockID>')
+def stockklineimgnew(stockID):
+    df = readStockKlineDf(stockID, days=1000)
+    return _klineimg(stockID, df)
+
+@app.route('/indexklineimgnew/<ID>')
+def indexklineimgnew(ID):
+    df = readIndexKlineDf(ID, days=3000)
+    return _klineimg(ID, df)
+
+def _klineimg(ID, df):
     # grab the static resources
     js_resources = INLINE.render_js()
     css_resources = INLINE.render_css()
 
-    df = readStockKlineDf(stockID, days=1000)
-    plotImg = BokehPlot(stockID, df)
+    plotImg = BokehPlot(ID, df)
     scripts, div = components(plotImg.plot())
     # return render_template("plotkline.html", the_div=div, the_script=scripts)
     html = render_template(
@@ -145,3 +154,11 @@ def klineimgnew(stockID):
         css_resources=css_resources,
     )
     return encode_utf8(html)
+
+
+@app.route('/indexinfo/<ID>')
+def indexInfo(ID):
+    stockItem = reportIndex(ID)
+    return render_template('indexinfo.html',
+                           stock=stockItem)
+

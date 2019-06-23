@@ -313,7 +313,7 @@ class BokehPlot:
 
         # 绘制K线图
         dataLen = self.df.shape[0]
-        tooltips = [('index', '@index'), ('date', '@date'), ('close', '@close')]
+        tooltips = [('date', '@date'), ('close', '@close')]
         ymin = self.df.low[-200:].min()
         ymax = self.df.high[-200:].max()
         start = ymin - (ymax - ymin) * 0.05
@@ -328,7 +328,7 @@ class BokehPlot:
         self.pkline.xaxis.major_label_overrides = self.df['date'].to_dict()
         self.plotCandlestick()
 
-        tooltips = [('pe', '@pe')]
+        tooltips = [('date', '@date'), ('pe', '@pe')]
         ymin = self.df.pe[-200:].min()
         ymax = self.df.pe[-200:].max()
         start = ymin - (ymax - ymin) * 0.05
