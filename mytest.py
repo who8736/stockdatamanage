@@ -335,8 +335,17 @@ if __name__ == "__main__":
     # calAllPEHistory()
 
     # 计算上证180指数PE
-    startDate = datetime.strptime('20190617', '%Y%m%d').date()
-    calPEHistory('000010', startDate)
+    # startDate = datetime.strptime('20190617', '%Y%m%d').date()
+    # calPEHistory('000010', startDate)
+
+    # 计算行业利润增长率
+    # hyID = '030201'
+    # date = 20184
+    # calHYTTMLirun('03020101', date)
+    # calHYTTMLirun('03020102', date)
+    # calHYTTMLirun('03020103', date)
+    # calHYTTMLirun('03020104', date)
+    # calHYTTMLirun(hyID, date)
 
     ##############################################
     # 数据修复
@@ -357,6 +366,9 @@ if __name__ == "__main__":
 
     # 重算TTMLirun
     # resetTTMLirun()
+
+    # 重算指定日期所有行业TTM利润
+    resetHYTTMLirun(startQuarter=19901, endQuarter=20191)
 
     ##############################################
     # 股票评分

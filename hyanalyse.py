@@ -176,8 +176,9 @@ def calHYTTMLirunHighLevel(hyID, date):
     if subHyIDList is None:
         return None
     profitsCur = 0
+    profitsLast = 0
     for subHyID in subHyIDList:
-        sql = ('select profits from hyprofits '
+        sql = ('select profits, profitsLast from hyprofits '
                'where hyid="%(subHyID)s" and date=%(date)s;') % locals()
 #         print sql
         result = sqlrw.engine.execute(sql).fetchone()
@@ -185,28 +186,32 @@ def calHYTTMLirunHighLevel(hyID, date):
         if result is None or result[0] is None:
             continue
         profitsCur += result[0]
+        if result[1] is not None:
+            profitsLast += result[1]
 
-    LastDate = date - 10
-    sql = ('select profits from hyprofits '
-           'where hyid="%(subHyID)s" and date="%(LastDate)s";') % locals()
-#     print sql
-    result = sqlrw.engine.execute(sql).fetchone()
-#     print 'result 145:', result
-    if result is None:
-        profitsLast = None
-#         profitsIncRate = None
-    else:
-        profitsLast = result[0]
+#     LastDate = date - 10
+#     sql = ('select profits from hyprofits '
+#            'where hyid="%(subHyID)s" and date="%(LastDate)s";') % locals()
+# #     print sql
+#     result = sqlrw.engine.execute(sql).fetchone()
+# #     print 'result 145:', result
+#     if result is None:
+#         profitsLast = None
+# #         profitsIncRate = None
+#     else:
+#         profitsLast = result[0]
 
-    if profitsLast is None or profitsLast == 0:
+    if profitsLast == 0:
         sql = (('replace into hyprofits(hyid, date, profits) '
                 'values("%(hyID)s", "%(date)s", %(profitsCur)s);') % locals())
     else:
         profitsInc = profitsCur - profitsLast
-        profitsIncRate = round(profitsInc / profitsLast, 2)
+        profitsIncRate = round(profitsInc / abs(profitsLast) * 100, 2)
         sql = (('replace into hyprofits'
-                '(hyid, date, profits, profitsInc, profitsIncRate) '
-                'values("%(hyID)s", "%(date)s", %(profitsCur)s, '
+                '(hyid, date, profits, profitsLast, '
+                'profitsInc, profitsIncRate) '
+                'values("%(hyID)s", "%(date)s", '
+                '%(profitsCur)s, %(profitsLast)s, '
                 '%(profitsInc)s, %(profitsIncRate)s);') % locals())
 #     print sql
     result = sqlrw.engine.execute(sql)
@@ -241,8 +246,9 @@ def calHYTTMLirunLowLevel(hyID, date):
 #     print profitsInc, profitsIncRate
 #     return [profitsInc, profitsIncRate]
     sql = (('replace into hyprofits'
-            '(hyid, date, profits, profitsInc, profitsIncRate) '
-            'values("%(hyID)s", "%(date)s", "%(profitsCur)s", '
+            '(hyid, date, profits, profitsLast, profitsInc, profitsIncRate) '
+            'values("%(hyID)s", "%(date)s", '
+            '"%(profitsCur)s", "%(profitsLast)s", '
             '"%(profitsInc)s", "%(profitsIncRate)s");') % locals())
 #     print sql
     sqlrw.engine.execute(sql)
