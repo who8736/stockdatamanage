@@ -810,10 +810,13 @@ def readLirunForDate(date):
     return df
 
 
-def readTTMPE(stockID):
+def readTTMPE(stockID, startDate=None):
     """ 读取某支股票的全部TTMPE
     """
-    sql = ('select date, ttmpe from klinestock where stockid="%(stockID)s";'
+    if startDate is None:
+        startDate = datetime.strptime('19900101', '%Y%m%d')
+    sql = ('select date, ttmpe from klinestock where stockid="%(stockID)s" '
+           'and date >= "%(startDate)s";'
            % locals())
     df = pd.read_sql(sql, engine)
     return df
