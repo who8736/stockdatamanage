@@ -66,8 +66,8 @@ def downHFQ(stockID):
 if __name__ == '__main__':
     stockID = '000651'
     histLen = 200
-#    ttmpe = histTTMPETrend(stockID, histLen)
-#    print(ttmpe)
+    ttmpe = histTTMPETrend(stockID, histLen)
+    print(ttmpe)
     
-    histClose = downHFQ(stockID)
+    # histClose = downHFQ(stockID)
     

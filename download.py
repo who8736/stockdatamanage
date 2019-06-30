@@ -35,7 +35,7 @@ import datatrans
 # import hyanalyse
 import sqlrw
 from sqlrw import engine
-from sqlrw import getKlineUpdateDate, lirunFileToList
+from sqlrw import getStockKlineUpdateDate, lirunFileToList
 from sqlrw import writeSQL
 from sqlrw import writeStockList
 from sqlrw import writeHYToSQL, writeHYNameToSQL
@@ -322,7 +322,7 @@ def downChengfen(ID, startDate, endDate=None):
     if endDate is None:
         endDate = datetime.today().date()
     pro = ts.pro_api()
-    ID = ID + '.SH'
+    # ID = ID + '.SH'
     df = pro.index_weight(index_code=ID,
                           # trade_date='20190105',
                           start_date=startDate.strftime('%Y%m%d'),
@@ -395,7 +395,7 @@ def downKlineFromBaostock(stockID, startDate=None,
     :param retry_count:
     """
     if startDate is None:  # startDate为空时取股票最后更新日期
-        startDate = getKlineUpdateDate() + dt.timedelta(days=1)
+        startDate = getStockKlineUpdateDate() + dt.timedelta(days=1)
     #         print stockID, startDate
     startDate = startDate.strftime('%Y-%m-%d')
     if endDate is None:
@@ -436,7 +436,7 @@ def downKlineFromTushare(stockID: str, startDate=None, endDate=None,
     """下载单个股票K线历史写入数据库, 下载源为tushare"""
     # logging.debug('download kline: %s', stockID)
     if startDate is None:  # startDate为空时取股票最后更新日期
-        startDate = getKlineUpdateDate() + dt.timedelta(days=1)
+        startDate = getStockKlineUpdateDate() + dt.timedelta(days=1)
         #         print stockID, startDate
         startDate = startDate.strftime('%Y-%m-%d')
     if endDate is None:

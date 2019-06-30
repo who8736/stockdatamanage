@@ -23,10 +23,13 @@ import hyanalyse
 import dataanalyse
 import sqlrw
 import valuation
-from sqlrw import checkGuben, setGubenLastUpdate, getKlineUpdateDate
+from sqlrw import checkGuben, setGubenLastUpdate
+from sqlrw import getStockKlineUpdateDate, getIndexKlineUpdateDate
+from sqlrw import getAllMarketPEUpdateDate
 import download
 from download import downGuben, downGuzhi, downKline
 from download import downMainTable, downloadLirun, downStockList
+from download import downIndex
 # from download import downHYList
 from initlog import initlog
 from datatrans import dateList
@@ -85,6 +88,35 @@ def startUpdate():
 
     # 更新股票评分
     updatePf()
+
+    # 更新指数数据及PE
+    updateIndex()
+
+    # 更新全市PE
+    updateAllMarketPE()
+
+
+@logfun
+def updateAllMarketPE():
+    """
+    更新全市场PE
+    :return:
+    """
+    startDate = getAllMarketPEUpdateDate()
+    dataanalyse.calAllPEHistory(startDate)
+
+
+@logfun
+def updateIndex():
+    """
+    更新指数数据及PE
+    :return:
+    """
+    ID = '000010.SH'
+    startDate = getIndexKlineUpdateDate() + dt.timedelta(days=1)
+    download.downChengfen(ID, startDate)
+    downIndex(ID, startDate)
+    dataanalyse.calPEHistory(ID[:6], startDate)
 
 
 @logfun
@@ -203,7 +235,7 @@ def updateKlineBaseData(stockList, threadNum):
 def updateKline():
     """ 更新日交易数据
     """
-    startDate = getKlineUpdateDate() + timedelta(days=1)
+    startDate = getStockKlineUpdateDate() + timedelta(days=1)
     endDate = datetime.today().date() - timedelta(days=1)
     for tradeDate in dateList(startDate, endDate):
         downKline(tradeDate)

@@ -21,6 +21,7 @@ from download import *
 from sqlrw import *
 from bokeh.plotting import show, output_file
 
+import datamanage
 from datamanage import updateKline
 from datamanage import updateKlineEXTData
 from datamanage import startUpdate
@@ -331,9 +332,6 @@ if __name__ == "__main__":
     # print(stockList)
     # updateKlineEXTData(stockList, threadNum)
 
-    # 计算全市场PE历史
-    # calAllPEHistory()
-
     # 计算上证180指数PE
     # startDate = datetime.strptime('20190617', '%Y%m%d').date()
     # calPEHistory('000010', startDate)
@@ -346,6 +344,12 @@ if __name__ == "__main__":
     # calHYTTMLirun('03020103', date)
     # calHYTTMLirun('03020104', date)
     # calHYTTMLirun(hyID, date)
+
+    # 更新指数数据及PE
+    datamanage.updateIndex()
+
+    # 更新全市PE
+    datamanage.updateAllMarketPE()
 
     ##############################################
     # 数据修复
@@ -368,7 +372,7 @@ if __name__ == "__main__":
     # resetTTMLirun()
 
     # 重算指定日期所有行业TTM利润
-    resetHYTTMLirun(startQuarter=19901, endQuarter=20191)
+    # resetHYTTMLirun(startQuarter=19901, endQuarter=20191)
 
     ##############################################
     # 股票评分

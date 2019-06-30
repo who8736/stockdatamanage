@@ -325,8 +325,30 @@ def clearStockList():
         engine.execute('TRUNCATE TABLE stocklist')
 
 
-def getKlineUpdateDate():
+def getAllMarketPEUpdateDate():
+    """
+    全市场PE更新日期
+    :return:
+    """
+    sql = 'select max(date) from pehistory where id="all";'
+    return _getLastUpdate(sql)
+
+
+def getStockKlineUpdateDate():
+    """
+    股票更新日期
+    :return:
+    """
     sql = 'select max(date) from klinestock;'
+    return _getLastUpdate(sql)
+
+
+def getIndexKlineUpdateDate():
+    """
+    指数更新日期
+    :return:
+    """
+    sql = 'select max(date) from klineindex;'
     return _getLastUpdate(sql)
 
 
