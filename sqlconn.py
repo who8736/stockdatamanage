@@ -20,20 +20,22 @@ class SQLConn():
         user = self.user
         password = self.password
         ip = self.ip
+        database = self.database
         connectStr = ('mysql://%(user)s:%(password)s@%(ip)s'
-                      '/stockdata?charset=utf8' % locals())
+                      '/%(database)s?charset=utf8' % locals())
         self.engine = create_engine(connectStr,
                                     strategy='threadlocal', echo=False)
         self.Session = scoped_session(
             sessionmaker(bind=self.engine, autoflush=False))
+        self.saveConf()
 
     def loadSQLConf(self):
         if not os.path.isfile('sql.conf'):
             self.user = 'root'
             self.password = 'password'
             self.ip = '127.0.0.1'
+            self.database = 'test'
             self.token = ''
-            self.saveConf()
             return
 
         try:
@@ -41,10 +43,29 @@ class SQLConn():
             cf.read('sql.conf')
             if cf.has_option('main', 'user'):
                 self.user = cf.get('main', 'user')
+            else:
+                self.user = 'user'
+
             if cf.has_option('main', 'password'):
                 self.password = cf.get('main', 'password')
+            else:
+                self.password = 'password'
+
             if cf.has_option('main', 'ip'):
                 self.ip = cf.get('main', 'ip')
+            else:
+                self.ip = '127.0.0.1'
+
+            if cf.has_option('main', 'database'):
+                self.database = cf.get('main', 'database')
+            else:
+                self.database = 'test'
+
+            if cf.has_option('main', 'token'):
+                self.token = cf.get('main', 'token')
+            else:
+                self.token = ''
+
         except Exception as e:
             print(e)
             logging.error('read conf file error.')
@@ -56,6 +77,8 @@ class SQLConn():
         cf.set('main', 'user', self.user)
         cf.set('main', 'password', self.password)
         cf.set('main', 'ip', self.ip)
+        cf.set('main', 'token', self.token)
+        cf.set('main', 'database', self.database)
 
         # write to file
         cf.write(open('sql.conf', 'w+'))
