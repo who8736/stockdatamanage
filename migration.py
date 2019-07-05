@@ -114,7 +114,7 @@ def importData():
         filename = filename.replace('\\', '\\\\')
         sql = f'alter table {table} disable keys'
         engine.execute(sql)
-        sql = (f'LOAD DATA LOCAL INFILE "{filename}" '
+        sql = (f'LOAD DATA INFILE "{filename}" '
                f'REPLACE INTO TABLE {table} '
                f'FIELDS TERMINATED BY "," '
                f'ESCAPED BY "#" ENCLOSED BY "`" '
