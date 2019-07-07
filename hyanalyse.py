@@ -298,7 +298,7 @@ def getHYPE(hyID, date):
     profitSum = 0
     for stockID in stockIDs:
         sql = ('select date, totalmarketvalue, ttmprofits, ttmpe '
-               f'from klinestock where stockid="{stockID}" and date<="{date} "'
+               f'from klinestock where stockid="{stockID}" and date<="{date}"'
                'order by `date` desc limit 1;')
         result = sqlrw.engine.execute(sql).fetchone()
         if result is not None:

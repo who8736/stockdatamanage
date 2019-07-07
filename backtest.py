@@ -113,74 +113,6 @@ def plotPERate():
     plt.show()
 
 
-# 专用于测试正则表达式替换语法，测试完后删除
-###################################################################
-from sqlrw import engine
-
-
-def readCurrentTTMPE(stockID):
-    sql = (f'select ttmpe from klinestock where stockid="{stockID}" and date=('
-           f'select max(`date`) from klinestock where stockid="{stockID}")')
-
-    result = engine.execute(sql).fetchone()
-    if result is None:
-        return None
-    else:
-        return result[0]
-
-
-def readTTMLirunForDate(date):
-    """从TTMLirun表读取某季度股票TTM利润
-    date: 格式YYYYQ, 4位年+1位季度，利润所属日期
-    return: 返回DataFrame格式TTM利润
-    """
-    sql = (f'select * from ttmlirun where '
-           f'`date` = "{date}"')
-    df = pd.read_sql(sql, engine)
-    return df
-
-
-def readLirunForDate(date):
-    """从Lirun表读取一期股票利润
-    date: 格式YYYYQ, 4位年+1位季度，利润所属日期
-    return: 返回DataFrame格式利润
-    """
-    sql = (f'select * from lirun where '
-           f'`date`="{date}"')
-    df = pd.read_sql(sql, engine)
-    return df
-
-
-def tihuan():
-    rootPath = os.path.abspath('.')
-    for parentPath, dirName, filenames in os.walk(rootPath):
-        for filename in filenames:
-            if (os.path.splitext(filename)[-1] == '.py'
-                    and filename != 'backtest.py'):
-                name = os.path.join(parentPath, filename)
-                print(name)
-                _tihuan(name)
-
-
-def _tihuan(filename):
-    # filename = 'bokehtest.py'
-    outstr = []
-    with open(filename, 'r', encoding='utf-8') as f:
-        instr = f.readlines()
-        for i in instr:
-            tmp = re.sub('%\((\w*)\)s', r'{\1}', i)
-            tmp = re.sub(' % locals\(\)', '', tmp)
-            tmp = re.sub('(\'.*{.*\')', r'f\1', tmp)
-            outstr.append(tmp)
-            print(tmp)
-    with open(filename, 'w', encoding='utf-8') as f:
-        f.writelines(outstr)
-
-
-###################################################################
-# 测试段结束
-
-
 if __name__ == '__main__':
     # stockID = '000651'
     # histLen = 200
@@ -189,6 +121,6 @@ if __name__ == '__main__':
 
     # plotPERate()
 
-    tihuan()
+    # tihuan()
 
     # histClose = downHFQ(stockID)

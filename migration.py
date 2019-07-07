@@ -140,5 +140,6 @@ def importData(deltable=False):
 
 
 if __name__ == '__main__':
-    export()
+    pass
+    # export()
     # importData()
