@@ -114,6 +114,8 @@ def plotPERate():
 
 
 if __name__ == '__main__':
+    pass
+
     # stockID = '000651'
     # histLen = 200
     # ttmpe = histTTMPETrend(stockID, histLen)
