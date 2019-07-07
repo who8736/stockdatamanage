@@ -14,17 +14,21 @@ import numpy as np
 import sqlrw
 
 
-def histTTMPETrend(stockID, histLen=1000, startDate=None, endDate=None):
-    """返回某股票PE水平
+def histTTMPETrend(stockID, type='stock', histLen=1000, startDate=None, endDate=None):
+    """
+    返回某股票PE水平
     histLen为参照时间长度，如当前TTMPE与前1000个交易日的TTMPE比较
     取值0-100
     为0时表示当前TTMPE处于历史最低位
     为100时表示当前TTMPE处于历史最高位
+
+    :param stockID:
+    :param type: 'stock'股票， 'index'指数
+    :param histLen:
+    :param startDate:
+    :param endDate:
+    :return:
     """
-    #    添加一列记录pe1000
-    #    遍历1001至2000号记录， 计算每一天的pe1000
-    #    写入pe1000
-    #    ttmpe1.iat[0, 0] = 10
 
     if startDate is None:
         startDate = datetime.strptime('20100101', '%Y%m%d').date()
@@ -33,7 +37,7 @@ def histTTMPETrend(stockID, histLen=1000, startDate=None, endDate=None):
 
     #    绘图， 调整双坐标系
     # stockID = '000651'
-    ttmpe = sqlrw.readTTMPE(stockID, startDate)
+    ttmpe = sqlrw.readTTMPE(stockID, startDate, type=type)
     #    ttmpe = ttmpe[-15:]
     ttmpe = ttmpe.set_index('date')
     ttmpe['perate'] = 0
@@ -100,8 +104,8 @@ def plotPERate():
     ax1.plot(ttmpe.index, ttmpe.ttmpe, 'b')
     ax1.set_ylabel('PE')
     ax2 = ax1.twinx()
-    ax2.plot(ttmpe.index, ttmpe.perate, 'r')
-    ax2.plot(ttmpe.index, ttmpe.perate1, 'g')
+    ax2.plot(ttmpe.index, ttmpe.perate, 'y')
+    ax2.plot(ttmpe.index, ttmpe.perate1, 'c')
     ax1.set_ylabel('历史PE水平')
     plt.show()
 

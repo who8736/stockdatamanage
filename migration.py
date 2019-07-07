@@ -23,9 +23,14 @@ def export():
     engine.execute(sql)
 
     # 导出存储过程
-    sql = (f'mysqldump -ntd -R -h{ip} -u{user} -p{password} '
-           f'"{database}" > "{exportPath}/procedure.sql"')
-    os.system(sql)
+    sql = (f'mysqldump --column-statistics=0 -ntd -R '
+           f'-h{ip} -u{user} -p{password} '
+           f'{database} > "{exportPath}/procedure.sql"')
+    print('export procedure:', sql)
+    res = os.system(sql)
+    # res = os.system('test.bat')
+    print('res:', res)
+    # return
 
     sql = 'show tables;'
     res = engine.execute(sql)
@@ -39,18 +44,25 @@ def export():
 
     for table in tables:
         print('start proceses:', table)
+        # exportPath = 'd:\\tmp'
         tableFileName = os.path.join(exportPath, f'{table}_struct.sql')
         tableFileName = tableFileName.replace('\\', '\\\\')
-        sql = (f'mysqldump --no-data -h{ip} -u{user} -p{password} '
+        sql = (f'mysqldump  --column-statistics=0 --no-data '
+               f'-h{ip} -u{user} -p{password} '
                f'{database} {table} > "{tableFileName}"')
+        print('export struct:', sql)
         result = os.system(sql)
         # print('export sql: ', sql)
         # print('result:', result)
         if result:
             print(f'export {table}s struct fail')
             continue
-        filename = os.path.join(exportPath, f'{table}.csv')
+        if ip == '127.0.0.1':
+            filename = os.path.join(exportPath, f'{table}.csv')
+        else:
+            filename = f'{table}.csv'
         filename = filename.replace('\\', '\\\\')
+
         if os.path.isfile(filename):
             os.remove(filename)
         # print('csv filename: ', filename)
@@ -59,16 +71,17 @@ def export():
                f'FIELDS TERMINATED BY "," OPTIONALLY ENCLOSED BY "`" '
                f'ESCAPED BY "#" LINES TERMINATED BY "\\n" '
                f'from {table} ')
-        # print('export sql: ', sql)
+        print('export sql: ', sql)
         res = engine.execute(sql)
         # print('export result: ', repr(res))
         if res:
             print(f'export {table} data ok')
         else:
             print(f'export {table} data fail')
+        # return
 
 
-def importData():
+def importData(deltable=False):
     """
     导入结构和数据
     :return:
@@ -87,10 +100,11 @@ def importData():
     res = engine.execute(sql)
     if res is None:
         return
-    tables = [name[0] for name in res.fetchall()]
-    for table in tables:
-        sql = f'drop table if exists {table}'
-        engine.execute(sql)
+    if deltable:
+        tables = [name[0] for name in res.fetchall()]
+        for table in tables:
+            sql = f'drop table if exists {table}'
+            engine.execute(sql)
     # return
 
     # 导入存储过程
@@ -122,8 +136,9 @@ def importData():
         engine.execute(sql)
         sql = f'alter table {table} enable keys'
         engine.execute(sql)
+        # return
 
 
 if __name__ == '__main__':
-    # export()
-    importData()
+    export()
+    # importData()

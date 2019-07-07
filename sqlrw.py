@@ -321,6 +321,10 @@ def getAllTableName(tableName):
 
 
 def clearStockList():
+    """
+    清空stocklist表
+    :return:
+    """
     if initsql.existTable('stocklist'):
         engine.execute('TRUNCATE TABLE stocklist')
 
@@ -810,14 +814,19 @@ def readLirunForDate(date):
     return df
 
 
-def readTTMPE(stockID, startDate=None):
-    """ 读取某支股票的全部TTMPE
+def readTTMPE(stockID, startDate=None, type='stock'):
+    """
+    读取某支股票的全部TTMPE
+
+    :param stockID:
+    :param startDate:  type:datetime.date
+    :param type: stock股票, index指数
+    :return:
     """
     if startDate is None:
         startDate = datetime.strptime('19900101', '%Y%m%d')
-    sql = ('select date, ttmpe from klinestock where stockid="%(stockID)s" '
-           'and date >= "%(startDate)s";'
-           % locals())
+    sql = (f'select date, ttmpe from kline{type} where stockid="{stockID}" '
+           f'and date >= "{startDate}";')
     df = pd.read_sql(sql, engine)
     return df
 

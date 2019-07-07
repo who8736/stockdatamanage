@@ -22,6 +22,10 @@ from sqlrw import *
 from bokeh.plotting import show, output_file
 
 import datamanage
+import dataanalyse
+import bokehtest
+import download
+import migration
 from datamanage import updateKline
 from datamanage import updateKlineEXTData
 from datamanage import startUpdate
@@ -38,10 +42,8 @@ from misc import *
 from datatrans import *
 from hyanalyse import *
 from plot import BokehPlot, plotKlineStock
-import bokehtest
 from download import downKline, _downGubenSina
 from bokehtest import plotIndexPE, testPlotKline
-import bokehtest
 from bokehtest import BokehPlotPE
 
 
@@ -346,10 +348,14 @@ if __name__ == "__main__":
     # calHYTTMLirun(hyID, date)
 
     # 更新指数数据及PE
-    datamanage.updateIndex()
+    # ID = '000010.SH'
+    # startDate = datetime.strptime('20190701', '%Y%m%d').date()
+    # dataanalyse.calPEHistory(ID[:6], startDate)
+
+    # datamanage.updateIndex()
 
     # 更新全市PE
-    datamanage.updateAllMarketPE()
+    # datamanage.updateAllMarketPE()
 
     ##############################################
     # 数据修复
@@ -406,5 +412,16 @@ if __name__ == "__main__":
 
     # 测试bokehtest模块中的功能
     # testBokehtest()
+
+    ##############################################
+    # 导入导出
+    ##############################################
+    a = datetime.now()
+    print(a)
+    # migration.export()
+    migration.importData()
+    b = datetime.now()
+    print(b)
+    print('time cost:', b - a)
 
     print('程序正常退出')

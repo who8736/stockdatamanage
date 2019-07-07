@@ -339,7 +339,7 @@ def calPEHistory(ID, startDate, endDate=None):
     # startDate = datetime.strptime('2019-06-17', '%Y-%m-%d').date()
     # assert len(ID) == 9, '指数代码错误， 正确格式：000010.SH'
     assert len(ID) == 6, '指数代码错误， 正确格式：000010'
-    ID = ID.upper()
+    # ID = ID.upper()
     if endDate is None:
         endDate = datetime.today().date()
     session = Session()

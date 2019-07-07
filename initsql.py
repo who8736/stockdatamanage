@@ -14,6 +14,10 @@ def existTable(tablename):
 
 
 def dropKlineTable():
+    """
+    删除表名格式为klineXXXXXX的所有表，XXXXXX为股票代码，从stockline表中获取
+    :return:
+    """
     stockList = sqlrw.readStockIDsFromSQL()
     for stockID in stockList:
         tablename = 'kline%s' % stockID
