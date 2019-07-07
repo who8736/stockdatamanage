@@ -64,8 +64,8 @@ def test():
 # def testPlotKline(stockID, days=1000):
 def readKlineDf(stockID, days):
     sql = ('select date, open, high, low, close, ttmpe '
-           'from klinestock where stockid="%(stockID)s" '
-           'order by date desc limit %(days)s;' % locals())
+           f'from klinestock where stockid="{stockID}" '
+           f'order by date desc limit {days};')
     result = engine.execute(sql).fetchall()
     stockDatas = [i for i in reversed(result)]
     # klineDatas = []

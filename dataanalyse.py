@@ -163,9 +163,9 @@ def calHistoryStatus(stockID):
         sql = ('insert ignore into guzhihistorystatus (`stockid`, `date`, '
                '`integrity`, `seculargrowth`, `growthmadrate`, '
                '`averageincrement`) '
-               'values ("%(stockID)s", "%(_date)s", %(integrity)r, '
-               '%(seculargrowth)r, "%(growthmadrate)s", '
-               '"%(averageincrement)s");') % locals()
+               f'values ("{stockID}", "{_date}", %(integrity)r, '
+               f'%(seculargrowth)r, "{growthmadrate}", '
+               f'"{averageincrement}");')
         print(sql)
         sqlrw.engine.execute(sql)
 
@@ -206,12 +206,12 @@ def peHistRate(stockList, dayCount):
         # 最低为0，最高为100
         # 历史交易天数不足时，PE水平为-1
     """
-    print('peHistRate: %(dayCount)s' % locals())
+    print(f'peHistRate: {dayCount}')
     perates = []
     for stockID in stockList:
         # print(stockID)
-        sql = ('select ttmpe from klinestock where stockid="%(stockID)s" '
-               'order by `date` desc limit %(dayCount)s;' % locals())
+        sql = (f'select ttmpe from klinestock where stockid="{stockID}" '
+               f'order by `date` desc limit {dayCount};')
         result = sqlrw.engine.execute(sql)
         peList = result.fetchall()
         # 如果历史交易天数不足，则历史PE水平为-1
@@ -321,7 +321,7 @@ def calAllPEHistory(startDate, endDate=None):
     endDate = datetime.today().date()
     session = Session()
     for tradeDate in dateList(startDate, endDate):
-        sql = 'call calallpe("%(tradeDate)s");' % locals()
+        sql = f'call calallpe("{tradeDate}");'
         print(sql)
         session.execute(sql)
     session.commit()
@@ -344,7 +344,7 @@ def calPEHistory(ID, startDate, endDate=None):
         endDate = datetime.today().date()
     session = Session()
     for tradeDate in dateList(startDate, endDate):
-        sql = 'call calchengfenpe("%(ID)s", "%(tradeDate)s");' % locals()
+        sql = f'call calchengfenpe("{ID}", "{tradeDate}");'
         print(sql)
         session.execute(sql)
     session.commit()

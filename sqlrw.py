@@ -84,10 +84,14 @@ def writeHYNameToSQL(filename):
 
 
 def writeGubenToSQL(gubenDf, replace=False):
-    """单个股票股本数据写入数据库
-    :type gubenDf: DataFrame
     """
-    tablename = 'guben'
+    单个股票股本数据写入数据库
+
+    :param gubenDf: :type DataFrame
+    :param replace:
+    :return:
+    """
+
     # lastUpdate = gubenUpdateDate(stockID)
     # gubenDf = gubenDf[pd.Timestamp(gubenDf.date) > lastUpdate]
     # gubenDf = gubenDf[gubenDf.date > lastUpdate]
@@ -101,7 +105,7 @@ def writeGubenToSQL(gubenDf, replace=False):
                    % (row['stockid'], row['date'], row['totalshares']))
             engine.execute(sql)
     else:
-        return writeSQL(gubenDf, tablename)
+        return writeSQL(gubenDf, 'guben')
 
 
 def checkGuben(tradeDate):
@@ -164,11 +168,11 @@ def writeGuzhiToSQL(stockID, data):
         next3YearPE = guzhiDict['next3YearPE']
     else:
         next3YearPE = 'null'
-    sql = (('replace into %(tablename)s'
+    sql = ((f'replace into {tablename}'
             '(stockid, peg, next1YearPE, next2YearPE, next3YearPE) '
-            'values("%(stockID)s", %(peg)s, '
-            '%(next1YearPE)s, %(next2YearPE)s, '
-            '%(next3YearPE)s);') % locals())
+            f'values("{stockID}", {peg}, '
+            f'{next1YearPE}, {next2YearPE}, '
+            f'{next3YearPE});'))
     return engine.execute(sql)
 
 
@@ -301,7 +305,7 @@ def dropNAData():
     #     stockList = ['002100']
     # for stockID in stockList:
     # tablename = tablenameKline(stockID)
-    # sql = 'delete from %(tablename)s where volume=0;' % locals()
+    # sql = f'delete from {tablename} where volume=0;'
     sql = 'delete from klinestock where volume=0;'
     engine.execute(sql)
 
@@ -440,15 +444,13 @@ def updateKlineMarketValue(stockID, startDate=None, endDate=None):
         gubenStartDate = gubenDf['date'][i]
         try:
             gubenEndDate = gubenDf['date'][i + 1]
-        except KeyError as e:
+        except KeyError:
             gubenEndDate = None
-        #             print e
         totalShares = gubenDf['totalshares'][i]
 
-        sql = ('update %(klineTablename)s '
-               'set totalmarketvalue = close * %(totalShares)s'
-               ' where stockid="%(stockID)s" and date>="%(gubenStartDate)s"'
-               % locals())
+        sql = (f'update {klineTablename} '
+               f'set totalmarketvalue = close * {totalShares}'
+               f' where stockid="{stockID}" and date>="{gubenStartDate}"')
         if endDate:
             sql += ' and date < "%s"' % gubenEndDate
         engine.execute(sql)
@@ -472,9 +474,8 @@ def updateKlineTTMLirun(stockID, startDate=None):
             endDate = None
         TTMLirun = TTMLirunDf['ttmprofits'][i]
 
-        sql = ('update %(klineTablename)s set ttmprofits = %(TTMLirun)s'
-               ' where stockid="%(stockID)s" and date>="%(startDate)s"'
-               % locals())
+        sql = (f'update {klineTablename} set ttmprofits = {TTMLirun}'
+               f' where stockid="{stockID}" and date>="{startDate}"')
         if endDate:
             sql += ' and date < "%s"' % endDate
         engine.execute(sql)
@@ -623,7 +624,7 @@ def readValuationSammary():
 
 
 def readValuation(stockID):
-    sql = 'select * from valuation where stockid="%(stockID)s"' % locals()
+    sql = f'select * from valuation where stockid="{stockID}"'
     result = engine.execute(sql).fetchone()
     return result
 
@@ -658,7 +659,7 @@ def readPERate(stockID):
     # 返回PE200， PE1000两个数值，分别代表该股票当前PE值在过去200、1000个交易日中的水平
     """
     sql = ('select pe200, pe1000 from guzhiresult '
-           'where stockid="%(stockID)s" limit 1' % locals())
+           f'where stockid="{stockID}" limit 1')
     print(sql)
     # 指定日期（含）前无TTM利润数据的，查询起始日期设定为startDate
     # 否则设定为最近一次数据日期
@@ -686,8 +687,8 @@ def readTTMLirunForStockID(stockID, startDate=None, endDate=None):
         return
     startDateStr = startDate.strftime('%Y-%m-%d')
     sql = ('select max(reportdate) from ttmlirun '
-           'where stockid="%(stockID)s" '
-           'and reportdate<="%(startDateStr)s"' % locals())
+           f'where stockid="{stockID}" '
+           f'and reportdate<="{startDateStr}"')
     #     print sql
     # 指定日期（含）前无TTM利润数据的，查询起始日期设定为startDate
     # 否则设定为最近一次数据日期
@@ -696,9 +697,9 @@ def readTTMLirunForStockID(stockID, startDate=None, endDate=None):
         TTMLirunStartDate = startDateStr
     else:
         TTMLirunStartDate = result[0]
-    sql = ('select * from ttmlirun where stockid = "%(stockID)s" '
-           'and `reportdate` >= "%(TTMLirunStartDate)s" '
-           'order by date' % locals())
+    sql = (f'select * from ttmlirun where stockid = "{stockID}" '
+           f'and `reportdate` >= "{TTMLirunStartDate}" '
+           'order by date')
     #     print sql
     if endDate is not None:
         sql += ' and `date` <= "%s"' % endDate.strftime('%Y-%m-%d')
@@ -723,9 +724,9 @@ def readLastTTMLirunForStockID(stockID, limit=1):
     list: 返回list格式TTM利润
     """
     sql = ('select incrate from ttmlirun '
-           'where stockid="%(stockID)s" '
+           f'where stockid="{stockID}" '
            'order by date desc '
-           'limit %(limit)s' % locals())
+           f'limit {limit}')
     #     print sql
     result = engine.execute(sql).fetchall()
     result = [i[0] for i in reversed(result)]
@@ -736,37 +737,37 @@ def readLastTTMLirunForStockID(stockID, limit=1):
 #     return df
 
 
-def readStockKlineDf(stockID, days):
-    sql = ('select date, open, high, low, close, ttmpe '
-           'from klinestock where stockid="%(stockID)s" '
-           'order by date desc limit %(days)s;' % locals())
-    result = engine.execute(sql).fetchall()
-    stockDatas = [i for i in reversed(result)]
-    # klineDatas = []
-    dateList = []
-    openList = []
-    closeList = []
-    highList = []
-    lowList = []
-    peList = []
-    indexes = list(range(len(result)))
-    for i in indexes:
-        date, _open, high, low, close, ttmpe = stockDatas[i]
-        dateList.append(date.strftime("%Y-%m-%d"))
-        # QuarterList.append(date)
-        openList.append(_open)
-        closeList.append(close)
-        highList.append(high)
-        lowList.append(low)
-        peList.append(ttmpe)
-    klineDf = pd.DataFrame({'date': dateList,
-                            'open': openList,
-                            'close': closeList,
-                            'high': highList,
-                            'low': lowList,
-                            'pe': peList})
-    return klineDf
-
+# def readStockKlineDf(stockID, days):
+#     sql = ('select date, open, high, low, close, ttmpe '
+#            f'from klinestock where stockid="{stockID}" '
+#            f'order by date desc limit {days};')
+#     result = engine.execute(sql).fetchall()
+#     stockDatas = [i for i in reversed(result)]
+#     # klineDatas = []
+#     dateList = []
+#     openList = []
+#     closeList = []
+#     highList = []
+#     lowList = []
+#     peList = []
+#     indexes = list(range(len(result)))
+#     for i in indexes:
+#         date, _open, high, low, close, ttmpe = stockDatas[i]
+#         dateList.append(date.strftime("%Y-%m-%d"))
+#         # QuarterList.append(date)
+#         openList.append(_open)
+#         closeList.append(close)
+#         highList.append(high)
+#         lowList.append(low)
+#         peList.append(ttmpe)
+#     klineDf = pd.DataFrame({'date': dateList,
+#                             'open': openList,
+#                             'close': closeList,
+#                             'high': highList,
+#                             'low': lowList,
+#                             'pe': peList})
+#     return klineDf
+#
 
 def readLastTTMLirun(stockList, limit=1):
     """取股票列表最近几期TTM利润
@@ -798,7 +799,7 @@ def readTTMLirunForDate(date):
     return: 返回DataFrame格式TTM利润
     """
     sql = ('select * from ttmlirun where '
-           '`date` = "%(date)s"' % locals())
+           f'`date` = "{date}"')
     df = pd.read_sql(sql, engine)
     return df
 
@@ -809,32 +810,31 @@ def readLirunForDate(date):
     return: 返回DataFrame格式利润
     """
     sql = ('select * from lirun where '
-           '`date` = "%(date)s"' % locals())
+           f'`date` = "{date}"')
     df = pd.read_sql(sql, engine)
     return df
 
 
-def readTTMPE(stockID, startDate=None, type='stock'):
+def readTTMPE(stockID, startDate=None, datatype='stock'):
     """
     读取某支股票的全部TTMPE
 
     :param stockID:
     :param startDate:  type:datetime.date
-    :param type: stock股票, index指数
+    :param datatype: stock股票, index指数
     :return:
     """
     if startDate is None:
         startDate = datetime.strptime('19900101', '%Y%m%d')
-    sql = (f'select date, ttmpe from kline{type} where stockid="{stockID}" '
+    sql = (f'select date, ttmpe from kline{datatype} where stockid="{stockID}" '
            f'and date >= "{startDate}";')
     df = pd.read_sql(sql, engine)
     return df
 
 
 def readCurrentTTMPE(stockID):
-    sql = ('select ttmpe from klinestock where stockid="%(stockID)s" and date=('
-           'select max(`date`) from klinestock where stockid="%(stockID)s")'
-           % locals())
+    sql = (f'select ttmpe from klinestock where stockid="{stockID}" and date=('
+           f'select max(`date`) from klinestock where stockid="{stockID}")')
 
     result = engine.execute(sql).fetchone()
     if result is None:
@@ -941,8 +941,8 @@ def replaceTTMLinrun(df):
         ttmprofits = row['ttmprofits']
         reportdate = row['reportdate']
         sql = ('replace into ttmlirun(stockid, date, ttmprofits, reportdate) '
-               'values("%(stockID)s", %(_date)s, '
-               '%(ttmprofits)s, "%(reportdate)s");' % locals())
+               f'values("{stockID}", {_date}, '
+               f'{ttmprofits}, "{reportdate}");')
         print(sql)
         engine.execute(sql)
 
@@ -970,9 +970,9 @@ def calTTMLirunIncRate(date, incrementUpdate=True):
         stockID = i[0]
         incRate = round(i[4], 2)
         sql = ('update ttmlirun '
-               'set incrate = %(incRate)s'
-               ' where stockid = "%(stockID)s"'
-               'and `date` = %(date)s' % locals())
+               f'set incrate = {incRate}'
+               f' where stockid = "{stockID}"'
+               f'and `date` = {date}')
         engine.execute(sql)
     return
 
@@ -1009,7 +1009,7 @@ def updateKlineEXTData(stockID, startDate=None):
         startDate = getTTMPELastUpdate(stockID) + dt.timedelta(days=1)
     # startDateStr = startDate.strftime('%Y-%m-%d')
     logging.debug(
-        'updateKlineEXTData: %(stockID)s, date: %(startDate)s' % locals())
+        f'updateKlineEXTData: {stockID}, date: {startDate}')
     try:
         updateKlineMarketValue(stockID, startDate)
         updateKlineTTMLirun(stockID, startDate)
@@ -1029,8 +1029,7 @@ def getTTMPELastUpdate(stockID):
     --------
     datetime：TTMPE最近更新日期
     """
-    sql = ('select ttmpe from lastupdate where stockid="%(stockID)s"'
-           % locals())
+    sql = f'select ttmpe from lastupdate where stockid="{stockID}"'
     return _getLastUpdate(sql)
 
 
@@ -1098,19 +1097,18 @@ def writeChigu(stockList):
         engine.execute(sql)
 
 
-def savePELirunIncrease(startDate='2007-01-01', endDate=None):
+def savePELirunIncrease(startDate='2007-01-01'):
     stockList = readStockListFromSQL()
     for stockID, stockName_ in stockList:
         #     sql = (u'insert ignore into pelirunincrease(stockid, date, pe) '
-        #            u'select "%(stockID)s", date, ttmpe '
-        #            u'from klinestock%(stockID)s '
-        #            u'where `date`>="%(startDate)s";') % locals()
+        #            uf'select "{stockID}", date, ttmpe '
+        #            uf'from klinestock{stockID} '
+        #            uf'where `date`>="{startDate}";')
         #
         #     engine.execute(sql)
 
         TTMLirunDf = readTTMLirunForStockID(stockID, startDate)
         TTMLirunDf = TTMLirunDf.dropna().reset_index(drop=True)
-        klineTablename = 'klinestock'
         TTMLirunCount = len(TTMLirunDf)
         for i in range(TTMLirunCount):
             incrate = TTMLirunDf['incrate'].iloc[i]
@@ -1120,12 +1118,10 @@ def savePELirunIncrease(startDate='2007-01-01', endDate=None):
             except IndexError:
                 endDate_ = None
 
-            sql = ('update pelirunincrease '
-                   'set lirunincrease = %(incrate)s'
-                   ' where stockid="%(stockID)s"'
-                   ' and date>="%(startDate_)s"') % locals()
+            sql = (f'update pelirunincrease set lirunincrease = {incrate}'
+                   f' where stockid="{stockID}" and date>="{startDate_}"')
             if endDate_ is not None:
-                sql += (' and date<"%(endDate_)s"' % locals())
+                sql += f' and date<"{endDate_}"'
             engine.execute(sql)
 
 
@@ -1134,16 +1130,16 @@ def savePELirunIncrease(startDate='2007-01-01', endDate=None):
 
 def setKlineTTMPELastUpdate(stockID, endDate):
     sql = ('insert into lastupdate (`stockid`, `ttmpe`) '
-           'values ("%(stockID)s", "%(endDate)s") '
-           'on duplicate key update `ttmpe`="%(endDate)s";' % locals())
+           f'values ("{stockID}", "{endDate}") '
+           f'on duplicate key update `ttmpe`="{endDate}";')
     result = engine.execute(sql)
     return result
 
 
 def setGubenLastUpdate(stockID, endDate=None):
     sql = ('insert into lastupdate (`stockid`, `guben`) '
-           'values ("%(stockID)s", "%(endDate)s") '
-           'on duplicate key update `guben`="%(endDate)s";' % locals())
+           f'values ("{stockID}", "{endDate}") '
+           f'on duplicate key update `guben`="{endDate}";')
     result = engine.execute(sql)
     return result
 
@@ -1157,17 +1153,15 @@ def updateKlineTTMPE(stockID, startDate, endDate=None):
         return
 
     startDateStr = startDate.strftime('%Y-%m-%d')
-    klineTablename = 'klinestock'
-    sql = ('update %(klineTablename)s '
+    sql = (f'update klinestock '
            'set ttmpe = round(totalmarketvalue / ttmprofits, 2)'
-           ' where stockid="%(stockID)s" and date>="%(startDateStr)s"'
-           % locals())
+           f' where stockid="{stockID}" and date>="{startDateStr}"')
     if endDate:
         sql += ' and date < "%s"' % endDate
     sql += ' and totalmarketvalue is not null'
     sql += ' and ttmprofits is not null'
-    unusedResult = engine.execute(sql)
-    sql = 'select max(date) from klinestock where stockid="%(stockID)s"' % locals()
+    engine.execute(sql)
+    sql = f'select max(date) from klinestock where stockid="{stockID}"'
     result = engine.execute(sql)
     endDate = result.fetchone()[0]
     if endDate is not None:
@@ -1250,8 +1244,8 @@ def readGuben(stockID, startDate=None, endDate=None):
         return
     startDateStr = startDate.strftime('%Y-%m-%d')
     sql = ('select max(date) from guben '
-           'where stockid="%(stockID)s" '
-           'and date<="%(startDateStr)s"' % locals())
+           f'where stockid="{stockID}" '
+           f'and date<="{startDateStr}"')
     result = engine.execute(sql)
     lastUpdate = result.fetchone()[0]
 
@@ -1263,8 +1257,8 @@ def readGuben(stockID, startDate=None, endDate=None):
         gubenStartDate = lastUpdate.strftime('%Y-%m-%d')
 
     sql = ('select date, totalshares from guben '
-           'where stockid = "%(stockID)s"'
-           ' and `date`>="%(gubenStartDate)s"' % locals())
+           f'where stockid = "{stockID}"'
+           f' and `date`>="{gubenStartDate}"')
     if endDate:
         sql += ' and `date` <= "%s"' % endDate.strftime('%Y-%m-%d')
     df = pd.read_sql(sql, engine)
@@ -1301,17 +1295,15 @@ def readGubenUpdateList():
 
 
 def readClose(stockID):
-    sql = ('select date, close from klinestock where stockid="%(stockID)s";'
-           % locals())
-    df = pd.read_sql(sql, engine)
-    return df
+    sql = f'select date, close from klinestock where stockid="{stockID}";'
+    return pd.read_sql(sql, engine)
 
 
 def readCurrentClose(stockID):
-    sql = ('select close from klinestock where stockid="%(stockID)s" '
+    sql = (f'select close from klinestock where stockid="{stockID}" '
            'and date=('
-           'select max(`date`) from klinestock where stockid="%(stockID)s"'
-           ')' % locals())
+           f'select max(`date`) from klinestock where stockid="{stockID}"'
+           ')')
     result = engine.execute(sql)
     return result.fetchone()[0]
 
@@ -1330,7 +1322,7 @@ def readCurrentPEG(stockID):
 
 def getStockIDsForClassified(classified):
     sql = ('select stockid from classified '
-           'where cname = "%(classified)s"' % locals())
+           f'where cname = "{classified}"')
     result = engine.execute(sql)
     stockIDList = [classifiedID[0] for classifiedID in result.fetchall()]
     return stockIDList
@@ -1375,7 +1367,7 @@ def getYouzhiList():
 
 def getClassifiedForStocksID(stockID):
     sql = ('select cname from classified '
-           'where stockid = "%(stockID)s"' % stockID)
+           f'where stockid = "{stockID}"' % stockID)
     result = engine.execute(sql)
     classified = result.first()[0]
     return classified
@@ -1404,8 +1396,8 @@ def readStockKlineDf(stockID, days):
                             'pe': peList})
     """
     sql = ('select date, open, high, low, close, ttmpe '
-           'from klinestock where stockid="%(stockID)s" '
-           'order by date desc limit %(days)s;' % locals())
+           f'from klinestock where stockid="{stockID}" '
+           f'order by date desc limit {days};')
     return _readKlineDf(sql)
 
 
@@ -1424,8 +1416,8 @@ def readIndexKlineDf(indexID, days):
     """
     sql = ('select date, open, high, low, close, ttmpe '
            'from klineindex '
-           'where id="%(indexID)s" '
-           'order by date desc limit %(days)s;' % locals())
+           f'where id="{indexID}" '
+           f'order by date desc limit {days};')
     return _readKlineDf(sql)
 
 

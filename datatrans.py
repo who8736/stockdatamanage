@@ -238,7 +238,7 @@ def transQuarterToDate(date):
     month = (date % 10) * 3
     days = {3: 31, 6: 30, 9: 30, 12: 31}
     day = days[month]
-    return '%(year)d-%(month)02d-%(day)d' % locals()
+    return f'{year}-{month:02d}-{day:02d}'
 
 
 def transTushareDateToQuarter(date):

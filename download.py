@@ -560,8 +560,8 @@ def _downGubenTusharePro(stockID='300445'):
     if df.empty:
         return
 
-    sql = ('select date, totalshares from guben where stockid="%(stockID)s" '
-           ' order by date desc limit 1;' % locals())
+    sql = (f'select date, totalshares from guben where stockid="{stockID}" '
+           ' order by date desc limit 1;')
     result = engine.execute(sql).fetchone()
 
     gubenDate = []
