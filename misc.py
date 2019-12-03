@@ -36,18 +36,53 @@ def urlGuzhi(stockID):
     return url
 
 
-def urlGuben(stockID):
+def urlGubenSina(stockID):
+    """
+    股本数据地址，数据源：sina
+    """
     return ('http://vip.stock.finance.sina.com.cn/corp/go.php'
             '/vCI_StockStructureHistory/stockid'
             '/%s/stocktype/TotalStock.phtml' % stockID)
 
+def urlGubenEastmoney(stockID):
+    """
+    股本数据地址，数据源：eastmoney
+    """
+    if(stockID[0] == '6'):
+        flag = 'sh'
+    else:
+        flag = 'sz'
+    return('http://f10.eastmoney.com/f10_v2/CapitalStockStructure.aspx?'
+           f'code={flag}{stockID}')
 
 def urlMainTable(stockID, tableType):
     url = ('http://money.finance.sina.com.cn/corp/go.php'
-           '/vDOWN_%(tableType)s/displaytype/4'
-           '/stockid/%(stockID)s/ctrl/all.phtml' % locals())
+           f'/vDOWN_{tableType}/displaytype/4'
+           f'/stockid/{stockID}/ctrl/all.phtml')
     return url
 
+
+def longStockID(stockID):
+    """ 转换股票代码格式为baostock格式
+        600000->sh.600000
+        000651->sz.000651
+    """
+    if(stockID[0] == '6'):
+        return 'sh.%s' % stockID
+    else:
+        return 'sz.%s' % stockID
+
+def tsCode(stockID):
+    """ 转换股票代码格式为tushare.pro格式
+        600000->600000.SH
+        000651->000651.SZ
+    """
+    if(len(stockID) == 9):
+        return stockID
+    if(stockID[0] == '6'):
+        return '%s.SH' % stockID
+    else:
+        return '%s.SZ' % stockID
 
 if __name__ == '__main__':
     pass

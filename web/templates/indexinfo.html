@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}股票估值分析 -- 估值报告{% endblock %}
+
+{% block body %}
+	<div class="container">
+    {{ super() }}
+
+    <p><iframe src="/indexklineimgnew/{{ stock.ID }}" id="bokehplot"
+        frameborder="0"  name="kline bokeh plot" scrolling="no"
+		onload="this.height=100">
+    </iframe></p>
+
+    </div>
+{% endblock %}

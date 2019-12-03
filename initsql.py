@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 2016年11月30日
 
 @author: who8736
-'''
+"""
 import sqlrw
 
 
@@ -11,6 +11,20 @@ def existTable(tablename):
     sql = 'show tables like "%s"' % tablename
     result = sqlrw.engine.execute(sql)
     return False if result.rowcount == 0 else True
+
+
+def dropKlineTable():
+    """
+    删除表名格式为klineXXXXXX的所有表，XXXXXX为股票代码，从stockline表中获取
+    :return:
+    """
+    stockList = sqlrw.readStockIDsFromSQL()
+    for stockID in stockList:
+        tablename = 'kline%s' % stockID
+        print(tablename)
+        if existTable(tablename):
+            sql = 'drop table %s;' % tablename
+            sqlrw.engine.execute(sql)
 
 
 def createChiguGuzhiTable():
@@ -141,7 +155,17 @@ def createPELirunIncreaseTable():
 
 
 def createGubenTable():
-    pass  # TODO: 创建总股本表
+    sql = ("CREATE TABLE `guben` ("
+           "`stockid` varchar(6) NOT NULL,"
+           " `date` date NOT NULL,"
+           "  `totalshares` double DEFAULT NULL,"
+           "  PRIMARY KEY (`stockid`,`date`),"
+           "  KEY `ix_guben_stockid` (`stockid`),"
+           "  KEY `ix_guben_date` (`date`)"
+           ") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
+           )
+    result = sqlrw.engine.execute(sql)
+    return result
 
 
 def createChiguTable():
@@ -149,10 +173,10 @@ def createChiguTable():
     return sqlrw.engine.execute(sql)
 
 
-def createKlineTable(stockID):
-    tableName = 'kline%s' % stockID
-    sql = 'create table %s like klinesample' % tableName
-    return sqlrw.engine.execute(sql)
+# def createKlineTable(stockID):
+#     tableName = 'kline%s' % stockID
+#     sql = 'create table %s like klinesample' % tableName
+#     return sqlrw.engine.execute(sql)
 
 
 def createStocklist():
@@ -187,6 +211,42 @@ def createStocklist():
     return result
 
 
+def createPEHistory():
+    sql = ("CREATE TABLE `pehistory` ("
+           "`name` varchar(45) NOT NULL,"
+           "`date` date NOT NULL,"
+           "`pe` decimal(10,2) NOT NULL,"
+           "PRIMARY KEY (`name`,`date`),"
+           "KEY `ix_name` (`name`),"
+           "KEY `ix_date` (`date`)"
+           ") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
+           )
+    result = sqlrw.engine.execute(sql)
+    return result
+
+
+def createIndexKline():
+    sql = ("CREATE TABLE `indexkline` ("
+           "`stockid` varchar(9) COLLATE utf8mb4_bin NOT NULL,"
+           "`date` date NOT NULL,"
+           "`close` double DEFAULT NULL,"
+           "`open` double DEFAULT NULL,"
+           "`high` double DEFAULT NULL,"
+           "`low` double DEFAULT NULL,"
+           "`pre_close` double DEFAULT NULL,"
+           "`change` double DEFAULT NULL,"
+           "`pct_chg` double DEFAULT NULL,"
+           "`vol` double DEFAULT NULL,"
+           "`amount` double DEFAULT NULL,"
+           "PRIMARY KEY (`stockid`,`date`),"
+           "KEY `ix_stockid` (`stockid`) /*!80000 INVISIBLE */,"
+           "KEY `ix_date` (`date`)"
+           ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;"
+           )
+    result = sqlrw.engine.execute(sql)
+    return result
+
+
 if __name__ == '__main__':
     if not existTable('chiguguzhi'):
         createChiguGuzhiTable()
@@ -210,3 +270,9 @@ if __name__ == '__main__':
         createPELirunIncreaseTable()
     if not existTable('stocklist'):
         createStocklist()
+    if not existTable('pehistory'):
+        createPEHistory()
+    if not existTable('indexkline'):
+        createIndexKline()
+    if not existTable('guben'):
+        createGubenTable()

@@ -237,6 +237,11 @@ def reportValuation(stockID):
 #     return reportStr
     return myItem
 
+
+def reportIndex(ID):
+    myItem = reportItem(ID)
+    return myItem
+
 if __name__ == '__main__':
     stockID = '000002'
     report(stockID)

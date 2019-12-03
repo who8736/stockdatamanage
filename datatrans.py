@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 2016年5月6日
 
 @author: who8736
-'''
+"""
 # import datetime as dt
 from datetime import datetime, timedelta
 import logging
@@ -11,52 +11,62 @@ import logging
 import pandas as pd
 from pandas.core.frame import DataFrame
 from lxml import etree
+from initlog import initlog
 
 
-def quarterSub(quarterDate, subNum):
+def quarterSub(_quarterDate, subNum):
     """
     # 从quarterDate中减去subNum个季度
     quarterDate: YYYYQ格式， 4位表示年，1表示季度
 
     """
-    return quarterAdd(quarterDate, -subNum)
+    return quarterAdd(_quarterDate, -subNum)
 
 
-def quarterAdd(quarterDate, addNum):
+def quarterAdd(_quarterDate, addNum):
     """
     # 从quarterDate中加上subNum个季度
     quarterDate: YYYYQ格式， 4位表示年，1表示季度
 
     """
-    quarters = int(quarterDate / 10) * 4 + (quarterDate % 10)
+    quarters = int(_quarterDate / 10) * 4 + (_quarterDate % 10)
     quarters = quarters + addNum
-    year = (quarters - 1) / 4
+    year = (quarters - 1) // 4
 #     print year
-    quarterDate = year * 10 + (quarters - year * 4)
-    return quarterDate
+    _quarterDate = year * 10 + (quarters - year * 4)
+    return _quarterDate
 
 
-def dateList(startDate, endDate):
+def QuarterList(startDate, endDate):
     """ 生成从startDate到endDate的季度列表
     """
-    dates = []
+    _dateList = []
     while startDate <= endDate:
-        dates.append(startDate)
+        _dateList.append(startDate)
         startDate += 1
         if startDate % 10 > 4:
             startDate = (int(startDate / 10) + 1) * 10 + 1
-    return dates
+    return _dateList
 
 
 def dateStrList(startDate, endDate):
     """ 生成从startDate到endDate的日期列表，日期样式为"2016-01-01"
     """
-    sDate = parse_ymd(startDate)
-    eDate = parse_ymd(endDate)
+    # sDate = parse_ymd(startDate)
+    # eDate = parse_ymd(endDate)
     dateList = []
-    while sDate <= eDate:
-        dateList.append(sDate.strftime('%Y-%m-%d'))
-        sDate = sDate + timedelta(days=1)
+    while startDate <= endDate:
+        dateList.append(startDate.strftime('%Y-%m-%d'))
+        startDate = startDate + timedelta(days=1)
+    return dateList
+
+
+def dateList(startDate, endDate):
+    dateList = []
+    curDate = startDate
+    while curDate <= endDate:
+        dateList.append(curDate)
+        curDate = curDate + timedelta(days=1)
     return dateList
 
 
@@ -86,7 +96,13 @@ def getCurYear():
     return datetime.today().year
 
 
-def gubenDataToDf(stockID, guben):
+def gubenDataToDfSina(stockID, guben):
+    """
+    新浪的股本数据转换为DataFrame格式
+    :param stockID: 股本代码， 600000
+    :param guben: 下载股本数据, html格式
+    :return: 股本数据， DataFrame格式
+    """
     gubenTree = etree.HTML(guben)
     gubenData = gubenTree.xpath('''//html//body//div//div
                                 //div//div//table//tr//td
@@ -99,11 +115,42 @@ def gubenDataToDf(stockID, guben):
 #     print totalshares
 #     t = [i[:-2] for i in totalshares]
 #     print t
+    danwei = {'万股':10000, '亿股':100000000}
+    try:
+        totalshares = [float(i[:-2]) * danwei[i[-2:]] for i in totalshares]
+    except ValueError as e:
+        logging.error('stockID:%s, %s', stockID, e)
+#     print totalshares
+    gubenDf = DataFrame({'stockid': stockID,
+                         'date': date,
+                         'totalshares': totalshares})
+    return gubenDf
+
+
+def gubenDataToDfEastymoney(stockID, guben):
+    """
+    东方财富的股本数据转换为DataFrame格式
+    :param stockID: 股本代码， 600000
+    :param guben: 下载股本数据, html格式
+    :return: 股本数据， DataFrame格式
+    """
+    gubenTree = etree.HTML(guben)
+    gubenData = gubenTree.xpath('''//html//body//div//div
+                                //div//div//table//tr//td
+                                //table//tr//td//table//tr//td''')
+    date = [gubenData[i][0].text for i in range(0, len(gubenData), 2)]
+    date = [datetime.strptime(d, '%Y-%m-%d') for d in date]
+    #     print date
+    totalshares = [
+        gubenData[i + 1][0].text for i in range(0, len(gubenData), 2)]
+    #     print totalshares
+    #     t = [i[:-2] for i in totalshares]
+    #     print t
     try:
         totalshares = [float(i[:-2]) * 10000 for i in totalshares]
     except ValueError as e:
         logging.error('stockID:%s, %s', stockID, e)
-#     print totalshares
+    #     print totalshares
     gubenDf = DataFrame({'stockid': stockID,
                          'date': date,
                          'totalshares': totalshares})
@@ -129,7 +176,7 @@ def gubenDfToList(df):
 
 
 def transLirunDf(df, year, quarter):
-    date = [year * 10 + quarter for unusedi in range(df['code'].count())]
+    date = [year * 10 + quarter for _ in range(df['code'].count())]
     stockid = df['code']
     profits = df['net_profits']
     if quarter == 4:
@@ -191,14 +238,22 @@ def transQuarterToDate(date):
     month = (date % 10) * 3
     days = {3: 31, 6: 30, 9: 30, 12: 31}
     day = days[month]
-    return '%(year)d-%(month)02d-%(day)d' % locals()
+    return f'{year}-{month:02d}-{day:02d}'
+
+
+def transTushareDateToQuarter(date):
+    year = int(date[:4])
+    qdic = {'03': 1, '06': 2, '09': 3, '12': 4}
+    quarter = qdic[date[4:6]]
+    return year * 10 + quarter
 
 
 if __name__ == '__main__':
+    initlog()
     quarterDate = 20161
     subNum = 6
 
     q = quarterSub(quarterDate, subNum - 1)
     print(q)
-    print((dateList(q, quarterDate)))
-    print((len(dateList(q, quarterDate))))
+    print(QuarterList(q, quarterDate))
+    print(len(QuarterList(q, quarterDate)))

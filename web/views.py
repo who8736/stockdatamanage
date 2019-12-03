@@ -8,32 +8,22 @@ Created on 2016年12月14日
 import numpy as np
 from flask import render_template, redirect, url_for
 from flask import send_file
-# from flask_login import login_required, current_user
+from bokeh.embed import components
+from bokeh.resources import INLINE
+from bokeh.util.string import encode_utf8
+
+from plot import plotKline, BokehPlot
 from report import report1 as guzhiReport
 from report import reportValuation
+from report import reportIndex
 from sqlrw import getChiguList, getGuzhiList, getYouzhiList
-from sqlrw import readStockIDsFromSQL, writeChigu
 from sqlrw import getStockName, readCurrentTTMPE
 from sqlrw import readCurrentClose, readCurrentPEG
-from sqlrw import readPERate
-from sqlrw import readValuationSammary, readValuation
-from plot import plotKline
-
+from sqlrw import readPERate, readStockKlineDf, readIndexKlineDf
+from sqlrw import readStockIDsFromSQL, writeChigu
+from sqlrw import readValuationSammary
 from . import app
 from .forms import StockListForm
-# import sys
-#
-# sys.setdefaultencoding('utf-8')
-# reload(sys)
-
-
-class testobj():
-
-    def __init__(self):
-        self.t1 = 'testtext1'
-        self.t2 = 'testtext2'
-        self.t3 = 'testtext3'
-        self.t4 = ['t401', 't402', 't403', 't404', ]
 
 
 @app.route('/')
@@ -47,7 +37,7 @@ def setStockList():
     stockList = getChiguList()
     stockListStr = "|".join([i for i in stockList])
     form = StockListForm()
-#     form.stockList = stockListStr
+    #     form.stockList = stockListStr
     if form.validate_on_submit():
         stockListStr = form.stockList.data
         print(stockListStr)
@@ -92,8 +82,8 @@ def reportnav(typeid):
 @app.route('/report/<stockid>')
 def reportView(stockid):
     stockItem = guzhiReport(stockid)
-#     reportstr = reportstr[:20]
-#     reportstr = 'test'
+    #     reportstr = reportstr[:20]
+    #     reportstr = 'test'
     return render_template('report.html',
                            stock=stockItem)
 
@@ -106,25 +96,25 @@ def valuationNav(typeid):
     elif typeid == 'youzhi':
         stocksDf = stocksDf[(stocksDf.pf >= 5) &
                             (stocksDf.pe < 30)]
-#        sql = 'select stockid, name, pf, pe, peg, pe200, pe1000'
+    #        sql = 'select stockid, name, pf, pe, peg, pe200, pe1000'
 
     stockReportList = np.array(stocksDf).tolist()
-#    for stockID in stockList:
-#        stockName = getStockName(stockID)
-#        stockClose = readCurrentClose(stockID)
-#        pe = readCurrentTTMPE(stockID)
-#        peg = readCurrentPEG(stockID)
-#        pe200, pe1000 = readPERate(stockID)
-#        stockReportList.append([stockID, stockName,
-#                                stockClose, pe, peg, pe200, pe1000])
+    #    for stockID in stockList:
+    #        stockName = getStockName(stockID)
+    #        stockClose = readCurrentClose(stockID)
+    #        pe = readCurrentTTMPE(stockID)
+    #        peg = readCurrentPEG(stockID)
+    #        pe200, pe1000 = readPERate(stockID)
+    #        stockReportList.append([stockID, stockName,
+    #                                stockClose, pe, peg, pe200, pe1000])
     return render_template('valuationnav.html', stockList=stockReportList)
 
 
 @app.route('/valuation/<stockid>')
 def valuationView(stockid):
     stockItem = reportValuation(stockid)
-#     reportstr = reportstr[:20]
-#     reportstr = 'test'
+    #     reportstr = reportstr[:20]
+    #     reportstr = 'test'
     return render_template('valuation.html',
                            stock=stockItem)
 
@@ -136,3 +126,39 @@ def klineimg(stockID):
     return send_file(plotImg,
                      attachment_filename='img.png',
                      as_attachment=True)
+
+
+@app.route('/stockklineimgnew/<stockID>')
+def stockklineimgnew(stockID):
+    df = readStockKlineDf(stockID, days=1000)
+    return _klineimg(stockID, df)
+
+@app.route('/indexklineimgnew/<ID>')
+def indexklineimgnew(ID):
+    df = readIndexKlineDf(ID, days=3000)
+    return _klineimg(ID, df)
+
+def _klineimg(ID, df):
+    # grab the static resources
+    js_resources = INLINE.render_js()
+    css_resources = INLINE.render_css()
+
+    plotImg = BokehPlot(ID, df)
+    scripts, div = components(plotImg.plot())
+    # return render_template("plotkline.html", the_div=div, the_script=scripts)
+    html = render_template(
+        'plotkline.html',
+        plot_script=scripts,
+        plot_div=div,
+        js_resources=js_resources,
+        css_resources=css_resources,
+    )
+    return encode_utf8(html)
+
+
+@app.route('/indexinfo/<ID>')
+def indexInfo(ID):
+    stockItem = reportIndex(ID)
+    return render_template('indexinfo.html',
+                           stock=stockItem)
+

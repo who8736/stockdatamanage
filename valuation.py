@@ -13,6 +13,7 @@ Created on Wed Oct 25 21:30:01 2017
 """
 
 import pandas as pd
+import numpy as np
 
 import initsql
 import hyanalyse
@@ -28,13 +29,13 @@ LOWPE = 20
 def lowpe(stock):
     """ 判断某支股票为低市盈率时返回1，否则返回0
     """
-    return 1 if stock.pe > 0 and stock.pe <= LOWPE else 0
+    return 1 if 0 < stock.pe <= LOWPE else 0
 
 
 def lowhype(stock):
     """ 判断某支股票低于行业市盈率时返回1，否则返回0
     """
-    return 1 if stock.pe > 0 and stock.pe < stock.hype else 0
+    return 1 if 0 < stock.pe < stock.hype else 0
 
 
 def wdzz(stock):
@@ -47,8 +48,8 @@ def wdzz(stock):
     avg = stock[1:].mean()
     std = stock[1:].std()
     z = (stock[1:] - avg).abs() / std
-    print(stock.stockid)
-    print(z)
+    # print(stock.stockid)
+    # print(z)
     return 1 if all(z < 1.5) else 0
 
 
@@ -70,9 +71,9 @@ def peZ(stock, dayCount):
         # 历史交易天数不足时，PE水平为-1
     """
     stockID = stock.stockid
-    sql = ('select ttmpe from kline%(stockID)s order by `date` desc '
-           'limit %(dayCount)s;') % locals()
-    print(sql)
+    sql = (f'select ttmpe from klinestock where stockid="{stockID}"'
+           f'order by `date` desc limit {dayCount};')
+    # print(sql)
     peDf = pd.read_sql(sql, engine)
     # 如果历史交易天数不足，则本项指标为0
     if len(peDf.index) != dayCount:
@@ -102,7 +103,7 @@ def calpf():
     """
 #    stocks = readStockListDf()[:10]
     stocks = readStockListDf()
-    print(stocks)
+    # print(stocks)
     # 低市盈率
     peDf = readCurrentTTMPEs(stocks.stockid.tolist())
     stocks = pd.merge(stocks, peDf, on='stockid', how='left')
@@ -126,7 +127,6 @@ def calpf():
 
     # 利润增长的平均标准差与平均增长率的比值， 小于1时判断为增长稳定
     stocks['wdzz1'] = incDf.apply(wdzz1, axis=1)
-    pass
 
     # 根据过去6季度TTM利润平均增长率与TTMPE计算PEG
     stocks['peg'] = stocks['pe'] / stocks['avg']
@@ -175,6 +175,12 @@ def calpf():
 #    print stocks
     if initsql.existTable('valuation'):
         engine.execute('TRUNCATE TABLE valuation')
+    stocks = stocks.dropna()
+
+    # 当计算peg时，如果平均增长率为0，则结果为inf
+    # 将inf替换为-9999
+    stocks.replace([np.inf, -np.inf], -9999, inplace=True)
+
     stocks.to_sql('valuation', engine, if_exists='append')
     return stocks
 

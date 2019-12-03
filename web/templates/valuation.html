@@ -8,19 +8,40 @@
     {{ super() }}
 	<h2>估值报告： {{ stock.stockID }}    {{ stock.name }}</h2>
 	<a href="http://finance.sina.com.cn/realstock/company/
-		{% if stock.stockID[0]=="6" %}sh{% else %}sz{% endif %}
+		{% if stock.stockID[0]=='6' %}sh{% else %}sz{% endif %}
 		{{ stock.stockID }}/nc.shtml"
 		class="btn btn-large btn-info" target="_blank">
 		新浪财经</a>
 	<a href="http://f9.eastmoney.com/
-		{% if stock.stockID[0]=="6" %}sh{% else %}sz{% endif %}
+		{% if stock.stockID[0]=='6' %}sh{% else %}sz{% endif %}
 		{{ stock.stockID }}.html"
 		class="btn btn-large btn-info" target="_blank">
 		东方财富</a>
 	<a href="http://stockpage.10jqka.com.cn/{{ stock.stockID }}"
 		class="btn btn-large btn-info" target="_blank">
 		同花顺</a>
-	<p><img src="/klineimg/{{ stock.stockID }}"></img></p>
+<!--	<p><img src="/klineimg/{{ stock.stockID }}"></p>-->
+    <p><iframe src="/stockklineimgnew/{{ stock.stockID }}" id="bokehplot"
+        frameborder="0"  name="kline bokeh plot" scrolling="no"
+		onload="this.height=100">
+    </iframe></p>
+        <script type="text/javascript">
+            function reinitIframe(){
+                var iframe = document.getElementById("bokehplot");
+                try{
+                    var bHeight = iframe.contentWindow.document.body.scrollHeight;
+                    var dHeight = iframe.contentWindow.document.documentElement.scrollHeight;
+                    var height = Math.max(bHeight, dHeight);
+                    iframe.height = height;
+                    var bWidth = iframe.contentWindow.document.body.scrollWidth;
+                    var dWidth = iframe.contentWindow.document.documentElement.scrollWidth;
+                    var width = Math.max(bWidth, dWidth);
+                    iframe.width = width;
+                    console.log(width);
+                }catch (ex){}
+            }
+            window.setInterval("reinitIframe()", 200);
+        </script>
     <p class="lead">当前TTMPE: {{ stock.curTTMPE }}</p>
     <p class="lead">peg: {{ stock.peg }}</p>
     <p class="lead">评分: {{ stock.pf }}</p>
@@ -63,7 +84,7 @@
 		{% endfor %}
 		</tr>
 	</table>
-	</p>
+<!--	</p>-->
     <p>最近6个季度TTM利润平均增长率: {{ stock.profitsIncAvg }}</P>
     <p>根据平均绝对离差计算的增长率差异水平:  {{ stock.profitsIncMad }}</P>
     <p>根据标准差计算的增长率差异水平:  {{ stock.profitsIncStand }}</P>
@@ -113,7 +134,8 @@
   		<tr><th>代码</th><th>名称</th><th>第1年</th><th>第2年</th><th>第3年</th></tr>
    		{% for samestock in stock.sameHYList %}
 		<tr>
-    		<td>{{ samestock[0] }}</td>
+    		<td><a class="text-center" href="/valuation/{{ samestock[0] }}">
+				{{ samestock[0] }}</a></td>
     		<td>{{ samestock[1] }}</td>
 			{% for sameitem in samestock[2] %}
     			<td>{{ sameitem }}</td>
