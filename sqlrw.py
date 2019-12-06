@@ -22,7 +22,7 @@ from datetime import datetime
 # import lxml
 # import tushare as ts  # @UnresolvedImport
 import pandas as pd
-from pandas.compat import StringIO
+# from pandas.compat import StringIO
 # from sqlalchemy import create_engine
 from sqlalchemy import MetaData, Table, Column
 from sqlalchemy import DATE, DECIMAL, String
@@ -285,11 +285,12 @@ def getStockBasicsFromCSV():
                pb,市净率
                timeToMarket,上市日期
     """
-    csvFile = open('all.csv')
-    text = csvFile.read()
+    # csvFile = open('all.csv')
+    # text = csvFile.read()
     # text = text.decode('GBK')
-    text = text.replace('--', '')
-    df = pd.read_csv(StringIO(text), dtype={'code': 'object'})
+    # text = text.replace('--', '')
+    # df = pd.read_csv(StringIO(text), dtype={'code': 'object'})
+    df = pd.read_csv('all.csv', dtype={'code': 'object'})
     df = df.set_index('code')
     return df
 

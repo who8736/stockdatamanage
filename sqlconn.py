@@ -22,7 +22,11 @@ class SQLConn:
         self.token = ''
         self.loadSQLConf()
 
-        connectStr = (f'mysql://{self.user}:{self.password}@{self.ip}'
+        # connectStr = (f'mysql://{self.user}:{self.password}@{self.ip}'
+        #               f'/{self.database}?charset=utf8mb4')
+        # connectStr = (f'mysql+pymysql://{self.user}:{self.password}@{self.ip}'
+        #               f'/{self.database}?charset=utf8mb4')
+        connectStr = (f'mysql+mysqlconnector://{self.user}:{self.password}@{self.ip}'
                       f'/{self.database}?charset=utf8')
         self.engine = create_engine(connectStr,
                                     strategy='threadlocal', echo=False)
@@ -75,6 +79,6 @@ class SQLConn:
         cf.write(open('sql.conf', 'w+'))
 
 
-sqlconn = SQLConn()
-engine = sqlconn.engine
-Session = sqlconn.Session
+# sqlconn = SQLConn()
+# engine = sqlconn.engine
+# Session = sqlconn.Session
