@@ -84,7 +84,7 @@ def startUpdate():
 #     updateMainTable(stockList, threadNum)
 
     # 更新股票估值
-    updateGhuzhiData()
+    updateGuzhiData()
 
     # 更新股票评分
     updatePf()
@@ -266,7 +266,7 @@ def updateHYData(date):
 
 
 @logfun
-def updateGhuzhiData():
+def updateGuzhiData():
     dataanalyse.testChigu()
     dataanalyse.testShaixuan()
 

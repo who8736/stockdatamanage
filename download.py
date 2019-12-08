@@ -21,7 +21,8 @@ from datetime import datetime, timedelta
 import tushare as ts
 import pandas as pd
 from pandas.core.frame import DataFrame
-from pandas.compat import StringIO
+# from pandas.compat import StringIO
+from io import StringIO
 from tushare.stock import cons as ct
 import baostock as bs
 
@@ -560,8 +561,8 @@ def _downGubenTusharePro(stockID='300445'):
     if df.empty:
         return
 
-    sql = ('select date, totalshares from guben where stockid="%(stockID)s" '
-           ' order by date desc limit 1;' % locals())
+    sql = (f'select date, totalshares from guben where stockid="{stockID}" '
+           ' order by date desc limit 1;')
     result = engine.execute(sql).fetchone()
 
     gubenDate = []
@@ -600,41 +601,42 @@ def downMainTable(stockID):
     return result
 
 
-def get_stock_basics():
-    """
-        确认无用后可删除
-        获取沪深上市公司基本情况
-    Return
-    --------
-    DataFrame
-               code,代码
-               name,名称
-               industry,细分行业
-               area,地区
-               pe,市盈率
-               outstanding,流通股本
-               totals,总股本(万)
-               totalAssets,总资产(万)
-               liquidAssets,流动资产
-               fixedAssets,固定资产
-               reserved,公积金
-               reservedPerShare,每股公积金
-               eps,每股收益
-               bvps,每股净资
-               pb,市净率
-               timeToMarket,上市日期
-    """
-    url = ct.ALL_STOCK_BASICS_FILE
-    req = getreq(url)
-    #     proxy = urllib2.ProxyHandler({'http': '127.0.0.1:8087'})
-    #     opener = urllib2.build_opener(proxy)
-    #     urllib2.install_opener(opener)
-    text = request.urlopen(req, timeout=30).read()
-    text = text.decode('GBK')
-    text = text.replace('--', '')
-    df = pd.read_csv(StringIO(text), dtype={'code': 'object'})
-    df = df.set_index('code')
-    return df
+# def get_stock_basics():
+#     """
+#         确认无用后可删除
+#         获取沪深上市公司基本情况
+#     Return
+#     --------
+#     DataFrame
+#                code,代码
+#                name,名称
+#                industry,细分行业
+#                area,地区
+#                pe,市盈率
+#                outstanding,流通股本
+#                totals,总股本(万)
+#                totalAssets,总资产(万)
+#                liquidAssets,流动资产
+#                fixedAssets,固定资产
+#                reserved,公积金
+#                reservedPerShare,每股公积金
+#                eps,每股收益
+#                bvps,每股净资
+#                pb,市净率
+#                timeToMarket,上市日期
+#     """
+#     url = ct.ALL_STOCK_BASICS_FILE
+#     req = getreq(url)
+#     #     proxy = urllib2.ProxyHandler({'http': '127.0.0.1:8087'})
+#     #     opener = urllib2.build_opener(proxy)
+#     #     urllib2.install_opener(opener)
+#     text = request.urlopen(req, timeout=30).read()
+#     # text = text.decode('GBK')
+#     # text = text.replace('--', '')
+#     # df = pd.read_csv(StringIO(text), dtype={'code': 'object'})
+#     df = pd.read_csv(StringIO(text), dtype={'code': 'object'})
+#     df = df.set_index('code')
+#     return df
 
 
 def get_report_data(year, quarter):
