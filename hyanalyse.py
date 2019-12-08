@@ -298,9 +298,9 @@ def getHYPE(hyID, date):
     valueSum = 0
     profitSum = 0
     for stockID in stockIDs:
-        sql = ('select date, totalmarketvalue, ttmprofits, ttmpe '
-               'from klinestock where stockid="%(stockID)s" and date<="%(date)s "'
-               'order by `date` desc limit 1;') % locals()
+        sql = (f'select date, totalmarketvalue, ttmprofits, ttmpe '
+               f'from klinestock where stockid="{stockID}" and date<="{date}"'
+               f'order by `date` desc limit 1;')
         result = sqlrw.engine.execute(sql).fetchone()
         if result is not None:
             #            value, profit = result.fetchone()
