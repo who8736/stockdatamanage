@@ -13,6 +13,7 @@ from urllib.request import urlopen
 # from datetime import datetime
 # import baostock as bs
 # import tushare as ts
+from tushare import get_report_data
 
 # from download import getreq
 from xml import etree

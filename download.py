@@ -22,6 +22,7 @@ import tushare as ts
 import pandas as pd
 from pandas.core.frame import DataFrame
 # from pandas.compat import StringIO
+from io import StringIO
 from tushare.stock import cons as ct
 import baostock as bs
 
