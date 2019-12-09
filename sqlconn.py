@@ -23,11 +23,11 @@ class SQLConn:
         self.loadSQLConf()
 
         # connectStr = (f'mysql://{self.user}:{self.password}@{self.ip}'
-        #               f'/{self.database}?charset=utf8mb4')
-        # connectStr = (f'mysql+pymysql://{self.user}:{self.password}@{self.ip}'
-        #               f'/{self.database}?charset=utf8mb4')
-        connectStr = (f'mysql+mysqlconnector://{self.user}:{self.password}@{self.ip}'
-                      f'/{self.database}?charset=utf8')
+        #               f'/{self.database}?charset=utf8')
+        connectStr = (f'mysql+pymysql://{self.user}:{self.password}@{self.ip}'
+                      f'/{self.database}?charset=utf8mb4')
+        # connectStr = (f'mysql+mysqlconnector://{self.user}:{self.password}@{self.ip}'
+        #               f'/{self.database}?charset=utf8')
         self.engine = create_engine(connectStr,
                                     strategy='threadlocal', echo=False)
         self.Session = scoped_session(
