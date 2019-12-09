@@ -13,6 +13,8 @@ from pandas.core.frame import DataFrame
 
 import sqlrw
 import datatrans
+
+
 # import logging
 # from wtforms.ext import dateutil
 
@@ -20,14 +22,14 @@ import datatrans
 def getStockListForHY(hyID):
     """ 返回指定行业的所有股票代码列表
     """
-    levelNum = len(hyID) / 2
-#     levels = ['level1', 'level2', 'level3', 'level4']
-#     level = levels[levelNum - 1]
-    sql = 'select stockid from hangyestock where hyid="%(hyID)s";' % locals()
+    # levelNum = len(hyID) / 2
+    #     levels = ['level1', 'level2', 'level3', 'level4']
+    #     level = levels[levelNum - 1]
+    sql = f'select stockid from hangyestock where hyid="{hyID}";'
     result = sqlrw.engine.execute(sql)
-#     stockList = result.fetchall()
+    #     stockList = result.fetchall()
     stockList = [i[0] for i in result.fetchall()]
-#     print len(stockList), stockList
+    #     print len(stockList), stockList
     return stockList
 
 
