@@ -1,7 +1,7 @@
-from sqlrw
+# from sqlrw
 
 def checkGuben():
-    ids = readStockIDsFromSQL()
+    # ids = readStockIDsFromSQL()
     sql = 'select stockid from klinestock'
-    for stockID in ids:
+    # for stockID in ids:
 
