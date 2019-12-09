@@ -23,6 +23,7 @@ from datetime import datetime
 # import tushare as ts  # @UnresolvedImport
 import pandas as pd
 # from pandas.compat import StringIO
+from io import StringIO
 # from sqlalchemy import create_engine
 from sqlalchemy import MetaData, Table, Column
 from sqlalchemy import DATE, DECIMAL, String
