@@ -37,7 +37,7 @@ def scatter(startDate, endDate):
     for date in dateList:
         print(date)
         sql = ('select pe, lirunincrease from pelirunincrease '
-               f'where date="{date}";')
+               'where date="%(date)s";' % locals())
         result = engine.execute(sql)
         peList = []
         incrateList = []
@@ -50,7 +50,7 @@ def scatter(startDate, endDate):
         plt.scatter(incrateList, peList)
         plt.axes().set_xlim((-200, 200))
         plt.axes().set_ylim((-200, 200))
-        filename = f'./data/plot/{date}.png'
+        filename = './data/plot/%(date)s.png' % locals()
         plt.savefig(filename)
         plt.clf()
 
@@ -62,8 +62,8 @@ def plotKlineOld(stockID):
     #     return plotKline(stockID)
     #     ax2 = fig.add_subplot(2, 1, 2)
     sql = ('select date, open, high, low, close, ttmpe '
-           f'from klinestock where stockid="{stockID}" '
-           'order by date desc limit 1000;')
+           'from klinestock where stockid="%(stockID)s" '
+           'order by date desc limit 1000;' % locals())
     result = engine.execute(sql)
     stockDatas = result.fetchall()
     klineDatas = []
@@ -124,8 +124,8 @@ def plotKlineIndex(ID, days):
     :return:
     """
     sql = ('select date, open, high, low, close, ttmpe '
-           f'from klinestock where stockid="{ID}" '
-           f'order by date desc limit {days};')
+           'from klinestock where stockid="%(ID)s" '
+           'order by date desc limit %(days)s;' % locals())
     df = pd.read_sql(sql, engine)
     print(df.head())
     bokehplot = BokehPlot(ID, df)
@@ -140,12 +140,53 @@ def plotKlineStock(ID, days):
     :return:
     """
     sql = ('select date, open, high, low, close, ttmpe '
-           f'from klinestock where stockid="{ID}" '
-           f'order by date desc limit {days};')
+           'from klinestock where stockid="%(ID)s" '
+           'order by date desc limit %(days)s;' % locals())
     df = pd.read_sql(sql, engine)
     print(df.head())
     bokehplot = BokehPlot(ID, df)
     return bokehplot.plot()
+
+def __del_plotKline():
+    sql = ('select date, open, high, low, close, ttmpe '
+           'from klinestock where stockid="%(stockID)s" '
+           'order by date desc limit %(days)s;' % locals())
+    result = engine.execute(sql).fetchall()
+    stockDatas = [i for i in reversed(result)]
+    klineDatas = []
+    dates = []
+    peDatas = []
+    indexes = list(range(len(stockDatas)))
+    for i in indexes:
+        date, _open, high, low, close, ttmpe = stockDatas[i]
+        klineDatas.append([i, _open, high, low, close])
+        dates.append(date.strftime("%Y-%m-%d"))
+        peDatas.append(ttmpe)
+
+    gs1 = gs.GridSpec(3, 1)
+    gs1.update(hspace=0)
+    fig = plt.figure()
+    ax1 = fig.add_subplot(gs1[0:2, :])
+    candlestick_ohlc(ax1, klineDatas)
+    # ax1.set_title(ID)
+    plt.grid(True)
+    ax2 = fig.add_subplot(gs1[2:3, :])
+    ax2.plot(indexes, peDatas)
+    ax1.set_xlim((0, len(stockDatas)))
+    ax2.set_xlim((0, len(stockDatas)))
+    tickerIndex, tickerLabels = getMonthIndex(dates)
+    locator = FixedLocator(tickerIndex)
+    ax1.xaxis.set_major_locator(locator)
+    ax2.xaxis.set_major_locator(locator)
+    ax2.set_xticklabels(tickerLabels)
+    #     for label in ax2.get_xticklabels():
+    #         label.set_rotation(45)
+    plt.grid(True)
+    plt.legend()
+    plt.show()
+    imgData = BytesIO()
+    fig.savefig(imgData, format='png')
+    return imgData
 
 
 def getMonthIndex(dates):

@@ -163,9 +163,9 @@ def calHistoryStatus(stockID):
         sql = ('insert ignore into guzhihistorystatus (`stockid`, `date`, '
                '`integrity`, `seculargrowth`, `growthmadrate`, '
                '`averageincrement`) '
-               f'values ("{stockID}", "{_date}", %(integrity)r, '
-               f'%(seculargrowth)r, "{growthmadrate}", '
-               f'"{averageincrement}");')
+               'values ("%(stockID)s", "%(_date)s", %(integrity)r, '
+               '%(seculargrowth)r, "%(growthmadrate)s", '
+               '"%(averageincrement)s");') % locals()
         print(sql)
         sqlrw.engine.execute(sql)
 
@@ -206,12 +206,12 @@ def peHistRate(stockList, dayCount):
         # 最低为0，最高为100
         # 历史交易天数不足时，PE水平为-1
     """
-    print(f'peHistRate: {dayCount}')
+    print('peHistRate: %(dayCount)s' % locals())
     perates = []
     for stockID in stockList:
         # print(stockID)
-        sql = (f'select ttmpe from klinestock where stockid="{stockID}" '
-               f'order by `date` desc limit {dayCount};')
+        sql = ('select ttmpe from klinestock where stockid="%(stockID)s" '
+               'order by `date` desc limit %(dayCount)s;' % locals())
         result = sqlrw.engine.execute(sql)
         peList = result.fetchall()
         # 如果历史交易天数不足，则历史PE水平为-1
@@ -321,7 +321,7 @@ def calAllPEHistory(startDate, endDate=None):
     endDate = datetime.today().date()
     session = Session()
     for tradeDate in dateList(startDate, endDate):
-        sql = f'call calallpe("{tradeDate}");'
+        sql = 'call calallpe("%(tradeDate)s");' % locals()
         print(sql)
         session.execute(sql)
     session.commit()
@@ -339,12 +339,12 @@ def calPEHistory(ID, startDate, endDate=None):
     # startDate = datetime.strptime('2019-06-17', '%Y-%m-%d').date()
     # assert len(ID) == 9, '指数代码错误， 正确格式：000010.SH'
     assert len(ID) == 6, '指数代码错误， 正确格式：000010'
-    # ID = ID.upper()
+    ID = ID.upper()
     if endDate is None:
         endDate = datetime.today().date()
     session = Session()
     for tradeDate in dateList(startDate, endDate):
-        sql = f'call calchengfenpe("{ID}", "{tradeDate}");'
+        sql = 'call calchengfenpe("%(ID)s", "%(tradeDate)s");' % locals()
         print(sql)
         session.execute(sql)
     session.commit()
