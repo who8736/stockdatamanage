@@ -65,7 +65,7 @@ def calGuzhi(stockList=None):
     #     print stockList.head()
     #     print type(stockList)
     # pe数据
-    peDf = sqlrw.readCurrentTTMPEs(stockList)
+    peDf = sqlrw.readLastTTMPEs(stockList)
     # 估值数据
     #     pegDf = sqlrw.readGuzhiFilesToDf(stockList)
     #     pegDf = sqlrw.readGuzhiSQLToDf(stockList)
