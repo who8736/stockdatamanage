@@ -864,14 +864,18 @@ def readLastTTMPEs(stockList, date=None):
     :return:
     """
     #     idList = []
-    peList = []
-    for stockID in stockList:
-        result = readLastTTMPE(stockID, date)
-        if result is None:
-            logging.debug('readCurrentTTMPE failed: %s', stockID)
-        peList.append(result)
+    if date is None:
+        sql = (f'select stockid, ttmpe from klinestock '
+               'where date=(select max(date) from klinestock)')
+    else:
+        sql = f'select stockid, ttmpe from klinestock where date={date}'
 
-    return DataFrame({'stockid': stockList, 'pe': peList})
+    result = engine.execute(sql).fetchall()
+    stockIDs, ttmpes = zip(*result)
+    df = pd.DataFrame({'stockid': stockIDs, 'pe': ttmpes})
+    df = df.loc[df['stockid'].isin(stockList)]
+    df = df.dropna()
+    return df
 
 
 # def alterKline():

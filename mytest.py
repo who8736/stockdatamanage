@@ -273,9 +273,9 @@ def testReadStockListFromSQL():
 
 
 def testReadLastTTMPE():
-    date = '20191201'
+    date = '20191202'
     stocks = readStockListDf(int(date))
-    result = readLastTTMPEs(stocks)
+    result = readLastTTMPEs(stocks.stockid.tolist(), date)
     print(result)
 
 

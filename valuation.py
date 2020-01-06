@@ -188,14 +188,18 @@ def calpf():
 def calpfnew(date=None):
     """ 根据各指标计算评分，分别写入文件和数据库
         新版，支持按指定日期计算评分，评分结果写入带日期的新表
+    :param date: str
+        'YYYYmmdd'格式的日期
+    :return:
     """
     #    stocks = readStockListDf()[:10]
     stocks = readStockListDf(date)
     # print(stocks)
     # 低市盈率
-    peDf = readLastTTMPEs(stocks.stockid.tolist())
-    stocks = pd.merge(stocks, peDf, on='stockid', how='left')
+    peDf = readLastTTMPEs(stocks.stockid.tolist(), date)
+    stocks = pd.merge(stocks, peDf, on='stockid', how='inner')
     stocks['lowpe'] = stocks.apply(lowpe, axis=1)
+    return stocks
 
     # 市盈率低于行业平均
     sql = 'select stockid, hyid from hangyestock;'
@@ -275,4 +279,6 @@ def calpfnew(date=None):
 
 if __name__ == '__main__':
     pass
-    stockspf = calpf()
+    stockspf = calpfnew('20191202')
+    print('=' * 20)
+    print(stockspf)
