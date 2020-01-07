@@ -134,8 +134,10 @@ def calGuzhi(stockList=None):
     #     print pegDf
 
     # 计算pe200与pe1000
-    guzhiDf['pe200'] = peHistRate(stockList, 200)
-    guzhiDf['pe1000'] = peHistRate(stockList, 1000)
+    df = peHistRate(stockList, 200)
+    guzhiDf = pd.merge(guzhiDf, df, on='stockid', how='left')
+    df = peHistRate(stockList, 1000)
+    guzhiDf = pd.merge(guzhiDf, df, on='stockid', how='left')
     #     print pegDf
     # 设置输出列与列顺序
     # 因无法取得数据，删除'peg', 'next1YearPE',  'next2YearPE',  'next3YearPE'
@@ -206,12 +208,12 @@ def peHistRate(stockList, dayCount):
         # 最低为0，最高为100
         # 历史交易天数不足时，PE水平为-1
     """
-    print('peHistRate: %(dayCount)s' % locals())
+    print(f'peHistRate: {dayCount}')
     perates = []
     for stockID in stockList:
         # print(stockID)
-        sql = ('select ttmpe from klinestock where stockid="%(stockID)s" '
-               'order by `date` desc limit %(dayCount)s;' % locals())
+        sql = (f'select ttmpe from klinestock where stockid="{stockID}" '
+               f'order by `date` desc limit {dayCount};')
         result = sqlrw.engine.execute(sql)
         peList = result.fetchall()
         # 如果历史交易天数不足，则历史PE水平为-1
@@ -224,7 +226,7 @@ def peHistRate(stockList, dayCount):
                                i is not None and i < peCur)) / dayCount * 100
             #             print stockID, perate, peList
             perates.append(perate)
-    return perates
+    return pd.DataFrame({'stockid': stockList, f'pe{dayCount}': perates})
 
 
 def youzhiSelect(pegDf):

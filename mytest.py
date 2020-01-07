@@ -33,6 +33,7 @@ from sqlconn import engine, Session
 from initsql import dropKlineTable
 from dataanalyse import testChigu, testShaixuan
 from dataanalyse import calPEHistory, calAllPEHistory
+from dataanalyse import calGuzhi
 # from misc import urlGubenEastmoney
 from misc import *
 # from initlog import initlog
@@ -411,6 +412,9 @@ if __name__ == "__main__":
     # 更新股票评分
     # calpf()
 
+    # 更新股票估值
+    calGuzhi()
+
     ##############################################
     # 绘图
     ##############################################
@@ -435,6 +439,6 @@ if __name__ == "__main__":
     # testReadStockListFromSQL()
 
     # sqlrw中的readLastTTMPE读取指定日期TTMPE
-    testReadLastTTMPE()
+    # testReadLastTTMPE()
 
     print('程序正常退出')

@@ -144,8 +144,12 @@ def calpf():
     stocks['lowpez1000'] = stocks.apply(lowPEZ1000, axis=1)
 
     # 计算pe200与pe1000
-    stocks['pe200'] = dataanalyse.peHistRate(stocks.stockid.tolist(), 200)
-    stocks['pe1000'] = dataanalyse.peHistRate(stocks.stockid.tolist(), 1000)
+    # stocks['pe200'] = dataanalyse.peHistRate(stocks.stockid.tolist(), 200)
+    # stocks['pe1000'] = dataanalyse.peHistRate(stocks.stockid.tolist(), 1000)
+    df = dataanalyse.peHistRate(stockList, 200)
+    guzhiDf = pd.merge(guzhiDf, df, on='stockid', how='left')
+    df = dataanalyse.peHistRate(stockList, 1000)
+    guzhiDf = pd.merge(guzhiDf, df, on='stockid', how='left')
 
     # 计算总评分
     stocks['pf'] = stocks.lowpe
