@@ -17,7 +17,7 @@ from report import report1 as guzhiReport
 from report import reportValuation
 from report import reportIndex
 from sqlrw import getChiguList, getGuzhiList, getYouzhiList
-from sqlrw import getStockName, readCurrentTTMPE
+from sqlrw import getStockName, readLastTTMPE
 from sqlrw import readCurrentClose, readCurrentPEG
 from sqlrw import readPERate, readStockKlineDf, readIndexKlineDf
 from sqlrw import readStockIDsFromSQL, writeChigu
@@ -71,7 +71,7 @@ def reportnav(typeid):
     for stockID in stockList:
         stockName = getStockName(stockID)
         stockClose = readCurrentClose(stockID)
-        pe = readCurrentTTMPE(stockID)
+        pe = readLastTTMPE(stockID)
         peg = readCurrentPEG(stockID)
         pe200, pe1000 = readPERate(stockID)
         stockReportList.append([stockID, stockName,

@@ -259,6 +259,26 @@ def testBokehtest():
     show(myplot)  # open a browser
 
 
+def testReadStockListFromSQL():
+    stocksA = readStockListFromSQL()
+    print(stocksA)
+    stocksALen = len(stocksA)
+    print('A股票总数:', len(stocksA))
+    stocksB = readStockListFromSQL(20191201)
+    print(stocksB)
+    stocksBLen = len(stocksB)
+    print('B股票总数:', len(stocksB))
+    print('相差：', stocksALen - stocksBLen)
+    print('相差的股票：', [i for i in stocksA if i not in stocksB])
+
+
+def testReadLastTTMPE():
+    date = '20191202'
+    stocks = readStockListDf(int(date))
+    result = readLastTTMPEs(stocks.stockid.tolist(), date)
+    print(result)
+
+
 if __name__ == "__main__":
     """
     本文件用于测试各模块功能
@@ -347,10 +367,10 @@ if __name__ == "__main__":
     # calHYTTMLirun(hyID, date)
 
     # 更新指数数据及PE
-    datamanage.updateIndex()
+    # datamanage.updateIndex()
 
     # 更新全市PE
-    datamanage.updateAllMarketPE()
+    # datamanage.updateAllMarketPE()
 
     ##############################################
     # 数据修复
@@ -407,5 +427,14 @@ if __name__ == "__main__":
 
     # 测试bokehtest模块中的功能
     # testBokehtest()
+
+    ##############################################
+    # 杂项测试
+    ##############################################
+    # sqlrw中的readStockListFromSQL读取指定日期股票
+    # testReadStockListFromSQL()
+
+    # sqlrw中的readLastTTMPE读取指定日期TTMPE
+    testReadLastTTMPE()
 
     print('程序正常退出')

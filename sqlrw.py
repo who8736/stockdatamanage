@@ -379,14 +379,27 @@ def getGuzhi(stockID):
     return result.fetchone()
 
 
-def readStockListFromSQL():
-    result = engine.execute('select stockid, name from stocklist '
-                            'where timetomarket>0')
-    stockIDList = []
-    for i in result:
-        stockIDList.append([i[0], i[1]])
-        pass
-    return stockIDList
+def readStockListFromSQL(date=None):
+    """
+    查询已上市且上市日期小于等于指定日期的股票列表
+    缺省为查询当前所有已上市股票
+    :param date: int, YYYYmmdd, 8位数字代表的年月日
+    :return:
+    """
+    if isinstance(date, str):
+        date = int(date)
+    sql = ('select stockid, name from stocklist '
+           'where timetomarket>0')
+    if date is not None:
+        sql += f' and timetomarket<={date}'
+
+    result = engine.execute(sql)
+    return [i for i in result]
+    # stockIDList = []
+    # for i in result:
+    #     stockIDList.append([i[0], i[1]])
+    #     pass
+    # return stockIDList
 
 
 def readStockIDsFromSQL():
@@ -411,18 +424,15 @@ def readStockListFromFile(filename):
     return stockIDList
 
 
-def readStockListDf():
-    stockList = readStockListFromSQL()
-    stockIDs = []
-    stockNames = []
-    for i in stockList:
-        stockIDs.append(i[0])
-        # name = i[1].encode('utf-8')
-        #         print type(i[1]), i[1], name
-        #         name = i[1]
-        stockNames.append(i[1])
-    stockListDf = DataFrame({'stockid': stockIDs,
-                             'name': stockNames})
+def readStockListDf(date=None):
+    """查询已上市且上市日期小于等于指定日期的股票列表,返回DataFrame格式数据
+    缺省为查询当前所有已上市股票
+    :param date: int, YYYYmmdd, 8位数字代表的年月日
+    :return:
+    """
+    stockList = readStockListFromSQL(date)
+    stockIDs, names = zip(*stockList)
+    stockListDf = DataFrame({'stockid': stockIDs, 'name': names})
     return stockListDf
 
 
@@ -820,10 +830,22 @@ def readTTMPE(stockID):
     return df
 
 
-def readCurrentTTMPE(stockID):
-    sql = ('select ttmpe from klinestock where stockid="%(stockID)s" and date=('
-           'select max(`date`) from klinestock where stockid="%(stockID)s")'
-           % locals())
+def readLastTTMPE(stockID, date=None):
+    """读取指定股票指定日期的TTMPE，默认为最后一天的TTMPE
+
+    :param stockID: str
+        股票代码， 如'600013'
+    :param date: str
+        指定日期， 格式'YYYYmmdd'
+    :return:
+    """
+    sql = (f'select ttmpe from klinestock where stockid="{stockID}" '
+           f'and date=(select max(`date`) from klinestock where '
+           f'stockid="{stockID}"')
+    if date is None:
+        sql += ')'
+    else:
+        sql += f' and date<={date})'
 
     result = engine.execute(sql).fetchone()
     if result is None:
@@ -832,16 +854,28 @@ def readCurrentTTMPE(stockID):
         return result[0]
 
 
-def readCurrentTTMPEs(stockList):
+def readLastTTMPEs(stockList, date=None):
+    """
+    读取stockList中股票指定日期的TTMPE, 默认取最后一天的TTMPE
+    :param stockList: list
+        股票列表
+    :param date: str
+        'YYYYmmdd'格式的日期
+    :return:
+    """
     #     idList = []
-    peList = []
-    for stockID in stockList:
-        result = readCurrentTTMPE(stockID)
-        if result is None:
-            logging.debug('readCurrentTTMPE failed: %s', stockID)
-        peList.append(result)
+    if date is None:
+        sql = (f'select stockid, ttmpe from klinestock '
+               'where date=(select max(date) from klinestock)')
+    else:
+        sql = f'select stockid, ttmpe from klinestock where date={date}'
 
-    return DataFrame({'stockid': stockList, 'pe': peList})
+    result = engine.execute(sql).fetchall()
+    stockIDs, ttmpes = zip(*result)
+    df = pd.DataFrame({'stockid': stockIDs, 'pe': ttmpes})
+    df = df.loc[df['stockid'].isin(stockList)]
+    df = df.dropna()
+    return df
 
 
 # def alterKline():
