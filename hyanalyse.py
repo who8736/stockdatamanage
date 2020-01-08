@@ -294,6 +294,7 @@ def getHYQuarters():
 def getHYPE(hyID, date):
     """ 计算行业在指定日期的市盈率
     """
+    # TODO: 读某行业指定日期的市盈率，如不存在，计算市盈率后存入数据库
     stockIDs = getStockListForHY(hyID)
     valueSum = 0
     profitSum = 0
