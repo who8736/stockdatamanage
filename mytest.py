@@ -367,6 +367,12 @@ if __name__ == "__main__":
     # calHYTTMLirun('03020104', date)
     # calHYTTMLirun(hyID, date)
 
+    # 计算行业PE
+    hyID = '03020101'
+    date = '20200102'
+    pe = getHYPE(hyID, date)
+    print('行业PE：', pe)
+
     # 更新指数数据及PE
     # datamanage.updateIndex()
 
@@ -413,7 +419,7 @@ if __name__ == "__main__":
     # calpf()
 
     # 更新股票估值
-    calGuzhi()
+    # calGuzhi()
 
     ##############################################
     # 绘图

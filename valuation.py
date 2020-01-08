@@ -209,7 +209,7 @@ def calpfnew(date=None):
     sql = 'select stockid, hyid from hangyestock;'
     hyDf = pd.read_sql(sql, engine)
     stocks = pd.merge(stocks, hyDf, on='stockid', how='left')
-    hyPEDf = hyanalyse.getHYsPE()
+    hyPEDf = hyanalyse.getHYsPE(date)
     stocks = pd.merge(stocks, hyPEDf, on='hyid', how='left')
     stocks['lowhype'] = stocks.apply(lowhype, axis=1)
 

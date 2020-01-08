@@ -291,10 +291,20 @@ def getHYQuarters():
     return hyQuarters
 
 
-def getHYPE(hyID, date):
+def getHYPE(hyID, date, reset = False):
     """ 计算行业在指定日期的市盈率
+    :param hyID:
+    :param date:
+    :param reset: 为True时用于重算某行业的PE
+
+    :return:
     """
     # TODO: 读某行业指定日期的市盈率，如不存在，计算市盈率后存入数据库
+    sql = f'select ttmpe from hangyepe where hyid="{hyID}" and date="{date}"'
+    result = sqlrw.engine.execute(sql).fetchone()
+    if reset and result is not None:
+        return result[0]
+
     stockIDs = getStockListForHY(hyID)
     valueSum = 0
     profitSum = 0
