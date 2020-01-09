@@ -289,6 +289,6 @@ def calpfnew(date=None):
 
 if __name__ == '__main__':
     pass
-    stockspf = calpfnew('20191203')
+    stockspf = calpfnew('20191206')
     print('=' * 20)
     print(stockspf)
