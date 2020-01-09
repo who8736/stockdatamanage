@@ -49,14 +49,12 @@ def QuarterList(startDate, endDate):
     return _dateList
 
 
-def dateStrList(startDate, endDate):
+def dateStrList(startDate, endDate, formatStr='%Y%m%d'):
     """ 生成从startDate到endDate的日期列表，日期样式为"2016-01-01"
     """
-    # sDate = parse_ymd(startDate)
-    # eDate = parse_ymd(endDate)
     dateList = []
     while startDate <= endDate:
-        dateList.append(startDate.strftime('%Y-%m-%d'))
+        dateList.append(startDate.strftime(formatStr))
         startDate = startDate + timedelta(days=1)
     return dateList
 

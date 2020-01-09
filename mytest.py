@@ -369,16 +369,33 @@ if __name__ == "__main__":
 
     # 计算行业PE
     # hyID = '03020101'
-    date = '20200102'
+    # date = '20200102'
     # pe = getHYPE(hyID, date)
-    pe = getHYsPE(date)
-    print('行业PE：', pe)
+    # pe = getHYsPE(date)
+    # print('行业PE：', pe)
 
     # 更新指数数据及PE
     # datamanage.updateIndex()
 
     # 更新全市PE
     # datamanage.updateAllMarketPE()
+
+    # 更新历史评分
+    # startDate = '20191220'
+    # endDate = '20191231'
+    # formatStr = '%Y%m%d'
+    # dateList = dateStrList(datetime.strptime(startDate, formatStr).date(),
+    #                        datetime.strptime(endDate, formatStr).date())
+    # print(dateList)
+
+    pro = ts.pro_api()
+    df = pro.trade_cal(exchange='', start_date='20180101', end_date='20181231')
+    dateList = df['cal_date'].loc[df.is_open==1].tolist()
+    # print(type(dateList))
+    # print(dateList)
+    for date in dateList:
+        print('计算评分：', date)
+        calpfnew(date)
 
     ##############################################
     # 数据修复

@@ -37,7 +37,7 @@ def scatter(startDate, endDate):
     for date in dateList:
         print(date)
         sql = ('select pe, lirunincrease from pelirunincrease '
-               'where date="%(date)s";' % locals())
+               f'where date="{date}";')
         result = engine.execute(sql)
         peList = []
         incrateList = []

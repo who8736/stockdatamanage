@@ -350,35 +350,35 @@ def createValuation():
 
 
 if __name__ == '__main__':
-if not existTable('chiguguzhi'):
-    createChiguGuzhiTable()
-if not existTable('youzhiguzhi'):
-    createYouzhiGuzhiTable()
-if not existTable('guzhi'):
-    createGuzhiTable()
-if not existTable('hangyestock'):
-    createHY()
-if not existTable('hangyename'):
-    createHYName()
-if not existTable('hyprofits'):
-    createHYProfitsTable()
-if not existTable('chigu'):
-    createChiguTable()
-if not existTable('guzhiresult'):
-    createGuzhiResultTable()
-if not existTable('guzhihistorystatus'):
-    createGuzhiHistoryStatusTable()
-if not existTable('pelirunincrease'):
-    createPELirunIncreaseTable()
-if not existTable('stocklist'):
-    createStocklist()
-if not existTable('pehistory'):
-    createPEHistory()
-if not existTable('indexkline'):
-    createIndexKline()
-if not existTable('guben'):
-    createGubenTable()
-if not existTable('hangyepe'):
-    createHangyePE()
-if not existTable('valuation'):
-    createValuation()
+    if not existTable('chiguguzhi'):
+        createChiguGuzhiTable()
+    if not existTable('youzhiguzhi'):
+        createYouzhiGuzhiTable()
+    if not existTable('guzhi'):
+        createGuzhiTable()
+    if not existTable('hangyestock'):
+        createHY()
+    if not existTable('hangyename'):
+        createHYName()
+    if not existTable('hyprofits'):
+        createHYProfitsTable()
+    if not existTable('chigu'):
+        createChiguTable()
+    if not existTable('guzhiresult'):
+        createGuzhiResultTable()
+    if not existTable('guzhihistorystatus'):
+        createGuzhiHistoryStatusTable()
+    if not existTable('pelirunincrease'):
+        createPELirunIncreaseTable()
+    if not existTable('stocklist'):
+        createStocklist()
+    if not existTable('pehistory'):
+        createPEHistory()
+    if not existTable('indexkline'):
+        createIndexKline()
+    if not existTable('guben'):
+        createGubenTable()
+    if not existTable('hangyepe'):
+        createHangyePE()
+    if not existTable('valuation'):
+        createValuation()
