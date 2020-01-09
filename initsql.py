@@ -284,34 +284,101 @@ def createHangyePE():
     result = sqlrw.engine.execute(sql)
     return result
 
+def createValuation():
+    sql = ("""CREATE TABLE `valuation` (
+            `stockid` varchar(6) NOT NULL,
+            `date` date NOT NULL,
+            `name` varchar(20) NOT NULL,
+            `pf` int(11) DEFAULT NULL,
+            `pe` float DEFAULT NULL,
+            `lowpe` int(11) DEFAULT NULL,
+            `hyid` varchar(8) DEFAULT NULL,
+            `hype` float DEFAULT NULL,
+            `lowhype` int(11) DEFAULT NULL,
+            `incrate0` float DEFAULT NULL,
+            `incrate1` float DEFAULT NULL,
+            `incrate2` float DEFAULT NULL,
+            `incrate3` float DEFAULT NULL,
+            `incrate4` float DEFAULT NULL,
+            `incrate5` float DEFAULT NULL,
+            `avg` float DEFAULT NULL,
+            `std` float DEFAULT NULL,
+            `peg` float DEFAULT NULL,
+            `lowpeg` int(11) DEFAULT NULL,
+            `wdzz` int(11) DEFAULT NULL,
+            `wdzz1` int(11) DEFAULT NULL,
+            `pez200` float DEFAULT NULL,
+            `lowpez200` int(11) DEFAULT NULL,
+            `pez1000` float DEFAULT NULL,
+            `lowpez1000` int(11) DEFAULT NULL,
+            `pe200` int(11) DEFAULT NULL,
+            `pe1000` int(11) DEFAULT NULL,
+            PRIMARY KEY (`stockid`,`date`),
+            KEY `index_date` (`date`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8
+            /*!50100 PARTITION BY RANGE (year(`date`))
+            (PARTITION p00 VALUES LESS THAN (2000) ENGINE = InnoDB,
+            PARTITION p01 VALUES LESS THAN (2001) ENGINE = InnoDB,
+            PARTITION p02 VALUES LESS THAN (2002) ENGINE = InnoDB,
+            PARTITION p03 VALUES LESS THAN (2003) ENGINE = InnoDB,
+            PARTITION p04 VALUES LESS THAN (2004) ENGINE = InnoDB,
+            PARTITION p05 VALUES LESS THAN (2005) ENGINE = InnoDB,
+            PARTITION p06 VALUES LESS THAN (2006) ENGINE = InnoDB,
+            PARTITION p07 VALUES LESS THAN (2007) ENGINE = InnoDB,
+            PARTITION p08 VALUES LESS THAN (2008) ENGINE = InnoDB,
+            PARTITION p09 VALUES LESS THAN (2009) ENGINE = InnoDB,
+            PARTITION p10 VALUES LESS THAN (2010) ENGINE = InnoDB,
+            PARTITION p11 VALUES LESS THAN (2011) ENGINE = InnoDB,
+            PARTITION p12 VALUES LESS THAN (2012) ENGINE = InnoDB,
+            PARTITION p13 VALUES LESS THAN (2013) ENGINE = InnoDB,
+            PARTITION p14 VALUES LESS THAN (2014) ENGINE = InnoDB,
+            PARTITION p15 VALUES LESS THAN (2015) ENGINE = InnoDB,
+            PARTITION p16 VALUES LESS THAN (2016) ENGINE = InnoDB,
+            PARTITION p17 VALUES LESS THAN (2017) ENGINE = InnoDB,
+            PARTITION p18 VALUES LESS THAN (2018) ENGINE = InnoDB,
+            PARTITION p19 VALUES LESS THAN (2019) ENGINE = InnoDB,
+            PARTITION p20 VALUES LESS THAN (2020) ENGINE = InnoDB,
+            PARTITION p21 VALUES LESS THAN (2021) ENGINE = InnoDB,
+            PARTITION p22 VALUES LESS THAN (2022) ENGINE = InnoDB,
+            PARTITION p23 VALUES LESS THAN (2023) ENGINE = InnoDB,
+            PARTITION p24 VALUES LESS THAN (2024) ENGINE = InnoDB,
+            PARTITION p25 VALUES LESS THAN (2025) ENGINE = InnoDB,
+            PARTITION p26 VALUES LESS THAN (2026) ENGINE = InnoDB,
+            PARTITION p27 VALUES LESS THAN (2027) ENGINE = InnoDB) */; """)
+    result = sqlrw.engine.execute(sql)
+    return result
+
+
 if __name__ == '__main__':
-    if not existTable('chiguguzhi'):
-        createChiguGuzhiTable()
-    if not existTable('youzhiguzhi'):
-        createYouzhiGuzhiTable()
-    if not existTable('guzhi'):
-        createGuzhiTable()
-    if not existTable('hangyestock'):
-        createHY()
-    if not existTable('hangyename'):
-        createHYName()
-    if not existTable('hyprofits'):
-        createHYProfitsTable()
-    if not existTable('chigu'):
-        createChiguTable()
-    if not existTable('guzhiresult'):
-        createGuzhiResultTable()
-    if not existTable('guzhihistorystatus'):
-        createGuzhiHistoryStatusTable()
-    if not existTable('pelirunincrease'):
-        createPELirunIncreaseTable()
-    if not existTable('stocklist'):
-        createStocklist()
-    if not existTable('pehistory'):
-        createPEHistory()
-    if not existTable('indexkline'):
-        createIndexKline()
-    if not existTable('guben'):
-        createGubenTable()
-    if not existTable('hangyepe'):
-        createHangyePE()
+if not existTable('chiguguzhi'):
+    createChiguGuzhiTable()
+if not existTable('youzhiguzhi'):
+    createYouzhiGuzhiTable()
+if not existTable('guzhi'):
+    createGuzhiTable()
+if not existTable('hangyestock'):
+    createHY()
+if not existTable('hangyename'):
+    createHYName()
+if not existTable('hyprofits'):
+    createHYProfitsTable()
+if not existTable('chigu'):
+    createChiguTable()
+if not existTable('guzhiresult'):
+    createGuzhiResultTable()
+if not existTable('guzhihistorystatus'):
+    createGuzhiHistoryStatusTable()
+if not existTable('pelirunincrease'):
+    createPELirunIncreaseTable()
+if not existTable('stocklist'):
+    createStocklist()
+if not existTable('pehistory'):
+    createPEHistory()
+if not existTable('indexkline'):
+    createIndexKline()
+if not existTable('guben'):
+    createGubenTable()
+if not existTable('hangyepe'):
+    createHangyePE()
+if not existTable('valuation'):
+    createValuation()
