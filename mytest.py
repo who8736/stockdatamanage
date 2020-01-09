@@ -48,7 +48,7 @@ from bokehtest import BokehPlotPE
 
 
 # import dataanalyse
-from valuation import calpf
+from valuation import calpf, calpfnew
 
 
 def downGubenFromEastmoney():
