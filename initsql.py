@@ -243,6 +243,8 @@ def createIndexKline():
     return result
 
 
+# TODO: 创建行业TTMPE表
+
 if __name__ == '__main__':
     if not existTable('chiguguzhi'):
         createChiguGuzhiTable()

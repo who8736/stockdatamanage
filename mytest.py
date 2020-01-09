@@ -368,10 +368,10 @@ if __name__ == "__main__":
     # calHYTTMLirun(hyID, date)
 
     # 计算行业PE
-    hyID = '03020101'
-    date = '20200102'
-    pe = getHYPE(hyID, date)
-    print('行业PE：', pe)
+    # hyID = '03020101'
+    # date = '20200102'
+    # pe = getHYPE(hyID, date)
+    # print('行业PE：', pe)
 
     # 更新指数数据及PE
     # datamanage.updateIndex()

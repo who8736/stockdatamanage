@@ -718,29 +718,26 @@ def readTTMLirunForStockID(stockID, startDate=None, endDate=None):
     return df
 
 
-def readLastTTMLirunForStockID(stockID, limit=1):
+def readLastTTMLirunForStockID(stockID, limit=1, date=None):
     """取指定股票最近几期TTM利润
     Parameters
     --------
     stockID: str 股票代码  e.g: '600519'
+    date: str 查询截止日期， e.g: '20191231'
     limit: 取最近期数的数据
 
     Return
     --------
     list: 返回list格式TTM利润
     """
-    sql = ('select incrate from ttmlirun '
-           'where stockid="%(stockID)s" '
-           'order by date desc '
-           'limit %(limit)s' % locals())
+    sql = f'select incrate from ttmlirun where stockid="{stockID}" '
+    if date is not None:
+        sql += f' and date="{date}"'
+    sql += f' order by date desc limit {limit}'
     #     print sql
     result = engine.execute(sql).fetchall()
     result = [i[0] for i in reversed(result)]
     return result
-
-
-#     df = pd.read_sql(sql, engine)
-#     return df
 
 
 def readStockKlineDf(stockID, days):
@@ -775,7 +772,7 @@ def readStockKlineDf(stockID, days):
     return klineDf
 
 
-def readLastTTMLirun(stockList, limit=1):
+def readLastTTMLirun(stockList, limit=1, date=None):
     """取股票列表最近几期TTM利润
     Parameters
     --------
@@ -788,7 +785,7 @@ def readLastTTMLirun(stockList, limit=1):
     """
     TTMLirunList = []
     for stockID in stockList:
-        TTMLirun = readLastTTMLirunForStockID(stockID, limit)
+        TTMLirun = readLastTTMLirunForStockID(stockID, limit, date)
         TTMLirun.insert(0, stockID)
         TTMLirunList.append(TTMLirun)
 

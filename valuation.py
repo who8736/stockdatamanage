@@ -203,7 +203,6 @@ def calpfnew(date=None):
     peDf = readLastTTMPEs(stocks.stockid.tolist(), date)
     stocks = pd.merge(stocks, peDf, on='stockid', how='inner')
     stocks['lowpe'] = stocks.apply(lowpe, axis=1)
-    return stocks
 
     # 市盈率低于行业平均
     sql = 'select stockid, hyid from hangyestock;'
@@ -215,7 +214,7 @@ def calpfnew(date=None):
 
     # 过去6个季度利润稳定增长
     sectionNum = 6  # 取6个季度
-    incDf = sqlrw.readLastTTMLirun(stocks.stockid.tolist(), sectionNum)
+    incDf = sqlrw.readLastTTMLirun(stocks.stockid.tolist(), sectionNum, date)
     stocks = pd.merge(stocks, incDf, on='stockid', how='left')
     stocks['avg'] = incDf.mean(axis=1).round(2)
     stocks['std'] = incDf.std(axis=1).round(2)
@@ -238,6 +237,7 @@ def calpfnew(date=None):
     stocks['pez1000'] = stocks.apply(peZ, axis=1, args=(1000, ))
     stocks['pez1000'] = stocks['pez1000'].round(2)
     stocks['lowpez1000'] = stocks.apply(lowPEZ1000, axis=1)
+    return stocks
 
     # 计算pe200与pe1000
     # stocks['pe200'] = dataanalyse.peHistRate(stocks.stockid.tolist(), 200)

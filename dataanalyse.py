@@ -203,7 +203,7 @@ def _calHistoryStatus(TTMLirunDf, date):
     return [integrity, seculargrowth, growthmadrate, lirunAverage]
 
 
-def peHistRate(stockList, dayCount):
+def peHistRate(stockList, dayCount, date=None):
     """ 计算一组股票在过去指定天数内的PE水平，
         # 最低为0，最高为100
         # 历史交易天数不足时，PE水平为-1
@@ -212,8 +212,10 @@ def peHistRate(stockList, dayCount):
     perates = []
     for stockID in stockList:
         # print(stockID)
-        sql = (f'select ttmpe from klinestock where stockid="{stockID}" '
-               f'order by `date` desc limit {dayCount};')
+        sql = f'select ttmpe from klinestock where stockid="{stockID}" '
+        if date is not None:
+            sql += ' and date<="{date}"'
+        sql += f'order by `date` desc limit {dayCount};'
         result = sqlrw.engine.execute(sql)
         peList = result.fetchall()
         # 如果历史交易天数不足，则历史PE水平为-1

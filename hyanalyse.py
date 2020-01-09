@@ -291,7 +291,7 @@ def getHYQuarters():
     return hyQuarters
 
 
-def getHYPE(hyID, date, reset = False):
+def getHYPE(hyID, date, reset=False):
     """ 计算行业在指定日期的市盈率
     :param hyID:
     :param date:
@@ -344,7 +344,10 @@ def getHYsPE(date=None):
         if pe is not None:
             hyIDs.append(hyID)
             hyPEs.append(pe)
-    return DataFrame({'hyid': hyIDs, 'hype': hyPEs})
+    df = DataFrame({'hyid': hyIDs, 'hype': hyPEs})
+    # TODO: 将行业TTMPE写入数据库保存
+    sqlrw.writeSQL(df, )
+    return df
 
 
 def resetHYTTMLirun(startQuarter=20191, endQuarter=20191):
