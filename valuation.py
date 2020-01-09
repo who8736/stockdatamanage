@@ -237,14 +237,14 @@ def calpfnew(date=None):
     stocks['pez1000'] = stocks.apply(peZ, axis=1, args=(1000, ))
     stocks['pez1000'] = stocks['pez1000'].round(2)
     stocks['lowpez1000'] = stocks.apply(lowPEZ1000, axis=1)
-    return stocks
+    # return stocks
 
     # 计算pe200与pe1000
     # stocks['pe200'] = dataanalyse.peHistRate(stocks.stockid.tolist(), 200)
     # stocks['pe1000'] = dataanalyse.peHistRate(stocks.stockid.tolist(), 1000)
-    df = dataanalyse.peHistRate(stocks.stockid.tolist(), 200)
+    df = dataanalyse.peHistRate(stocks.stockid.tolist(), 200, date)
     stocks = pd.merge(stocks, df, on='stockid', how='left')
-    df = dataanalyse.peHistRate(stocks.stockid.tolist(), 1000)
+    df = dataanalyse.peHistRate(stocks.stockid.tolist(), 1000, date)
     stocks = pd.merge(stocks, df, on='stockid', how='left')
 
     # 计算总评分
@@ -273,20 +273,22 @@ def calpfnew(date=None):
     stocks.set_index(['stockid'], inplace=True)
     stocks.to_csv('./data/valuation.csv')
     #    print stocks
-    if initsql.existTable('valuation'):
-        engine.execute('TRUNCATE TABLE valuation')
+    # if initsql.existTable('valuation'):
+    #     engine.execute('TRUNCATE TABLE valuation')
     stocks = stocks.dropna()
+    stocks['date'] = date
 
     # 当计算peg时，如果平均增长率为0，则结果为inf
     # 将inf替换为-9999
     stocks.replace([np.inf, -np.inf], -9999, inplace=True)
 
-    stocks.to_sql('valuation', engine, if_exists='append')
+    sqlrw.writeSQL(stocks, 'valuation')
+    # stocks.to_sql('valuation', engine, if_exists='append')
     return stocks
 
 
 if __name__ == '__main__':
     pass
-    stockspf = calpfnew('20191202')
+    stockspf = calpfnew('20191203')
     print('=' * 20)
     print(stockspf)

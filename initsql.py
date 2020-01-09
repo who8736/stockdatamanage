@@ -243,7 +243,46 @@ def createIndexKline():
     return result
 
 
-# TODO: 创建行业TTMPE表
+def createHangyePE():
+    sql = ("""CREATE TABLE `hangyepe` (
+            `hyid` varchar(8) NOT NULL,
+            `date` date NOT NULL,
+            `ttmpe` float DEFAULT NULL,
+            PRIMARY KEY (`hyid`,`date`),
+            KEY `index_date` (`date`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8
+            /*!50100 PARTITION BY RANGE (year(`date`))
+            (PARTITION p00 VALUES LESS THAN (2000) ENGINE = InnoDB,
+            PARTITION p01 VALUES LESS THAN (2001) ENGINE = InnoDB,
+            PARTITION p02 VALUES LESS THAN (2002) ENGINE = InnoDB,
+            PARTITION p03 VALUES LESS THAN (2003) ENGINE = InnoDB,
+            PARTITION p04 VALUES LESS THAN (2004) ENGINE = InnoDB,
+            PARTITION p05 VALUES LESS THAN (2005) ENGINE = InnoDB,
+            PARTITION p06 VALUES LESS THAN (2006) ENGINE = InnoDB,
+            PARTITION p07 VALUES LESS THAN (2007) ENGINE = InnoDB,
+            PARTITION p08 VALUES LESS THAN (2008) ENGINE = InnoDB,
+            PARTITION p09 VALUES LESS THAN (2009) ENGINE = InnoDB,
+            PARTITION p10 VALUES LESS THAN (2010) ENGINE = InnoDB,
+            PARTITION p11 VALUES LESS THAN (2011) ENGINE = InnoDB,
+            PARTITION p12 VALUES LESS THAN (2012) ENGINE = InnoDB,
+            PARTITION p13 VALUES LESS THAN (2013) ENGINE = InnoDB,
+            PARTITION p14 VALUES LESS THAN (2014) ENGINE = InnoDB,
+            PARTITION p15 VALUES LESS THAN (2015) ENGINE = InnoDB,
+            PARTITION p16 VALUES LESS THAN (2016) ENGINE = InnoDB,
+            PARTITION p17 VALUES LESS THAN (2017) ENGINE = InnoDB,
+            PARTITION p18 VALUES LESS THAN (2018) ENGINE = InnoDB,
+            PARTITION p19 VALUES LESS THAN (2019) ENGINE = InnoDB,
+            PARTITION p20 VALUES LESS THAN (2020) ENGINE = InnoDB,
+            PARTITION p21 VALUES LESS THAN (2021) ENGINE = InnoDB,
+            PARTITION p22 VALUES LESS THAN (2022) ENGINE = InnoDB,
+            PARTITION p23 VALUES LESS THAN (2023) ENGINE = InnoDB,
+            PARTITION p24 VALUES LESS THAN (2024) ENGINE = InnoDB,
+            PARTITION p25 VALUES LESS THAN (2025) ENGINE = InnoDB,
+            PARTITION p26 VALUES LESS THAN (2026) ENGINE = InnoDB,
+            PARTITION pnow VALUES LESS THAN MAXVALUE ENGINE = InnoDB) */;
+            """)
+    result = sqlrw.engine.execute(sql)
+    return result
 
 if __name__ == '__main__':
     if not existTable('chiguguzhi'):
@@ -274,3 +313,5 @@ if __name__ == '__main__':
         createIndexKline()
     if not existTable('guben'):
         createGubenTable()
+    if not existTable('hangyepe'):
+        createHangyePE()

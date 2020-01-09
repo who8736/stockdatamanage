@@ -732,7 +732,7 @@ def readLastTTMLirunForStockID(stockID, limit=1, date=None):
     """
     sql = f'select incrate from ttmlirun where stockid="{stockID}" '
     if date is not None:
-        sql += f' and date="{date}"'
+        sql += f' and date<="{date}"'
     sql += f' order by date desc limit {limit}'
     #     print sql
     result = engine.execute(sql).fetchall()

@@ -369,9 +369,10 @@ if __name__ == "__main__":
 
     # 计算行业PE
     # hyID = '03020101'
-    # date = '20200102'
+    date = '20200102'
     # pe = getHYPE(hyID, date)
-    # print('行业PE：', pe)
+    pe = getHYsPE(date)
+    print('行业PE：', pe)
 
     # 更新指数数据及PE
     # datamanage.updateIndex()
@@ -446,5 +447,13 @@ if __name__ == "__main__":
 
     # sqlrw中的readLastTTMPE读取指定日期TTMPE
     # testReadLastTTMPE()
+
+    # 读取近几个季度的TTM利润
+    # date = '20200102'
+    # stocks = readStockListDf(date)
+    # sectionNum = 6  # 取6个季度
+    # incDf = sqlrw.readLastTTMLirun(stocks.stockid.tolist(), sectionNum, date)
+    # print(incDf)
+
 
     print('程序正常退出')
