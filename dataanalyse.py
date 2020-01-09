@@ -214,7 +214,7 @@ def peHistRate(stockList, dayCount, date=None):
         # print(stockID)
         sql = f'select ttmpe from klinestock where stockid="{stockID}" '
         if date is not None:
-            sql += ' and date<="{date}"'
+            sql += f' and date<="{date}"'
         sql += f'order by `date` desc limit {dayCount};'
         result = sqlrw.engine.execute(sql)
         peList = result.fetchall()

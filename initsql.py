@@ -247,7 +247,7 @@ def createHangyePE():
     sql = ("""CREATE TABLE `hangyepe` (
             `hyid` varchar(8) NOT NULL,
             `date` date NOT NULL,
-            `ttmpe` float DEFAULT NULL,
+            `hype` float DEFAULT NULL,
             PRIMARY KEY (`hyid`,`date`),
             KEY `index_date` (`date`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8

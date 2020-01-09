@@ -30,7 +30,7 @@ from datamanage import updateGubenSingleThread
 from sqlrw import _getLastUpdate
 from sqlrw import readStockIDsFromSQL
 from sqlconn import engine, Session
-from initsql import dropKlineTable
+from initsql import *
 from dataanalyse import testChigu, testShaixuan
 from dataanalyse import calPEHistory, calAllPEHistory
 from dataanalyse import calGuzhi
@@ -389,7 +389,7 @@ if __name__ == "__main__":
     # print(dateList)
 
     pro = ts.pro_api()
-    df = pro.trade_cal(exchange='', start_date='20180101', end_date='20181231')
+    df = pro.trade_cal(exchange='', start_date='20190101', end_date='20191231')
     dateList = df['cal_date'].loc[df.is_open==1].tolist()
     # print(type(dateList))
     # print(dateList)
@@ -420,6 +420,10 @@ if __name__ == "__main__":
     # 重算指定日期所有行业TTM利润
     # resetHYTTMLirun(startQuarter=19901, endQuarter=20191)
 
+    # 重建表
+    # createHangyePE()
+    # createValuation()
+
     ##############################################
     # 股票评分
     ##############################################
@@ -438,6 +442,8 @@ if __name__ == "__main__":
 
     # 更新股票估值
     # calGuzhi()
+
+
 
     ##############################################
     # 绘图
