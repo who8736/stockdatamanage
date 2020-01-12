@@ -66,13 +66,15 @@ def wdzz1(stock):
     return 1 if stdrate < 0.6 and avg > 10 else 0
 
 
-def peZ(stock, dayCount):
+def peZ(stock, dayCount, date=None):
     """ 计算一支股票指定日期PE的Z值，
         # 历史交易天数不足时，PE水平为-1
     """
     stockID = stock.stockid
-    sql = ('select ttmpe from klinestock where stockid="%(stockID)s"'
-           'order by `date` desc limit %(dayCount)s;') % locals()
+    sql = f'select ttmpe from klinestock where stockid="{stockID}"'
+    if date is not None:
+           sql += f' and date<="{date}"'
+    sql += f' order by `date` desc limit {dayCount};'
     # print(sql)
     peDf = pd.read_sql(sql, engine)
     # 如果历史交易天数不足，则本项指标为0
@@ -189,7 +191,7 @@ def calpf():
     return stocks
 
 
-def calpfnew(date=None):
+def calpfnew(date=None, replace=False):
     """ 根据各指标计算评分，分别写入文件和数据库
         新版，支持按指定日期计算评分，评分结果写入带日期的新表
     :param date: str
@@ -229,12 +231,12 @@ def calpfnew(date=None):
     stocks['lowpeg'] = stocks.apply(lowPEG, axis=1)
 
     # 200天Z值小于-1
-    stocks['pez200'] = stocks.apply(peZ, axis=1, args=(200, ))
+    stocks['pez200'] = stocks.apply(peZ, axis=1, args=(200, date))
     stocks['pez200'] = stocks['pez200'].round(2)
     stocks['lowpez200'] = stocks.apply(lowPEZ200, axis=1)
 
     # 1000天Z值小于-1
-    stocks['pez1000'] = stocks.apply(peZ, axis=1, args=(1000, ))
+    stocks['pez1000'] = stocks.apply(peZ, axis=1, args=(1000, date))
     stocks['pez1000'] = stocks['pez1000'].round(2)
     stocks['lowpez1000'] = stocks.apply(lowPEZ1000, axis=1)
     # return stocks
@@ -282,13 +284,24 @@ def calpfnew(date=None):
     # 将inf替换为-9999
     stocks.replace([np.inf, -np.inf], -9999, inplace=True)
 
-    sqlrw.writeSQL(stocks, 'valuation')
+    # print(stocks)
+    # return
+    # if replace:
+    #     for index, row in stocks.iterrows():
+    #         sql = (('replace into valuation'
+    #                 '(stockid, date, totalshares) '
+    #                 'values("%s", "%s", %s)')
+    #                % (row['stockid'], row['date'], row['totalshares']))
+    #         engine.execute(sql)
+    # else:
+    #     sqlrw.writeSQL(stocks, 'valuation')
+    sqlrw.writeSQL(stocks, 'valuation', replace)
     # stocks.to_sql('valuation', engine, if_exists='append')
     return stocks
 
 
 if __name__ == '__main__':
     pass
-    stockspf = calpfnew('20191206')
+    stockspf = calpfnew('20191231', replace=True)
     print('=' * 20)
     print(stockspf)

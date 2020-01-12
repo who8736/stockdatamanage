@@ -6,6 +6,8 @@ Created on Mon Apr 15 15:27:38 2019
 """
 
 import time
+import typing
+
 # import pandas as pd
 # from pandas import DataFrame
 from urllib.request import urlopen
@@ -21,6 +23,8 @@ from xml import etree
 from download import *
 from sqlrw import *
 from bokeh.plotting import show, output_file
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.dialects.mysql import insert, Insert
 
 import datamanage
 from datamanage import updateKline
@@ -45,7 +49,6 @@ from download import downKline, _downGubenSina
 from bokehtest import plotIndexPE, testPlotKline
 import bokehtest
 from bokehtest import BokehPlotPE
-
 
 # import dataanalyse
 from valuation import calpf, calpfnew
@@ -214,7 +217,8 @@ def resetLirun():
         df = pro.income(ts_code=stockID, start_date=startDate, fields=fields)
         df['date'] = df['end_date'].apply(transTushareDateToQuarter)
         df['stockid'] = df['ts_code'].apply(lambda x: x[:6])
-        df['reportdate'] = df['ann_date'].apply(lambda x: '%s-%s-%s' % (x[:4], x[4:6], x[6:]))
+        df['reportdate'] = df['ann_date'].apply(
+            lambda x: '%s-%s-%s' % (x[:4], x[4:6], x[6:]))
         df.rename(columns={'n_income_attr_p': 'profits'}, inplace=True)
         df1 = df[['stockid', 'date', 'profits', 'reportdate']]
         if not df1.empty:
@@ -241,7 +245,8 @@ def gatherKline():
                "                              `ttmprofits`, `ttmpe`) "
                "select '%s', s.`date`, s.`open`, s.`high`, s.`close`, s.`low`, "
                "       s.`volume`, s.`totalmarketvalue`, s.`ttmprofits`, "
-               "       s.`ttmpe` from klinestock where stockid='%s' as s;\n") % (stockID, stockID)
+               "       s.`ttmpe` from klinestock where stockid='%s' as s;\n") % (
+                  stockID, stockID)
         print('process stockID: ', stockID)
         # print(sql)
         engine.execute(sql)
@@ -280,6 +285,35 @@ def testReadLastTTMPE():
     print(result)
 
 
+def testWriteSQL():
+    data = [{'username': 'a', 'email': 'aa@bb.cc', 'password': 'aaa_modify1'},
+            {'username': 'b', 'email': 'bb@bb.cc', 'password': 'bbb_modify2'}, ]
+    print(data)
+    df = pd.DataFrame(data)
+    print(df)
+    # return
+    # datafield = ['username', 'email', 'password']
+    session = Session()
+    metadata = MetaData(bind=engine)
+    Base = declarative_base()
+
+
+    class TableTest(Base):
+        # __table__ = Table('user', Base.metadata, autoload=True)
+        __table__ = Table('user', Base.metadata,
+                          autoload=True, autoload_with=engine)
+
+
+    for index, row in df.iterrows():
+        d = {key: getattr(row, key) for key in row.keys()}
+        table = TableTest(**d)
+        session.merge(table)
+
+    # for d in data:
+    #     u1 = TableTest(**d)
+    #     session.merge(u1)
+    session.commit()
+
 if __name__ == "__main__":
     """
     本文件用于测试各模块功能
@@ -296,7 +330,7 @@ if __name__ == "__main__":
     #     downKline(tradeDate)
 
     # 股本
-    #-------------------------------
+    # -------------------------------
     # 下载指定股票股本信息
     # date = '2019-04-19'
     # gubenUpdateDf = checkGuben(date)
@@ -306,7 +340,7 @@ if __name__ == "__main__":
     #     time.sleep(1)  # tushare.pro每分钟最多访问接口200次
 
     # 指数
-    #-------------------------------
+    # -------------------------------
     # 下载指数成份股列表
     # for year in range(2009, 2020):
     #     ID = '000010'
@@ -381,9 +415,9 @@ if __name__ == "__main__":
     # datamanage.updateAllMarketPE()
 
     # 更新历史评分
-    # startDate = '20191220'
-    # endDate = '20191231'
-    # formatStr = '%Y%m%d'
+    startDate = '20191220'
+    endDate = '20191231'
+    formatStr = '%Y%m%d'
     # dateList = dateStrList(datetime.strptime(startDate, formatStr).date(),
     #                        datetime.strptime(endDate, formatStr).date())
     # print(dateList)
@@ -443,7 +477,11 @@ if __name__ == "__main__":
     # 更新股票估值
     # calGuzhi()
 
-
+    # 测试新评分函数
+    # stockspf = calpfnew('20171228', replace=False)
+    # stockspf = calpfnew('20171227', replace=True)
+    # print('=' * 20)
+    # print(stockspf)
 
     ##############################################
     # 绘图
@@ -476,7 +514,12 @@ if __name__ == "__main__":
     # stocks = readStockListDf(date)
     # sectionNum = 6  # 取6个季度
     # incDf = sqlrw.readLastTTMLirun(stocks.stockid.tolist(), sectionNum, date)
-    # print(incDf)
+    # incDf = sqlrw.readLastTTMLirunForStockID('000651', 6, '20181231')
 
+    # print(incDf)
+    # print(incDf.loc[incDf.stockid=='000651'])
+
+    # 测试sqlrw.writeSQL函数的replace功能
+    # testWriteSQL()
 
     print('程序正常退出')

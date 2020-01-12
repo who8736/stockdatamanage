@@ -27,6 +27,7 @@ from io import StringIO
 # from sqlalchemy import create_engine
 from sqlalchemy import MetaData, Table, Column
 from sqlalchemy import DATE, DECIMAL, String
+from sqlalchemy.ext.declarative import declarative_base
 # from sqlalchemy.orm import sessionmaker, scoped_session
 # import sqlalchemy
 from pandas.core.frame import DataFrame
@@ -524,37 +525,43 @@ def writeStockList(stockList):
     stockList.to_sql('stocklist', engine, if_exists='append')
 
 
-def writeSQL(dfdata, tableName, replace=False):
+def writeSQL(data: pd.DataFrame, tableName: str, replace=False):
     """
     Dataframe格式数据写入tableName指定的表中
     replace: True，主键重复时更新数据， False, 忽略重复主键, 默认为False
     """
     logging.debug('start writeSQL %s' % tableName)
-
     if not initsql.existTable(tableName):
         logging.error('not exist %s' % tableName)
         return False
-
-    if isinstance(dfdata, DataFrame):
-        if dfdata.empty:
-            return True
-        dfdata = dfdata.where(pd.notnull(dfdata), None)
-        data = datatrans.transDfToList(dfdata)
-    else:
-        data = dfdata
-
-    if not data:
+    if data.empty:
         return True
+    data = data.where(pd.notnull(data), None)
+    data = datatrans.transDfToList(data)
 
+    Base = declarative_base()
+    class MyTable(Base):
+        __table__ = Table(f'{tableName}', Base.metadata,
+                          autoload=True, autoload_with=engine)
     try:
         session = Session()
         metadata = MetaData(bind=engine)
-        mytable = Table(tableName, metadata, autoload=True)
         if replace:
-            session.add(mytable)
-            # session.execute(mytable.replace(), data)
-            session.merge(data)
+            for d in data:
+            # for index, row in data.iterrows():
+            #     tmpDict = row.to_dict()
+            #     tmpDict[data.index.name] = index
+                # d = {key: getattr(row, key) for key in row.keys()}
+                # for key in row.keys():
+                #     print('key type:', type(key))
+                #     print('value type:', type(getattr(row, key)))
+                #     print('value:', getattr(row, key))
+                # table = MyTable(**tmpDict)
+                table = MyTable(**d)
+                session.merge(table)
+            session.commit()
         else:
+            mytable = Table(tableName, metadata, autoload=True)
             session.execute(mytable.insert().prefix_with('IGNORE'), data)
         session.commit()
         session.close()
@@ -732,7 +739,7 @@ def readLastTTMLirunForStockID(stockID, limit=1, date=None):
     """
     sql = f'select incrate from ttmlirun where stockid="{stockID}" '
     if date is not None:
-        sql += f' and date<="{date}"'
+        sql += f' and reportdate<="{date}"'
     sql += f' order by date desc limit {limit}'
     #     print sql
     result = engine.execute(sql).fetchall()
