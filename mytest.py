@@ -423,7 +423,7 @@ if __name__ == "__main__":
     # print(dateList)
 
     pro = ts.pro_api()
-    df = pro.trade_cal(exchange='', start_date='20190101', end_date='20191231')
+    df = pro.trade_cal(exchange='', start_date='20180101', end_date='20181231')
     dateList = df['cal_date'].loc[df.is_open==1].tolist()
     # print(type(dateList))
     # print(dateList)
