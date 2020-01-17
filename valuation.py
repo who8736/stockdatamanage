@@ -191,7 +191,7 @@ def calpf():
     return stocks
 
 
-def calpfnew(date=None, replace=False):
+def calpfnew(date, replace=False):
     """ 根据各指标计算评分，分别写入文件和数据库
         新版，支持按指定日期计算评分，评分结果写入带日期的新表
     :param date: str
@@ -199,6 +199,12 @@ def calpfnew(date=None, replace=False):
     :return:
     """
     #    stocks = readStockListDf()[:10]
+    if not replace:
+        sql = f'select count(1) from valuation where date="{date}"'
+        result = engine.execute(sql).fetchone()[0]
+        if result > 0:
+            return
+
     stocks = readStockListDf(date)
     # print(stocks)
     # 低市盈率

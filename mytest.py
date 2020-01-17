@@ -415,18 +415,12 @@ if __name__ == "__main__":
     # datamanage.updateAllMarketPE()
 
     # 更新历史评分
-    startDate = '20191220'
-    endDate = '20191231'
-    formatStr = '%Y%m%d'
-    # dateList = dateStrList(datetime.strptime(startDate, formatStr).date(),
-    #                        datetime.strptime(endDate, formatStr).date())
-    # print(dateList)
-
+    # startDate = '20191220'
+    # endDate = '20191231'
+    # formatStr = '%Y%m%d'
     pro = ts.pro_api()
-    df = pro.trade_cal(exchange='', start_date='20180101', end_date='20180731')
+    df = pro.trade_cal(exchange='', start_date='20200101', end_date='20200116')
     dateList = df['cal_date'].loc[df.is_open==1].tolist()
-    # print(type(dateList))
-    # print(dateList)
     for date in dateList:
         print('计算评分：', date)
         calpfnew(date, True)
@@ -521,5 +515,8 @@ if __name__ == "__main__":
 
     # 测试sqlrw.writeSQL函数的replace功能
     # testWriteSQL()
+
+    # 测试datamanage中的updatePf
+    # datamanage.updatePf()
 
     print('程序正常退出')

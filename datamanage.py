@@ -23,6 +23,7 @@ import hyanalyse
 import dataanalyse
 import sqlrw
 import valuation
+from sqlconn import engine
 from sqlrw import checkGuben, setGubenLastUpdate
 from sqlrw import getStockKlineUpdateDate, getIndexKlineUpdateDate
 from sqlrw import getAllMarketPEUpdateDate
@@ -203,7 +204,24 @@ def updateGubenSingleThread():
 def updatePf():
     """ 重算评分
     """
-    valuation.calpf()
+    # valuation.calpfnew()
+    sql = 'select max(date) from valuation'
+    result = engine.execute(sql).fetchone()
+    if result is None:
+        startDate = '20090101'
+    else:
+        startDate = result[0] + timedelta(days=1)
+        startDate = startDate.strftime('%Y%m%d')
+    endDate = datetime.today() - timedelta(days=1)
+    endDate = endDate.strftime('%Y%m%d')
+    pro = ts.pro_api()
+    df = pro.trade_cal(exchange='', start_date=startDate, end_date=endDate)
+    dateList = df['cal_date'].loc[df.is_open==1].tolist()
+    # print(type(dateList))
+    # print(dateList)
+    for date in dateList:
+        print('计算评分：', date)
+        valuation.calpfnew(date)
 
 #
 # def updateDataTest(stockList):
