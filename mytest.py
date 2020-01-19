@@ -419,11 +419,11 @@ if __name__ == "__main__":
     # endDate = '20191231'
     # formatStr = '%Y%m%d'
     pro = ts.pro_api()
-    df = pro.trade_cal(exchange='', start_date='20200101', end_date='20200116')
+    df = pro.trade_cal(exchange='', start_date='20180101', end_date='20200116')
     dateList = df['cal_date'].loc[df.is_open==1].tolist()
     for date in dateList:
         print('计算评分：', date)
-        calpfnew(date, True)
+        calpfnew(date, False)
 
     ##############################################
     # 数据修复
