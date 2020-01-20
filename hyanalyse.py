@@ -7,12 +7,15 @@ Created on 2016年12月2日
 """
 
 import datetime as dt
+from datetime import timedelta
+import logging
 
 # import pandas as pd
 from pandas.core.frame import DataFrame
 
 import sqlrw
 import datatrans
+from sqlconn import engine
 # import logging
 # from wtforms.ext import dateutil
 
@@ -24,7 +27,7 @@ def getStockListForHY(hyID):
 #     levels = ['level1', 'level2', 'level3', 'level4']
 #     level = levels[levelNum - 1]
     sql = 'select stockid from hangyestock where hyid="%(hyID)s";' % locals()
-    result = sqlrw.engine.execute(sql)
+    result = engine.execute(sql)
 #     stockList = result.fetchall()
     stockList = [i[0] for i in result.fetchall()]
 #     print len(stockList), stockList
@@ -36,7 +39,7 @@ def getHYIDForStock(stockID):
     """
     sql = ('select hyid from hangyestock where stockid="%(stockID)s";'
            % locals())
-    result = sqlrw.engine.execute(sql).fetchone()
+    result = engine.execute(sql).fetchone()
     if result is None:
         return None
     else:
@@ -48,7 +51,7 @@ def getHYIDForStock(stockID):
 #     """ 查询已进行行业分类的股票列表
 #     """
 #     sql = 'select stockid from hangyestock;'
-#     result = sqlrw.engine.execute(sql)
+#     result = engine.execute(sql)
 #     hystock = result.fetchall()
 #     hystock = [i[0] for i in hystock]
 #     return hystock
@@ -59,7 +62,7 @@ def getHYLirunCount(hyID, quarter):
     """
     sql = ('select count(1) from hyprofits where hyid="%(hyID)s" and '
            'date="%(quarter)s"') % locals()
-    result = sqlrw.engine.execute(sql)
+    result = engine.execute(sql)
     return result.fetchone()[0]
 
 
@@ -68,7 +71,7 @@ def getHYList(level=4):
     """
     sql = 'select hyid from hangyename where hylevel=%(level)s;' % locals()
 #     print sql
-    result = sqlrw.engine.execute(sql)
+    result = engine.execute(sql)
     return [i[0] for i in result.fetchall()]
 
 
@@ -80,7 +83,7 @@ def getSubHY(hyID, subLevel):
            'where hylevel%(level)sid="%(hyID)s" and '
            'hylevel="%(subLevel)s";') % locals()
 #     print sql
-    result = sqlrw.engine.execute(sql)
+    result = engine.execute(sql)
     result = result.fetchall()
 #     print 'getSubHY:', result
     if result is None:
@@ -93,7 +96,7 @@ def getHYName(hyID):
     print('getHYName(hyID):hyID: ', hyID)
     sql = ('select hyname from hangyename where hyid="%(hyID)s";'
            % locals())
-    result = sqlrw.engine.execute(sql).fetchone()
+    result = engine.execute(sql).fetchone()
     if result is None:
         return None
     else:
@@ -106,7 +109,7 @@ def getHYStockCount(hyID):
     """
     sql = ('select count(1) from hangyestock where hyid="%(hyID)s";'
            % locals())
-    result = sqlrw.engine.execute(sql).fetchone()
+    result = engine.execute(sql).fetchone()
     if result is not None:
         return result[0]
 
@@ -116,7 +119,7 @@ def getHYProfitsIncRate(hyID, quarter):
            'where hyid="%(hyID)s" and date="%(quarter)s";'
            % locals())
     print(sql)
-    result = sqlrw.engine.execute(sql).fetchone()
+    result = engine.execute(sql).fetchone()
     if result is None:
         return None
     else:
@@ -138,7 +141,7 @@ def getStockProfitsIncRate(stockID, quarter):
     sql = ('select incrate from ttmlirun '
            'where stockid="%(stockID)s" and date="%(quarter)s";'
            % locals())
-    result = sqlrw.engine.execute(sql).fetchone()
+    result = engine.execute(sql).fetchone()
     if result is not None:
         return result[0]
     else:
@@ -181,7 +184,7 @@ def calHYTTMLirunHighLevel(hyID, date):
         sql = ('select profits, profitsLast from hyprofits '
                'where hyid="%(subHyID)s" and date=%(date)s;') % locals()
 #         print sql
-        result = sqlrw.engine.execute(sql).fetchone()
+        result = engine.execute(sql).fetchone()
 #         print 'result:', result
         if result is None or result[0] is None:
             continue
@@ -193,7 +196,7 @@ def calHYTTMLirunHighLevel(hyID, date):
 #     sql = ('select profits from hyprofits '
 #            'where hyid="%(subHyID)s" and date="%(LastDate)s";') % locals()
 # #     print sql
-#     result = sqlrw.engine.execute(sql).fetchone()
+#     result = engine.execute(sql).fetchone()
 # #     print 'result 145:', result
 #     if result is None:
 #         profitsLast = None
@@ -214,7 +217,7 @@ def calHYTTMLirunHighLevel(hyID, date):
                 '%(profitsCur)s, %(profitsLast)s, '
                 '%(profitsInc)s, %(profitsIncRate)s);') % locals())
 #     print sql
-    result = sqlrw.engine.execute(sql)
+    result = engine.execute(sql)
 #     print 'result 158:', result
 #     if result is None:
 #         return False
@@ -251,7 +254,7 @@ def calHYTTMLirunLowLevel(hyID, date):
             '"%(profitsCur)s", "%(profitsLast)s", '
             '"%(profitsInc)s", "%(profitsIncRate)s");') % locals())
 #     print sql
-    sqlrw.engine.execute(sql)
+    engine.execute(sql)
     return True
 
 
@@ -260,7 +263,7 @@ def calAllHYTTMLirun(date):
     """
     for level in range(4, 0, -1):
         sql = 'select hyid from hangyename where hylevel=%(level)s;' % locals()
-        result = sqlrw.engine.execute(sql)
+        result = engine.execute(sql)
         hyIDList = result.fetchall()
         hyIDList = [i[0] for i in hyIDList]
         print(hyIDList)
@@ -300,7 +303,7 @@ def getHYPE(hyID, date, reset=False):
     :return:
     """
     sql = f'select hype from hangyepe where hyid="{hyID}" and date="{date}"'
-    result = sqlrw.engine.execute(sql).fetchone()
+    result = engine.execute(sql).fetchone()
     if not reset and result is not None:
         return result[0]
 
@@ -311,7 +314,7 @@ def getHYPE(hyID, date, reset=False):
         sql = (f'select date, totalmarketvalue, ttmprofits, ttmpe '
                f'from klinestock where stockid="{stockID}" and date<="{date}"'
                f'order by `date` desc limit 1;')
-        result = sqlrw.engine.execute(sql).fetchone()
+        result = engine.execute(sql).fetchone()
         if result is not None:
             #            value, profit = result.fetchone()
             # result = result.first()
@@ -330,21 +333,42 @@ def getHYPE(hyID, date, reset=False):
         return pe
 
 
-def getHYsPE(date=None):
+def calHYsPE(date=None):
     """ 计算所有行业在指定日期的市盈率
     """
     if date is None:
-        date = dt.datetime.today().strftime('%Y%m%d')
-    hyList = getHYList()
-    hyIDs = []
-    hyPEs = []
-    for hyID in hyList:
-        pe = getHYPE(hyID, date)
-        if pe is not None:
-            hyIDs.append(hyID)
-            hyPEs.append(pe)
-    df = DataFrame({'hyid': hyIDs, 'hype': hyPEs, 'date':date})
-    sqlrw.writeSQL(df, 'hangyepe')
+        date = dt.datetime.today() - timedelta(days=1)
+        date = date.strftime('%Y%m%d')
+    logging.debug(f'update hangyepe: {date}')
+    sql = (f'insert into hangyepe (hyid, `date`, hype)'
+           f' select hyid, "{date}" as date,'
+           f' round(sum(totalmarketvalue)/sum(ttmprofits), 2) as pe'
+           f' from (select a.stockid, b.hyid as hyid, a.totalmarketvalue,'
+           f' a.ttmprofits from klinestock as a inner join hangyestock as b'
+           f' on a.stockid=b.stockid where a.date="{date}"'
+           f' and a.ttmprofits > 0) as c group by hyid;')
+    try:
+        engine.execute(sql)
+    except Exception as e:
+        logging.error(f'failed to read hangyepe for date:{date}:', e)
+
+
+def getHYsPE(date=None, replace=False):
+    """ 读取所有行业在指定日期的市盈率
+    """
+    if date is None:
+        date = dt.datetime.today() - timedelta(days=1)
+        date = date.strftime('%Y%m%d')
+
+    sql = f'select hyid, hype from hangyepe where date="{date}"'
+    try:
+        result = engine.execute(sql).fetchall()
+    except Exception as e:
+        logging.error(f'failed to read hangyepe for date: {date}:', e)
+    if not result:
+        return
+    hyIDs, hyPEs = list(zip(*result))
+    df = DataFrame({'hyid': hyIDs, 'hype': hyPEs, 'date': date})
     return df
 
 
