@@ -208,7 +208,7 @@ def peHistRate(stockList, dayCount, date=None):
         # 最低为0，最高为100
         # 历史交易天数不足时，PE水平为-1
     """
-    print(f'peHistRate: {dayCount}')
+    print(f'peHistRate: {dayCount}, stockList count:{len(stockList)}')
     perates = []
     for stockID in stockList:
         # print(stockID)
