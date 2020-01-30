@@ -311,7 +311,7 @@ def getHYPE(hyID, date, reset=False):
     valueSum = 0
     profitSum = 0
     for stockID in stockIDs:
-        sql = (f'select date, totalmarketvalue, ttmprofits, ttmpe '
+        sql = (f'select date, totalmarketvalue, ttmprofits '
                f'from klinestock where stockid="{stockID}" and date<="{date}"'
                f'order by `date` desc limit 1;')
         result = engine.execute(sql).fetchone()
@@ -320,7 +320,7 @@ def getHYPE(hyID, date, reset=False):
             # result = result.first()
             value = result[1]
             profit = result[2]
-            ttmpe = result[3]
+            # ttmpe = result[3]
             if profit is None or profit < 0 or value is None:
                 continue
 
@@ -361,10 +361,12 @@ def getHYsPE(date=None, replace=False):
         date = date.strftime('%Y%m%d')
 
     sql = f'select hyid, hype from hangyepe where date="{date}"'
+    result = None
     try:
         result = engine.execute(sql).fetchall()
     except Exception as e:
         logging.error(f'failed to read hangyepe for date: {date}:', e)
+        return
     if not result:
         return
     hyIDs, hyPEs = list(zip(*result))

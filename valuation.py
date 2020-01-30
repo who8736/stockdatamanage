@@ -217,7 +217,7 @@ def calpfnew(date, replace=False):
     hyDf = pd.read_sql(sql, engine)
     stocks = pd.merge(stocks, hyDf, on='stockid', how='left')
     hyPEDf = hyanalyse.getHYsPE(date)
-    if hyPEDf is None or hyPEDf.empty():
+    if hyPEDf is None or hyPEDf.empty:
         hyanalyse.calHYsPE(date)
         hyPEDf = hyanalyse.getHYsPE(date)
     stocks = pd.merge(stocks, hyPEDf, on='hyid', how='left')

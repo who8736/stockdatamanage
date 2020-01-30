@@ -16,6 +16,7 @@ from urllib.request import urlopen
 # import baostock as bs
 # import tushare as ts
 from tushare import get_report_data
+import configparser
 
 # from download import getreq
 from xml import etree
@@ -49,6 +50,7 @@ from download import downKline, _downGubenSina
 from bokehtest import plotIndexPE, testPlotKline
 import bokehtest
 from bokehtest import BokehPlotPE
+
 
 # import dataanalyse
 from valuation import calpf, calpfnew
@@ -403,9 +405,9 @@ if __name__ == "__main__":
 
     # 计算行业PE
     # hyID = '03020101'
-    date = '20200102'
+    # date = '20200102'
     # pe = getHYPE(hyID, date)
-    pe = getHYsPE(date)
+    # pe = getHYsPE(date)
     # print('行业PE：', pe)
 
     # 更新指数数据及PE
@@ -418,12 +420,20 @@ if __name__ == "__main__":
     # startDate = '20191220'
     # endDate = '20191231'
     # formatStr = '%Y%m%d'
-    # pro = ts.pro_api()
-    # df = pro.trade_cal(exchange='', start_date='20180101', end_date='20200116')
-    # dateList = df['cal_date'].loc[df.is_open==1].tolist()
-    # for date in dateList:
-    #     print('计算评分：', date)
-    #     calpfnew(date, False)
+    cf = configparser.ConfigParser()
+    cf.read('sql.conf')
+    if cf.has_option('main', 'token'):
+        token = cf.get('main', 'token')
+    else:
+        token = ''
+    ts.set_token(token)
+    print(token)
+    pro = ts.pro_api()
+    df = pro.trade_cal(exchange='', start_date='20200101', end_date='20201231')
+    dateList = df['cal_date'].loc[df.is_open==1].tolist()
+    for date in dateList:
+        print('计算评分：', date)
+        calpfnew(date, False)
 
     ##############################################
     # 数据修复
