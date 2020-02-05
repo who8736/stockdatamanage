@@ -355,21 +355,62 @@ def calPEHistory(ID, startDate, endDate=None):
     session.close()
 
 
+def analysePEHist(stockID, startDate, endDate, dayCount=200,
+                  lowRate=20, highRate=80):
+    """分析指定股票一段时期内PE水平，以折线图展示
+
+    :param stockID:
+    :param startDate:
+    :param endDate:
+    :param lowRate:
+    :param highRate:
+    :return:
+    """
+    sql = (f'select date, ttmpe from klinestock where stockid={stockID}'
+           f' and date>="{startDate}" and date<="{endDate}";')
+    result = engine.execute(sql).fetchall()
+    tmpDates, tmpPEs = zip(*result)
+    tmpDates = list(tmpDates)
+    tmpPEs = list(tmpPEs)
+    dates = []
+    PEs = []
+    lowPEs = []
+    highPEs = []
+    cnt = len(result)
+    lowPos = dayCount * lowRate // 100 - 1
+    highPos = dayCount * highRate // 100 - 1
+    for i in range(dayCount - 1, cnt):
+        dates.append(tmpDates[i])
+        PEs.append(tmpPEs[i])
+        start = i - dayCount + 1
+        end = i + 1
+        _tmpPEs = tmpPEs[start:end]
+        _tmpPEs.sort()
+        lowPE = _tmpPEs[lowPos]
+        highPE = _tmpPEs[highPos]
+        lowPEs.append(lowPE)
+        highPEs.append(highPE)
+
+    df = pd.DataFrame({'date': dates, 'pe': PEs,
+                       'lowpe': lowPEs, 'highpe': highPEs})
+    print(df)
+    return df
+
 if __name__ == '__main__':
     initlog()
 
     timec = dt.datetime.now()
     #    testStockID = u'601398'
-    testStockID = '000153'
-    startDate = '2016-04-30'
-    endDate = '2016-04-29'
+    stockID = '000651'
+    startDate = '20130101'
+    endDate = '20191231'
     logging.info('===================start=====================')
 
     # 测试持股估值
     #     testChigu()
 
     # 测试筛选估值
-    testShaixuan()
+    # testShaixuan()
 
     # 测试TTMPE直方图、概率分布
     #     ttmdf = sqlrw.readTTMPE(testStockID)
@@ -392,6 +433,10 @@ if __name__ == '__main__':
 
     # 测试估值计算函数
     #     calGuzhi()
+
+    # 测试历史估值水平
+    df = analysePEHist(stockID, startDate, endDate, dayCount=1000)
+    df.plot()
 
     timed = dt.datetime.now()
     logging.info('datamanage test took %s' % (timed - timec))

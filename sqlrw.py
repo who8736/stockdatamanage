@@ -631,7 +631,8 @@ def readGuzhiSQLToDf(stockList):
 
 def readValuationSammary():
     sql = ('select stockid, name, pf, pe, peg, pe200, pe1000 '
-           'from valuation order by pf desc;')
+           'from valuation where date = (select max(date) from valuation) '
+           'order by pf desc;')
     stocks = pd.read_sql(sql, engine)
     return stocks
 

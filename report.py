@@ -152,44 +152,44 @@ def report1(stockID):
 def reportValuation(stockID):
     myItem = reportItem(stockID)
     myStockValuation = sqlrw.readValuation(stockID)
-    myItem.name = myStockValuation[1]
+    myItem.name = myStockValuation[2]
     guzhiData = sqlrw.getGuzhi(stockID)
 
     # 股票评分
-    myItem.pf = myStockValuation[2]
-    myItem.lowpe = myStockValuation[4]
-    myItem.lowhype = myStockValuation[7]
-    myItem.lowpeg = myStockValuation[17]
-    myItem.wdzz = myStockValuation[19]
-    myItem.lowpez200 = myStockValuation[21]
-    myItem.lowpez1000 = myStockValuation[23]
+    myItem.pf = myStockValuation[3]
+    myItem.lowpe = myStockValuation[5]
+    myItem.lowhype = myStockValuation[8]
+    myItem.lowpeg = myStockValuation[18]
+    myItem.wdzz = myStockValuation[20]
+    myItem.lowpez200 = myStockValuation[22]
+    myItem.lowpez1000 = myStockValuation[24]
 
     # 当前TTMPE在近200、1000个工作日中的Z值
-    myItem.pez200 = myStockValuation[20]
-    myItem.pez1000 = myStockValuation[22]
+    myItem.pez200 = myStockValuation[21]
+    myItem.pez1000 = myStockValuation[23]
 
     # 当前TTMPE
-    myItem.curTTMPE = myStockValuation[3]
-    myItem.peg = myStockValuation[16]
-    myItem.hype = myStockValuation[6]
+    myItem.curTTMPE = myStockValuation[4]
+    myItem.peg = myStockValuation[17]
+    myItem.hype = myStockValuation[7]
     # 未来三年PE预计
     myItem.PEYuji = [guzhiData[4], guzhiData[5], guzhiData[6]]
     # 最近6个季度TTM利润增长率
-    myItem.profitsInc = [myStockValuation[8], myStockValuation[9],
-                         myStockValuation[10], myStockValuation[11],
-                         myStockValuation[12], myStockValuation[13]]
+    myItem.profitsInc = [myStockValuation[9], myStockValuation[10],
+                         myStockValuation[11], myStockValuation[12],
+                         myStockValuation[13], myStockValuation[14]]
     # 最近6个季度TTM利润平均增长率
-    myItem.profitsIncAvg = myStockValuation[14]
+    myItem.profitsIncAvg = myStockValuation[15]
     # 根据平均绝对离差计算的增长率差异水平
     myItem.profitsIncMad = guzhiData[14]
     # 根据标准差计算的增长率差异水平
-    myItem.profitsIncStand = myStockValuation[15]
+    myItem.profitsIncStand = myStockValuation[16]
     # 当前TTMPE参考最近200个工作日水平
-    myItem.PERate200 = myStockValuation[24]
-    myItem.PEZ200 = myStockValuation[20]
+    myItem.PERate200 = myStockValuation[25]
+    myItem.PEZ200 = myStockValuation[21]
     # 当前TTMPE参考最近1000个工作日水平
-    myItem.PERate1000 = myStockValuation[25]
-    myItem.PEZ1000 = myStockValuation[22]
+    myItem.PERate1000 = myStockValuation[26]
+    myItem.PEZ1000 = myStockValuation[23]
 
     hyIDlv4 = hyanalyse.getHYIDForStock(stockID)
     hyIDlv3 = hyIDlv4[:6]
