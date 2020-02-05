@@ -1035,6 +1035,8 @@ def updateKlineEXTData(stockID, startDate=None):
     """
     if startDate is None:
         startDate = getTTMPELastUpdate(stockID) + dt.timedelta(days=1)
+        if startDate == dt.datetime.today().date():
+            return
     # startDateStr = startDate.strftime('%Y-%m-%d')
     logging.debug(
         'updateKlineEXTData: %(stockID)s, date: %(startDate)s' % locals())
