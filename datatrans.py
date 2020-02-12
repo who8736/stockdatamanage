@@ -50,12 +50,22 @@ def QuarterList(startDate, endDate):
 
 
 def dateStrList(startDate, endDate, formatStr='%Y%m%d'):
-    """ 生成从startDate到endDate的日期列表，日期样式为"2016-01-01"
+    """生成从startDate到endDate的日期列表，日期样式为"20160101"
+    :param startDate: str, 'YYYYmmdd'
+    :param endDate: str, 'YYYYmmdd'
+    :param formatStr:
+    :return:
     """
+    if isinstance(startDate, datetime):
+        startDate = startDate.strftime(formatStr)
+    if isinstance(endDate, datetime):
+        endDate = endDate.strftime(formatStr)
     dateList = []
-    while startDate <= endDate:
-        dateList.append(startDate.strftime(formatStr))
-        startDate = startDate + timedelta(days=1)
+    start = datetime.strptime(startDate, formatStr)
+    end = datetime.strptime(endDate, formatStr)
+    while start <= end:
+        dateList.append(start.strftime(formatStr))
+        start = start + timedelta(days=1)
     return dateList
 
 

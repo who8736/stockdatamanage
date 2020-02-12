@@ -42,6 +42,7 @@ from sqlrw import writeStockList
 from sqlrw import writeHYToSQL, writeHYNameToSQL
 from sqlrw import gubenUpdateDate, writeGubenToSQL
 from initlog import initlog
+from misc import tsCode
 
 
 # def downGubenToSQL(stockID, retry=3, timeout=10):
@@ -778,6 +779,46 @@ def downIndex(ID, startDate, endDate=None):
 
     print(df.head())
     writeSQL(df, 'klineindex')
+
+
+def downDailyBasic(stockID=None, tradeDate=None, startDate=None, endDate=None):
+    """
+    下载tushare每日指标
+    :param stockID: 股票代码
+    :param tradeDate: 交易日期
+    :param startDate: 开始日期
+    :param endDate: 结束日期
+    :return:
+    """
+    pro = ts.pro_api()
+    df = None
+    if stockID is not None and startDate is not None:
+        df = pro.daily_basic(ts_code=tsCode(stockID),
+                             start_date=startDate,
+                             end_date=endDate)
+    elif tradeDate is not None:
+        df = pro.daily_basic(trade_date=tradeDate)
+    if isinstance(df, pd.DataFrame):
+        df.rename(columns={'ts_code': 'stockid', 'trade_date': 'date'},
+                  inplace=True)
+        df['stockid'] = df['stockid'].str[:6]
+        df.set_index(keys=['stockid'], inplace=True)
+    return df
+
+
+def downPledgeStat(stockID):
+    """获取股权质押统计数据
+
+    :param stockID:
+    :return:
+    """
+    pro = ts.pro_api()
+    df = None
+    df = pro.pledge_stat(ts_code=tsCode(stockID))
+    df.rename(columns={'ts_code': 'stockid', 'end_date': 'date'}, inplace=True)
+    df['stockid'] = df['stockid'].str[:6]
+    df.set_index(keys=['stockid'], inplace=True)
+    return df
 
 
 if __name__ == '__main__':

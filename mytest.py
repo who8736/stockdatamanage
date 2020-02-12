@@ -51,7 +51,6 @@ from bokehtest import plotIndexPE, testPlotKline
 import bokehtest
 from bokehtest import BokehPlotPE
 
-
 # import dataanalyse
 from valuation import calpf, calpfnew
 
@@ -299,12 +298,10 @@ def testWriteSQL():
     metadata = MetaData(bind=engine)
     Base = declarative_base()
 
-
     class TableTest(Base):
         # __table__ = Table('user', Base.metadata, autoload=True)
         __table__ = Table('user', Base.metadata,
                           autoload=True, autoload_with=engine)
-
 
     for index, row in df.iterrows():
         d = {key: getattr(row, key) for key in row.keys()}
@@ -315,6 +312,7 @@ def testWriteSQL():
     #     u1 = TableTest(**d)
     #     session.merge(u1)
     session.commit()
+
 
 if __name__ == "__main__":
     """
@@ -355,6 +353,53 @@ if __name__ == "__main__":
     # 下载指数K线数据
     # startDate = datetime.strptime('20100101', '%Y%m%d')
     # downIndex('000010.SH', startDate=startDate)
+
+    # # 下载每日指标
+    # stockID = '000651'
+    # startDate = '20090829'
+    # endDate = '20171231'
+    # tradeDate = '20191231'
+    # dates = dateStrList(startDate, endDate)
+    # for d in dates:
+    #     # df = downDailyBasic(stockID=stockID,
+    #     #                     startDate=startDate,
+    #     #                     endDate=endDate)
+    #     # df = downDailyBasic(tradeDate=tradeDate)
+    #     df = downDailyBasic(tradeDate=d)
+    #     print(df)
+    #     # df.to_excel('test.xlsx')
+    #     writeSQL(df, 'dailybasic')
+
+    # 下载股权质押统计数据
+    IDs = readStockIDsFromSQL()
+    # IDs = IDs[:10]
+    times = []
+    cnt = len(IDs)
+    for i in range(cnt):
+        nowtime = datetime.now()
+        if i >= 50 and (nowtime < times[i - 50] + timedelta(seconds=60)):
+            _timedelta = nowtime - times[i - 50]
+            sleeptime = 60 - _timedelta.seconds
+            print(f'******暂停{sleeptime}秒******')
+            time.sleep(sleeptime)
+            nowtime = datetime.now()
+        times.append(nowtime)
+        print(f'第{i}个，时间：{nowtime}')
+        stockID = IDs[i]
+        print(stockID)
+        flag = True
+        df = None
+        while flag:
+            try:
+                df = downPledgeStat(stockID)
+                flag = False
+            except Exception as e:
+                print(e)
+                time.sleep(10)
+        # print(df)
+        time.sleep(1)
+        if df is not None:
+            writeSQL(df, 'pledgestat')
 
     ##############################################
     # 数据更新
@@ -420,20 +465,20 @@ if __name__ == "__main__":
     # startDate = '20191220'
     # endDate = '20191231'
     # formatStr = '%Y%m%d'
-    cf = configparser.ConfigParser()
-    cf.read('sql.conf')
-    if cf.has_option('main', 'token'):
-        token = cf.get('main', 'token')
-    else:
-        token = ''
-    ts.set_token(token)
-    print(token)
-    pro = ts.pro_api()
-    df = pro.trade_cal(exchange='', start_date='20200101', end_date='20201231')
-    dateList = df['cal_date'].loc[df.is_open==1].tolist()
-    for date in dateList:
-        print('计算评分：', date)
-        calpfnew(date, False)
+    # cf = configparser.ConfigParser()
+    # cf.read('sql.conf')
+    # if cf.has_option('main', 'token'):
+    #     token = cf.get('main', 'token')
+    # else:
+    #     token = ''
+    # ts.set_token(token)
+    # print(token)
+    # pro = ts.pro_api()
+    # df = pro.trade_cal(exchange='', start_date='20200101', end_date='20201231')
+    # dateList = df['cal_date'].loc[df.is_open==1].tolist()
+    # for date in dateList:
+    #     print('计算评分：', date)
+    #     calpfnew(date, False)
 
     ##############################################
     # 数据修复
