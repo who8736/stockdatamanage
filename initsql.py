@@ -4,12 +4,16 @@ Created on 2016年11月30日
 
 @author: who8736
 """
+import pandas as pd
+
 import sqlrw
+from sqlconn import engine
+# from sqlrw import readStockIDsFromSQL
 
 
 def existTable(tablename):
     sql = 'show tables like "%s"' % tablename
-    result = sqlrw.engine.execute(sql)
+    result = engine.execute(sql)
     return False if result.rowcount == 0 else True
 
 
@@ -20,7 +24,7 @@ def dropKlineTable():
         print(tablename)
         if existTable(tablename):
             sql = 'drop table %s;' % tablename
-            sqlrw.engine.execute(sql)
+            engine.execute(sql)
 
 
 def createChiguGuzhiTable():
@@ -44,7 +48,7 @@ def createChiguGuzhiTable():
            'pe200 DOUBLE,'
            'pe1000 DOUBLE,'
            'PRIMARY KEY ( stockid )); ')
-    result = sqlrw.engine.execute(sql)
+    result = engine.execute(sql)
     return result
 
 
@@ -54,7 +58,7 @@ def createHY():
            'hyid VARCHAR(8),'
            'PRIMARY KEY ( stockid ),'
            'KEY `hyid` (`hyid`)); ')
-    result = sqlrw.engine.execute(sql)
+    result = engine.execute(sql)
     return result
 
 
@@ -71,25 +75,25 @@ def createHYName():
            'KEY `hylevel1id` (`hylevel1id`),'
            'KEY `hylevel2id` (`hylevel2id`),'
            'KEY `hylevel3id` (`hylevel3id`)); ')
-    result = sqlrw.engine.execute(sql)
+    result = engine.execute(sql)
     return result
 
 
 def createYouzhiGuzhiTable():
     sql = 'CREATE TABLE youzhiguzhi like chiguguzhi;'
-    result = sqlrw.engine.execute(sql)
+    result = engine.execute(sql)
     return result
 
 
 def createGuzhiResultTable():
     sql = 'CREATE TABLE guzhiresult like chiguguzhi;'
-    result = sqlrw.engine.execute(sql)
+    result = engine.execute(sql)
     return result
 
 
 def createTTMPETable(tablename):
     sql = 'create table %s like ttmpesimple' % tablename
-    result = sqlrw.engine.execute(sql)
+    result = engine.execute(sql)
     return result
 
 
@@ -101,7 +105,7 @@ def createGuzhiTable():
            'next2YearPE DOUBLE,'
            'next3YearPE DOUBLE,'
            'PRIMARY KEY ( stockid )); ')
-    result = sqlrw.engine.execute(sql)
+    result = engine.execute(sql)
     return result
 
 
@@ -112,7 +116,7 @@ def createHYProfitsTable():
            'profitsInc DOUBLE,'
            'profitsIncRate DOUBLE,'
            'PRIMARY KEY ( hyid, date)); ')
-    result = sqlrw.engine.execute(sql)
+    result = engine.execute(sql)
     return result
 
 
@@ -130,7 +134,7 @@ def createGuzhiHistoryStatusTable():
            'growthmadrate FLOAT,'
            'averageincrement FLOAT,'
            'PRIMARY KEY ( stockid, date)); ')
-    result = sqlrw.engine.execute(sql)
+    result = engine.execute(sql)
     return result
 
 
@@ -146,7 +150,7 @@ def createPELirunIncreaseTable():
            'pe FLOAT,'
            'lirunincrease FLOAT,'
            'PRIMARY KEY (date, stockid)); ')
-    result = sqlrw.engine.execute(sql)
+    result = engine.execute(sql)
     return result
 
 
@@ -160,19 +164,19 @@ def createGubenTable():
            "  KEY `ix_guben_date` (`date`)"
            ") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
            )
-    result = sqlrw.engine.execute(sql)
+    result = engine.execute(sql)
     return result
 
 
 def createChiguTable():
     sql = 'CREATE TABLE chigu(stockid VARCHAR(6),PRIMARY KEY (stockid));'
-    return sqlrw.engine.execute(sql)
+    return engine.execute(sql)
 
 
 # def createKlineTable(stockID):
 #     tableName = 'kline%s' % stockID
 #     sql = 'create table %s like klinesample' % tableName
-#     return sqlrw.engine.execute(sql)
+#     return engine.execute(sql)
 
 
 def createStocklist():
@@ -203,7 +207,7 @@ def createStocklist():
            "PRIMARY KEY (`stockid`)"
            ") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
            )
-    result = sqlrw.engine.execute(sql)
+    result = engine.execute(sql)
     return result
 
 
@@ -217,7 +221,7 @@ def createPEHistory():
            "KEY `ix_date` (`date`)"
            ") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
            )
-    result = sqlrw.engine.execute(sql)
+    result = engine.execute(sql)
     return result
 
 
@@ -239,7 +243,7 @@ def createIndexKline():
            "KEY `ix_date` (`date`)"
            ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;"
            )
-    result = sqlrw.engine.execute(sql)
+    result = engine.execute(sql)
     return result
 
 
@@ -281,8 +285,9 @@ def createHangyePE():
             PARTITION p26 VALUES LESS THAN (2026) ENGINE = InnoDB,
             PARTITION pnow VALUES LESS THAN MAXVALUE ENGINE = InnoDB) */;
             """)
-    result = sqlrw.engine.execute(sql)
+    result = engine.execute(sql)
     return result
+
 
 def createValuation():
     sql = ("""CREATE TABLE `valuation` (
@@ -345,8 +350,47 @@ def createValuation():
             PARTITION p25 VALUES LESS THAN (2025) ENGINE = InnoDB,
             PARTITION p26 VALUES LESS THAN (2026) ENGINE = InnoDB,
             PARTITION p27 VALUES LESS THAN (2027) ENGINE = InnoDB) */; """)
-    result = sqlrw.engine.execute(sql)
+    result = engine.execute(sql)
     return result
+
+
+def createTable():
+    """读取createtable文件夹tablename.xlsx文件中的表名，
+    根据相应表格格式的xlsx文件创建mysql表格
+
+    :return:
+    """
+    # 读表名
+    tablenameDf = pd.read_excel('createtable/tablename.xlsx')
+    tablenames = tablenameDf['table']
+
+    # 读类型对应关系
+    typedf = pd.read_excel('createtable/typetrans.xlsx')
+    typedf.set_index('tusharetype', inplace=True)
+
+    for tablename in tablenames:
+        if existTable(tablename):
+            continue
+        # 读字段名
+        df = pd.read_excel(f'createtable/{tablename}.xlsx')
+        # 表头
+        sql = f'CREATE TABLE `{tablename}` ('
+        # 字段
+        flag = False
+        for _, row in df.iterrows():
+            rowList = row.to_list()
+            field = rowList[0]
+            mysqltype = typedf.at[rowList[1], 'mysqltype']
+            if flag:
+                sql += ', '
+            else:
+                flag = True
+            sql += f'`{field}` {mysqltype} NOT NULL'
+        # 表尾
+        sql += ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;'
+        print(sql)
+
+        # engine.execute(sql)
 
 
 if __name__ == '__main__':

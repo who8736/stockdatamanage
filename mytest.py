@@ -371,35 +371,35 @@ if __name__ == "__main__":
     #     writeSQL(df, 'dailybasic')
 
     # 下载股权质押统计数据
-    IDs = readStockIDsFromSQL()
+    # IDs = readStockIDsFromSQL()
     # IDs = IDs[:10]
-    times = []
-    cnt = len(IDs)
-    for i in range(cnt):
-        nowtime = datetime.now()
-        if i >= 50 and (nowtime < times[i - 50] + timedelta(seconds=60)):
-            _timedelta = nowtime - times[i - 50]
-            sleeptime = 60 - _timedelta.seconds
-            print(f'******暂停{sleeptime}秒******')
-            time.sleep(sleeptime)
-            nowtime = datetime.now()
-        times.append(nowtime)
-        print(f'第{i}个，时间：{nowtime}')
-        stockID = IDs[i]
-        print(stockID)
-        flag = True
-        df = None
-        while flag:
-            try:
-                df = downPledgeStat(stockID)
-                flag = False
-            except Exception as e:
-                print(e)
-                time.sleep(10)
-        # print(df)
-        time.sleep(1)
-        if df is not None:
-            writeSQL(df, 'pledgestat')
+    # times = []
+    # cnt = len(IDs)
+    # for i in range(cnt):
+    #     nowtime = datetime.now()
+    #     if i >= 50 and (nowtime < times[i - 50] + timedelta(seconds=60)):
+    #         _timedelta = nowtime - times[i - 50]
+    #         sleeptime = 60 - _timedelta.seconds
+    #         print(f'******暂停{sleeptime}秒******')
+    #         time.sleep(sleeptime)
+    #         nowtime = datetime.now()
+    #     times.append(nowtime)
+    #     print(f'第{i}个，时间：{nowtime}')
+    #     stockID = IDs[i]
+    #     print(stockID)
+    #     flag = True
+    #     df = None
+    #     while flag:
+    #         try:
+    #             df = downPledgeStat(stockID)
+    #             flag = False
+    #         except Exception as e:
+    #             print(e)
+    #             time.sleep(10)
+    #     # print(df)
+    #     time.sleep(1)
+    #     if df is not None:
+    #         writeSQL(df, 'pledgestat')
 
     ##############################################
     # 数据更新
@@ -573,5 +573,9 @@ if __name__ == "__main__":
 
     # 测试datamanage中的updatePf
     # datamanage.updatePf()
+
+    # 建表测试
+    createTable()
+
 
     print('程序正常退出')
