@@ -15,6 +15,7 @@ from urllib.request import urlopen
 # from datetime import datetime
 # import baostock as bs
 # import tushare as ts
+from bokeh.plotting import figure, show, output_file
 from tushare import get_report_data
 import configparser
 
@@ -230,9 +231,14 @@ def resetLirun():
 
 
 def testBokeh():
-    b = BokehPlot('000651')
-    p = b.plot()
-    output_file("kline.html", title="kline plot test")
+    """bokeh测试用"""
+    # b = BokehPlot('000651')
+    # p = b.plot()
+    # output_file("kline.html", title="kline plot test")
+    output_file('vbar.html')
+    p = figure(plot_width=400, plot_height=400)
+    p.vbar(x=[1, 2, 3], width=0.5, bottom=[1, 2, 3],
+           top=[1.2, 2, 3.1], color="firebrick")
     show(p)  # open a browser
 
 
@@ -590,7 +596,7 @@ if __name__ == "__main__":
     # 绘图
     ##############################################
     # bokeh绘图
-    # testBokeh()
+    testBokeh()
 
     # 指数PE绘图
     # plotIndexPE()
@@ -632,10 +638,10 @@ if __name__ == "__main__":
     # createTable()
 
     # 使用tushare下载器
-    tableList = ['balancesheet', 'cashflow', 'forecast',
-                 'express', 'dividend', 'fina_indicator',
-                 'disclosure_date']
-    for tablename in tableList:
-        downloader(tablename)
+    # tableList = ['balancesheet', 'cashflow', 'forecast',
+    #              'express', 'dividend', 'fina_indicator',
+    #              'disclosure_date']
+    # for tablename in tableList:
+    #     downloader(tablename)
 
     print('程序正常退出')

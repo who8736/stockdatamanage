@@ -420,8 +420,11 @@ class BokehPlot:
         return self.column_layout
 
     def plotCandlestick(self):
-        inc = self.df.close > self.df.open
-        dec = self.df.open > self.df.close
+        """绘制K线图"""
+        inc = ((self.df.close > self.df.open) |
+               ((self.df.open == self.df.close) &
+                self.df.close.gt(self.df.close.shift())))
+        dec = ~inc
         incSor = ColumnDataSource(self.df[inc])
         decSor = ColumnDataSource(self.df[dec])
 
