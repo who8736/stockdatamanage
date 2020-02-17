@@ -314,6 +314,53 @@ def testWriteSQL():
     session.commit()
 
 
+def downloader(tablename):
+    """tushare用的下载器，可限制对tushare的访问量
+    :return:
+    """
+    pro = ts.pro_api()
+    IDs = readStockIDsFromSQL()
+    # IDs = IDs[:10]
+    times = []
+    cnt = len(IDs)
+
+    # tushare下载限制，每perTimes秒限制下载downLimit次
+    perTimes = 0
+    downLimit = 0
+    # tablename = 'income'
+    for i in range(cnt):
+        nowtime = datetime.now()
+        if perTimes > 0 and downLimit > 0 and i >= downLimit and (
+                nowtime < times[i - downLimit] + timedelta(seconds=perTimes)):
+            _timedelta = nowtime - times[i - 50]
+            sleeptime = 60 - _timedelta.seconds
+            print(f'******暂停{sleeptime}秒******')
+            time.sleep(sleeptime)
+            nowtime = datetime.now()
+        times.append(nowtime)
+        print(f'第{i}个，时间：{nowtime}')
+        stockID = IDs[i]
+        print(stockID)
+        flag = True
+        df = None
+        fun = getattr(pro, tablename)
+        while flag:
+            try:
+                # 下载质押统计表
+                # df = downPledgeStat(stockID)
+                # 下载利润表
+                # df = downIncome(stockID)
+                df = fun(ts_code=tsCode(stockID))
+                flag = False
+            except Exception as e:
+                print(e)
+                time.sleep(10)
+        # print(df)
+        time.sleep(1)
+        if df is not None:
+            writeSQL(df, tablename)
+
+
 if __name__ == "__main__":
     """
     本文件用于测试各模块功能
@@ -400,6 +447,13 @@ if __name__ == "__main__":
     #     time.sleep(1)
     #     if df is not None:
     #         writeSQL(df, 'pledgestat')
+
+    # 下载利润表
+    # stockID = '000651'
+    # startDate = '20160101'
+    # endDate = '20200202'
+    # downIncome(stockID, startDate=startDate, endDate=endDate)
+    # downIncome(stockID)
 
     ##############################################
     # 数据更新
@@ -575,7 +629,13 @@ if __name__ == "__main__":
     # datamanage.updatePf()
 
     # 建表测试
-    createTable()
+    # createTable()
 
+    # 使用tushare下载器
+    tableList = ['balancesheet', 'cashflow', 'forecast',
+                 'express', 'dividend', 'fina_indicator',
+                 'disclosure_date']
+    for tablename in tableList:
+        downloader(tablename)
 
     print('程序正常退出')

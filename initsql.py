@@ -380,17 +380,17 @@ def createTable():
         for _, row in df.iterrows():
             rowList = row.to_list()
             field = rowList[0]
-            mysqltype = typedf.at[rowList[1], 'mysqltype']
+            dataType = rowList[1]
             if flag:
                 sql += ', '
             else:
                 flag = True
-            sql += f'`{field}` {mysqltype} NOT NULL'
+            sql += f'`{field}` {dataType} DEFAULT NULL'
         # 表尾
         sql += ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;'
         print(sql)
 
-        # engine.execute(sql)
+        engine.execute(sql)
 
 
 if __name__ == '__main__':

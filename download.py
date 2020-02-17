@@ -821,6 +821,41 @@ def downPledgeStat(stockID):
     return df
 
 
+def downIncome(stockID, startDate='', endDate=''):
+    """下载tushare利润表
+
+    :param stockID: str, 股票代码
+    :param startDate: str, 开始日期, yyyymmdd
+    :param endDate: str, 结束日期, yyyymmdd
+    :return:
+    """
+    if len(stockID) == 6:
+        stockID = tsCode(stockID)
+    pro = ts.pro_api()
+    df = pro.income(ts_code=tsCode(stockID), start_date=startDate,
+                    end_date=endDate)
+    print(df)
+    writeSQL(df, 'income')
+
+
+def downBalancesheet(stockID, startDate='', endDate=''):
+    """下载tushare资产负债表
+
+    :param stockID: str, 股票代码
+    :param startDate: str, 开始日期, yyyymmdd
+    :param endDate: str, 结束日期, yyyymmdd
+    :return:
+    """
+    if len(stockID) == 6:
+        stockID = tsCode(stockID)
+    pro = ts.pro_api()
+    df = pro.balancesheet(ts_code=tsCode(stockID), start_date=startDate,
+                    end_date=endDate)
+    print(df)
+    return df
+    # writeSQL(df, 'income')
+
+
 if __name__ == '__main__':
     initlog()
 

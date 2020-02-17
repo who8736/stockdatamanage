@@ -540,17 +540,19 @@ def writeSQL(data: pd.DataFrame, tableName: str, replace=False):
     data = datatrans.transDfToList(data)
 
     Base = declarative_base()
+
     class MyTable(Base):
         __table__ = Table(f'{tableName}', Base.metadata,
                           autoload=True, autoload_with=engine)
+
     try:
         session = Session()
         metadata = MetaData(bind=engine)
         if replace:
             for d in data:
-            # for index, row in data.iterrows():
-            #     tmpDict = row.to_dict()
-            #     tmpDict[data.index.name] = index
+                # for index, row in data.iterrows():
+                #     tmpDict = row.to_dict()
+                #     tmpDict[data.index.name] = index
                 # d = {key: getattr(row, key) for key in row.keys()}
                 # for key in row.keys():
                 #     print('key type:', type(key))
@@ -638,7 +640,8 @@ def readValuationSammary():
 
 
 def readValuation(stockID):
-    sql = 'select * from valuation where stockid="%(stockID)s"' % locals()
+    sql = (f'select * from valuation where stockid="{stockID}"'
+           'order by date desc limit 1')
     result = engine.execute(sql).fetchone()
     return result
 
