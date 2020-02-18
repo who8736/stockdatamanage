@@ -11,7 +11,7 @@ import hyanalyse
 import datatrans
 
 
-class reportItem():
+class ReportItem():
 
     def __init__(self, stockID):
         self.stockID = stockID
@@ -80,7 +80,7 @@ def report(stockID):
 
 
 def report1(stockID):
-    myItem = reportItem(stockID)
+    myItem = ReportItem(stockID)
     myItem.name = sqlrw.getStockName(stockID)
     guzhiData = sqlrw.getGuzhi(stockID)
     # 当前TTMPE
@@ -150,7 +150,7 @@ def report1(stockID):
 
 
 def reportValuation(stockID):
-    myItem = reportItem(stockID)
+    myItem = ReportItem(stockID)
     myStockValuation = sqlrw.readValuation(stockID)
     myItem.name = myStockValuation[2]
     guzhiData = sqlrw.getGuzhi(stockID)
@@ -239,7 +239,7 @@ def reportValuation(stockID):
 
 
 def reportIndex(ID):
-    myItem = reportItem(ID)
+    myItem = ReportItem(ID)
     return myItem
 
 if __name__ == '__main__':

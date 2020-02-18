@@ -1,34 +1,36 @@
 {% extends "base.html" %}
 {% block title %}股票评分{% endblock %}
 {% block body %}
-	<div class="container">
-	    {{ super() }}
-		<hr>
-		<div class="text-center">
-		    <table class="table">
-			    <tr>
-			      <th>代码</th>
-			      <th>名称</th>
-			      <th>评分</th>
-			      <th>PE</th>
-			      <th>PEG</th>
-			      <th>PE200</th>
-			      <th>PE1000</th>
-			    </tr>
-				{% for stock in stockList %}
-			    	<tr>
-						<td><a class="text-center" href="/valuation/{{ stock[0] }}">
-							{{ stock[0] }}</a></td>
-						<td>{{ stock[1] }}</td>
-						<td>{{ stock[2] }}</td>
-						<td>{{ stock[3] }}</td>
-						<td>{{ stock[4] }}</td>
-						<td>{{ stock[5] }}</td>
-						<td>{{ stock[6] }}</td>
-					</tr>
-				{% endfor %}
-			</table>
-		</div>
-	</div>
+<div class="container">
+    {{ super() }}
+    <hr>
+    <div class="text-center">
+        <table class="table">
+            <tr>
+                <th>代码</th>
+                <th>名称</th>
+                <th>行业名称</th>
+                <th>评分</th>
+                <th>PE</th>
+                <th>PEG</th>
+                <th>PE200</th>
+                <th>PE1000</th>
+            </tr>
+            {% for index, stock in stocksDf.iterrows() %}
+            <tr>
+                <td><a class="text-center" href="/valuation/{{ index }}">
+                    {{ stock['stockid'] }}</a></td>
+                <td>{{ stock['name'] }}</td>
+                <td>{{ stock['hyname'] }}</td>
+				<td>{{ stock['pf'] }}</td>
+				<td>{{ stock['pe'] }}</td>
+				<td>{{ stock['peg'] }}</td>
+				<td>{{ stock['pe200'] }}</td>
+                <td>{{ stock['pe1000'] }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
 {% endblock %}
 

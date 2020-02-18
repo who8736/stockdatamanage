@@ -96,18 +96,8 @@ def valuationNav(typeid):
     elif typeid == 'youzhi':
         stocksDf = stocksDf[(stocksDf.pf >= 5) &
                             (stocksDf.pe < 30)]
-    #        sql = 'select stockid, name, pf, pe, peg, pe200, pe1000'
-
-    stockReportList = np.array(stocksDf).tolist()
-    #    for stockID in stockList:
-    #        stockName = getStockName(stockID)
-    #        stockClose = readCurrentClose(stockID)
-    #        pe = readCurrentTTMPE(stockID)
-    #        peg = readCurrentPEG(stockID)
-    #        pe200, pe1000 = readPERate(stockID)
-    #        stockReportList.append([stockID, stockName,
-    #                                stockClose, pe, peg, pe200, pe1000])
-    return render_template('valuationnav.html', stockList=stockReportList)
+    # stockReportList = np.array(stocksDf).tolist()
+    return render_template('valuationnav.html', stocksDf=stocksDf)
 
 
 @app.route('/valuation/<stockid>')

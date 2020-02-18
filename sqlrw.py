@@ -636,6 +636,11 @@ def readValuationSammary():
            'from valuation where date = (select max(date) from valuation) '
            'order by pf desc;')
     stocks = pd.read_sql(sql, engine)
+    sql = ('select a.stockid, a.name, c.hyname'
+           ' from stocklist a, hangyestock b, hangyename c'
+           ' where a.stockid=b.stockid and b.hyid=c.hyid order by stockid;')
+    hyname = pd.read_sql(sql, engine)
+    stocks = pd.merge(stocks, hyname, how='left')
     return stocks
 
 
