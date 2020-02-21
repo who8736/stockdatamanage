@@ -632,15 +632,50 @@ def readGuzhiSQLToDf(stockList):
 
 
 def readValuationSammary():
-    sql = ('select stockid, name, pf, pe, peg, pe200, pe1000 '
+    """读取股票评分信息"""
+    # 基本信息
+    sql = ('select stockid, name, date, pf, pe, peg, pe200, pe1000 '
            'from valuation where date = (select max(date) from valuation) '
            'order by pf desc;')
     stocks = pd.read_sql(sql, engine)
+
+    # 行业名称
     sql = ('select a.stockid, a.name, c.hyname'
            ' from stocklist a, hangyestock b, hangyename c'
            ' where a.stockid=b.stockid and b.hyid=c.hyid order by stockid;')
     hyname = pd.read_sql(sql, engine)
     stocks = pd.merge(stocks, hyname, how='left')
+
+    # 财务指标
+    sql = ('select a.ts_code, a.end_date as fina_date,'
+           ' a.grossprofit_margin, a.roe'
+           ' from fina_indicator a,'
+           ' (select ts_code, max(end_date) as fina_date '
+           ' from fina_indicator group by ts_code) b'
+           ' where a.ts_code = b.ts_code and a.end_date = b.fina_date;')
+    finastat = pd.read_sql(sql, engine)
+    finastat['stockid'] = finastat.ts_code.str[:6]
+    finastat['grossprofit_margin'] = finastat.grossprofit_margin.round(2)
+    finastat['roe'] = finastat.roe.round(2)
+    finastat = finastat[['stockid', 'fina_date', 'grossprofit_margin', 'roe']]
+    stocks = pd.merge(stocks, finastat, how='left')
+
+    # 每日指标
+    # sql = ('select a.stockid, a.dv_ttm,'
+    #        ' from dailybasic a,'
+    #        ' (select stockid, max(date) as daily_date'
+    #        ' from dailybasic group by stockid) b'
+    #        ' where a.stockid=b.stockid and a.date = b.daily_date')
+    sql = """select a.stockid, a.dv_ttm from dailybasic a,
+            (select stockid, max(date) as daily_date 
+            from dailybasic group by stockid) b
+            where a.stockid = b.stockid and a.date = b.daily_date;"""
+
+    daily = pd.read_sql(sql, engine)
+    stocks = pd.merge(stocks, daily, how='left')
+
+    # 排序
+    stocks.sort_values(by=['pf', 'pe'], ascending=(False, True), inplace=True)
     return stocks
 
 

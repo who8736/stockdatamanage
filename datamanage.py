@@ -30,7 +30,7 @@ from sqlrw import getAllMarketPEUpdateDate
 import download
 from download import downGuben, downGuzhi, downKline
 from download import downMainTable, downloadLirun, downStockList
-from download import downIndex
+from download import downIndex, downDailyBasic
 # from download import downHYList
 from initlog import initlog
 from datatrans import dateList
@@ -60,6 +60,9 @@ def startUpdate():
     # 更新股票列表
     downStockList()
 #     stockList = stockList[:10]
+
+    # 更新每日指标
+    updateDailybasic()
 
     # 更新行业列表
     downHYList()
@@ -296,6 +299,21 @@ def readStockListFromFile(filename):
     return stockList
 
 
+@logfun
+def updateDailybasic():
+    """更新每日指标
+    """
+    sql = 'select max(date) from dailybasic'
+    lastdate = engine.execute(sql).fetchone()[0]
+    lastdate += timedelta(days=1)
+    startDate = lastdate.strftime('%Y%m%d')
+    endDate = datetime.today().date() - timedelta(days=1)
+    endDate = endDate.strftime('%Y%m%d')
+    dates = datatrans.dateStrList(startDate, endDate)
+    for d in dates:
+        download.downDailyBasic(tradeDate=d)
+
+
 # def readTestStockList():
 #     filename = '.\\data\\teststock.txt'
 #     return readStockListFromFile(filename)
@@ -331,7 +349,7 @@ if __name__ == '__main__':
     else:
         token = ''
     ts.set_token(token)
-    print(token)
+    print('设置访问tushare的token:', token)
 
 #     updateDataTest()
 

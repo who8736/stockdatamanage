@@ -5,9 +5,6 @@ Created on Mon Apr 15 15:27:38 2019
 @author: ff
 """
 
-import time
-import typing
-
 # import pandas as pd
 # from pandas import DataFrame
 from urllib.request import urlopen
@@ -15,9 +12,7 @@ from urllib.request import urlopen
 # from datetime import datetime
 # import baostock as bs
 # import tushare as ts
-from bokeh.plotting import figure, show, output_file
-from tushare import get_report_data
-import configparser
+from bokeh.plotting import figure
 
 # from download import getreq
 from xml import etree
@@ -26,34 +21,19 @@ from download import *
 from sqlrw import *
 from bokeh.plotting import show, output_file
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.dialects.mysql import insert, Insert
 
-import datamanage
-from datamanage import updateKline
-from datamanage import updateKlineEXTData
-from datamanage import startUpdate
-from datamanage import updateGubenSingleThread
-from sqlrw import _getLastUpdate
+from datamanage import updateKlineEXTData, updateDailybasic
 from sqlrw import readStockIDsFromSQL
-from sqlconn import engine, Session
-from initsql import *
-from dataanalyse import testChigu, testShaixuan
-from dataanalyse import calPEHistory, calAllPEHistory
-from dataanalyse import calGuzhi
+from sqlconn import Session
 # from misc import urlGubenEastmoney
 from misc import *
 # from initlog import initlog
 from datatrans import *
 from hyanalyse import *
-from plot import BokehPlot, plotKlineStock
 import bokehtest
-from download import downKline, _downGubenSina
-from bokehtest import plotIndexPE, testPlotKline
-import bokehtest
-from bokehtest import BokehPlotPE
+
 
 # import dataanalyse
-from valuation import calpf, calpfnew
 
 
 def downGubenFromEastmoney():
@@ -320,53 +300,6 @@ def testWriteSQL():
     session.commit()
 
 
-def downloader(tablename):
-    """tushare用的下载器，可限制对tushare的访问量
-    :return:
-    """
-    pro = ts.pro_api()
-    IDs = readStockIDsFromSQL()
-    # IDs = IDs[:10]
-    times = []
-    cnt = len(IDs)
-
-    # tushare下载限制，每perTimes秒限制下载downLimit次
-    perTimes = 0
-    downLimit = 0
-    # tablename = 'income'
-    for i in range(cnt):
-        nowtime = datetime.now()
-        if perTimes > 0 and downLimit > 0 and i >= downLimit and (
-                nowtime < times[i - downLimit] + timedelta(seconds=perTimes)):
-            _timedelta = nowtime - times[i - 50]
-            sleeptime = 60 - _timedelta.seconds
-            print(f'******暂停{sleeptime}秒******')
-            time.sleep(sleeptime)
-            nowtime = datetime.now()
-        times.append(nowtime)
-        print(f'第{i}个，时间：{nowtime}')
-        stockID = IDs[i]
-        print(stockID)
-        flag = True
-        df = None
-        fun = getattr(pro, tablename)
-        while flag:
-            try:
-                # 下载质押统计表
-                # df = downPledgeStat(stockID)
-                # 下载利润表
-                # df = downIncome(stockID)
-                df = fun(ts_code=tsCode(stockID))
-                flag = False
-            except Exception as e:
-                print(e)
-                time.sleep(10)
-        # print(df)
-        time.sleep(1)
-        if df is not None:
-            writeSQL(df, tablename)
-
-
 if __name__ == "__main__":
     """
     本文件用于测试各模块功能
@@ -408,6 +341,7 @@ if __name__ == "__main__":
     # downIndex('000010.SH', startDate=startDate)
 
     # # 下载每日指标
+    updateDailybasic()
     # stockID = '000651'
     # startDate = '20090829'
     # endDate = '20171231'
@@ -596,7 +530,7 @@ if __name__ == "__main__":
     # 绘图
     ##############################################
     # bokeh绘图
-    testBokeh()
+    # testBokeh()
 
     # 指数PE绘图
     # plotIndexPE()

@@ -13,6 +13,8 @@ import socket
 from urllib import request
 import time
 import re
+
+import tushare
 from lxml import etree
 import lxml
 import datetime as dt
@@ -26,7 +28,7 @@ from io import StringIO
 from tushare.stock import cons as ct
 import baostock as bs
 
-from misc import urlGubenSina
+from misc import urlGubenSina, tsCode
 # from misc import urlGubenEastmoney
 from misc import urlGuzhi, urlMainTable
 # from misc import filenameGuben
@@ -35,7 +37,7 @@ from misc import longStockID, tsCode
 import datatrans
 # import hyanalyse
 import sqlrw
-from sqlrw import engine
+from sqlrw import engine, readStockIDsFromSQL, writeSQL
 from sqlrw import getStockKlineUpdateDate, lirunFileToList
 from sqlrw import writeSQL
 from sqlrw import writeStockList
@@ -803,6 +805,7 @@ def downDailyBasic(stockID=None, tradeDate=None, startDate=None, endDate=None):
                   inplace=True)
         df['stockid'] = df['stockid'].str[:6]
         df.set_index(keys=['stockid'], inplace=True)
+        sqlrw.writeSQL(df, 'dailybasic')
     return df
 
 
@@ -818,6 +821,7 @@ def downPledgeStat(stockID):
     df.rename(columns={'ts_code': 'stockid', 'end_date': 'date'}, inplace=True)
     df['stockid'] = df['stockid'].str[:6]
     df.set_index(keys=['stockid'], inplace=True)
+    writeSQL(df, 'pledgestat')
     return df
 
 
@@ -863,3 +867,48 @@ if __name__ == '__main__':
     stockID = '000651'
     startDate = '2019-04-01'
     downKlineFromBaostock(stockID, startDate)
+
+
+def downloader(tablename, perTimes=0, downLimit=0):
+    """tushare用的下载器，可限制对tushare的访问量
+    # tushare下载限制，每perTimes秒限制下载downLimit次
+    :return:
+    """
+    pro = ts.pro_api()
+    IDs = readStockIDsFromSQL()
+    # IDs = IDs[:10]
+    times = []
+    cnt = len(IDs)
+
+    # tablename = 'income'
+    for i in range(cnt):
+        nowtime = datetime.now()
+        if perTimes > 0 and downLimit > 0 and i >= downLimit and (
+                nowtime < times[i - downLimit] + timedelta(seconds=perTimes)):
+            _timedelta = nowtime - times[i - 50]
+            sleeptime = 60 - _timedelta.seconds
+            print(f'******暂停{sleeptime}秒******')
+            time.sleep(sleeptime)
+            nowtime = datetime.now()
+        times.append(nowtime)
+        print(f'第{i}个，时间：{nowtime}')
+        stockID = IDs[i]
+        print(stockID)
+        flag = True
+        df = None
+        fun = getattr(pro, tablename)
+        while flag:
+            try:
+                # 下载质押统计表
+                # df = downPledgeStat(stockID)
+                # 下载利润表
+                # df = downIncome(stockID)
+                df = fun(ts_code=tsCode(stockID))
+                flag = False
+            except Exception as e:
+                print(e)
+                time.sleep(10)
+        # print(df)
+        time.sleep(1)
+        if df is not None:
+            writeSQL(df, tablename)
