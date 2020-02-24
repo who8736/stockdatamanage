@@ -305,7 +305,7 @@ class BokehPlot:
         days = df.shape[0]
         self.source = ColumnDataSource(self.df)
 
-        TOOLS = "pan,wheel_zoom,box_zoom,reset,save"
+        TOOLS = 'pan,wheel_zoom,box_zoom,reset,save,crosshair'
         width = 1000
         klineHeight = int(width / 16 * 6)
         peHeight = int(width / 16 * 3)
