@@ -90,14 +90,13 @@ def reportView(stockid):
 
 @app.route('/valuationtype/<typeid>')
 def valuationNav(typeid):
-    stocksDf = readValuationSammary()
+    df = readValuationSammary()
     if typeid == 'chigu':
-        stocksDf = stocksDf[stocksDf['stockid'].isin(getChiguList())]
+        df = df[df['stockid'].isin(getChiguList())]
     elif typeid == 'youzhi':
-        stocksDf = stocksDf[(stocksDf.pf >= 5) &
-                            (stocksDf.pe < 30)]
-    # stockReportList = np.array(stocksDf).tolist()
-    return render_template('valuationnav.html', stocksDf=stocksDf)
+        df = df[(df.pf >= 5) & (df.pe < 30)]
+    # stockReportList = np.array(df).tolist()
+    return render_template('valuationnav.html', stocksDf=df)
 
 
 @app.route('/valuation/<stockid>')
