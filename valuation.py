@@ -11,6 +11,7 @@ Created on Wed Oct 25 21:30:01 2017
 # 近三年利润增长率算术平均值超10%
 
 """
+import os
 
 import pandas as pd
 import numpy as np
@@ -21,6 +22,7 @@ import dataanalyse
 import sqlrw
 from sqlrw import engine
 from sqlrw import readStockListDf, readLastTTMPEs
+import pushdata
 
 # 定义指标常数
 LOWPE = 20
@@ -282,7 +284,11 @@ def calpfnew(date, replace=False):
 
     # 保存评价结果
     stocks.set_index(['stockid'], inplace=True)
-    stocks.to_csv('./data/valuation.csv')
+    # stocks.to_csv('./data/valuation.csv')
+    pfFilename = f'valuations{date}.xlsx'
+    stocks.to_excel(os.path.join('data', pfFilename))
+    mailTitle = f'评分{date}'
+    pushdata.push(mailTitle, pfFilename)
     #    print stocks
     # if initsql.existTable('valuation'):
     #     engine.execute('TRUNCATE TABLE valuation')

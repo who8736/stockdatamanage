@@ -31,6 +31,7 @@ from misc import *
 from datatrans import *
 from hyanalyse import *
 import bokehtest
+from valuation import calpfnew
 
 
 # import dataanalyse
@@ -341,7 +342,7 @@ if __name__ == "__main__":
     # downIndex('000010.SH', startDate=startDate)
 
     # # 下载每日指标
-    updateDailybasic()
+    # updateDailybasic()
     # stockID = '000651'
     # startDate = '20090829'
     # endDate = '20171231'
@@ -460,7 +461,7 @@ if __name__ == "__main__":
     # endDate = '20191231'
     # formatStr = '%Y%m%d'
     # cf = configparser.ConfigParser()
-    # cf.read('sql.conf')
+    # cf.read('stockdata.conf')
     # if cf.has_option('main', 'token'):
     #     token = cf.get('main', 'token')
     # else:
@@ -473,6 +474,7 @@ if __name__ == "__main__":
     # for date in dateList:
     #     print('计算评分：', date)
     #     calpfnew(date, False)
+    calpfnew('20200228', True)
 
     ##############################################
     # 数据修复

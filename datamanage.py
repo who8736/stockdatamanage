@@ -34,6 +34,7 @@ from download import downIndex, downDailyBasic
 # from download import downHYList
 from initlog import initlog
 from datatrans import dateList
+import config
 
 
 def logfun(func):
@@ -342,14 +343,9 @@ if __name__ == '__main__':
         logging.error('login baostock failed')
 
     # 加载tushare.pro用户的token,需事先在sql.conf文件中设置
-    cf = configparser.ConfigParser()
-    cf.read('sql.conf')
-    if cf.has_option('main', 'token'):
-        token = cf.get('main', 'token')
-    else:
-        token = ''
-    ts.set_token(token)
-    print('设置访问tushare的token:', token)
+    cf = config.Config()
+    ts.set_token(cf.tushareToken)
+    print('设置访问tushare的token:', cf.tushareToken)
 
 #     updateDataTest()
 
