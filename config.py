@@ -14,6 +14,7 @@ SQLPASSWORD = ''
 SQLIP = '127.0.0.1'
 TUSHARETOKEN = ''
 
+PUSHDATA = False
 MAILSERVER = 'smtp.163.com'
 MAILPORT = '25'  # 设为空表示不需指定端口
 MAILUSER = 'test@163.com'
@@ -28,6 +29,7 @@ class Config:
         self.sqlPassword = ''
         self.sqlIp = ''
         self.tushareToken = ''
+        self.pushData = ''
         self.mailServer = ''
         self.mailPort = ''
         self.mailUser = ''
@@ -51,6 +53,7 @@ class Config:
         self.cf.set('sql', 'tushareToken', TUSHARETOKEN)
 
         self.cf.add_section('mail')
+        self.cf.set('mail', 'pushData', PUSHDATA)
         self.cf.set('mail', 'mailServer', MAILSERVER)
         self.cf.set('mail', 'mailPort', MAILPORT)
         self.cf.set('mail', 'mailUser', MAILUSER)
@@ -68,6 +71,7 @@ class Config:
         self.sqlPassword = self.cf.get('sql', 'sqlPassword')
         self.sqlIp = self.cf.get('sql', 'sqlIp')
         self.tushareToken = self.cf.get('sql', 'tushareToken')
+        self.pushData = self.cf.get('mail', 'pushData')
         self.mailServer = self.cf.get('mail', 'mailServer')
         self.mailPort = self.cf.get('mail', 'mailPort')
         self.mailUser = self.cf.get('mail', 'mailUser')

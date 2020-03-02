@@ -23,6 +23,7 @@ import sqlrw
 from sqlrw import engine
 from sqlrw import readStockListDf, readLastTTMPEs
 import pushdata
+from config import Config
 
 # 定义指标常数
 LOWPE = 20
@@ -287,8 +288,13 @@ def calpfnew(date, replace=False):
     # stocks.to_csv('./data/valuation.csv')
     pfFilename = f'valuations{date}.xlsx'
     stocks.to_excel(os.path.join('data', pfFilename))
-    mailTitle = f'评分{date}'
-    pushdata.push(mailTitle, pfFilename)
+
+    # 将评分发送到邮箱
+    cf = Config()
+    pushflag = cf.pushData
+    if pushflag:
+        mailTitle = f'评分{date}'
+        pushdata.push(mailTitle, pfFilename)
     #    print stocks
     # if initsql.existTable('valuation'):
     #     engine.execute('TRUNCATE TABLE valuation')
