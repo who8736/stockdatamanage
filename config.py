@@ -5,78 +5,57 @@ Created on 2016年12月14日
 @author: who8736
 """
 import os
+import sys
 import configparser
 
-SECRETKEY = 'Sm9obiBTY2hyb20ga2lja3MgYXNz'
-
-SQLUSER = ''
-SQLPASSWORD = ''
-SQLIP = '127.0.0.1'
-TUSHARETOKEN = ''
-
-PUSHDATA = False
-MAILSERVER = 'smtp.163.com'
-MAILPORT = '25'  # 设为空表示不需指定端口
-MAILUSER = 'test@163.com'
-MAILPASSWORD = 'testpassword'
-SENDTO = 'test@qq.com|test1@qq.com'
+# options格式：类成员变量名，配置文件中的段，配置文件中的选项，
+#              缺省值, 值类型
+options = [['secretkey', 'main', 'secretkey',
+            'Sm9obiBTY2hyb20ga2lja3MgYXNz', 'str'],
+           ['sqlUser', 'sql', 'sqluser', '', 'str'],
+           ['sqlPassword', 'sql', 'sqlpassword', '', 'str'],
+           ['sqlIp', 'sql', 'sqlip', '127.0.0.1', 'str'],
+           ['tushareToken', 'sql', 'tusharetoken', '', 'str'],
+           ['pushData', 'mail', 'pushdata', 'False', 'bool'],
+           ['mailServer', 'mail', 'mailserver', 'smtp.163.com', 'str'],
+           ['mailPort', 'mail', 'mailport', '25', 'str'], # 设为空表示不需指定端口
+           ['mailUser', 'mail', 'mailuser', 'test@163.com', 'str'],
+           ['mailPassword', 'mail', 'mailpassword', 'testpassword', 'str'],
+           ['sendTo', 'mail', 'sendto', 'test@qq.com|test1@qq.com', 'str'],
+           ]
 
 
 class Config:
     def __init__(self):
-        self.secretKey = ''
-        self.sqlUser = ''
-        self.sqlPassword = ''
-        self.sqlIp = ''
-        self.tushareToken = ''
-        self.pushData = ''
-        self.mailServer = ''
-        self.mailPort = ''
-        self.mailUser = ''
-        self.mailPassword = ''
-        self.sendTo = ''
         self.cf = configparser.ConfigParser()
-
         if not os.path.isfile('stockdata.conf'):
             self.initConfig()
-        self.readConfig()
+            print('请修改配置stockdata.conf后，重新运行程序')
+            sys.exit(1)
+        else:
+            self.readConfig()
+            self.saveConf()
 
     def initConfig(self):
-        # add section / set option & key
-        self.cf.add_section('main')
-        self.cf.set('main', 'secretKey', SECRETKEY)
-
-        self.cf.add_section('sql')
-        self.cf.set('sql', 'sqlUser', SQLUSER)
-        self.cf.set('sql', 'sqlPassword', SQLPASSWORD)
-        self.cf.set('sql', 'sqlIp', SQLIP)
-        self.cf.set('sql', 'tushareToken', TUSHARETOKEN)
-
-        self.cf.add_section('mail')
-        self.cf.set('mail', 'pushData', PUSHDATA)
-        self.cf.set('mail', 'mailServer', MAILSERVER)
-        self.cf.set('mail', 'mailPort', MAILPORT)
-        self.cf.set('mail', 'mailUser', MAILUSER)
-        self.cf.set('mail', 'mailPassword', MAILPASSWORD)
-        self.cf.set('mail', 'sendTo', SENDTO)
-
-        # write to file
-        self.cf.write(open('stockdata.conf', 'w+'))
+        """初始化配置文件，
+        初始化步骤：生成空配置文件, 生成缺省配置, 保存缺省配置
+        """
+        self.saveConf()
+        self.readConfig()
+        self.saveConf()
 
     def readConfig(self):
         self.cf.read('stockdata.conf')
+        for varName, section, option, defaultValue, valueType in options:
+            if not self.cf.has_section(section):
+                self.cf.add_section(section)
+            if not self.cf.has_option(section, option):
+                self.cf.set(section, option, defaultValue)
 
-        self.secretKey = self.cf.get('main', 'secretKey')
-        self.sqlUser = self.cf.get('sql', 'sqlUser')
-        self.sqlPassword = self.cf.get('sql', 'sqlPassword')
-        self.sqlIp = self.cf.get('sql', 'sqlIp')
-        self.tushareToken = self.cf.get('sql', 'tushareToken')
-        self.pushData = self.cf.get('mail', 'pushData')
-        self.mailServer = self.cf.get('mail', 'mailServer')
-        self.mailPort = self.cf.get('mail', 'mailPort')
-        self.mailUser = self.cf.get('mail', 'mailUser')
-        self.mailPassword = self.cf.get('mail', 'mailPassword')
-        self.sendTo = self.cf.get('mail', 'sendTo')
+            if valueType == 'bool':
+                setattr(self, varName, self.cf.getboolean(section, option))
+            else:
+                setattr(self, varName, self.cf.get(section, option))
 
     def saveConf(self):
         # write to file

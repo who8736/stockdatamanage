@@ -208,7 +208,7 @@ def peHistRate(stockList, dayCount, date=None):
         # 最低为0，最高为100
         # 历史交易天数不足时，PE水平为-1
     """
-    print(f'peHistRate: {dayCount}, stockList count:{len(stockList)}')
+    print(f'开始计算peHistRate: {dayCount}, stockList count:{len(stockList)}')
     perates = []
     for stockID in stockList:
         # print(stockID)
@@ -346,13 +346,14 @@ def calPEHistory(ID, startDate, endDate=None):
     ID = ID.upper()
     if endDate is None:
         endDate = datetime.today().date()
-    session = Session()
+    # session = Session()
     for tradeDate in dateList(startDate, endDate):
         sql = 'call calchengfenpe("%(ID)s", "%(tradeDate)s");' % locals()
         print(sql)
-        session.execute(sql)
-    session.commit()
-    session.close()
+        engine.execute(sql)
+        # session.execute(sql)
+    # session.commit()
+    # session.close()
 
 
 def analysePEHist(stockID, startDate, endDate, dayCount=200,

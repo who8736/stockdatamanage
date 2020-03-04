@@ -23,6 +23,7 @@ from bokeh.plotting import show, output_file
 from sqlalchemy.ext.declarative import declarative_base
 
 from datamanage import updateKlineEXTData, updateDailybasic
+from datamanage import updateIndex
 from sqlrw import readStockIDsFromSQL
 from sqlconn import Session
 # from misc import urlGubenEastmoney
@@ -451,7 +452,7 @@ if __name__ == "__main__":
     # print('行业PE：', pe)
 
     # 更新指数数据及PE
-    # datamanage.updateIndex()
+    # updateIndex()
 
     # 更新全市PE
     # datamanage.updateAllMarketPE()
@@ -579,5 +580,11 @@ if __name__ == "__main__":
     #              'disclosure_date']
     # for tablename in tableList:
     #     downloader(tablename)
+
+    # 发送邮件
+    # datestr = '20200303'
+    # from pushdata import push
+    # push(f'评分{datestr}', f'valuations{datestr}.xlsx')
+
 
     print('程序正常退出')
