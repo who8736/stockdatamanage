@@ -23,9 +23,7 @@ def push(title, filename):
     sendTime = datetime.datetime.now().strftime('%Y%m%d %H:%M:%S')
 
     message = MIMEMultipart()
-    message['From'] = f'who8736pushdata<{user}>'
-    # message['To'] = 'aa<172554860@qq.com>'
-    # message['To'] = 'aa<172554860@qq.com>; bb<who8736pushdata@foxmail.com>'
+    message['From'] = f'aa<{user}>'
     message['To'] = ';'.join(receivers)
     message.attach(MIMEText(title, 'plain', 'utf-8'))
 
@@ -45,9 +43,6 @@ def push(title, filename):
     try:
         serv = smtplib.SMTP(server, port)
         serv.login(user, password)
-        # serv.sendmail(user, ['172554860@qq.com'], message.as_string())
-        # serv.sendmail(user, ['aa<172554860@qq.com>', 'bb<who8736@foxmail.com>'], message.as_string())
-        # serv.sendmail(user, ['aa<172554860@qq.com>'], message.as_string())
         serv.sendmail(user, receivers, message.as_string())
         # serv.sendmail(user, ';'.join(receivers), message.as_string())
         serv.quit()
@@ -66,14 +61,11 @@ def push1(title, filename):
     cf = config.Config()
     user = cf.mailUser
     receivers = [f'aa<{s}>' for s in cf.sendTo.split('|')]
-    # receivers = ['aa<172554860@qq.com>', 'who8736pushdata<who8736pushdata@163.com>']
     # receivers = [f'{s}' for s in cf.sendTo.split('|')]
     sendTime = datetime.datetime.now().strftime('%Y%m%d %H:%M:%S')
 
     message = MIMEMultipart()
-    message['From'] = f'who8736pushdata<{user}>'
-    # message['To'] = 'aa<172554860@qq.com>'
-    # message['To'] = 'aa<172554860@qq.com>; bb<who8736pushdata@163.com>'
+    message['From'] = f'aa<{user}>'
     message['To'] = ';'.join(receivers)
     message.attach(MIMEText(title, 'plain', 'utf-8'))
 
@@ -93,9 +85,6 @@ def push1(title, filename):
     try:
         serv = smtplib.SMTP(server, port)
         serv.login(user, password)
-        # serv.sendmail(user, ['172554860@qq.com'], message.as_string())
-        # serv.sendmail(user, ['aa<172554860@qq.com>', 'bb<who8736@foxmail.com>'], message.as_string())
-        # serv.sendmail(user, ['aa<172554860@qq.com>'], message.as_string())
         serv.sendmail(user, receivers, message.as_string())
         # serv.sendmail(user, ';'.join(receivers), message.as_string())
         serv.quit()
@@ -103,6 +92,7 @@ def push1(title, filename):
         logging.debug(f'邮件发送成功: {title}')
     except Exception as e:
         print(e)
+        logging.error('邮件发送失败: ', e)
 
 
 if __name__ == '__main__':
