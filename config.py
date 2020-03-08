@@ -24,11 +24,14 @@ options = [['secretkey', 'main', 'secretkey',
            ['sendTo', 'mail', 'sendto', 'test@qq.com|test1@qq.com', 'str'],
            ]
 
+CPATH = os.path.split(os.path.abspath(__file__))[0]
+CFILE = os.path.join(CPATH, 'stockdata.conf')
+
 
 class Config:
     def __init__(self):
         self.cf = configparser.ConfigParser()
-        if not os.path.isfile('stockdata.conf'):
+        if not os.path.isfile(CFILE):
             self.initConfig()
             print('请修改配置stockdata.conf后，重新运行程序')
             sys.exit(1)
@@ -45,7 +48,7 @@ class Config:
         self.saveConf()
 
     def readConfig(self):
-        self.cf.read('stockdata.conf')
+        self.cf.read(CFILE)
         for varName, section, option, defaultValue, valueType in options:
             if not self.cf.has_section(section):
                 self.cf.add_section(section)
@@ -59,7 +62,7 @@ class Config:
 
     def saveConf(self):
         # write to file
-        self.cf.write(open('stockdata.conf', 'w+'))
+        self.cf.write(open(CFILE, 'w+'))
 
 
 if __name__ == '__main__':
