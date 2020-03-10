@@ -83,6 +83,8 @@ def adfTestProfits1(stockID, startDate, endDate):
     return resultb
 
 
+
+
 if __name__ == '__main__':
     pass
     stockID = '000651'
