@@ -82,11 +82,8 @@ def adfTestProfits1(stockID, startDate, endDate):
     # return (round(resultb[0], 2), round(resultb[1], 2), flag)
     return resultb
 
-
-
-
-if __name__ == '__main__':
-    pass
+def adfTestAll():
+    """对所有股票2009年1季度至2020年1季度TTM利润增长率进行ADF检测"""
     stockID = '000651'
     startDate = '20091'
     endDate = '20201'
@@ -134,3 +131,30 @@ if __name__ == '__main__':
                        })
     df.to_excel('test.xlsx')
     print(df)
+
+
+def findPairs(stockIDa, stockIDb, startDate='20090101', endDate='20191231'):
+    """两支股票的TTMPE是否存在协整关系
+    时间区间为20090101至20191231
+    1.两只股票TTMPE的折线图
+    2.两只股票TTMPE的散点图
+    3.两只股票的线性回归
+    4.根据线性回归结果计算残差，返回残差的ADF检验结果
+    """
+    sql = (f'select date, ttmpe from klinestock where stockid="{stockIDa}"'
+           f' and date>="{startDate}" and date<="{endDate}"')
+    dfa = pd.read_sql(sql, engine)
+    dfa.rename(columns={'ttmpe': 'ttmpea'}, inplace=True)
+    print(dfa)
+    sql = (f'select date, ttmpe from klinestock where stockid="{stockIDb}"'
+           f' and date>="{startDate}" and date<="{endDate}"')
+    dfb = pd.read_sql(sql, engine)
+    dfb.rename(columns={'ttmpe': 'ttmpeb'}, inplace=True)
+    print(dfb)
+    df = pd.merge(dfa, dfb, how='inner')
+    print(df)
+    df.plot()
+
+if __name__ == '__main__':
+    pass
+    findPairs('000651', '000333')
