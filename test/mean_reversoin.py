@@ -6,9 +6,12 @@
 第二种：
 """
 
-import pandas as pd
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt  # @IgnorePep8
 import numpy as np
-import statsmodels.api as sm
+import pandas as pd
+from matplotlib.dates import DateFormatter
+from matplotlib.dates import YearLocator  # @IgnorePep8
 from statsmodels.tsa.stattools import adfuller
 
 from sqlconn import engine
@@ -40,7 +43,7 @@ def adfTestProfits(stockID, startDate, endDate):
     flag = (resultb[0] < resultb[4]['1%']
             and resultb[0] < resultb[4]['5%']
             and resultb[0] < resultb[4]['10%'])
-    return (resultb[0], resultb[1], flag)
+    return resultb[0], resultb[1], flag
 
 
 def adfTestProfits1(stockID, startDate, endDate):
@@ -74,13 +77,14 @@ def adfTestProfits1(stockID, startDate, endDate):
     resulta = adfuller(df['incrate'])
     df1 = np.diff(df['incrate'])
     resultb = adfuller(df1)
-    # print('resulta:\n', resulta)
-    # print('resultb:\n', resultb)
+    print('resulta:\n', resulta)
+    print('resultb:\n', resultb)
     # flag = (resultb[0] < resultb[4]['1%']
     #         and resultb[0] < resultb[4]['5%']
     #         and resultb[0] < resultb[4]['10%'])
     # return (round(resultb[0], 2), round(resultb[1], 2), flag)
     return resultb
+
 
 def adfTestAll():
     """对所有股票2009年1季度至2020年1季度TTM利润增长率进行ADF检测"""
@@ -145,16 +149,45 @@ def findPairs(stockIDa, stockIDb, startDate='20090101', endDate='20191231'):
            f' and date>="{startDate}" and date<="{endDate}"')
     dfa = pd.read_sql(sql, engine)
     dfa.rename(columns={'ttmpe': 'ttmpea'}, inplace=True)
+    dfa.set_index('date', inplace=True)
     print(dfa)
+
     sql = (f'select date, ttmpe from klinestock where stockid="{stockIDb}"'
            f' and date>="{startDate}" and date<="{endDate}"')
     dfb = pd.read_sql(sql, engine)
     dfb.rename(columns={'ttmpe': 'ttmpeb'}, inplace=True)
+    dfb.set_index('date', inplace=True)
     print(dfb)
-    df = pd.merge(dfa, dfb, how='inner')
+
+    df = pd.merge(dfa, dfb, left_index=True, right_index=True)
+    # df.set_index('date', inplace=True)
     print(df)
-    df.plot()
+
+    # 绘制拆线图
+    fig1 = plt.figure()
+    ax1 = fig1.add_subplot()
+    ax1.plot(dfa.index, dfa.ttmpea, color='blue')
+    ax1.plot(dfb.index, dfb.ttmpeb, color='yellow')
+    # 设置X轴的刻度间隔
+    # 可选:YearLocator,年刻度; MonthLocator,月刻度; DayLocator,日刻度
+    ax1.xaxis.set_major_locator(YearLocator())
+    # 设置X轴主刻度的显示格式
+    ax1.xaxis.set_major_formatter(DateFormatter('%Y'))
+    # 设置鼠标悬停时，在左下显示的日期格式
+    ax1.fmt_xdata = mdates.DateFormatter('%Y-%m-%d')
+    # 自动调整X轴标签角度
+    fig1.autofmt_xdate()
+
+    # 绘制散点图
+    fig2 = plt.figure()
+    ax2 = fig2.add_subplot()
+    ax2.scatter(df.ttmpea, df.ttmpeb)
+    # fig2.autofmt_xdate()
+
+    plt.grid(True)
+    plt.show()
+
 
 if __name__ == '__main__':
     pass
-    findPairs('000651', '000333')
+    findPairs('000651', '000002', startDate='20140101')
