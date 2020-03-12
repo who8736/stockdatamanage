@@ -253,19 +253,25 @@ def diabetesTest():
 
 
 def linearAll():
+    """
+    沪深300成份股中两支股票间的协整关系
+    :return:
+    """
+    pro = ts.pro_api()
+    indexDf = pro.index_weight(index_code='399300.SZ', start_date='20200301')
+    codeList = indexDf.con_code.str[:6].to_list()
+    nameDf = pd.DataFrame(readStockListFromSQL(), columns=['id', 'name'])
     startDate = '20140101'
     endDate = '20191231'
-    pro = ts.pro_api()
-    df1 = pro.index_weight(index_code='399300.SZ', start_date='20200301')
-    codeList = df1.con_code.str[:6].to_list()
     # codeList = codeList[:6]
 
-    total = (1 + len(codeList) - 1) * ((len(codeList) - 1) / 2)
+    total = len(codeList) * (len(codeList) - 1) // 2
     cnt = 0
     # resultList = []
     aList = []
     bList = []
     scoreList = []
+    errorList = []
     for i in range(len(codeList) - 1):
         for j in range(i + 1, len(codeList)):
             cnt += 1
@@ -276,18 +282,33 @@ def linearAll():
                 result = findPairs1(stockIDa, stockIDb)
             except Exception as e:
                 print(f'ERROR {stockIDa}-{stockIDb}:', e)
+                errorList.append(f'ERROR {stockIDa}-{stockIDb}: {e}')
             else:
                 # resultList.append([stockIDa, stockIDb, result])
                 aList.append(stockIDa)
                 bList.append(stockIDb)
                 scoreList.append(result)
-    df = pd.DataFrame({'a': aList, 'b': bList, 'score': scoreList})
-    df.to_excel('score.xlsx')
+    resultDf = pd.DataFrame({'ida': aList, 'idb': bList, 'score': scoreList})
+    resultDf = pd.merge(resultDf, nameDf,
+                        left_on='ida', right_on='id', how='left')
+    resultDf.rename(columns={'name': 'namea'}, inplace=True)
+    resultDf = pd.merge(resultDf, nameDf,
+                        left_on='idb', right_on='id', how='left')
+    resultDf.rename(columns={'name': 'nameb'}, inplace=True)
+    resultDf = resultDf[['ida', 'namea', 'idb', 'nameb', 'score']]
+    resultDf.sort_values('score', ascending=False, inplace=True)
+    resultDf.to_excel('score.xlsx')
+
+    stra = '\n'.join(errorList)
+    f = open('error.log', 'w+')
+    f.write(stra)
+    f.close()
+
 
 if __name__ == '__main__':
     pass
     stockIDa = '601985'
-    stockIDb = '601186'
+    stockIDb = '600170'
     startDate = '20140101'
     endDate = '20191231'
     findPairs(stockIDa, stockIDb, startDate=startDate)
