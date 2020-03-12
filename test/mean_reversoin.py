@@ -8,10 +8,11 @@
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt  # @IgnorePep8
-import numpy as np
-import pandas as pd
+import matplotlib.gridspec as gridspec
 from matplotlib.dates import DateFormatter
 from matplotlib.dates import YearLocator  # @IgnorePep8
+import numpy as np
+import pandas as pd
 from statsmodels.tsa.stattools import adfuller
 
 from sqlconn import engine
@@ -137,57 +138,7 @@ def adfTestAll():
     print(df)
 
 
-def findPairs(stockIDa, stockIDb, startDate='20090101', endDate='20191231'):
-    """两支股票的TTMPE是否存在协整关系
-    时间区间为20090101至20191231
-    1.两只股票TTMPE的折线图
-    2.两只股票TTMPE的散点图
-    3.两只股票的线性回归
-    4.根据线性回归结果计算残差，返回残差的ADF检验结果
-    """
-    sql = (f'select date, ttmpe from klinestock where stockid="{stockIDa}"'
-           f' and date>="{startDate}" and date<="{endDate}"')
-    dfa = pd.read_sql(sql, engine)
-    dfa.rename(columns={'ttmpe': 'ttmpea'}, inplace=True)
-    dfa.set_index('date', inplace=True)
-    print(dfa)
-
-    sql = (f'select date, ttmpe from klinestock where stockid="{stockIDb}"'
-           f' and date>="{startDate}" and date<="{endDate}"')
-    dfb = pd.read_sql(sql, engine)
-    dfb.rename(columns={'ttmpe': 'ttmpeb'}, inplace=True)
-    dfb.set_index('date', inplace=True)
-    print(dfb)
-
-    df = pd.merge(dfa, dfb, left_index=True, right_index=True)
-    # df.set_index('date', inplace=True)
-    print(df)
-
-    # 绘制拆线图
-    fig1 = plt.figure()
-    ax1 = fig1.add_subplot()
-    ax1.plot(dfa.index, dfa.ttmpea, color='blue')
-    ax1.plot(dfb.index, dfb.ttmpeb, color='yellow')
-    # 设置X轴的刻度间隔
-    # 可选:YearLocator,年刻度; MonthLocator,月刻度; DayLocator,日刻度
-    ax1.xaxis.set_major_locator(YearLocator())
-    # 设置X轴主刻度的显示格式
-    ax1.xaxis.set_major_formatter(DateFormatter('%Y'))
-    # 设置鼠标悬停时，在左下显示的日期格式
-    ax1.fmt_xdata = mdates.DateFormatter('%Y-%m-%d')
-    # 自动调整X轴标签角度
-    fig1.autofmt_xdate()
-
-    # 绘制散点图
-    fig2 = plt.figure()
-    ax2 = fig2.add_subplot()
-    ax2.scatter(df.ttmpea, df.ttmpeb)
-    # fig2.autofmt_xdate()
-
-    plt.grid(True)
-    plt.show()
 
 
 if __name__ == '__main__':
     pass
-    findPairs('000651', '000002', startDate='20140101')
