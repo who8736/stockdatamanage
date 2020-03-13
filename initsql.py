@@ -365,8 +365,8 @@ def createTable():
     tablenames = tablenameDf['table']
 
     # 读类型对应关系
-    typedf = pd.read_excel('createtable/typetrans.xlsx')
-    typedf.set_index('tusharetype', inplace=True)
+    # typedf = pd.read_excel('createtable/typetrans.xlsx')
+    # typedf.set_index('tusharetype', inplace=True)
 
     for tablename in tablenames:
         if existTable(tablename):

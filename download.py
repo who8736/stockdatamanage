@@ -783,9 +783,57 @@ def downIndex(ID, startDate, endDate=None):
     writeSQL(df, 'klineindex')
 
 
+def downIndexBasic():
+    """
+    从tushare下载指数基本信息
+    市场代码	说明
+    MSCI	MSCI指数
+    CSI   	中证指数
+    SSE	   上交所指数
+    SZSE	深交所指数
+    CICC	中金指数
+    SW	    申万指数
+    OTH	    其他指数
+    :return:
+    """
+    pro = ts.pro_api()
+    df_index_basic_sh = pro.index_basic(market='SSE')
+    df_index_basic_sz = pro.index_basic(market='SZSE')
+    writeSQL(df_index_basic_sh, 'index_basic')
+    writeSQL(df_index_basic_sz, 'index_basic')
+
+
+def downIndexDailyBasic(ts_code, startDate=None, endDate=None):
+    """
+    从tushare下载指数每日指标
+    000001.SH	上证综指
+    000005.SH	上证商业类指数
+    000006.SH	上证房地产指数
+    000016.SH	上证50
+    000300.SH	沪深300
+    000905.SH	中证500
+    399001.SZ	深证成指
+    399005.SZ	中小板指
+    399006.SZ	创业板指
+    399016.SZ	深证创新
+    399300.SZ	沪深300
+    399905.SZ	中证500
+
+    :param ts_code: '000001.SH'
+    :param startDate: 'YYYYmmdd'
+    :param endDate: 'YYYYmmdd'
+    :return:
+    """
+    pro = ts.pro_api()
+    df = pro.index_dailybasic(ts_code=ts_code,
+                              start_date=startDate,
+                              end_date=endDate)
+    writeSQL(df, 'index_dailybasic')
+
+
 def downDailyBasic(stockID=None, tradeDate=None, startDate=None, endDate=None):
     """
-    下载tushare每日指标
+    从tushare下载股票每日指标
     :param stockID: 股票代码
     :param tradeDate: 交易日期
     :param startDate: 开始日期
@@ -854,24 +902,16 @@ def downBalancesheet(stockID, startDate='', endDate=''):
         stockID = tsCode(stockID)
     pro = ts.pro_api()
     df = pro.balancesheet(ts_code=tsCode(stockID), start_date=startDate,
-                    end_date=endDate)
+                          end_date=endDate)
     print(df)
     return df
     # writeSQL(df, 'income')
 
 
-if __name__ == '__main__':
-    initlog()
-
-    pass
-    stockID = '000651'
-    startDate = '2019-04-01'
-    downKlineFromBaostock(stockID, startDate)
-
-
-def downloader(tablename, perTimes=0, downLimit=0):
+def downloaderStock(tablename, perTimes=0, downLimit=0):
     """tushare用的下载器，可限制对tushare的访问量
-    # tushare下载限制，每perTimes秒限制下载downLimit次
+    tushare下载限制，每perTimes秒限制下载downLimit次
+    本函数只适用于股票类表格
     :return:
     """
     pro = ts.pro_api()
@@ -912,3 +952,12 @@ def downloader(tablename, perTimes=0, downLimit=0):
         time.sleep(1)
         if df is not None:
             writeSQL(df, tablename)
+
+
+if __name__ == '__main__':
+    initlog()
+
+    pass
+    stockID = '000651'
+    startDate = '2019-04-01'
+    downKlineFromBaostock(stockID, startDate)
