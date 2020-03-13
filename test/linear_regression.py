@@ -45,6 +45,10 @@ def studyTime():
 
 
 def linearRegressionTest():
+    """
+    对单一自变量进行线性回归，返回（截距， 系数，平均方差）
+    :return:
+    """
     pass
 
 
