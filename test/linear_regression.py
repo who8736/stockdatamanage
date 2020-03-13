@@ -284,6 +284,7 @@ def linearAll():
     df = pd.DataFrame({'a': aList, 'b': bList, 'score': scoreList})
     df.to_excel('score.xlsx')
 
+
 if __name__ == '__main__':
     pass
     stockIDa = '601985'
