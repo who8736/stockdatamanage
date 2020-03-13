@@ -395,12 +395,7 @@ def readStockListFromSQL(date=None):
         sql += f' and timetomarket<={date}'
 
     result = engine.execute(sql)
-    return [i for i in result]
-    # stockIDList = []
-    # for i in result:
-    #     stockIDList.append([i[0], i[1]])
-    #     pass
-    # return stockIDList
+    return result.fetchall()
 
 
 def readStockIDsFromSQL():
