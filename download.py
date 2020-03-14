@@ -803,6 +803,34 @@ def downIndexBasic():
     writeSQL(df_index_basic_sz, 'index_basic')
 
 
+def downIndexDaily(ts_code, startDate=None, endDate=None):
+    """
+    从tushare下载指数日K线
+    000001.SH	上证综指
+    000005.SH	上证商业类指数
+    000006.SH	上证房地产指数
+    000016.SH	上证50
+    000300.SH	沪深300
+    000905.SH	中证500
+    399001.SZ	深证成指
+    399005.SZ	中小板指
+    399006.SZ	创业板指
+    399016.SZ	深证创新
+    399300.SZ	沪深300
+    399905.SZ	中证500
+
+    :param ts_code: '000001.SH'
+    :param startDate: 'YYYYmmdd'
+    :param endDate: 'YYYYmmdd'
+    :return:
+    """
+    pro = ts.pro_api()
+    df = pro.index_daily(ts_code=ts_code,
+                         start_date=startDate,
+                         end_date=endDate)
+    writeSQL(df, 'index_daily')
+
+
 def downIndexDailyBasic(ts_code, startDate=None, endDate=None):
     """
     从tushare下载指数每日指标
