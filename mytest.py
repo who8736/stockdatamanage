@@ -10,7 +10,6 @@ Created on Mon Apr 15 15:27:38 2019
 from urllib.request import urlopen
 # from lxml import etree
 # from datetime import datetime
-import datetime as dt
 # import baostock as bs
 # import tushare as ts
 from bokeh.plotting import figure
@@ -23,18 +22,16 @@ from sqlrw import *
 from bokeh.plotting import show, output_file
 from sqlalchemy.ext.declarative import declarative_base
 
-from datamanage import updateKlineEXTData, updateDailybasic
-from datamanage import updateIndex
+from datamanage import *
 from sqlrw import readStockIDsFromSQL
 from sqlconn import Session
 # from misc import urlGubenEastmoney
 from misc import *
 # from initlog import initlog
 from datatrans import *
+from dataanalyse import *
 from hyanalyse import *
 import bokehtest
-from valuation import calpfnew
-from initsql import createTable
 
 
 # import dataanalyse
@@ -304,140 +301,6 @@ def testWriteSQL():
     session.commit()
 
 
-def testDownIndexDailyBasic():
-    """
-    下载指数每日指标
-    000001.SH	上证综指
-    000005.SH	上证商业类指数
-    000006.SH	上证房地产指数
-    000016.SH	上证50
-    000300.SH	沪深300
-    000905.SH	中证500
-    399001.SZ	深证成指
-    399005.SZ	中小板指
-    399006.SZ	创业板指
-    399016.SZ	深证创新
-    399300.SZ	沪深300
-    399905.SZ	中证500
-
-    :return:
-    """
-    pro = ts.pro_api()
-    codeList = ['000001.SH',
-                '000005.SH',
-                '000006.SH',
-                '000016.SH',
-                '399001.SZ',
-                '399005.SZ',
-                '399006.SZ',
-                '399016.SZ',
-                '399300.SZ',
-                '399905.SZ', ]
-    for code in codeList:
-        # sql = (f'select max(trade_date) from index_dailybasic'
-        #        f' where ts_code="{code}"')
-        # result = engine.execute(sql).fetchone()[0]
-        # startDate = None
-        # if isinstance(result, type(datetime.date)):
-        #     result = result + timedelta(days=1)
-        #     startDate = result.strftime('YYYYmmdd')
-        startDate = '20040101'
-        endDate = '20080101'
-        df = pro.index_dailybasic(ts_code=code,
-                                  start_date=startDate, end_date=endDate)
-        writeSQL(df, 'index_dailybasic')
-
-
-def testDownIndexDaily():
-    """
-    下载指数每日指标
-    000001.SH	上证综指
-    000005.SH	上证商业类指数
-    000006.SH	上证房地产指数
-    000016.SH	上证50
-    000300.SH	沪深300
-    000905.SH	中证500
-    399001.SZ	深证成指
-    399005.SZ	中小板指
-    399006.SZ	创业板指
-    399016.SZ	深证创新
-    399300.SZ	沪深300
-    399905.SZ	中证500
-
-    :return:
-    """
-    pro = ts.pro_api()
-    codeList = ['000001.SH',
-                '000005.SH',
-                '000006.SH',
-                '000016.SH',
-                '399001.SZ',
-                '399005.SZ',
-                '399006.SZ',
-                '399016.SZ',
-                '399300.SZ',
-                '399905.SZ', ]
-    for code in codeList:
-        sql = (f'select max(trade_date) from index_daily'
-               f' where ts_code="{code}"')
-        result = engine.execute(sql).fetchone()[0]
-        startDate = None
-        endDate = None
-        if isinstance(result, dt.date):
-            result = result + timedelta(days=1)
-            startDate = result.strftime('YYYYmmdd')
-        # startDate = '20040101'
-        # endDate = '20080101'
-        df = pro.index_daily(ts_code=code,
-                             start_date=startDate, end_date=endDate)
-        writeSQL(df, 'index_daily')
-
-
-def testDownIndexWeight():
-    """
-    下载指数成份和权重
-    000001.SH	上证综指
-    000005.SH	上证商业类指数
-    000006.SH	上证房地产指数
-    000016.SH	上证50
-    000300.SH	沪深300
-    000905.SH	中证500
-    399001.SZ	深证成指
-    399005.SZ	中小板指
-    399006.SZ	创业板指
-    399016.SZ	深证创新
-    399300.SZ	沪深300
-    399905.SZ	中证500
-
-    :return:
-    """
-    pro = ts.pro_api()
-    codeList = ['000001.SH',
-                '000005.SH',
-                '000006.SH',
-                '000016.SH',
-                '399001.SZ',
-                '399005.SZ',
-                '399006.SZ',
-                '399016.SZ',
-                '399300.SZ',
-                '399905.SZ', ]
-    for code in codeList:
-        sql = (f'select max(trade_date) from index_weight'
-               f' where index_code="{code}"')
-        result = engine.execute(sql).fetchone()[0]
-        startDate = None
-        endDate = None
-        if isinstance(result, dt.date):
-            result = result + timedelta(days=1)
-            startDate = result.strftime('YYYYmmdd')
-        # startDate = '20040101'
-        # endDate = '20080101'
-        df = pro.index_weight(index_code=code,
-                              start_date=startDate, end_date=endDate)
-        writeSQL(df, 'index_weight')
-
-
 def testDownIndexWeightRepair():
     """
     下载指数成份和权重, 用于修复历史数据，对每个指数从库中日期最早日期向前修复
@@ -498,15 +361,10 @@ def testDownIndexWeightRepair():
             cur += 1
 
 
-if __name__ == "__main__":
+def __testDownload():
+    """测试专用函数:数据下载
     """
-    本文件用于测试各模块功能
-    """
-    initlog()
-
-    ##############################################
-    # 数据下载
-    ##############################################
+    pass
     # 下载k线
     # startDate = datetime.strptime('2018-01-27', '%Y-%m-%d')
     # endDate = datetime.strptime('2018-03-29', '%Y-%m-%d')
@@ -613,11 +471,17 @@ if __name__ == "__main__":
     # testDownIndexDailyBasic()
 
     # 下载指数日K线
-    # testDownIndexDaily()
+    # downIndexDaily()
 
     # 下载指数成分和权重
-    testDownIndexWeightRepair()
+    # testDownIndexWeightRepair()
+    # downIndexWeight()
 
+
+def __testUpdate():
+    """测试专用函数:数据下载
+    """
+    pass
     ##############################################
     # 数据更新
     ##############################################
@@ -655,6 +519,7 @@ if __name__ == "__main__":
     # 计算上证180指数PE
     # startDate = datetime.strptime('20190617', '%Y%m%d').date()
     # calPEHistory('000010', startDate)
+    # calPEHistory('000010.SH', startDate=None)
 
     # 计算行业利润增长率
     # hyID = '030201'
@@ -673,7 +538,7 @@ if __name__ == "__main__":
     # print('行业PE：', pe)
 
     # 更新指数数据及PE
-    # updateIndex()
+    updateIndex()
 
     # 更新全市PE
     # datamanage.updateAllMarketPE()
@@ -698,6 +563,11 @@ if __name__ == "__main__":
     #     calpfnew(date, False)
     # calpfnew('20200228', True)
 
+
+def __testRepair():
+    """测试专用函数:数据修复
+    """
+    pass
     ##############################################
     # 数据修复
     ##############################################
@@ -725,6 +595,10 @@ if __name__ == "__main__":
     # createHangyePE()
     # createValuation()
 
+def __testValuation():
+    """测试专用函数:股票评分
+    """
+    pass
     ##############################################
     # 股票评分
     ##############################################
@@ -750,6 +624,10 @@ if __name__ == "__main__":
     # print('=' * 20)
     # print(stockspf)
 
+def __testPlot():
+    """测试专用函数:绘图
+    """
+    pass
     ##############################################
     # 绘图
     ##############################################
@@ -767,6 +645,10 @@ if __name__ == "__main__":
     # 测试bokehtest模块中的功能
     # testBokehtest()
 
+def __testMisc():
+    """测试专用函数:杂项测试
+    """
+    pass
     ##############################################
     # 杂项测试
     ##############################################
@@ -806,5 +688,18 @@ if __name__ == "__main__":
     # datestr = '20200303'
     # from pushdata import push
     # push(f'评分{datestr}', f'valuations{datestr}.xlsx')
+
+if __name__ == "__main__":
+    """
+    本文件用于测试各模块功能
+    """
+    initlog()
+
+    # __testDownload()
+    # __testMisc()
+    # __testPlot()
+    # __testRepair()
+    __testUpdate()
+    # __testValuation()
 
     print('程序正常退出')

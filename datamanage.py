@@ -25,12 +25,15 @@ import sqlrw
 import valuation
 from sqlconn import engine
 from sqlrw import checkGuben, setGubenLastUpdate
-from sqlrw import getStockKlineUpdateDate, getIndexKlineUpdateDate
+from sqlrw import getStockKlineUpdateDate, getIndexPEUpdateDate
 from sqlrw import getAllMarketPEUpdateDate
 import download
 from download import downGuben, downGuzhi, downKline
 from download import downMainTable, downloadLirun, downStockList
-from download import downIndex, downDailyBasic
+from download import downIndex
+from download import downDailyBasic, downTradeCal
+from download import downIndexDaily, downIndexDailyBasic
+from download import downIndexBasic, downIndexWeight
 # from download import downHYList
 from initlog import initlog
 from datatrans import dateList
@@ -57,6 +60,8 @@ def logfun(func):
 def startUpdate():
     """自动更新全部数据，包括K线历史数据、利润数据、K线表中的TTM市盈率
     """
+    # 更新交易日历
+    updateTradeCal()
 
     # 更新股票列表
     downStockList()
@@ -117,11 +122,16 @@ def updateIndex():
     更新指数数据及PE
     :return:
     """
+    downIndexBasic()
+    downIndexDaily()
+    downIndexDailyBasic()
+    downIndexWeight()
+
     ID = '000010.SH'
-    startDate = getIndexKlineUpdateDate() + dt.timedelta(days=1)
-    download.downChengfen(ID, startDate)
-    downIndex(ID, startDate)
-    dataanalyse.calPEHistory(ID[:6], startDate)
+    # startDate = getIndexKlineUpdateDate() + dt.timedelta(days=1)
+    # startDate = getIndexPEUpdateDate()
+    startDate = getIndexPEUpdateDate() + dt.timedelta(days=1)
+    dataanalyse.calPEHistory(ID, startDate)
 
 
 @logfun
@@ -315,19 +325,16 @@ def updateDailybasic():
         download.downDailyBasic(tradeDate=d)
 
 
-# def readTestStockList():
-#     filename = '.\\data\\teststock.txt'
-#     return readStockListFromFile(filename)
-
-
-# def readChiguStock():
-#     filename = '.\\data\\chigustockid.txt'
-#     readStockListFromFile(filename)
-
-#
-# def readYouzhiStock():
-#     filename = '.\\data\\youzhiid.txt'
-#     readStockListFromFile(filename)
+@logfun
+def updateTradeCal():
+    """更新交易日历
+    """
+    sql = 'select year(max(cal_date)) from trade_cal'
+    lastYear = engine.execute(sql).fetchone()[0]
+    if lastYear is None:
+        downTradeCal('1990')
+    elif lastYear < datetime.today().year:
+        downTradeCal(str(int(lastYear) + 1))
 
 
 if __name__ == '__main__':

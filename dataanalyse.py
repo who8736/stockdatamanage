@@ -335,20 +335,21 @@ def calAllPEHistory(startDate, endDate=None):
 def calPEHistory(ID, startDate, endDate=None):
     """
     计算某一指数的TTMPE
-    :param ID: 短格式的指数代码，如: 000010
+    :param ID: 长格式的指数代码，如: 000010.SH
     :param startDate:
     :param endDate:
     :return:
     """
-    # startDate = datetime.strptime('2019-06-17', '%Y-%m-%d').date()
-    # assert len(ID) == 9, '指数代码错误， 正确格式：000010.SH'
-    assert len(ID) == 6, '指数代码错误， 正确格式：000010'
+    if startDate is None:
+        startDate = datetime.strptime('19900101', '%Y%m%d').date()
+    assert len(ID) == 9, '指数代码错误， 正确格式：000010.SH'
+    # assert len(ID) == 6, '指数代码错误， 正确格式：000010'
     ID = ID.upper()
     if endDate is None:
         endDate = datetime.today().date()
     # session = Session()
     for tradeDate in dateList(startDate, endDate):
-        sql = 'call calchengfenpe("%(ID)s", "%(tradeDate)s");' % locals()
+        sql = f'call calchengfenpe("{ID}", "{tradeDate}");'
         print(sql)
         engine.execute(sql)
         # session.execute(sql)

@@ -354,6 +354,15 @@ def getIndexKlineUpdateDate():
     return _getLastUpdate(sql)
 
 
+def getIndexPEUpdateDate():
+    """
+    指数PE更新日期,当前仅有上证180指数的PE值需手动计算
+    :return:
+    """
+    sql = f'select max(trade_date) from pehistory where ts_code="000010.SH";'
+    return _getLastUpdate(sql)
+
+
 def __klineUpdateDate():
     """
     待删除函数, kline改为分区表后无需按股票代码查询更新日期

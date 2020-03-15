@@ -803,62 +803,6 @@ def downIndexBasic():
     writeSQL(df_index_basic_sz, 'index_basic')
 
 
-def downIndexDaily(ts_code, startDate=None, endDate=None):
-    """
-    从tushare下载指数日K线
-    000001.SH	上证综指
-    000005.SH	上证商业类指数
-    000006.SH	上证房地产指数
-    000016.SH	上证50
-    000300.SH	沪深300
-    000905.SH	中证500
-    399001.SZ	深证成指
-    399005.SZ	中小板指
-    399006.SZ	创业板指
-    399016.SZ	深证创新
-    399300.SZ	沪深300
-    399905.SZ	中证500
-
-    :param ts_code: '000001.SH'
-    :param startDate: 'YYYYmmdd'
-    :param endDate: 'YYYYmmdd'
-    :return:
-    """
-    pro = ts.pro_api()
-    df = pro.index_daily(ts_code=ts_code,
-                         start_date=startDate,
-                         end_date=endDate)
-    writeSQL(df, 'index_daily')
-
-
-def downIndexDailyBasic(ts_code, startDate=None, endDate=None):
-    """
-    从tushare下载指数每日指标
-    000001.SH	上证综指
-    000005.SH	上证商业类指数
-    000006.SH	上证房地产指数
-    000016.SH	上证50
-    000300.SH	沪深300
-    000905.SH	中证500
-    399001.SZ	深证成指
-    399005.SZ	中小板指
-    399006.SZ	创业板指
-    399016.SZ	深证创新
-    399300.SZ	沪深300
-    399905.SZ	中证500
-
-    :param ts_code: '000001.SH'
-    :param startDate: 'YYYYmmdd'
-    :param endDate: 'YYYYmmdd'
-    :return:
-    """
-    pro = ts.pro_api()
-    df = pro.index_dailybasic(ts_code=ts_code,
-                              start_date=startDate,
-                              end_date=endDate)
-    writeSQL(df, 'index_dailybasic')
-
-
 def downDailyBasic(stockID=None, tradeDate=None, startDate=None, endDate=None):
     """
     从tushare下载股票每日指标
@@ -980,6 +924,166 @@ def downloaderStock(tablename, perTimes=0, downLimit=0):
         time.sleep(1)
         if df is not None:
             writeSQL(df, tablename)
+
+
+def downTradeCal(year):
+    pro = ts.pro_api()
+    df = pro.trade_cal(exchange='SSE', start_date=f'{year}0101')
+    writeSQL(df, 'trade_cal')
+
+
+def downIndexWeight():
+    """
+    下载指数成份和权重
+    000001.SH	上证综指
+    000005.SH	上证商业类指数
+    000006.SH	上证房地产指数
+    000016.SH	上证50
+    000300.SH	沪深300
+    000905.SH	中证500
+    399001.SZ	深证成指
+    399005.SZ	中小板指
+    399006.SZ	创业板指
+    399016.SZ	深证创新
+    399300.SZ	沪深300
+    399905.SZ	中证500
+
+    :return:
+    """
+    pro = ts.pro_api()
+    codeList = ['000001.SH',
+                '000005.SH',
+                '000006.SH',
+                '000010.SH',
+                '000016.SH',
+                '000905.SH',
+                '399001.SZ',
+                '399005.SZ',
+                '399006.SZ',
+                '399016.SZ',
+                '399300.SZ', ]
+    times = []
+    cur = 0
+    perTimes = 60
+    downLimit = 70
+    for code in codeList:
+        sql = (f'select max(trade_date) from index_weight'
+               f' where index_code="{code}"')
+        initDate = engine.execute(sql).fetchone()[0]
+        if initDate is None:
+            initDate = dt.date(2001, 1, 1)
+        assert isinstance(initDate, dt.date)
+        while initDate < dt.datetime.today().date():
+            nowtime = datetime.now()
+            if (perTimes > 0 and downLimit > 0 and cur >= downLimit
+                    and (nowtime < times[cur - downLimit] + timedelta(
+                        seconds=perTimes))):
+                _timedelta = nowtime - times[cur - downLimit]
+                sleeptime = perTimes - _timedelta.seconds
+                print(f'******暂停{sleeptime}秒******')
+                time.sleep(sleeptime)
+
+            startDate = initDate.strftime('%Y%m%d')
+            initDate += timedelta(days=30)
+            endDate = initDate.strftime('%Y%m%d')
+            initDate += timedelta(days=1)
+            print(f'下载{code},日期{startDate}-{endDate}')
+            df = pro.index_weight(index_code=code,
+                                  start_date=startDate, end_date=endDate)
+            writeSQL(df, 'index_weight')
+
+            nowtime = datetime.now()
+            times.append(nowtime)
+            cur += 1
+
+
+def downIndexDaily():
+    """
+    下载指数每日指标
+    000001.SH	上证综指
+    000005.SH	上证商业类指数
+    000006.SH	上证房地产指数
+    000010.SH	上证180
+    000016.SH	上证50
+    000300.SH	沪深300
+    000905.SH	中证500
+    399001.SZ	深证成指
+    399005.SZ	中小板指
+    399006.SZ	创业板指
+    399016.SZ	深证创新
+    399300.SZ	沪深300
+    399905.SZ	中证500
+
+    :return:
+    """
+    pro = ts.pro_api()
+    codeList = ['000001.SH',
+                '000005.SH',
+                '000006.SH',
+                '000010.SH',
+                '000016.SH',
+                '399001.SZ',
+                '399005.SZ',
+                '399006.SZ',
+                '399016.SZ',
+                '399300.SZ',
+                '399905.SZ', ]
+    for code in codeList:
+        sql = (f'select max(trade_date) from index_daily'
+               f' where ts_code="{code}"')
+        result = engine.execute(sql).fetchone()[0]
+        startDate = None
+        endDate = None
+        if isinstance(result, dt.date):
+            result = result + timedelta(days=1)
+            startDate = result.strftime('YYYYmmdd')
+        df = pro.index_daily(ts_code=code,
+                             start_date=startDate, end_date=endDate)
+        writeSQL(df, 'index_daily')
+
+
+def downIndexDailyBasic():
+    """
+    下载指数每日指标
+    000001.SH	上证综指
+    000005.SH	上证商业类指数
+    000006.SH	上证房地产指数
+    000016.SH	上证50
+    000300.SH	沪深300
+    000905.SH	中证500
+    399001.SZ	深证成指
+    399005.SZ	中小板指
+    399006.SZ	创业板指
+    399016.SZ	深证创新
+    399300.SZ	沪深300
+    399905.SZ	中证500
+
+    :return:
+    """
+    pro = ts.pro_api()
+    codeList = ['000001.SH',
+                '000005.SH',
+                '000006.SH',
+                '000016.SH',
+                '399001.SZ',
+                '399005.SZ',
+                '399006.SZ',
+                '399016.SZ',
+                '399300.SZ',
+                '399905.SZ', ]
+    for code in codeList:
+        # sql = (f'select max(trade_date) from index_dailybasic'
+        #        f' where ts_code="{code}"')
+        # result = engine.execute(sql).fetchone()[0]
+        # startDate = None
+        # if isinstance(result, type(datetime.date)):
+        #     result = result + timedelta(days=1)
+        #     startDate = result.strftime('YYYYmmdd')
+        startDate = '20040101'
+        endDate = '20080101'
+        df = pro.index_dailybasic(ts_code=code,
+                                  start_date=startDate, end_date=endDate)
+        writeSQL(df, 'index_dailybasic')
 
 
 if __name__ == '__main__':
