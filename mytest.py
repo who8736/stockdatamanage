@@ -23,7 +23,7 @@ from bokeh.plotting import show, output_file
 from sqlalchemy.ext.declarative import declarative_base
 
 from datamanage import *
-from sqlrw import readStockIDsFromSQL
+from sqlrw import readStockList
 from sqlconn import Session
 # from misc import urlGubenEastmoney
 from misc import *
@@ -42,12 +42,12 @@ def downGubenFromEastmoney():
     url: 
     """
     pass
-    stockID = '600000'
+    ts_code = '600000.SH'
     # startDate = '2019-04-01'
     bs.login()
     # from misc import usrlGubenEastmoney
     # urlGubenEastmoney('600000')
-    gubenURL = urlGubenEastmoney(stockID)
+    gubenURL = urlGubenEastmoney(ts_code)
     # req = getreq(gubenURL, includeHeader=True)
     req = getreq(gubenURL)
     guben = urlopen(req).read()
@@ -59,7 +59,7 @@ def downGubenFromEastmoney():
                                 //div//div//table//tr//td
                                 //table//tr//td//table//tr//td''')
     date = [gubenData[i][0].text for i in range(0, len(gubenData), 2)]
-    date = [datetime.strptime(d, '%Y-%m-%d') for d in date]
+    date = [datetime.strptime(d, '%Y%m%d') for d in date]
     #     print date
     totalshares = [
         gubenData[i + 1][0].text for i in range(0, len(gubenData), 2)]
@@ -69,22 +69,22 @@ def downGubenFromEastmoney():
     try:
         totalshares = [float(i[:-2]) * 10000 for i in totalshares]
     except ValueError as e:
-        # logging.error('stockID:%s, %s', stockID, e)
-        print('stockID:%s, %s', stockID, e)
+        # logging.error('ts_code:%s, %s', ts_code, e)
+        print('ts_code:%s, %s', ts_code, e)
     #     print totalshares
-    gubenDf = DataFrame({'stockid': stockID,
+    gubenDf = DataFrame({'ts_code': ts_code,
                          'date': date,
                          'totalshares': totalshares})
     return gubenDf
 
 
-def urlGuben(stockID):
+def urlGuben(ts_code):
     return ('http://vip.stock.finance.sina.com.cn/corp/go.php'
-            '/vCI_StockStructureHistory/stockid'
-            '/%s/stocktype/TotalStock.phtml' % stockID)
+            '/vCI_StockStructureHistory/ts_code'
+            '/%s/stocktype/TotalStock.phtml' % ts_code)
 
 
-def downLiutongGubenFromBaostock():
+def del_downLiutongGubenFromBaostock():
     """ 从baostock下载每日K线数据，并根据成交量与换手率计算流通总股本
     """
     code = 'sz.000651'
@@ -114,15 +114,15 @@ def downLiutongGubenFromBaostock():
 #     tradeDate = '%s%s%s' % (date[:4], date[5:7], date[8:])
 #     dfFromTushare = pro.daily_basic(ts_code='', trade_date=tradeDate,
 #                                     fields='ts_code,total_share')
-#     dfFromTushare['stockid'] = dfFromTushare['ts_code'].str[:6]
+#     dfFromTushare['ts_code'] = dfFromTushare['ts_code'].str[:6]
 #
-#     sql = """ select a.stockid, a.date, a.totalshares from guben as a,
-#             (SELECT stockid, max(date) as maxdate FROM stockdata.guben
-#             group by stockid) as b
-#             where a.stockid=b.stockid and a.date = b.maxdate;
+#     sql = """ select a.ts_code, a.date, a.totalshares from guben as a,
+#             (SELECT ts_code, max(date) as maxdate FROM stockdata.guben
+#             group by ts_code) as b
+#             where a.ts_code=b.ts_code and a.date = b.maxdate;
 #             """
 #     dfFromSQL = pd.read_sql(sql, con=engine)
-#     df = pd.merge(dfFromTushare, dfFromSQL, how='left', on='stockid')
+#     df = pd.merge(dfFromTushare, dfFromSQL, how='left', on='ts_code')
 #     df.loc[0:, 'cha'] = df.apply(
 #         lambda x: abs(x['total_share'] * 10000 - x['totalshares']) / (
 #                 x['total_share'] * 10000), axis=1)
@@ -130,40 +130,40 @@ def downLiutongGubenFromBaostock():
 #     chaRate = 0.0001
 #     dfUpdate = df[df.cha >= chaRate]
 #     print(dfUpdate)
-#     for stockID in dfUpdate['stockid']:
-#         sql = ('select max(date) from guben where stockid="%s" limit 1;'
-#                % stockID)
+#     for ts_code in dfUpdate['ts_code']:
+#         sql = ('select max(date) from guben where ts_code="%s" limit 1;'
+#                % ts_code)
 #         dateA = _getLastUpdate(sql)
-#         setGubenLastUpdate(stockID, dateA)
+#         setGubenLastUpdate(ts_code, dateA)
 #
 #     # 对于需更新股本的股票，逐个更新股本并修改更新日期
 #     # 对于无需更新股本的股票，将其更新日期修改为上一交易日
 #     dfFinished = df[df.cha < chaRate]
-#     for stockID in dfFinished['stockid']:
-#         setGubenLastUpdate(stockID, date)
+#     for ts_code in dfFinished['ts_code']:
+#         setGubenLastUpdate(ts_code, date)
 #     # print(df3)
 #     return dfUpdate
 
 
 def downGubenTest():
     """ 仅做测试用，下载单个股本数据，验证股本下载函数是否正确"""
-    # stockIDs = ["300539"]
-    stockIDs = readStockIDsFromSQL()
-    for stockID in stockIDs:
-        downGuben(stockID, replace=True)
+    # ts_codes = ["300539"]
+    ts_codes = readStockList().ts_code.to_list()
+    for ts_code in ts_codes:
+        downGuben(ts_code, replace=True)
         time.sleep(1)
 
 
-def resetKlineExtData():
+def del_resetKlineExtData():
     """
 
     :return:
     """
-    stockList = sqlrw.readStockIDsFromSQL()
+    stockList = sqlrw.readStockList()
     print(type(stockList))
     print(stockList)
-    for stockID in stockList:
-        updateKlineEXTData(stockID, '2016-01-01')
+    for ts_code in stockList:
+        updateKlineEXTData(ts_code, '2016-01-01')
 
     # for()
 
@@ -193,17 +193,17 @@ def resetLirun():
 
     # stockList = readStockListFromSQL()
     stockList = [['600306', 'aaa']]
-    for stockID, stockName in stockList:
-        print(stockID, stockName)
-        # stockID = '002087'
-        stockID = tsCode(stockID)
-        df = pro.income(ts_code=stockID, start_date=startDate, fields=fields)
+    for ts_code, stockName in stockList:
+        print(ts_code, stockName)
+        # ts_code = '002087'
+        ts_code = tsCode(ts_code)
+        df = pro.income(ts_code=ts_code, start_date=startDate, fields=fields)
         df['date'] = df['end_date'].apply(transTushareDateToQuarter)
-        df['stockid'] = df['ts_code'].apply(lambda x: x[:6])
+        df['ts_code'] = df['ts_code'].apply(lambda x: x[:6])
         df['reportdate'] = df['ann_date'].apply(
             lambda x: '%s-%s-%s' % (x[:4], x[4:6], x[6:]))
         df.rename(columns={'n_income_attr_p': 'profits'}, inplace=True)
-        df1 = df[['stockid', 'date', 'profits', 'reportdate']]
+        df1 = df[['ts_code', 'date', 'profits', 'reportdate']]
         if not df1.empty:
             writeSQL(df1, 'lirun')
 
@@ -224,21 +224,21 @@ def testBokeh():
 
 
 def gatherKline():
-    stockList = readStockIDsFromSQL()
-    for stockID in stockList:
-        # stockID = '000002'
-        sql = ("insert ignore stockdata.kline(`stockid`, `date`, `open`, "
+    stockList = readStockList()
+    for ts_code in stockList:
+        # ts_code = '000002'
+        sql = ("insert ignore stockdata.kline(`ts_code`, `date`, `open`, "
                "                              `high`, `close`, `low`, "
                "                              `volume`, `totalmarketvalue`, "
                "                              `ttmprofits`, `ttmpe`) "
                "select '%s', s.`date`, s.`open`, s.`high`, s.`close`, s.`low`, "
                "       s.`volume`, s.`totalmarketvalue`, s.`ttmprofits`, "
-               "       s.`ttmpe` from klinestock where stockid='%s' as s;\n") % (
-                  stockID, stockID)
-        print('process stockID: ', stockID)
+               "       s.`ttmpe` from klinestock where ts_code='%s' as s;\n") % (
+                  ts_code, ts_code)
+        print('process ts_code: ', ts_code)
         # print(sql)
         engine.execute(sql)
-        # if stockID > '000020':
+        # if ts_code > '000020':
         #     break
 
 
@@ -269,7 +269,7 @@ def testReadStockListFromSQL():
 def testReadLastTTMPE():
     date = '20191202'
     stocks = readStockListDf(int(date))
-    result = readLastTTMPEs(stocks.stockid.tolist(), date)
+    result = readLastTTMPEs(stocks.ts_code.tolist(), date)
     print(result)
 
 
@@ -376,9 +376,9 @@ def __testDownload():
     # 下载指定股票股本信息
     # date = '2019-04-19'
     # gubenUpdateDf = checkGuben(date)
-    # for stockID in gubenUpdateDf['stockid']:
-    #     downGuben(stockID)
-    #     setGubenLastUpdate(stockID, date)
+    # for ts_code in gubenUpdateDf['ts_code']:
+    #     downGuben(ts_code)
+    #     setGubenLastUpdate(ts_code, date)
     #     time.sleep(1)  # tushare.pro每分钟最多访问接口200次
 
     # 指数
@@ -398,13 +398,13 @@ def __testDownload():
 
     # # 下载每日指标
     # updateDailybasic()
-    # stockID = '000651'
+    # ts_code = '000651'
     # startDate = '20090829'
     # endDate = '20171231'
     # tradeDate = '20191231'
     # dates = dateStrList(startDate, endDate)
     # for d in dates:
-    #     # df = downDailyBasic(stockID=stockID,
+    #     # df = downDailyBasic(ts_code=ts_code,
     #     #                     startDate=startDate,
     #     #                     endDate=endDate)
     #     # df = downDailyBasic(tradeDate=tradeDate)
@@ -414,7 +414,7 @@ def __testDownload():
     #     writeSQL(df, 'dailybasic')
 
     # 下载股权质押统计数据
-    # IDs = readStockIDsFromSQL()
+    # IDs = readts_codesFromSQL()
     # IDs = IDs[:10]
     # times = []
     # cnt = len(IDs)
@@ -428,13 +428,13 @@ def __testDownload():
     #         nowtime = datetime.now()
     #     times.append(nowtime)
     #     print(f'第{i}个，时间：{nowtime}')
-    #     stockID = IDs[i]
-    #     print(stockID)
+    #     ts_code = IDs[i]
+    #     print(ts_code)
     #     flag = True
     #     df = None
     #     while flag:
     #         try:
-    #             df = downPledgeStat(stockID)
+    #             df = downPledgeStat(ts_code)
     #             flag = False
     #         except Exception as e:
     #             print(e)
@@ -445,11 +445,11 @@ def __testDownload():
     #         writeSQL(df, 'pledgestat')
 
     # 下载利润表
-    # stockID = '000651'
+    # ts_code = '000651'
     # startDate = '20160101'
     # endDate = '20200202'
-    # downIncome(stockID, startDate=startDate, endDate=endDate)
-    # downIncome(stockID)
+    # downIncome(ts_code, startDate=startDate, endDate=endDate)
+    # downIncome(ts_code)
 
     # 下载指数基本信息
     # downIndexBasic()
@@ -487,16 +487,16 @@ def __testUpdate():
     ##############################################
 
     # 更新股票市值与PE
-    # stockList = sqlrw.readStockIDsFromSQL()
-    # for stockID in stockList:
-    #     print(stockID)
-    # stockID = '600306'
-    # stockIDs = ["002953", "002955", "300770", "300771",
+    # stockList = sqlrw.readts_codesFromSQL()
+    # for ts_code in stockList:
+    #     print(ts_code)
+    # ts_code = '600306'
+    # ts_codes = ["002953", "002955", "300770", "300771",
     #             "300772", "300773", "300775", "300776", "300777",
     #             "300778", "300779", "300780", "300781", "600989",
     #             "603267", "603327", "603697", "603967", "603982", ]
-    # for stockID in stockIDs:
-    #     sqlrw.updateKlineEXTData(stockID,
+    # for ts_code in ts_codes:
+    #     sqlrw.updateKlineEXTData(ts_code,
     #                              datetime.strptime('2016-01-26', '%Y-%m-%d'))
 
     # tushare.pro下载日交易数据
@@ -512,7 +512,7 @@ def __testUpdate():
 
     # 更新股票日交易数据
     # threadNum = 10
-    # stockList = sqlrw.readStockIDsFromSQL()
+    # stockList = sqlrw.readts_codesFromSQL()
     # print(stockList)
     # updateKlineEXTData(stockList, threadNum)
 
@@ -662,11 +662,11 @@ def __testMisc():
     # date = '20200102'
     # stocks = readStockListDf(date)
     # sectionNum = 6  # 取6个季度
-    # incDf = sqlrw.readLastTTMLirun(stocks.stockid.tolist(), sectionNum, date)
-    # incDf = sqlrw.readLastTTMLirunForStockID('000651', 6, '20181231')
+    # incDf = sqlrw.readLastTTMLirun(stocks.ts_code.tolist(), sectionNum, date)
+    # incDf = sqlrw.readLastTTMLirunForts_code('000651', 6, '20181231')
 
     # print(incDf)
-    # print(incDf.loc[incDf.stockid=='000651'])
+    # print(incDf.loc[incDf.ts_code=='000651'])
 
     # 测试sqlrw.writeSQL函数的replace功能
     # testWriteSQL()

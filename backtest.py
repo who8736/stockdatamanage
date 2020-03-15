@@ -9,7 +9,7 @@ import pandas as pd
 import sqlrw
 import baostock as bs
 
-def histTTMPETrend(stockID, histLen=1000):
+def histTTMPETrend(ts_code, histLen=1000):
     """返回某股票PE水平
     histLen为参照时间长度，如当前TTMPE与前1000个交易日的TTMPE比较
     取值0-100
@@ -22,8 +22,8 @@ def histTTMPETrend(stockID, histLen=1000):
 #    ttmpe1.iat[0, 0] = 10
     
 #    绘图， 调整双坐标系
-    stockID = '000651'
-    ttmpe = sqlrw.readTTMPE(stockID)
+    ts_code = '000651'
+    ttmpe = sqlrw.readTTMPE(ts_code)
 #    ttmpe = ttmpe[-15:]
     ttmpe = ttmpe.set_index('date')
     ttmpe['pe1000'] = 0
@@ -42,17 +42,17 @@ def histTTMPETrend(stockID, histLen=1000):
     
     return ttmpe
         
-def downHFQ(stockID):
+def downHFQ(ts_code):
     lg = bs.login()
     print 
     if lg.error_code != '0':
         return None
-    if stockID[0] == "6":
-        stockID = "sh." + stockID
+    if ts_code[0] == "6":
+        ts_code = "sh." + ts_code
     else:
-        stockID = "sz." + stockID
+        ts_code = "sz." + ts_code
         
-    rs =  bs.query_history_k_data_plus(stockID,
+    rs =  bs.query_history_k_data_plus(ts_code,
     "date,close",
     frequency="d", adjustflag="3")
     reList = []
@@ -64,10 +64,10 @@ def downHFQ(stockID):
     return result
         
 if __name__ == '__main__':
-    stockID = '000651'
+    ts_code = '000651'
     histLen = 200
-    ttmpe = histTTMPETrend(stockID, histLen)
+    ttmpe = histTTMPETrend(ts_code, histLen)
     print(ttmpe)
     
-    # histClose = downHFQ(stockID)
+    # histClose = downHFQ(ts_code)
     

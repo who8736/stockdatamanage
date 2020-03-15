@@ -58,11 +58,11 @@ def scatter(startDate, endDate):
 #         plt.show()
 
 
-def plotKlineOld(stockID):
-    #     return plotKline(stockID)
+def plotKlineOld(ts_code):
+    #     return plotKline(ts_code)
     #     ax2 = fig.add_subplot(2, 1, 2)
     sql = ('select date, open, high, low, close, ttmpe '
-           'from klinestock where stockid="%(stockID)s" '
+           'from klinestock where ts_code="%(ts_code)s" '
            'order by date desc limit 1000;' % locals())
     result = engine.execute(sql)
     stockDatas = result.fetchall()
@@ -83,7 +83,7 @@ def plotKlineOld(stockID):
     fig = plt.figure()
     ax1 = fig.add_subplot(gs1[0:2, :])
     candlestick_ohlc(ax1, klineDatas)
-    ax1.set_title(stockID)
+    ax1.set_title(ts_code)
     ax2 = fig.add_subplot(gs1[2:3, :])
     ax2.plot(dates, peDatas)
     ax2.xaxis.set_major_locator(MonthLocator())
@@ -123,9 +123,10 @@ def plotKlineIndex(ID, days):
     :param days:
     :return:
     """
-    sql = ('select date, open, high, low, close, ttmpe '
-           'from klinestock where stockid="%(ID)s" '
-           'order by date desc limit %(days)s;' % locals())
+    sql = (f'select a.trade_date, a.open, a.high, a.low, a.close, b.ttmpe '
+           f'from daily a, daily_basic b '
+           f'where a.ts_code="{ID}" and a.ts_code=b.ts_code and a.trade=b.trade'
+           f'order by a.trade_date desc limit {days};')
     df = pd.read_sql(sql, engine)
     print(df.head())
     bokehplot = BokehPlot(ID, df)
@@ -139,9 +140,11 @@ def plotKlineStock(ID, days):
     :param days:
     :return:
     """
-    sql = ('select date, open, high, low, close, ttmpe '
-           'from klinestock where stockid="%(ID)s" '
-           'order by date desc limit %(days)s;' % locals())
+    sql = (f'select a.trade_date, a.open, a.high, a.low, a.close, b.ttmpe '
+           f'from daily a, dailybasic b '
+           f'where a.ts_code="{ID}" and a.ts_code=b.ts_code '
+           f'and a.trade_date=b.trade_date'
+           f'order by date desc limit {days};')
     df = pd.read_sql(sql, engine)
     print(df.head())
     bokehplot = BokehPlot(ID, df)
@@ -149,7 +152,7 @@ def plotKlineStock(ID, days):
 
 def __del_plotKline():
     sql = ('select date, open, high, low, close, ttmpe '
-           'from klinestock where stockid="%(stockID)s" '
+           'from klinestock where ts_code="%(ts_code)s" '
            'order by date desc limit %(days)s;' % locals())
     result = engine.execute(sql).fetchall()
     stockDatas = [i for i in reversed(result)]
@@ -222,14 +225,14 @@ def test():
     plt.show()
 
 
-# def plotKlineBokeh(stockID, days=1000):
+# def plotKlineBokeh(ts_code, days=1000):
 #     """
 #     绘制K线,pe走势图
-#     :param stockID: string, 股票代码, 600619
+#     :param ts_code: string, 股票代码, 600619
 #     :param days: int, 走势图显示的总天数
 #     :return:
 #     """
-#     df = readStockKlineDf(stockID, days)
+#     df = readStockKlineDf(ts_code, days)
 #     source = ColumnDataSource(df)
 #     TOOLS = "pan,wheel_zoom,box_zoom,reset,save"
 #     width = 1000
@@ -244,7 +247,7 @@ def test():
 #                     plot_height=klineHeight,
 #                     plot_width=width,
 #                     x_axis_location="above",
-#                     title="kline: %s" % stockID,
+#                     title="kline: %s" % ts_code,
 #                     tooltips=tooltips,
 #                     x_range=(dataLen - 200, dataLen - 1))
 #     pkline.xaxis.major_label_overrides = df['date'].to_dict()
@@ -295,7 +298,7 @@ def test():
 class BokehPlot:
     """
     绘制K线,pe走势图
-    :param stockID: string, 股票代码, 600619
+    :param ts_code: string, 股票代码, 600619
     :param days: int, 走势图显示的总天数
     :return:
     """

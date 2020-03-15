@@ -26,7 +26,7 @@ def getStockListForHY(hyID):
     levelNum = len(hyID) / 2
 #     levels = ['level1', 'level2', 'level3', 'level4']
 #     level = levels[levelNum - 1]
-    sql = 'select stockid from hangyestock where hyid="%(hyID)s";' % locals()
+    sql = 'select ts_code from hangyestock where hyid="%(hyID)s";' % locals()
     result = engine.execute(sql)
 #     stockList = result.fetchall()
     stockList = [i[0] for i in result.fetchall()]
@@ -34,10 +34,10 @@ def getStockListForHY(hyID):
     return stockList
 
 
-def getHYIDForStock(stockID):
+def getHYIDForStock(ts_code):
     """ 当查询指定股票的4级行业的代码
     """
-    sql = ('select hyid from hangyestock where stockid="%(stockID)s";'
+    sql = ('select hyid from hangyestock where ts_code="%(ts_code)s";'
            % locals())
     result = engine.execute(sql).fetchone()
     if result is None:
@@ -50,7 +50,7 @@ def getHYIDForStock(stockID):
 # def getHYStock():
 #     """ 查询已进行行业分类的股票列表
 #     """
-#     sql = 'select stockid from hangyestock;'
+#     sql = 'select ts_code from hangyestock;'
 #     result = engine.execute(sql)
 #     hystock = result.fetchall()
 #     hystock = [i[0] for i in hystock]
@@ -137,9 +137,9 @@ def getHYProfitsIncRates(hyID):
     return hyIncRate1, hyIncRate2, hyIncRate3
 
 
-def getStockProfitsIncRate(stockID, quarter):
+def getStockProfitsIncRate(ts_code, quarter):
     sql = ('select incrate from ttmlirun '
-           'where stockid="%(stockID)s" and date="%(quarter)s";'
+           'where ts_code="%(ts_code)s" and date="%(quarter)s";'
            % locals())
     result = engine.execute(sql).fetchone()
     if result is not None:
@@ -148,14 +148,14 @@ def getStockProfitsIncRate(stockID, quarter):
         return None
 
 
-def getStockProfitsIncRates(stockID):
+def getStockProfitsIncRates(ts_code):
     curYear = datatrans.getCurYear()
     lastYearQuarter1 = (curYear - 3) * 10 + 4
     lastYearQuarter2 = (curYear - 2) * 10 + 4
     lastYearQuarter3 = (curYear - 1) * 10 + 4
-    incRate1 = getStockProfitsIncRate(stockID, lastYearQuarter1)
-    incRate2 = getStockProfitsIncRate(stockID, lastYearQuarter2)
-    incRate3 = getStockProfitsIncRate(stockID, lastYearQuarter3)
+    incRate1 = getStockProfitsIncRate(ts_code, lastYearQuarter1)
+    incRate2 = getStockProfitsIncRate(ts_code, lastYearQuarter2)
+    incRate3 = getStockProfitsIncRate(ts_code, lastYearQuarter3)
     print(incRate1, incRate2, incRate3)
     return incRate1, incRate2, incRate3
 
@@ -232,11 +232,11 @@ def calHYTTMLirunLowLevel(hyID, date):
     allTTMLirunCur = sqlrw.readTTMLirunForDate(date)
     allTTMLirunLast = sqlrw.readTTMLirunForDate(date - 10)
     allTTMLirunLast = allTTMLirunLast[
-        allTTMLirunLast['stockid'].isin(stockList)]
+        allTTMLirunLast['ts_code'].isin(stockList)]
     if allTTMLirunLast.empty or allTTMLirunCur.empty:
         return False
     allTTMLirunCur = allTTMLirunCur[
-        allTTMLirunCur['stockid'].isin(allTTMLirunLast['stockid'])]
+        allTTMLirunCur['ts_code'].isin(allTTMLirunLast['ts_code'])]
     profitsCur = sum(allTTMLirunCur['ttmprofits'])
     profitsLast = sum(allTTMLirunLast['ttmprofits'])
 
@@ -307,12 +307,12 @@ def getHYPE(hyID, date, reset=False):
     if not reset and result is not None:
         return result[0]
 
-    stockIDs = getStockListForHY(hyID)
+    ts_codes = getStockListForHY(hyID)
     valueSum = 0
     profitSum = 0
-    for stockID in stockIDs:
+    for ts_code in ts_codes:
         sql = (f'select date, totalmarketvalue, ttmprofits '
-               f'from klinestock where stockid="{stockID}" and date<="{date}"'
+               f'from klinestock where ts_code="{ts_code}" and date<="{date}"'
                f'order by `date` desc limit 1;')
         result = engine.execute(sql).fetchone()
         if result is not None:
@@ -324,7 +324,7 @@ def getHYPE(hyID, date, reset=False):
             if profit is None or profit < 0 or value is None:
                 continue
 
-#            print stockID, result[0], result[1], result[2], result[3]
+#            print ts_code, result[0], result[1], result[2], result[3]
             valueSum += value
             profitSum += profit
     if profitSum != 0:
@@ -343,9 +343,9 @@ def calHYsPE(date=None):
     sql = (f'insert into hangyepe (hyid, `date`, hype)'
            f' select hyid, "{date}" as date,'
            f' round(sum(totalmarketvalue)/sum(ttmprofits), 2) as pe'
-           f' from (select a.stockid, b.hyid as hyid, a.totalmarketvalue,'
+           f' from (select a.ts_code, b.hyid as hyid, a.totalmarketvalue,'
            f' a.ttmprofits from klinestock as a inner join hangyestock as b'
-           f' on a.stockid=b.stockid where a.date="{date}"'
+           f' on a.ts_code=b.ts_code where a.date="{date}"'
            f' and a.ttmprofits > 0) as c group by hyid;')
     try:
         engine.execute(sql)
@@ -387,14 +387,14 @@ def resetHYTTMLirun(startQuarter=20191, endQuarter=20191):
 def test1():
     """ 查询一组股票所处的行业分别有多少公司
     """
-    stockIDs = ['002508', '600261', '002285', '000488',
+    ts_codes = ['002508', '600261', '002285', '000488',
                 '002573', '300072', '000910']
-    for stockID in stockIDs:
-        stockName = sqlrw.getStockName(stockID)
-        hyID = getHYIDForStock(stockID)
+    for ts_code in ts_codes:
+        stockName = sqlrw.getStockName(ts_code)
+        hyID = getHYIDForStock(ts_code)
         hyName = getHYName(hyID)
         hyCount = getHYStockCount(hyID)
-        print(stockID, stockName, hyID, hyName, hyCount)
+        print(ts_code, stockName, hyID, hyName, hyCount)
 
 
 def test2():
@@ -406,10 +406,10 @@ def test2():
         print(hyID, pe)
 
 
-# def getHYIDName(stockID):
-#     hyID = getHYIDForStock(stockID)
+# def getHYIDName(ts_code):
+#     hyID = getHYIDForStock(ts_code)
 #     hyName = getHYName(hyID)
-#     print stockID, hyID, hyName
+#     print ts_code, hyID, hyName
 
 
 if __name__ == '__main__':

@@ -33,25 +33,26 @@ from misc import urlGubenSina, tsCode
 from misc import urlGuzhi, urlMainTable
 # from misc import filenameGuben
 from misc import filenameMainTable, filenameGuzhi
-from misc import longStockID, tsCode
+from misc import longts_code, tsCode
 import datatrans
 # import hyanalyse
 import sqlrw
-from sqlrw import engine, readStockIDsFromSQL, writeSQL
-from sqlrw import getStockKlineUpdateDate, lirunFileToList
+from sqlrw import engine, readStockList, writeSQL
+# from sqlrw import getStockKlineUpdateDate, lirunFileToList
 from sqlrw import writeSQL
-from sqlrw import writeStockList
+# from sqlrw import writeStockList
 from sqlrw import writeHYToSQL, writeHYNameToSQL
-from sqlrw import gubenUpdateDate, writeGubenToSQL
+# from sqlrw import gubenUpdateDate
+from sqlrw import writeGubenToSQL
 from initlog import initlog
 from misc import tsCode
 
 
-# def downGubenToSQL(stockID, retry=3, timeout=10):
+# def downGubenToSQL(ts_code, retry=3, timeout=10):
 #     """下载单个股票股本数据写入数据库"""
-#     logging.debug('downGubenToSQL: %s', stockID)
+#     logging.debug('downGubenToSQL: %s', ts_code)
 #     socket.setdefaulttimeout(timeout)
-#     gubenURL = urlGuben(stockID)
+#     gubenURL = urlGuben(ts_code)
 #     req = getreq(gubenURL)
 #
 #     gubenDf = pd.DataFrame()
@@ -66,40 +67,43 @@ from misc import tsCode
 #             guben = urllib2.urlopen(req).read()
 #         except IOError, e:
 #             logging.warning('[%s]:download %s guben data, retry...',
-#                             e, stockID)
+#                             e, ts_code)
 # #             print type(e)
 #             errorString = '%s' % e
 #             if errorString == 'HTTP Error 456: ':
 #                 print 'sleep 60 seconds...'
 #                 time.sleep(60)
 #         else:
-#             gubenDf = datatrans.gubenDataToDf(stockID, guben)
+#             gubenDf = datatrans.gubenDataToDf(ts_code, guben)
 #             tablename = 'guben'
-#             lastUpdate = getGubenLastUpdateDate(stockID)
+#             lastUpdate = getGubenLastUpdateDate(ts_code)
 #             gubenDf = gubenDf[gubenDf.date > lastUpdate]
 #             if not gubenDf.empty:
 #                 writeSQL(gubenDf, tablename)
 #             return
-#     logging.error('fail download %s guben data.', stockID)
+#     logging.error('fail download %s guben data.', ts_code)
 
 
 def downStockList(retry=10):
     """ 更新股票列表与行业列表
     """
-    sl = pd.DataFrame()
-    for _ in range(retry):
-        try:
-            sl = ts.get_stock_basics().fillna(value=0)
-        except socket.timeout:
-            logging.warning('updateStockList timeout!!!')
-        else:
-            logging.debug('updateStockList ok')
-            break
-    if sl.empty:
-        logging.error('updateStockList fail!!!')
-        return False
-    sl.index.name = 'stockid'
-    writeStockList(sl)
+    pro = ts.pro_api()
+    df = pro.stock_basic()
+    writeSQL(df, 'stock_basic')
+    # sl = pd.DataFrame()
+    # for _ in range(retry):
+    #     try:
+    #         sl = ts.get_stock_basics().fillna(value=0)
+    #     except socket.timeout:
+    #         logging.warning('updateStockList timeout!!!')
+    #     else:
+    #         logging.debug('updateStockList ok')
+    #         break
+    # if sl.empty:
+    #     logging.error('updateStockList fail!!!')
+    #     return False
+    # sl.index.name = 'ts_code'
+    # writeStockList(sl)
 
 
 def downHYList():
@@ -108,18 +112,13 @@ def downHYList():
     读取行业表中的股票代码，与当前获取的股票列表比较，
     如果存在部分股票未列入行业表，则更新行业列表数据
     """
-    sql = 'select stockid from stocklist where timeToMarket!=0;'
-    result = sqlrw.engine.execute(sql)
-    stockList = [i[0] for i in result.fetchall()]
-
-    sql = 'select stockid from hangyestock;'
-    result = sqlrw.engine.execute(sql)
-    hystock = [i[0] for i in result.fetchall()]
-
-    noinhy = [i for i in stockList if i not in hystock]
+    sql = ('select ts_code from stock_basic'
+           ' where ts_code not in (select ts_code from classify_member)'
+           ' and list_status="L" or list_status="P"')
+    result = sqlrw.engine.execute(sql).fetchall()
     # 股票列表中上市日期不为0，即为已上市
     # 且不在行业列表中，表示需更新行业数据
-    if not noinhy:
+    if result[0][0] is not None:
         HYDataFilename = downHYFile()
         writeHYToSQL(HYDataFilename)
         writeHYNameToSQL(HYDataFilename)
@@ -227,20 +226,20 @@ def downloadClassified():
     """
     classifiedDf = ts.get_industry_classified(standard='sw')
     classifiedDf = classifiedDf[['code', 'c_name']]
-    classifiedDf.columns = ['stockid', 'cname']
+    classifiedDf.columns = ['ts_code', 'cname']
     return classifiedDf
 
-    # def downGubenOld(stockID, retry=3, timeout=10):
+    # def downGubenOld(ts_code, retry=3, timeout=10):
     #     """ 本函数待废除，如果新的downGuben正常
     #         下载单个股票股本数据写入数据库
     #
     #     """
     #     # //*[@id="lngbbd_Table"]/tbody/tr[1]
-    #     logging.debug('downGubenToSQL: %s', stockID)
-    #     print('downGubenToSQL: %s' % stockID)
+    #     logging.debug('downGubenToSQL: %s', ts_code)
+    #     print('downGubenToSQL: %s' % ts_code)
     #     socket.setdefaulttimeout(timeout)
-    #     # gubenURL = urlGubenEastmoney(stockID)
-    #     gubenURL = urlGubenSina(stockID)
+    #     # gubenURL = urlGubenEastmoney(ts_code)
+    #     gubenURL = urlGubenSina(ts_code)
     #     req = getreq(gubenURL)
     # #     downloadStat = False
     #     gubenDf = pd.DataFrame()
@@ -255,42 +254,42 @@ def downloadClassified():
     #             guben = urllib.request.urlopen(req).read()
     #         except IOError as e:
     #             logging.warning('[%s]:download %s guben data, retry...',
-    #                             e, stockID)
+    #                             e, ts_code)
     # #             print type(e)
     #             errorString = '%s' % e
     #             if errorString == 'HTTP Error 456: ':
     #                 print('sleep 60 seconds...')
     #                 time.sleep(60)
     #         else:
-    #             gubenDf = datatrans.gubenDataToDfSina(stockID, guben)
+    #             gubenDf = datatrans.gubenDataToDfSina(ts_code, guben)
     #             if sqlrw.writeGubenToSQL(gubenDf):
-    #                 logging.debug('download %s guben data final.', stockID)
+    #                 logging.debug('download %s guben data final.', ts_code)
     #                 return
     # #             return gubenDf
-    #     logging.error('fail download %s guben data.', stockID)
+    #     logging.error('fail download %s guben data.', ts_code)
     #     return None
 
-    # def downloadGuben(stockID):
+    # def downloadGuben(ts_code):
     # """ 下载股本并保存到文件， 确认为无用函数后可删除
     # """
-    # url = urlGuben(stockID)
-    # filename = filenameGuben(stockID)
+    # url = urlGuben(ts_code)
+    # filename = filenameGuben(ts_code)
     # return dataToFile(url, filename)
 
 
-def downGuzhi_del(stockID):
+def downGuzhi_del(ts_code):
     """ 确认无用后可删除
     # 下载单个股票估值数据， 保存并返回估值数据
     """
-    logging.debug('downGuzhiToSQL: %s', stockID)
-    url = urlGuzhi(stockID)
+    logging.debug('downGuzhiToSQL: %s', ts_code)
+    url = urlGuzhi(ts_code)
     data = downloadData(url)
     if data is None:
-        logging.error('down %s guzhi data fail.', stockID)
+        logging.error('down %s guzhi data fail.', ts_code)
         return None
 
     # 保存至文件
-    filename = filenameGuzhi(stockID)
+    filename = filenameGuzhi(ts_code)
     mainFile = open(filename, 'wb')
     try:
         mainFile.write(data)
@@ -311,7 +310,7 @@ def downChengfen180():
     filename = './data/000010cons.xls'
     if dataToFile(url, filename):
         df = pd.read_excel(filename)
-        df1 = pd.DataFrame({'name': 'sse180', 'stockid': df.iloc[:, 4]})
+        df1 = pd.DataFrame({'name': 'sse180', 'ts_code': df.iloc[:, 4]})
         writeSQL(df1, 'chengfen')
 
 
@@ -332,19 +331,19 @@ def downChengfen(ID, startDate, endDate=None):
                           start_date=startDate.strftime('%Y%m%d'),
                           end_date=endDate.strftime('%Y%m%d'))
     df['indexid'] = df.index_code.str[:6]
-    df['stockid'] = df.con_code.str[:6]
+    df['ts_code'] = df.con_code.str[:6]
     df.rename(columns={'trade_date': 'date', }, inplace=True)
-    df = df[['indexid', 'stockid', 'date', 'weight']]
+    df = df[['indexid', 'ts_code', 'date', 'weight']]
 
     print(df.head())
     writeSQL(df, 'chengfen')
 
 
-def downGuzhi(stockID):
+def downGuzhi(ts_code):
     """ 下载单个股票估值数据， 保存并返回估值数据
     """
-    url = urlGuzhi(stockID)
-    filename = filenameGuzhi(stockID)
+    url = urlGuzhi(ts_code)
+    filename = filenameGuzhi(ts_code)
     logging.debug('write guzhi file: %s', filename)
     return dataToFile(url, filename)
 
@@ -359,7 +358,7 @@ def downKline(tradeDate):
     try:
         pro = ts.pro_api()
         df = pro.daily(trade_date=strDate)
-        df['stockid'] = df['ts_code'].str[:6]
+        df['ts_code'] = df['ts_code'].str[:6]
         # df.date = (df['trade_date'].str[:4] + '-'
         #            + df['trade_date'].str[4:6] + '-'
         #            +df['trade_date'].str[6:])
@@ -369,43 +368,43 @@ def downKline(tradeDate):
         # df['treade_date'].map(lambda x: x[:4] + '-' + x[4:6] + '-' + x[6:])
         df.rename(columns={'trade_date': 'date', 'vol': 'volume'},
                   inplace=True)
-        df = df[['stockid', 'date', 'open', 'high', 'close', 'low', 'volume']]
+        df = df[['ts_code', 'date', 'open', 'high', 'close', 'low', 'volume']]
         writeSQL(df, 'klinestock')
     except Exception as e:
         print(e)
         logging.error(e)
 
 
-def __downKline(stockID, startDate=None, endDate=None, retry_count=6):
+def __downKline(ts_code, startDate=None, endDate=None, retry_count=6):
     """
     待删除函数，改用tushare按日下载数据的方案
     下载单个股票K线历史写入数据库, 通过调用不同下载函数选择不同的数据源
     """
-    logging.debug('download kline: %s', stockID)
+    logging.debug('download kline: %s', ts_code)
 
     # 数据源：　baostock
-    # downKlineFromBaostock(stockID, startDate, endDate, retry_count)
+    # downKlineFromBaostock(ts_code, startDate, endDate, retry_count)
 
     # 数据源：　tushare
-    downKlineFromTushare(stockID, startDate, endDate, retry_count)
+    downKlineFromTushare(ts_code, startDate, endDate, retry_count)
 
 
-def downKlineFromBaostock(stockID, startDate=None,
+def del_downKlineFromBaostock(ts_code, startDate=None,
                           endDate=None, retry_count=6):
     """下载单个股票K线历史写入数据库, 下载源为baostock
-    :type stockID: str
+    :type ts_code: str
     :param startDate: date, 开始日期
     :param endDate: date, 结束日期
     :param retry_count:
     """
-    if startDate is None:  # startDate为空时取股票最后更新日期
-        startDate = getStockKlineUpdateDate() + dt.timedelta(days=1)
-    #         print stockID, startDate
+    # if startDate is None:  # startDate为空时取股票最后更新日期
+    #     startDate = getStockKlineUpdateDate() + dt.timedelta(days=1)
+    #         print ts_code, startDate
     startDate = startDate.strftime('%Y-%m-%d')
     if endDate is None:
         endDate = dt.datetime.today().strftime('%Y-%m-%d')
     #     retryCount = 0
-    longID = longStockID(stockID)
+    longID = longts_code(ts_code)
 
     for cur_retry in range(1, retry_count + 1):
         try:
@@ -419,30 +418,30 @@ def downKlineFromBaostock(stockID, startDate=None,
             df = pd.DataFrame(dataList, columns=rs.fields)
             # assert isinstance(df, pd.DataFrame), 'df is not pd.DataFrame'
             df = df[df.tradestatus == '1'].copy()
-            df['stockid'] = stockID
+            df['ts_code'] = ts_code
             df = df.rename({'peTTM': 'ttmpe'})
             df = df.iloc[0:, :-1]
-            # df = ts.get_hist_data(stockID, startDate, endDate, retry_count=1)
+            # df = ts.get_hist_data(ts_code, startDate, endDate, retry_count=1)
         except IOError:
             logging.warning('fail download %s Kline data %d times, retry....',
-                            stockID, cur_retry)
+                            ts_code, cur_retry)
         else:
             if (df is None) or df.empty:
                 return None
             else:
                 writeSQL(df, 'klinestock')
                 return
-    logging.error('fail download %s Kline data!', stockID)
+    logging.error('fail download %s Kline data!', ts_code)
 
 
-def downKlineFromTushare(stockID: str, startDate=None, endDate=None,
+def del_downKlineFromTushare(ts_code: str, startDate=None, endDate=None,
                          retry_count=6):
     """下载单个股票K线历史写入数据库, 下载源为tushare"""
-    # logging.debug('download kline: %s', stockID)
-    if startDate is None:  # startDate为空时取股票最后更新日期
-        startDate = getStockKlineUpdateDate() + dt.timedelta(days=1)
-        #         print stockID, startDate
-        startDate = startDate.strftime('%Y-%m-%d')
+    # logging.debug('download kline: %s', ts_code)
+    # if startDate is None:  # startDate为空时取股票最后更新日期
+    #     startDate = getStockKlineUpdateDate() + dt.timedelta(days=1)
+        #         print ts_code, startDate
+        # startDate = startDate.strftime('%Y-%m-%d')
     if endDate is None:
         endDate = dt.datetime.today().strftime('%Y-%m-%d')
     #     retryCount = 0
@@ -450,18 +449,18 @@ def downKlineFromTushare(stockID: str, startDate=None, endDate=None,
         return
     for cur_retry in range(1, retry_count + 1):
         try:
-            df = ts.get_hist_data(stockID, startDate, endDate, retry_count=1)
+            df = ts.get_hist_data(ts_code, startDate, endDate, retry_count=1)
         except IOError:
             logging.warning('fail download %s Kline data %d times, retry....',
-                            stockID, cur_retry)
+                            ts_code, cur_retry)
         else:
             if (df is None) or df.empty:
                 return None
             else:
-                df['stockid'] = stockID
+                df['ts_code'] = ts_code
                 writeSQL(df, 'klinestock')
                 return
-    logging.error('fail download %s Kline data!', stockID)
+    logging.error('fail download %s Kline data!', ts_code)
 
 
 def downloadLirun(date):
@@ -474,7 +473,7 @@ def downloadLirun(date):
 #     return downloadLirunFromEastmoney(date)
 
 
-def downloadLirunFromEastmoney(stockList, date):
+def del_downloadLirunFromEastmoney(stockList, date):
     """
     获取业绩报表数据,数据源为Eastmoney
     Parameters
@@ -494,8 +493,9 @@ def downloadLirunFromEastmoney(stockList, date):
     """
     lirunList = []
     date = datatrans.transQuarterToDate(date).replace('-', '')
-    for stockID in stockList:
-        lirun = lirunFileToList(stockID, date)
+    for ts_code in stockList:
+        lirun = None
+        # lirun = lirunFileToList(ts_code, date)
         if lirun:
             lirunList.append(lirun)
     return DataFrame(lirunList)
@@ -530,41 +530,41 @@ def downloadLirunFromTushare(date):
     return datatrans.transLirunDf(df, year, quarter)
 
 
-# def downGuben(stockID='300445', date='2019-04-19'):
-def downGuben(stockID='300445', replace=False):
+# def downGuben(ts_code='300445', date='2019-04-19'):
+def downGuben(ts_code='300445', replace=False):
     """
     下载股本数据并保存到数据库
     2个可选数据源，tushare.pro和新浪财经
     tushare.pro数据错误，改用新浪数据
-    :param stockID:
+    :param ts_code:
     :return:
     """
-    df = _downGubenSina(stockID)
-    # df = _downGubenTusharePro(stockID)
+    df = _downGubenSina(ts_code)
+    # df = _downGubenTusharePro(ts_code)
     if df is not None:
         writeGubenToSQL(df, replace)
 
 
-def _downGubenTusharePro(stockID='300445'):
+def _downGubenTusharePro(ts_code='300445'):
     """
     从tushare.pro下载股本数据
-    :param stockID:
+    :param ts_code:
     :return:
     """
-    print('start update guben: %s' % stockID)
-    updateDate = gubenUpdateDate(stockID)
+    print('start update guben: %s' % ts_code)
+    updateDate = gubenUpdateDate(ts_code)
     # print(type(updateDate))
     # print(updateDate.strftime('%Y%m%d'))
     startDate = updateDate.strftime('%Y%m%d')
     pro = ts.pro_api()
-    code = tsCode(stockID)
+    code = tsCode(ts_code)
     # print(code)
     df = pro.daily_basic(ts_code=code, start_date=startDate,
                          fields='trade_date,total_share')
     if df.empty:
         return
 
-    sql = (f'select date, totalshares from guben where stockid="{stockID}" '
+    sql = (f'select date, totalshares from guben where ts_code="{ts_code}" '
            ' order by date desc limit 1;')
     result = engine.execute(sql).fetchone()
 
@@ -583,19 +583,19 @@ def _downGubenTusharePro(stockID='300445'):
                                                '%Y%m%d'))
             gubenValue.append(df.total_share[idx - 1] * 10000)
             pos += 1
-    resultDf = pd.DataFrame({'stockid': stockID,
+    resultDf = pd.DataFrame({'ts_code': ts_code,
                              'date': gubenDate,
                              'totalshares': gubenValue})
     return resultDf
 
 
-def downMainTable(stockID):
+def downMainTable(ts_code):
     mainTableType = ['BalanceSheet', 'ProfitStatement', 'CashFlow']
     result = None
     for tableType in mainTableType:
-        url = urlMainTable(stockID, tableType)
-        filename = filenameMainTable(stockID, tableType)
-        logging.debug('downMainTable %s, %s', stockID, tableType)
+        url = urlMainTable(ts_code, tableType)
+        filename = filenameMainTable(ts_code, tableType)
+        logging.debug('downMainTable %s, %s', ts_code, tableType)
         result = dataToFile(url, filename)
         if not result:
             logging.error('download fail: %s', url)
@@ -722,13 +722,13 @@ def _get_report_data(year, quarter, pageNo, dataArr,
                 return dataArr
 
 
-def _downGubenSina(stockID):
+def _downGubenSina(ts_code):
     """ 从新浪网下载股本数据
     """
-    print('开始下载股本数据：', stockID)
+    print('开始下载股本数据：', ts_code)
     timeout = 6
     socket.setdefaulttimeout(timeout)
-    gubenURL = urlGubenSina(stockID)
+    gubenURL = urlGubenSina(ts_code)
     useragent = (r'Mozilla / 5.0(Windows NT 10.0; Win64; x64) '
                  r'AppleWebKit / 537.36(KHTML, like Gecko) '
                  r'Chrome / 74.0.3729.169 Safari / 537.36')
@@ -745,12 +745,12 @@ def _downGubenSina(stockID):
         guben = request.urlopen(req).read()
     except IOError as e:
         print(e)
-        print('数据下载失败： %s' % stockID)
+        print('数据下载失败： %s' % ts_code)
         return None
     # else:
     #         sock.close()
     #     print guben
-    df = datatrans.gubenDataToDfSina(stockID, guben)
+    df = datatrans.gubenDataToDfSina(ts_code, guben)
     return df
 
 
@@ -803,10 +803,10 @@ def downIndexBasic():
     writeSQL(df_index_basic_sz, 'index_basic')
 
 
-def downDailyBasic(stockID=None, tradeDate=None, startDate=None, endDate=None):
+def downDailyBasic(ts_code=None, tradeDate=None, startDate=None, endDate=None):
     """
     从tushare下载股票每日指标
-    :param stockID: 股票代码
+    :param ts_code: 股票代码
     :param tradeDate: 交易日期
     :param startDate: 开始日期
     :param endDate: 结束日期
@@ -814,66 +814,66 @@ def downDailyBasic(stockID=None, tradeDate=None, startDate=None, endDate=None):
     """
     pro = ts.pro_api()
     df = None
-    if stockID is not None and startDate is not None:
-        df = pro.daily_basic(ts_code=tsCode(stockID),
+    if ts_code is not None and startDate is not None:
+        df = pro.daily_basic(ts_code=tsCode(ts_code),
                              start_date=startDate,
                              end_date=endDate)
     elif tradeDate is not None:
         df = pro.daily_basic(trade_date=tradeDate)
     if isinstance(df, pd.DataFrame):
-        df.rename(columns={'ts_code': 'stockid', 'trade_date': 'date'},
+        df.rename(columns={'ts_code': 'ts_code', 'trade_date': 'date'},
                   inplace=True)
-        df['stockid'] = df['stockid'].str[:6]
-        df.set_index(keys=['stockid'], inplace=True)
+        df['ts_code'] = df['ts_code'].str[:6]
+        df.set_index(keys=['ts_code'], inplace=True)
         sqlrw.writeSQL(df, 'dailybasic')
     return df
 
 
-def downPledgeStat(stockID):
+def downPledgeStat(ts_code):
     """获取股权质押统计数据
 
-    :param stockID:
+    :param ts_code:
     :return:
     """
     pro = ts.pro_api()
     df = None
-    df = pro.pledge_stat(ts_code=tsCode(stockID))
-    df.rename(columns={'ts_code': 'stockid', 'end_date': 'date'}, inplace=True)
-    df['stockid'] = df['stockid'].str[:6]
-    df.set_index(keys=['stockid'], inplace=True)
+    df = pro.pledge_stat(ts_code=tsCode(ts_code))
+    df.rename(columns={'ts_code': 'ts_code', 'end_date': 'date'}, inplace=True)
+    df['ts_code'] = df['ts_code'].str[:6]
+    df.set_index(keys=['ts_code'], inplace=True)
     writeSQL(df, 'pledgestat')
     return df
 
 
-def downIncome(stockID, startDate='', endDate=''):
+def downIncome(ts_code, startDate='', endDate=''):
     """下载tushare利润表
 
-    :param stockID: str, 股票代码
+    :param ts_code: str, 股票代码
     :param startDate: str, 开始日期, yyyymmdd
     :param endDate: str, 结束日期, yyyymmdd
     :return:
     """
-    if len(stockID) == 6:
-        stockID = tsCode(stockID)
+    if len(ts_code) == 6:
+        ts_code = tsCode(ts_code)
     pro = ts.pro_api()
-    df = pro.income(ts_code=tsCode(stockID), start_date=startDate,
+    df = pro.income(ts_code=tsCode(ts_code), start_date=startDate,
                     end_date=endDate)
     print(df)
     writeSQL(df, 'income')
 
 
-def downBalancesheet(stockID, startDate='', endDate=''):
+def downBalancesheet(ts_code, startDate='', endDate=''):
     """下载tushare资产负债表
 
-    :param stockID: str, 股票代码
+    :param ts_code: str, 股票代码
     :param startDate: str, 开始日期, yyyymmdd
     :param endDate: str, 结束日期, yyyymmdd
     :return:
     """
-    if len(stockID) == 6:
-        stockID = tsCode(stockID)
+    if len(ts_code) == 6:
+        ts_code = tsCode(ts_code)
     pro = ts.pro_api()
-    df = pro.balancesheet(ts_code=tsCode(stockID), start_date=startDate,
+    df = pro.balancesheet(ts_code=tsCode(ts_code), start_date=startDate,
                           end_date=endDate)
     print(df)
     return df
@@ -887,7 +887,7 @@ def downloaderStock(tablename, perTimes=0, downLimit=0):
     :return:
     """
     pro = ts.pro_api()
-    IDs = readStockIDsFromSQL()
+    IDs = readStockList().ts_code.to_list()
     # IDs = IDs[:10]
     times = []
     cnt = len(IDs)
@@ -904,18 +904,18 @@ def downloaderStock(tablename, perTimes=0, downLimit=0):
             nowtime = datetime.now()
         times.append(nowtime)
         print(f'第{i}个，时间：{nowtime}')
-        stockID = IDs[i]
-        print(stockID)
+        ts_code = IDs[i]
+        print(ts_code)
         flag = True
         df = None
         fun = getattr(pro, tablename)
         while flag:
             try:
                 # 下载质押统计表
-                # df = downPledgeStat(stockID)
+                # df = downPledgeStat(ts_code)
                 # 下载利润表
-                # df = downIncome(stockID)
-                df = fun(ts_code=tsCode(stockID))
+                # df = downIncome(ts_code)
+                df = fun(ts_code=tsCode(ts_code))
                 flag = False
             except Exception as e:
                 print(e)
@@ -1090,6 +1090,6 @@ if __name__ == '__main__':
     initlog()
 
     pass
-    stockID = '000651'
+    ts_code = '000651'
     startDate = '2019-04-01'
-    downKlineFromBaostock(stockID, startDate)
+    downKlineFromBaostock(ts_code, startDate)

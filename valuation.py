@@ -51,7 +51,7 @@ def wdzz(stock):
     avg = stock[1:].mean()
     std = stock[1:].std()
     z = (stock[1:] - avg).abs() / std
-    # print(stock.stockid)
+    # print(stock.ts_code)
     # print(z)
     return 1 if all(z < 1.5) else 0
 
@@ -73,8 +73,8 @@ def peZ(stock, dayCount, date=None):
     """ 计算一支股票指定日期PE的Z值，
         # 历史交易天数不足时，PE水平为-1
     """
-    stockID = stock.stockid
-    sql = f'select ttmpe from klinestock where stockid="{stockID}"'
+    ts_code = stock.ts_code
+    sql = f'select ttmpe from klinestock where ts_code="{ts_code}"'
     if date is not None:
            sql += f' and date<="{date}"'
     sql += f' order by `date` desc limit {dayCount};'
@@ -110,22 +110,22 @@ def calpf():
     stocks = readStockListDf()
     # print(stocks)
     # 低市盈率
-    peDf = readLastTTMPEs(stocks.stockid.tolist())
-    stocks = pd.merge(stocks, peDf, on='stockid', how='left')
+    peDf = readLastTTMPEs(stocks.ts_code.tolist())
+    stocks = pd.merge(stocks, peDf, on='ts_code', how='left')
     stocks['lowpe'] = stocks.apply(lowpe, axis=1)
 
     # 市盈率低于行业平均
-    sql = 'select stockid, hyid from hangyestock;'
+    sql = 'select ts_code, hyid from hangyestock;'
     hyDf = pd.read_sql(sql, engine)
-    stocks = pd.merge(stocks, hyDf, on='stockid', how='left')
+    stocks = pd.merge(stocks, hyDf, on='ts_code', how='left')
     hyPEDf = hyanalyse.getHYsPE()
     stocks = pd.merge(stocks, hyPEDf, on='hyid', how='left')
     stocks['lowhype'] = stocks.apply(lowhype, axis=1)
 
     # 过去6个季度利润稳定增长
     sectionNum = 6  # 取6个季度
-    incDf = sqlrw.readLastTTMLirun(stocks.stockid.tolist(), sectionNum)
-    stocks = pd.merge(stocks, incDf, on='stockid', how='left')
+    incDf = sqlrw.readLastTTMLirun(stocks.ts_code.tolist(), sectionNum)
+    stocks = pd.merge(stocks, incDf, on='ts_code', how='left')
     stocks['avg'] = incDf.mean(axis=1).round(2)
     stocks['std'] = incDf.std(axis=1).round(2)
     stocks['wdzz'] = incDf.apply(wdzz, axis=1)
@@ -149,12 +149,12 @@ def calpf():
     stocks['lowpez1000'] = stocks.apply(lowPEZ1000, axis=1)
 
     # 计算pe200与pe1000
-    # stocks['pe200'] = dataanalyse.peHistRate(stocks.stockid.tolist(), 200)
-    # stocks['pe1000'] = dataanalyse.peHistRate(stocks.stockid.tolist(), 1000)
-    df = dataanalyse.peHistRate(stocks.stockid.tolist(), 200)
-    stocks = pd.merge(stocks, df, on='stockid', how='left')
-    df = dataanalyse.peHistRate(stocks.stockid.tolist(), 1000)
-    stocks = pd.merge(stocks, df, on='stockid', how='left')
+    # stocks['pe200'] = dataanalyse.peHistRate(stocks.ts_code.tolist(), 200)
+    # stocks['pe1000'] = dataanalyse.peHistRate(stocks.ts_code.tolist(), 1000)
+    df = dataanalyse.peHistRate(stocks.ts_code.tolist(), 200)
+    stocks = pd.merge(stocks, df, on='ts_code', how='left')
+    df = dataanalyse.peHistRate(stocks.ts_code.tolist(), 1000)
+    stocks = pd.merge(stocks, df, on='ts_code', how='left')
 
     # 计算总评分
     stocks['pf'] = stocks.lowpe
@@ -166,7 +166,7 @@ def calpf():
     stocks = stocks.sort_values(by='pf', ascending=False)
 
     # 设置输出列与列顺序
-#     guzhiDf = guzhiDf[['stockid', 'name', 'pe',
+#     guzhiDf = guzhiDf[['ts_code', 'name', 'pe',
 #                        'incrate0', 'incrate1', 'incrate2',
 #                        'incrate3', 'incrate4', 'incrate5',
 #                        'avgrate', 'madrate', 'stdrate', 'pe200', 'pe1000'
@@ -174,12 +174,12 @@ def calpf():
 
 #     mystocks = ['002508', '600261', '002285', '000488',
 #                 '002573', '300072', '000910']
-#     mystockspf = stocks[stocks['stockid'].isin(mystocks)]
-#     mystockspf.set_index(['stockid'], inplace=True)
+#     mystockspf = stocks[stocks['ts_code'].isin(mystocks)]
+#     mystockspf.set_index(['ts_code'], inplace=True)
 #     mystockspf.to_csv('./data/valuationmystocks.csv')
 
     # 保存评价结果
-    stocks.set_index(['stockid'], inplace=True)
+    stocks.set_index(['ts_code'], inplace=True)
     stocks.to_csv('./data/valuation.csv')
 #    print stocks
     if initsql.existTable('valuation'):
@@ -211,14 +211,14 @@ def calpfnew(date, replace=False):
     stocks = readStockListDf(date)
     # print(stocks)
     # 低市盈率
-    peDf = readLastTTMPEs(stocks.stockid.tolist(), date)
-    stocks = pd.merge(stocks, peDf, on='stockid', how='inner')
+    peDf = readLastTTMPEs(stocks.ts_code.tolist(), date)
+    stocks = pd.merge(stocks, peDf, on='ts_code', how='inner')
     stocks['lowpe'] = stocks.apply(lowpe, axis=1)
 
     # 市盈率低于行业平均
-    sql = 'select stockid, hyid from hangyestock;'
+    sql = 'select ts_code, hyid from hangyestock;'
     hyDf = pd.read_sql(sql, engine)
-    stocks = pd.merge(stocks, hyDf, on='stockid', how='left')
+    stocks = pd.merge(stocks, hyDf, on='ts_code', how='left')
     hyPEDf = hyanalyse.getHYsPE(date)
     if hyPEDf is None or hyPEDf.empty:
         hyanalyse.calHYsPE(date)
@@ -228,8 +228,8 @@ def calpfnew(date, replace=False):
 
     # 过去6个季度利润稳定增长
     sectionNum = 6  # 取6个季度
-    incDf = sqlrw.readLastTTMLirun(stocks.stockid.tolist(), sectionNum, date)
-    stocks = pd.merge(stocks, incDf, on='stockid', how='left')
+    incDf = sqlrw.readLastTTMLirun(stocks.ts_code.tolist(), sectionNum, date)
+    stocks = pd.merge(stocks, incDf, on='ts_code', how='left')
     stocks['avg'] = incDf.mean(axis=1).round(2)
     stocks['std'] = incDf.std(axis=1).round(2)
     stocks['wdzz'] = incDf.apply(wdzz, axis=1)
@@ -254,12 +254,12 @@ def calpfnew(date, replace=False):
     # return stocks
 
     # 计算pe200与pe1000
-    # stocks['pe200'] = dataanalyse.peHistRate(stocks.stockid.tolist(), 200)
-    # stocks['pe1000'] = dataanalyse.peHistRate(stocks.stockid.tolist(), 1000)
-    df = dataanalyse.peHistRate(stocks.stockid.tolist(), 200, date)
-    stocks = pd.merge(stocks, df, on='stockid', how='left')
-    df = dataanalyse.peHistRate(stocks.stockid.tolist(), 1000, date)
-    stocks = pd.merge(stocks, df, on='stockid', how='left')
+    # stocks['pe200'] = dataanalyse.peHistRate(stocks.ts_code.tolist(), 200)
+    # stocks['pe1000'] = dataanalyse.peHistRate(stocks.ts_code.tolist(), 1000)
+    df = dataanalyse.peHistRate(stocks.ts_code.tolist(), 200, date)
+    stocks = pd.merge(stocks, df, on='ts_code', how='left')
+    df = dataanalyse.peHistRate(stocks.ts_code.tolist(), 1000, date)
+    stocks = pd.merge(stocks, df, on='ts_code', how='left')
 
     # 计算总评分
     stocks['pf'] = stocks.lowpe
@@ -271,7 +271,7 @@ def calpfnew(date, replace=False):
     stocks = stocks.sort_values(by='pf', ascending=False)
 
     # 设置输出列与列顺序
-    #     guzhiDf = guzhiDf[['stockid', 'name', 'pe',
+    #     guzhiDf = guzhiDf[['ts_code', 'name', 'pe',
     #                        'incrate0', 'incrate1', 'incrate2',
     #                        'incrate3', 'incrate4', 'incrate5',
     #                        'avgrate', 'madrate', 'stdrate', 'pe200', 'pe1000'
@@ -279,12 +279,12 @@ def calpfnew(date, replace=False):
 
     #     mystocks = ['002508', '600261', '002285', '000488',
     #                 '002573', '300072', '000910']
-    #     mystockspf = stocks[stocks['stockid'].isin(mystocks)]
-    #     mystockspf.set_index(['stockid'], inplace=True)
+    #     mystockspf = stocks[stocks['ts_code'].isin(mystocks)]
+    #     mystockspf.set_index(['ts_code'], inplace=True)
     #     mystockspf.to_csv('./data/valuationmystocks.csv')
 
     # 保存评价结果
-    stocks.set_index(['stockid'], inplace=True)
+    stocks.set_index(['ts_code'], inplace=True)
     # stocks.to_csv('./data/valuation.csv')
     pfFilename = f'valuations{date}.xlsx'
     stocks.to_excel(os.path.join('data', pfFilename))
@@ -310,9 +310,9 @@ def calpfnew(date, replace=False):
     # if replace:
     #     for index, row in stocks.iterrows():
     #         sql = (('replace into valuation'
-    #                 '(stockid, date, totalshares) '
+    #                 '(ts_code, date, totalshares) '
     #                 'values("%s", "%s", %s)')
-    #                % (row['stockid'], row['date'], row['totalshares']))
+    #                % (row['ts_code'], row['date'], row['totalshares']))
     #         engine.execute(sql)
     # else:
     #     sqlrw.writeSQL(stocks, 'valuation')

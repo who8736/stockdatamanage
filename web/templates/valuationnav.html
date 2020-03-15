@@ -23,8 +23,8 @@
             </tr>
             {% for index, stock in stocksDf.iterrows() %}
             <tr>
-                <td><a class="text-center" href="/valuation/{{ stock['stockid'] }}">
-                    {{ stock['stockid'] }}</a></td>
+                <td><a class="text-center" href="/valuation/{{ stock['ts_code'] }}">
+                    {{ stock['ts_code'] }}</a></td>
                 <td>{{ stock['name'] }}</td>
                 <td>{{ stock['date'] }}</td>
                 <td>{{ stock['hyname'] }}</td>

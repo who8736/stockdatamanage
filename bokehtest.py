@@ -61,10 +61,10 @@ def test():
     show(p)  # open a browser
 
 
-# def testPlotKline(stockID, days=1000):
-def readKlineDf(stockID, days):
+# def testPlotKline(ts_code, days=1000):
+def readKlineDf(ts_code, days):
     sql = ('select date, open, high, low, close, ttmpe '
-           'from klinestock where stockid="%(stockID)s" '
+           'from klinestock where ts_code="%(ts_code)s" '
            'order by date desc limit %(days)s;' % locals())
     result = engine.execute(sql).fetchall()
     stockDatas = [i for i in reversed(result)]
@@ -103,14 +103,14 @@ def plotPE(p, source):
     p.line(x='index', y='pe', source=source)
 
 
-def testPlotKline(stockID, days=1000):
+def testPlotKline(ts_code, days=1000):
     """
     绘制K线,pe走势图
-    :param stockID: string, 股票代码, 600619
+    :param ts_code: string, 股票代码, 600619
     :param days: int, 走势图显示的总天数
     :return:
     """
-    df = readKlineDf(stockID, days)
+    df = readKlineDf(ts_code, days)
     source = ColumnDataSource(df)
     TOOLS = "pan,wheel_zoom,box_zoom,reset,save"
     width = 1000
@@ -125,7 +125,7 @@ def testPlotKline(stockID, days=1000):
                     plot_height=klineHeight,
                     plot_width=width,
                     x_axis_location="above",
-                    title="kline: %s" % stockID,
+                    title="kline: %s" % ts_code,
                     tooltips=tooltips,
                     x_range=(dataLen - 200, dataLen - 1))
     pkline.xaxis.major_label_overrides = df['date'].to_dict()
@@ -186,7 +186,7 @@ def plotIndexPE():
     #                 plot_height=klineHeight,
     #                 plot_width=width,
     #                 x_axis_location="above",
-    #                 title="kline: %s" % stockID,
+    #                 title="kline: %s" % ts_code,
     #                 tooltips=tooltips,
     # pkline.xaxis.major_label_overrides = df['date'].to_dict()
     # plotCandlestick(pkline, df)
@@ -227,14 +227,14 @@ def plotIndexPE():
 class BokehPlot:
     """
     绘制K线,pe走势图
-    :param stockID: string, 股票代码, 600619
+    :param ts_code: string, 股票代码, 600619
     :param days: int, 走势图显示的总天数
     :return:
     """
 
-    def __init__(self, stockID, days=1000):
-        # self.df = readKlineDf(stockID, days)
-        self.df = self._getDf(stockID, days)
+    def __init__(self, ts_code, days=1000):
+        # self.df = readKlineDf(ts_code, days)
+        self.df = self._getDf(ts_code, days)
         self.source = ColumnDataSource(self.df)
 
         TOOLS = "pan,wheel_zoom,box_zoom,reset,save"

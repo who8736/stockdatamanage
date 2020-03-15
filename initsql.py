@@ -8,7 +8,7 @@ import pandas as pd
 
 import sqlrw
 from sqlconn import engine
-# from sqlrw import readStockIDsFromSQL
+# from sqlrw import readts_codesFromSQL
 
 
 def existTable(tablename):
@@ -17,10 +17,10 @@ def existTable(tablename):
     return False if result.rowcount == 0 else True
 
 
-def dropKlineTable():
-    stockList = sqlrw.readStockIDsFromSQL()
-    for stockID in stockList:
-        tablename = 'kline%s' % stockID
+def del_dropKlineTable():
+    stockList = sqlrw.readStockList()
+    for ts_code in stockList:
+        tablename = 'kline%s' % ts_code
         print(tablename)
         if existTable(tablename):
             sql = 'drop table %s;' % tablename
@@ -29,7 +29,7 @@ def dropKlineTable():
 
 def createChiguGuzhiTable():
     sql = ('CREATE TABLE chiguguzhi('
-           'stockid VARCHAR(6),'
+           'ts_code VARCHAR(6),'
            'name VARCHAR(40),'
            'pe DOUBLE,'
            'peg DOUBLE,'
@@ -47,16 +47,16 @@ def createChiguGuzhiTable():
            'stdrate DOUBLE,'
            'pe200 DOUBLE,'
            'pe1000 DOUBLE,'
-           'PRIMARY KEY ( stockid )); ')
+           'PRIMARY KEY ( ts_code )); ')
     result = engine.execute(sql)
     return result
 
 
 def createHY():
     sql = ('CREATE TABLE hangyestock('
-           'stockid VARCHAR(6),'
+           'ts_code VARCHAR(6),'
            'hyid VARCHAR(8),'
-           'PRIMARY KEY ( stockid ),'
+           'PRIMARY KEY ( ts_code ),'
            'KEY `hyid` (`hyid`)); ')
     result = engine.execute(sql)
     return result
@@ -99,12 +99,12 @@ def createTTMPETable(tablename):
 
 def createGuzhiTable():
     sql = ('CREATE TABLE guzhi('
-           'stockid VARCHAR(6),'
+           'ts_code VARCHAR(6),'
            'peg DOUBLE,'
            'next1YearPE DOUBLE,'
            'next2YearPE DOUBLE,'
            'next3YearPE DOUBLE,'
-           'PRIMARY KEY ( stockid )); ')
+           'PRIMARY KEY ( ts_code )); ')
     result = engine.execute(sql)
     return result
 
@@ -127,13 +127,13 @@ def createGuzhiHistoryStatusTable():
     growthmadrate： FLOAT类型, 利润增长平均离差率
     """
     sql = ('CREATE TABLE guzhihistorystatus('
-           'stockid VARCHAR(6),'
+           'ts_code VARCHAR(6),'
            'date INT(11),'
            'integrity BOOL,'
            'seculargrowth BOOL,'
            'growthmadrate FLOAT,'
            'averageincrement FLOAT,'
-           'PRIMARY KEY ( stockid, date)); ')
+           'PRIMARY KEY ( ts_code, date)); ')
     result = engine.execute(sql)
     return result
 
@@ -145,22 +145,22 @@ def createPELirunIncreaseTable():
     growthmadrate： FLOAT类型, 利润增长平均离差率
     """
     sql = ('CREATE TABLE pelirunincrease('
-           'stockid VARCHAR(6),'
+           'ts_code VARCHAR(6),'
            'date DATE,'
            'pe FLOAT,'
            'lirunincrease FLOAT,'
-           'PRIMARY KEY (date, stockid)); ')
+           'PRIMARY KEY (date, ts_code)); ')
     result = engine.execute(sql)
     return result
 
 
 def createGubenTable():
     sql = ("CREATE TABLE `guben` ("
-           "`stockid` varchar(6) NOT NULL,"
+           "`ts_code` varchar(6) NOT NULL,"
            " `date` date NOT NULL,"
            "  `totalshares` double DEFAULT NULL,"
-           "  PRIMARY KEY (`stockid`,`date`),"
-           "  KEY `ix_guben_stockid` (`stockid`),"
+           "  PRIMARY KEY (`ts_code`,`date`),"
+           "  KEY `ix_guben_ts_code` (`ts_code`),"
            "  KEY `ix_guben_date` (`date`)"
            ") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
            )
@@ -169,19 +169,19 @@ def createGubenTable():
 
 
 def createChiguTable():
-    sql = 'CREATE TABLE chigu(stockid VARCHAR(6),PRIMARY KEY (stockid));'
+    sql = 'CREATE TABLE chigu(ts_code VARCHAR(6),PRIMARY KEY (ts_code));'
     return engine.execute(sql)
 
 
-# def createKlineTable(stockID):
-#     tableName = 'kline%s' % stockID
+# def createKlineTable(ts_code):
+#     tableName = 'kline%s' % ts_code
 #     sql = 'create table %s like klinesample' % tableName
 #     return engine.execute(sql)
 
 
 def createStocklist():
     sql = ("CREATE TABLE `stocklist` ("
-           "`stockid` varchar(6) NOT NULL,"
+           "`ts_code` varchar(6) NOT NULL,"
            "`name` varchar(20) DEFAULT NULL,"
            "`industry` varchar(20) DEFAULT NULL,"
            "`area` varchar(20) DEFAULT NULL,"
@@ -204,7 +204,7 @@ def createStocklist():
            "`gpr` double DEFAULT NULL,"
            "`npr` double DEFAULT NULL,"
            "`holders` double DEFAULT NULL,"
-           "PRIMARY KEY (`stockid`)"
+           "PRIMARY KEY (`ts_code`)"
            ") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
            )
     result = engine.execute(sql)
@@ -227,7 +227,7 @@ def createPEHistory():
 
 def createIndexKline():
     sql = ("CREATE TABLE `indexkline` ("
-           "`stockid` varchar(9) COLLATE utf8mb4_bin NOT NULL,"
+           "`ts_code` varchar(9) COLLATE utf8mb4_bin NOT NULL,"
            "`date` date NOT NULL,"
            "`close` double DEFAULT NULL,"
            "`open` double DEFAULT NULL,"
@@ -238,8 +238,8 @@ def createIndexKline():
            "`pct_chg` double DEFAULT NULL,"
            "`vol` double DEFAULT NULL,"
            "`amount` double DEFAULT NULL,"
-           "PRIMARY KEY (`stockid`,`date`),"
-           "KEY `ix_stockid` (`stockid`) /*!80000 INVISIBLE */,"
+           "PRIMARY KEY (`ts_code`,`date`),"
+           "KEY `ix_ts_code` (`ts_code`) /*!80000 INVISIBLE */,"
            "KEY `ix_date` (`date`)"
            ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;"
            )
@@ -291,7 +291,7 @@ def createHangyePE():
 
 def createValuation():
     sql = ("""CREATE TABLE `valuation` (
-            `stockid` varchar(6) NOT NULL,
+            `ts_code` varchar(6) NOT NULL,
             `date` date NOT NULL,
             `name` varchar(20) NOT NULL,
             `pf` int(11) DEFAULT NULL,
@@ -318,7 +318,7 @@ def createValuation():
             `lowpez1000` int(11) DEFAULT NULL,
             `pe200` int(11) DEFAULT NULL,
             `pe1000` int(11) DEFAULT NULL,
-            PRIMARY KEY (`stockid`,`date`),
+            PRIMARY KEY (`ts_code`,`date`),
             KEY `index_date` (`date`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8
             /*!50100 PARTITION BY RANGE (year(`date`))

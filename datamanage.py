@@ -82,11 +82,12 @@ def startUpdate():
     updateGubenSingleThread()
 
     # 更新股票日交易数据
+    # TODO: 用新的更新方法
     threadNum = 10
-    stockList = sqlrw.readStockIDsFromSQL()
+    stockList = sqlrw.readStockList()
     # updateKlineBaseData(stockList, threadNum)
     updateKline()
-    updateKlineEXTData(stockList, threadNum)
+    # updateKlineEXTData(stockList, threadNum)
 
     # 因新浪反爬虫策略，更新股本数据改用单线程, 20170903
     # 主表数据暂时没用，停止更新， 20170904
@@ -156,7 +157,7 @@ def updateLirun():
             continue
         # 读取已存储的利润数据，从下载数据中删除该部分，对未存储的利润写入数据库
         lirunCur = sqlrw.readLirunForDate(date)
-        df = df[~df.stockid.isin(lirunCur.stockid)]
+        df = df[~df.ts_code.isin(lirunCur.ts_code)]
         df = df[df.profits.notnull()]
 #         print df
 
@@ -190,8 +191,8 @@ def updateGubenSingleThread():
     """ 更新股本单线程版
     """
     # stockList = sqlrw.readGubenUpdateList()
-    # for stockID in stockList:
-    #     downGuben(stockID)
+    # for ts_code in stockList:
+    #     downGuben(ts_code)
     #     time.sleep(5)
     # 以上代码为原股本下载代码
 
@@ -208,9 +209,9 @@ def updateGubenSingleThread():
                        end_date=endDate)
     date = df[df.is_open == 1].cal_date.max()
     gubenUpdateDf = checkGuben(date)
-    for stockID in gubenUpdateDf['stockid']:
-        downGuben(stockID)
-        setGubenLastUpdate(stockID, date)
+    for ts_code in gubenUpdateDf['ts_code']:
+        downGuben(ts_code)
+        setGubenLastUpdate(ts_code, date)
         time.sleep(2)
 
 
@@ -287,8 +288,8 @@ def updateMainTable(stockList, threadNum):
 def updateMainTableSingleThread(stockList):
     """ 更新主表数据单线程版， 因主表数据暂时无用
     """
-    for stockID in stockList:
-        downMainTable(stockID)
+    for ts_code in stockList:
+        downMainTable(ts_code)
         time.sleep(1)
 
 
@@ -361,7 +362,7 @@ if __name__ == '__main__':
     # updateLirun()
     # updatePf()
 
-#     stockList = sqlrw.readStockIDsFromSQL()
+#     stockList = sqlrw.readts_codesFromSQL()
 #     updateGubenSingleThread()
 #     updateMainTableSingleThread(stockList)
 #     stockList = stockList[:10]
@@ -369,5 +370,5 @@ if __name__ == '__main__':
 #     updateGuzhi(stockList, threadNum)
 
 
-#     stockID = '000005'
-#     sqlrw.downMainTable(stockID)
+#     ts_code = '000005'
+#     sqlrw.downMainTable(ts_code)

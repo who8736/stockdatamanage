@@ -37,7 +37,7 @@ def calGuzhi(stockList=None):
     Return
     --------
     DataFrame
-        stockid: 股票代码
+        ts_code: 股票代码
         name: 股票名称
         pe: TTM市盈率
         peg: 股票PEG值
@@ -60,7 +60,7 @@ def calGuzhi(stockList=None):
     """
 
     if stockList is None:
-        stockList = sqlrw.getLowPEStockList().stockid.values
+        stockList = sqlrw.getLowPEStockList().ts_code.values
 
     #     print stockList.head()
     #     print type(stockList)
@@ -69,7 +69,7 @@ def calGuzhi(stockList=None):
     # 估值数据
     #     pegDf = sqlrw.readGuzhiFilesToDf(stockList)
     #     pegDf = sqlrw.readGuzhiSQLToDf(stockList)
-    #     pegDf = pd.merge(peDf, pegDf, on='stockid', how='left')
+    #     pegDf = pd.merge(peDf, pegDf, on='ts_code', how='left')
     #     print pegDf.head()
 
     # TODO:　假设当前为第2季度，但第1季度上市公司的财务报告未公布，导致缺少数据如何处理
@@ -78,7 +78,7 @@ def calGuzhi(stockList=None):
     incDf = sqlrw.readLastTTMLirun(stockList, sectionNum)
     #     print 'incDf:'
     #     print incDf
-    guzhiDf = pd.merge(peDf, incDf, on='stockid', how='left')
+    guzhiDf = pd.merge(peDf, incDf, on='ts_code', how='left')
 
     # 原取TTM利润方法，按当前日期计算取前N季度数据， 但第1季度上市公司的财务报告未公布，导致缺少数据无法处理
     #     endDate = datatrans.getLastQuarter()
@@ -90,11 +90,11 @@ def calGuzhi(stockList=None):
     # 过去N个季度TTM利润增长率
     #     for i in range(sectionNum):
     #         incDf = sqlrw.readTTMLirunForDate(QuarterList[i])
-    #         incDf = incDf[['stockid', 'incrate']]
-    #         incDf.columns = ['stockid', 'incrate%d' % i]
+    #         incDf = incDf[['ts_code', 'incrate']]
+    #         incDf.columns = ['ts_code', 'incrate%d' % i]
     #         print incDf.head()
-    #         pegDf = pd.merge(pegDf, incDf, on='stockid', how='left')
-    #         pegDf = pd.merge(pegDf, incDf, on='stockid')
+    #         pegDf = pd.merge(pegDf, incDf, on='ts_code', how='left')
+    #         pegDf = pd.merge(pegDf, incDf, on='ts_code')
 
     #     print pegDf.head()
     # 平均利润增长率
@@ -130,23 +130,23 @@ def calGuzhi(stockList=None):
 
     # 增加股票名称
     nameDf = sqlrw.readStockListDf()
-    guzhiDf = pd.merge(guzhiDf, nameDf, on='stockid', how='left')
+    guzhiDf = pd.merge(guzhiDf, nameDf, on='ts_code', how='left')
     #     print pegDf
 
     # 计算pe200与pe1000
     df = peHistRate(stockList, 200)
-    guzhiDf = pd.merge(guzhiDf, df, on='stockid', how='left')
+    guzhiDf = pd.merge(guzhiDf, df, on='ts_code', how='left')
     df = peHistRate(stockList, 1000)
-    guzhiDf = pd.merge(guzhiDf, df, on='stockid', how='left')
+    guzhiDf = pd.merge(guzhiDf, df, on='ts_code', how='left')
     #     print pegDf
     # 设置输出列与列顺序
     # 因无法取得数据，删除'peg', 'next1YearPE',  'next2YearPE',  'next3YearPE'
-    guzhiDf = guzhiDf[['stockid', 'name', 'pe',
+    guzhiDf = guzhiDf[['ts_code', 'name', 'pe',
                        'incrate0', 'incrate1', 'incrate2',
                        'incrate3', 'incrate4', 'incrate5',
                        'avgrate', 'madrate', 'stdrate', 'pe200', 'pe1000'
                        ]]
-    #     guzhiDf = guzhiDf[['stockid', 'name', 'pe', 'peg',
+    #     guzhiDf = guzhiDf[['ts_code', 'name', 'pe', 'peg',
     #                        'next1YearPE',  'next2YearPE',  'next3YearPE',
     #                        'incrate0', 'incrate1', 'incrate2',
     #                        'incrate3', 'incrate4', 'incrate5',
@@ -155,24 +155,24 @@ def calGuzhi(stockList=None):
     return guzhiDf
 
 
-def calHistoryStatus(stockID):
-    TTMLirunDf = sqlrw.readTTMLirunForStockID(stockID)
+def calHistoryStatus(ts_code):
+    TTMLirunDf = sqlrw.readTTMLirunForts_code(ts_code)
     dates = TTMLirunDf['date']
     for _date in dates:
         #         print i
-        result = _calHistoryStatus(stockID, TTMLirunDf, _date)
+        result = _calHistoryStatus(ts_code, TTMLirunDf, _date)
         integrity, seculargrowth, growthmadrate, averageincrement = result
-        sql = ('insert ignore into guzhihistorystatus (`stockid`, `date`, '
+        sql = ('insert ignore into guzhihistorystatus (`ts_code`, `date`, '
                '`integrity`, `seculargrowth`, `growthmadrate`, '
                '`averageincrement`) '
-               'values ("%(stockID)s", "%(_date)s", %(integrity)r, '
+               'values ("%(ts_code)s", "%(_date)s", %(integrity)r, '
                '%(seculargrowth)r, "%(growthmadrate)s", '
                '"%(averageincrement)s");') % locals()
         print(sql)
         sqlrw.engine.execute(sql)
 
 
-# def _calHistoryStatus(stockID, TTMLirunDf, date):
+# def _calHistoryStatus(ts_code, TTMLirunDf, date):
 def _calHistoryStatus(TTMLirunDf, date):
     """
     """
@@ -210,9 +210,9 @@ def peHistRate(stockList, dayCount, date=None):
     """
     print(f'开始计算peHistRate: {dayCount}, stockList count:{len(stockList)}')
     perates = []
-    for stockID in stockList:
-        # print(stockID)
-        sql = f'select ttmpe from klinestock where stockid="{stockID}" '
+    for ts_code in stockList:
+        # print(ts_code)
+        sql = f'select ttmpe from klinestock where ts_code="{ts_code}" '
         if date is not None:
             sql += f' and date<="{date}"'
         sql += f'order by `date` desc limit {dayCount};'
@@ -226,9 +226,9 @@ def peHistRate(stockList, dayCount, date=None):
             peCur = peList[0]
             perate = float(sum(1 for i in peList if
                                i is not None and i < peCur)) / dayCount * 100
-            #             print stockID, perate, peList
+            #             print ts_code, perate, peList
             perates.append(perate)
-    return pd.DataFrame({'stockid': stockList, f'pe{dayCount}': perates})
+    return pd.DataFrame({'ts_code': stockList, f'pe{dayCount}': perates})
 
 
 def youzhiSelect(pegDf):
@@ -255,7 +255,7 @@ def youzhiSelect(pegDf):
     pegDf = pegDf[(pegDf.pe200 < 20) & (pegDf.pe1000 < 30)]
     pegDf = pegDf[pegDf.madrate < 0.6]
     pegDf = pegDf.sort_values(by='pe')
-    #     pegDf = pegDf[['stockid', 'pe', 'peg',
+    #     pegDf = pegDf[['ts_code', 'pe', 'peg',
     #                    'next1YearPE',  'next2YearPE',  'next3YearPE',
     #                    'incrate0', 'incrate1', 'incrate2',
     #                    'incrate3', 'incrate4', 'incrate5',
@@ -273,7 +273,7 @@ def youzhiSelect(pegDf):
 
 def testChigu():
     #     youzhiSelect()
-    #     inFilename = './data/chigustockid.txt'
+    #     inFilename = './data/chiguts_code.txt'
     # outFilename = './data/chiguguzhi.csv'
     #     testStockList = ['600519', '600999', '000651', '000333']
     #     testStockList = sqlrw.readStockListFromFile(inFilename)
@@ -284,9 +284,9 @@ def testChigu():
     #    dfToCsvFile(df, outFilename)
     #     df.to_csv(outFilename)
     sqlrw.engine.execute('TRUNCATE TABLE chiguguzhi')
-    #     df.index.name = 'stockid'
+    #     df.index.name = 'ts_code'
     #     clearStockList()
-    #     df.set_index('stockid', inplace=True)
+    #     df.set_index('ts_code', inplace=True)
     #     print df.head()
     sqlrw.writeSQL(df, 'chiguguzhi')
 
@@ -297,7 +297,7 @@ def testChigu():
 
 
 def testShaixuan():
-    stockList = sqlrw.readStockListDf().stockid.values
+    stockList = sqlrw.readStockListDf().ts_code.values
     df = calGuzhi(stockList)
     df = df.dropna()
     sqlrw.engine.execute('TRUNCATE TABLE guzhiresult')
@@ -309,7 +309,7 @@ def testShaixuan():
     #    dfToCsvFile(df, outFilename)
     df.to_csv(outFilename)
     #     outFilename = './data/youzhiid.txt'
-    #     sqlrw.writeStockIDListToFile(df['stockid'], outFilename)
+    #     sqlrw.writets_codeListToFile(df['ts_code'], outFilename)
     sqlrw.engine.execute('TRUNCATE TABLE youzhiguzhi')
     sqlrw.writeSQL(df, 'youzhiguzhi')
 
@@ -357,18 +357,18 @@ def calPEHistory(ID, startDate, endDate=None):
     # session.close()
 
 
-def analysePEHist(stockID, startDate, endDate, dayCount=200,
+def analysePEHist(ts_code, startDate, endDate, dayCount=200,
                   lowRate=20, highRate=80):
     """分析指定股票一段时期内PE水平，以折线图展示
 
-    :param stockID:
+    :param ts_code:
     :param startDate:
     :param endDate:
     :param lowRate:
     :param highRate:
     :return:
     """
-    sql = (f'select date, ttmpe from klinestock where stockid={stockID}'
+    sql = (f'select date, ttmpe from klinestock where ts_code={ts_code}'
            f' and date>="{startDate}" and date<="{endDate}";')
     result = engine.execute(sql).fetchall()
     tmpDates, tmpPEs = zip(*result)
@@ -402,8 +402,8 @@ if __name__ == '__main__':
     initlog()
 
     timec = dt.datetime.now()
-    #    testStockID = u'601398'
-    stockID = '000651'
+    #    testts_code = u'601398'
+    ts_code = '000651'
     startDate = '20130101'
     endDate = '20191231'
     logging.info('===================start=====================')
@@ -415,7 +415,7 @@ if __name__ == '__main__':
     # testShaixuan()
 
     # 测试TTMPE直方图、概率分布
-    #     ttmdf = sqlrw.readTTMPE(testStockID)
+    #     ttmdf = sqlrw.readTTMPE(testts_code)
     #     ttmdf = ttmdf[-200:]
     #     ttmdf.plot()
     #     print ttmdf.head()
@@ -437,7 +437,7 @@ if __name__ == '__main__':
     #     calGuzhi()
 
     # 测试历史估值水平
-    df = analysePEHist(stockID, startDate, endDate, dayCount=1000)
+    df = analysePEHist(ts_code, startDate, endDate, dayCount=1000)
     df.plot()
 
     timed = dt.datetime.now()

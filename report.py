@@ -13,17 +13,17 @@ import datatrans
 
 class ReportItem():
 
-    def __init__(self, stockID):
-        self.stockID = stockID
+    def __init__(self, ts_code):
+        self.ts_code = ts_code
 
 
-def report(stockID):
-    reportStr = '股票代码: %s\n' % stockID
-    reportStr += '股票名称: %s\n\n' % sqlrw.getStockName(stockID)
+def report(ts_code):
+    reportStr = '股票代码: %s\n' % ts_code
+    reportStr += '股票名称: %s\n\n' % sqlrw.getStockName(ts_code)
 
     reportStr += '估值数据：\n' + '-' * 20 + '\n'
 #     return reportStr
-    guzhiData = sqlrw.getGuzhi(stockID)
+    guzhiData = sqlrw.getGuzhi(ts_code)
     print(guzhiData)
     reportStr += '当前TTMPE： %+6.2f\n' % guzhiData[2]
     reportStr += 'PEG：       %+6.2f\n' % guzhiData[3]
@@ -39,14 +39,14 @@ def report(stockID):
     reportStr += '当前TTMPE参考最近200个工作日水平： %+6.2f\n' % guzhiData[16]
     reportStr += '当前TTMPE参考最近1000个工作日水平： %+6.2f\n' % guzhiData[17]
 
-    hyIDlv4 = hyanalyse.getHYIDForStock(stockID)
+    hyIDlv4 = hyanalyse.getHYIDForStock(ts_code)
     hyIDlv3 = hyIDlv4[:6]
     hyIDlv2 = hyIDlv4[:4]
     hyIDlv1 = hyIDlv4[:2]
     reportStr += '=' * 20 + '\n\n'
     reportStr += '行业比较：\n' + '-' * 20 + '\n'
     reportStr += ('最近三年TTM利润增长率水平：%+10.2f%+10.2f%+10.2f\n\n' %
-                  hyanalyse.getStockProfitsIncRates(stockID))
+                  hyanalyse.getStockProfitsIncRates(ts_code))
 
     reportStr += '所属一级行业：%s\n' % hyanalyse.getHYName(hyIDlv1)
     reportStr += ('最近三年TTM利润增长率水平：%+10.2f%+10.2f%+10.2f\n\n' %
@@ -63,26 +63,26 @@ def report(stockID):
 
     stockList = hyanalyse.getStockListForHY(hyIDlv4)
     print(stockList)
-    for sameHYStockID in stockList:
-        if sameHYStockID[0] not in ['0', '3', '6']:
+    for sameHYts_code in stockList:
+        if sameHYts_code[0] not in ['0', '3', '6']:
             continue
-        print('sameHYStockID:', sameHYStockID)
-        reportStr += '同行业股票代码: %s\t' % sameHYStockID
-        reportStr += '股票名称: %s\n\n' % sqlrw.getStockName(sameHYStockID)
+        print('sameHYts_code:', sameHYts_code)
+        reportStr += '同行业股票代码: %s\t' % sameHYts_code
+        reportStr += '股票名称: %s\n\n' % sqlrw.getStockName(sameHYts_code)
         reportStr += ('最近三年TTM利润增长率水平：%+10.2s%+10.2s%+10.2s\n\n' %
-                      hyanalyse.getStockProfitsIncRates(sameHYStockID))
+                      hyanalyse.getStockProfitsIncRates(sameHYts_code))
 
-    outFilename = './data/report%s.txt' % stockID
+    outFilename = './data/report%s.txt' % ts_code
     outfile = codecs.open(outFilename, 'wb', 'utf-8')
     outfile.write(reportStr)
     outfile.close()
     return reportStr
 
 
-def report1(stockID):
-    myItem = ReportItem(stockID)
-    myItem.name = sqlrw.getStockName(stockID)
-    guzhiData = sqlrw.getGuzhi(stockID)
+def report1(ts_code):
+    myItem = ReportItem(ts_code)
+    myItem.name = sqlrw.getStockName(ts_code)
+    guzhiData = sqlrw.getGuzhi(ts_code)
     # 当前TTMPE
     myItem.curTTMPE = guzhiData[2]
     myItem.peg = guzhiData[3]
@@ -102,13 +102,13 @@ def report1(stockID):
     # 当前TTMPE参考最近1000个工作日水平
     myItem.PERate1000 = guzhiData[17]
 
-    hyIDlv4 = hyanalyse.getHYIDForStock(stockID)
+    hyIDlv4 = hyanalyse.getHYIDForStock(ts_code)
     hyIDlv3 = hyIDlv4[:6]
     hyIDlv2 = hyIDlv4[:4]
     hyIDlv1 = hyIDlv4[:2]
 
     # 最近三年TTM利润增长率水平
-    myItem.profitsInc3Years = hyanalyse.getStockProfitsIncRates(stockID)
+    myItem.profitsInc3Years = hyanalyse.getStockProfitsIncRates(ts_code)
     # 所属1级行业
     myItem.hyIDlv1 = hyIDlv1
     myItem.hyLv1 = hyanalyse.getHYName(hyIDlv1)
@@ -133,15 +133,15 @@ def report1(stockID):
     stockList = hyanalyse.getStockListForHY(hyIDlv4)
 #     print stockList
     sameHYList = []
-    for sameHYStockID in stockList:
-        if sameHYStockID[0] not in ['0', '3', '6']:
+    for sameHYts_code in stockList:
+        if sameHYts_code[0] not in ['0', '3', '6']:
             continue
-#         print u'sameHYStockID:', sameHYStockID
-        sameHYList.append([sameHYStockID,
-                           sqlrw.getStockName(sameHYStockID),
-                           hyanalyse.getStockProfitsIncRates(sameHYStockID)])
+#         print u'sameHYts_code:', sameHYts_code
+        sameHYList.append([sameHYts_code,
+                           sqlrw.getStockName(sameHYts_code),
+                           hyanalyse.getStockProfitsIncRates(sameHYts_code)])
     myItem.sameHYList = sameHYList
-#     outFilename = u'./data/report%s.txt' % stockID
+#     outFilename = u'./data/report%s.txt' % ts_code
 #     outfile = codecs.open(outFilename, 'wb', 'utf-8')
 #     outfile.write(reportStr)
 #     outfile.close()
@@ -149,11 +149,11 @@ def report1(stockID):
     return myItem
 
 
-def reportValuation(stockID):
-    myItem = ReportItem(stockID)
-    myStockValuation = sqlrw.readValuation(stockID)
+def reportValuation(ts_code):
+    myItem = ReportItem(ts_code)
+    myStockValuation = sqlrw.readValuation(ts_code)
     myItem.name = myStockValuation[2]
-    guzhiData = sqlrw.getGuzhi(stockID)
+    guzhiData = sqlrw.getGuzhi(ts_code)
 
     # 股票评分
     myItem.pf = myStockValuation[3]
@@ -191,13 +191,13 @@ def reportValuation(stockID):
     myItem.PERate1000 = myStockValuation[26]
     myItem.PEZ1000 = myStockValuation[23]
 
-    hyIDlv4 = hyanalyse.getHYIDForStock(stockID)
+    hyIDlv4 = hyanalyse.getHYIDForStock(ts_code)
     hyIDlv3 = hyIDlv4[:6]
     hyIDlv2 = hyIDlv4[:4]
     hyIDlv1 = hyIDlv4[:2]
 
     # 最近三年TTM利润增长率水平
-    myItem.profitsInc3Years = hyanalyse.getStockProfitsIncRates(stockID)
+    myItem.profitsInc3Years = hyanalyse.getStockProfitsIncRates(ts_code)
     # 所属1级行业
     myItem.hyIDlv1 = hyIDlv1
     myItem.hyLv1 = hyanalyse.getHYName(hyIDlv1)
@@ -222,15 +222,15 @@ def reportValuation(stockID):
     stockList = hyanalyse.getStockListForHY(hyIDlv4)
 #     print stockList
     sameHYList = []
-    for sameHYStockID in stockList:
-        if sameHYStockID[0] not in ['0', '3', '6']:
+    for sameHYts_code in stockList:
+        if sameHYts_code[0] not in ['0', '3', '6']:
             continue
-#         print u'sameHYStockID:', sameHYStockID
-        sameHYList.append([sameHYStockID,
-                           sqlrw.getStockName(sameHYStockID),
-                           hyanalyse.getStockProfitsIncRates(sameHYStockID)])
+#         print u'sameHYts_code:', sameHYts_code
+        sameHYList.append([sameHYts_code,
+                           sqlrw.getStockName(sameHYts_code),
+                           hyanalyse.getStockProfitsIncRates(sameHYts_code)])
     myItem.sameHYList = sameHYList
-#     outFilename = u'./data/report%s.txt' % stockID
+#     outFilename = u'./data/report%s.txt' % ts_code
 #     outfile = codecs.open(outFilename, 'wb', 'utf-8')
 #     outfile.write(reportStr)
 #     outfile.close()
@@ -243,5 +243,5 @@ def reportIndex(ID):
     return myItem
 
 if __name__ == '__main__':
-    stockID = '000002'
-    report(stockID)
+    ts_code = '000002'
+    report(ts_code)

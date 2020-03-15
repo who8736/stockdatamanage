@@ -13,7 +13,7 @@ from sqlrw import readValuationSammary, getChiguList
 
 def readChiguInfo():
     stocksDf = readValuationSammary()
-    stocksDf = stocksDf[stocksDf['stockid'].isin(getChiguList())]
+    stocksDf = stocksDf[stocksDf['ts_code'].isin(getChiguList())]
     stockReportList = np.array(stocksDf).tolist()
 #     print stockReportList
 #     msg = ''

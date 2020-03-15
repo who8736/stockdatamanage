@@ -20,7 +20,7 @@ from sqlrw import getChiguList, getGuzhiList, getYouzhiList
 from sqlrw import getStockName, readLastTTMPE
 from sqlrw import readCurrentClose, readCurrentPEG
 from sqlrw import readPERate, readStockKlineDf, readIndexKlineDf
-from sqlrw import readStockIDsFromSQL, writeChigu
+from sqlrw import readStockList, writeChigu
 from sqlrw import readValuationSammary
 from . import app
 from .forms import StockListForm
@@ -34,28 +34,28 @@ def index():
 
 @app.route('/stocklist', methods=["GET", "POST"])
 def setStockList():
-    stockList = getChiguList()
-    stockListStr = "|".join([i for i in stockList])
+    chigu = getChiguList()
+    chiguStr = "|".join([i for i in chigu])
     form = StockListForm()
     #     form.stockList = stockListStr
     if form.validate_on_submit():
-        stockListStr = form.stockList.data
-        print(stockListStr)
-        stockList = stockListStr.split("|")
-        allStockID = readStockIDsFromSQL()
+        chiguStr = form.stockList.data
+        # print(stockListStr)
+        chigu = chiguStr.split("|")
+        allstocks = readStockList()
         checkFlag = True
-        for stockID in stockList:
-            if stockID not in allStockID:
+        for ts_code in chigu:
+            if ts_code not in allstocks:
                 checkFlag = False
-                print('%s is not a valid stockid' % stockID)
+                print('%s is not a valid ts_code' % ts_code)
                 break
         if checkFlag:
             print('all ok')
-            writeChigu(stockList)
+            writeChigu(chigu)
             return redirect(url_for('index'))
     return render_template('stocklist.html',
                            form=form,
-                           stockListStr=stockListStr)
+                           stockListStr=chiguStr)
 
 
 @app.route('/reporttype/<typeid>')
@@ -68,20 +68,20 @@ def reportnav(typeid):
         stockList = getGuzhiList()
 
     stockReportList = []
-    for stockID in stockList:
-        stockName = getStockName(stockID)
-        stockClose = readCurrentClose(stockID)
-        pe = readLastTTMPE(stockID)
-        peg = readCurrentPEG(stockID)
-        pe200, pe1000 = readPERate(stockID)
-        stockReportList.append([stockID, stockName,
+    for ts_code in stockList:
+        stockName = getStockName(ts_code)
+        stockClose = readCurrentClose(ts_code)
+        pe = readLastTTMPE(ts_code)
+        peg = readCurrentPEG(ts_code)
+        pe200, pe1000 = readPERate(ts_code)
+        stockReportList.append([ts_code, stockName,
                                 stockClose, pe, peg, pe200, pe1000])
     return render_template('reportnav.html', stockList=stockReportList)
 
 
-@app.route('/report/<stockid>')
-def reportView(stockid):
-    stockItem = guzhiReport(stockid)
+@app.route('/report/<ts_code>')
+def reportView(ts_code):
+    stockItem = guzhiReport(ts_code)
     #     reportstr = reportstr[:20]
     #     reportstr = 'test'
     return render_template('report.html',
@@ -92,35 +92,35 @@ def reportView(stockid):
 def valuationNav(typeid):
     df = readValuationSammary()
     if typeid == 'chigu':
-        df = df[df['stockid'].isin(getChiguList())]
+        df = df[df['ts_code'].isin(getChiguList())]
     elif typeid == 'youzhi':
         df = df[(df.pf >= 5) & (df.pe < 30)]
     # stockReportList = np.array(df).tolist()
     return render_template('valuationnav.html', stocksDf=df)
 
 
-@app.route('/valuation/<stockid>')
-def valuationView(stockid):
-    stockItem = reportValuation(stockid)
+@app.route('/valuation/<ts_code>')
+def valuationView(ts_code):
+    stockItem = reportValuation(ts_code)
     #     reportstr = reportstr[:20]
     #     reportstr = 'test'
     return render_template('valuation.html',
                            stock=stockItem)
 
 
-@app.route('/klineimg/<stockID>')
-def klineimg(stockID):
-    plotImg = plotKline(stockID)
+@app.route('/klineimg/<ts_code>')
+def klineimg(ts_code):
+    plotImg = plotKline(ts_code)
     plotImg.seek(0)
     return send_file(plotImg,
                      attachment_filename='img.png',
                      as_attachment=True)
 
 
-@app.route('/stockklineimgnew/<stockID>')
-def stockklineimgnew(stockID):
-    df = readStockKlineDf(stockID, days=1000)
-    return _klineimg(stockID, df)
+@app.route('/stockklineimgnew/<ts_code>')
+def stockklineimgnew(ts_code):
+    df = readStockKlineDf(ts_code, days=1000)
+    return _klineimg(ts_code, df)
 
 @app.route('/indexklineimgnew/<ID>')
 def indexklineimgnew(ID):

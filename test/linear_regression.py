@@ -52,7 +52,7 @@ def linearRegressionTest():
     pass
 
 
-def findPairs(stockIDa, stockIDb, startDate='20090101', endDate='20191231'):
+def findPairs(ts_codea, ts_codeb, startDate='20090101', endDate='20191231'):
     """两支股票的TTMPE是否存在协整关系
     时间区间为20090101至20191231
     1.两只股票TTMPE的折线图
@@ -60,14 +60,14 @@ def findPairs(stockIDa, stockIDb, startDate='20090101', endDate='20191231'):
     3.两只股票的线性回归
     4.根据线性回归结果计算残差，返回残差的ADF检验结果
     """
-    sql = (f'select date, ttmpe from klinestock where stockid="{stockIDa}"'
+    sql = (f'select date, ttmpe from klinestock where ts_code="{ts_codea}"'
            f' and date>="{startDate}" and date<="{endDate}"')
     dfa = pd.read_sql(sql, engine)
     dfa.rename(columns={'ttmpe': 'ttmpea'}, inplace=True)
     dfa.set_index('date', inplace=True)
     # print(dfa)
 
-    sql = (f'select date, ttmpe from klinestock where stockid="{stockIDb}"'
+    sql = (f'select date, ttmpe from klinestock where ts_code="{ts_codeb}"'
            f' and date>="{startDate}" and date<="{endDate}"')
     dfb = pd.read_sql(sql, engine)
     dfb.rename(columns={'ttmpe': 'ttmpeb'}, inplace=True)
@@ -82,8 +82,8 @@ def findPairs(stockIDa, stockIDb, startDate='20090101', endDate='20191231'):
     ax1 = plt.subplot(gs[0, 0])
     ax2 = plt.subplot(gs[0, 1])
     # 绘制拆线图
-    ax1.plot(dfa.index, dfa.ttmpea, color='blue', label=stockIDa)
-    ax1.plot(dfb.index, dfb.ttmpeb, color='yellow', label=stockIDb)
+    ax1.plot(dfa.index, dfa.ttmpea, color='blue', label=ts_codea)
+    ax1.plot(dfb.index, dfb.ttmpeb, color='yellow', label=ts_codeb)
     ax1.legend()
     # 设置X轴的刻度间隔
     # 可选:YearLocator,年刻度; MonthLocator,月刻度; DayLocator,日刻度
@@ -132,7 +132,7 @@ def findPairs(stockIDa, stockIDb, startDate='20090101', endDate='20191231'):
     return score
 
 
-def findPairs1(stockIDa, stockIDb, startDate='20090101', endDate='20191231'):
+def findPairs1(ts_codea, ts_codeb, startDate='20090101', endDate='20191231'):
     """两支股票的TTMPE是否存在协整关系
     时间区间为20090101至20191231
     1.两只股票TTMPE的折线图
@@ -140,14 +140,14 @@ def findPairs1(stockIDa, stockIDb, startDate='20090101', endDate='20191231'):
     3.两只股票的线性回归
     4.根据线性回归结果计算残差，返回残差的ADF检验结果
     """
-    sql = (f'select date, ttmpe from klinestock where stockid="{stockIDa}"'
+    sql = (f'select date, ttmpe from klinestock where ts_code="{ts_codea}"'
            f' and date>="{startDate}" and date<="{endDate}"')
     dfa = pd.read_sql(sql, engine)
     dfa.rename(columns={'ttmpe': 'ttmpea'}, inplace=True)
     dfa.set_index('date', inplace=True)
     # print(dfa)
 
-    sql = (f'select date, ttmpe from klinestock where stockid="{stockIDb}"'
+    sql = (f'select date, ttmpe from klinestock where ts_code="{ts_codeb}"'
            f' and date>="{startDate}" and date<="{endDate}"')
     dfb = pd.read_sql(sql, engine)
     dfb.rename(columns={'ttmpe': 'ttmpeb'}, inplace=True)
@@ -163,8 +163,8 @@ def findPairs1(stockIDa, stockIDb, startDate='20090101', endDate='20191231'):
     ax1 = plt.subplot(gs[0, 0])
     ax2 = plt.subplot(gs[0, 1])
     # 绘制拆线图
-    ax1.plot(dfa.index, dfa.ttmpea, color='blue', label=stockIDa)
-    ax1.plot(dfb.index, dfb.ttmpeb, color='yellow', label=stockIDb)
+    ax1.plot(dfa.index, dfa.ttmpea, color='blue', label=ts_codea)
+    ax1.plot(dfb.index, dfb.ttmpeb, color='yellow', label=ts_codeb)
     ax1.legend()
     # 设置X轴的刻度间隔
     # 可选:YearLocator,年刻度; MonthLocator,月刻度; DayLocator,日刻度
@@ -279,18 +279,18 @@ def linearAll():
     for i in range(len(codeList) - 1):
         for j in range(i + 1, len(codeList)):
             cnt += 1
-            stockIDa = codeList[i]
-            stockIDb = codeList[j]
-            print(f'第{cnt}个，共{total}个：', stockIDa, stockIDb)
+            ts_codea = codeList[i]
+            ts_codeb = codeList[j]
+            print(f'第{cnt}个，共{total}个：', ts_codea, ts_codeb)
             try:
-                result = findPairs1(stockIDa, stockIDb)
+                result = findPairs1(ts_codea, ts_codeb)
             except Exception as e:
-                print(f'ERROR {stockIDa}-{stockIDb}:', e)
-                errorList.append(f'ERROR {stockIDa}-{stockIDb}: {e}')
+                print(f'ERROR {ts_codea}-{ts_codeb}:', e)
+                errorList.append(f'ERROR {ts_codea}-{ts_codeb}: {e}')
             else:
-                # resultList.append([stockIDa, stockIDb, result])
-                aList.append(stockIDa)
-                bList.append(stockIDb)
+                # resultList.append([ts_codea, ts_codeb, result])
+                aList.append(ts_codea)
+                bList.append(ts_codeb)
                 scoreList.append(result)
     resultDf = pd.DataFrame({'ida': aList, 'idb': bList, 'score': scoreList})
     resultDf = pd.merge(resultDf, nameDf,
@@ -312,10 +312,10 @@ def linearAll():
 
 if __name__ == '__main__':
     pass
-    stockIDa = '601985'
-    stockIDb = '600170'
+    ts_codea = '601985'
+    ts_codeb = '600170'
     startDate = '20140101'
     endDate = '20191231'
-    findPairs(stockIDa, stockIDb, startDate=startDate)
+    findPairs(ts_codea, ts_codeb, startDate=startDate)
     # linearAll()
     # diabetesTest()

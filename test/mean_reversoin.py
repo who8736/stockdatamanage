@@ -20,25 +20,25 @@ from sqlconn import engine
 from sqlrw import readStockListFromSQL
 
 
-def adfTestPE(stockID, startDate, endDate, plotFlag=False):
+def adfTestPE(ts_code, startDate, endDate, plotFlag=False):
     sql = (f'select ttmpe from klinestock '
-           f'where stockid="{stockID}" '
+           f'where ts_code="{ts_code}" '
            f'and date>="{startDate}" and date<="{endDate}"')
     dfa = pd.read_sql(sql, engine)
     resulta = adfuller(dfa['ttmpe'])
     dfb = np.diff(dfa['ttmpe'])
     resultb = adfuller(dfb)
-    print('stock:', stockID)
+    print('stock:', ts_code)
     print('resulta:\n', resulta)
     print('resultb:\n', resultb)
     print('mean of dfb:', np.mean(dfb))
     if plotFlag:
-        plotDf(stockID, dfa, dfb)
+        plotDf(ts_code, dfa, dfb)
 
     return resulta
 
 
-def plotDf(stockID, dfa, dfb):
+def plotDf(ts_code, dfa, dfb):
     """
     暂时用于绘制用于PE的ADF检测的两个图，其中dfa为TTMPE，dfb为TTMPE的一阶差分
     :param dfa:
@@ -50,12 +50,12 @@ def plotDf(stockID, dfa, dfb):
     ax1 = plt.subplot(gs[0, 0])
     ax2 = plt.subplot(gs[0, 1])
     # 绘制拆线图
-    ax1.plot(dfa.ttmpe, color='blue', label=stockID)
+    ax1.plot(dfa.ttmpe, color='blue', label=ts_code)
     ax1.legend()
-    ax1.set_title(stockID, fontsize=12)
-    ax2.plot(dfb, color='blue', label=stockID)
+    ax1.set_title(ts_code, fontsize=12)
+    ax2.plot(dfb, color='blue', label=ts_code)
     ax2.legend()
-    ax2.set_title(stockID, fontsize=12)
+    ax2.set_title(ts_code, fontsize=12)
     # 设置X轴的刻度间隔
     # 可选:YearLocator,年刻度; MonthLocator,月刻度; DayLocator,日刻度
     # ax1.xaxis.set_major_locator(YearLocator())
@@ -70,9 +70,9 @@ def plotDf(stockID, dfa, dfb):
     plt.show()
 
 
-def adfTestProfits(stockID, startDate, endDate):
+def adfTestProfits(ts_code, startDate, endDate):
     sql = (f'select ttmprofits from ttmlirun '
-           f'where stockid="{stockID}" '
+           f'where ts_code="{ts_code}" '
            f'and date>="{startDate}" and date<="{endDate}"')
     df = pd.read_sql(sql, engine)
     resulta = adfuller(df['ttmprofits'])
@@ -86,10 +86,10 @@ def adfTestProfits(stockID, startDate, endDate):
     return resultb[0], resultb[1], flag
 
 
-def adfTestProfits1(stockID, startDate, endDate):
+def adfTestProfits1(ts_code, startDate, endDate):
     """
 
-    :param stockID:
+    :param ts_code:
     :param startDate:
     :param endDate:
     :return:
@@ -111,7 +111,7 @@ def adfTestProfits1(stockID, startDate, endDate):
     一个虚拟类，其结果作为属性附加
     """
     sql = (f'select incrate from ttmlirun '
-           f'where stockid="{stockID}" '
+           f'where ts_code="{ts_code}" '
            f'and date>="{startDate}" and date<="{endDate}"')
     df = pd.read_sql(sql, engine)
     resulta = adfuller(df['incrate'])
@@ -128,14 +128,14 @@ def adfTestProfits1(stockID, startDate, endDate):
 
 def adfTestAllProfits():
     """对所有股票2009年1季度至2020年1季度TTM利润增长率进行ADF检测"""
-    stockID = '000651'
+    ts_code = '000651'
     startDate = '20091'
     endDate = '20201'
-    adfTestProfits(stockID, startDate, endDate)
+    adfTestProfits(ts_code, startDate, endDate)
 
     stockList = readStockListFromSQL()
     print(stockList)
-    stockIDs = []
+    ts_codes = []
     stockNames = []
     adfs = []
     pvalues = []
@@ -143,19 +143,19 @@ def adfTestAllProfits():
     cvalue1s = []
     cvalue5s = []
     cvalue10s = []
-    # for stockID, name in stockList[:10]:
-    for stockID, name in stockList:
-        print('正在处理:', stockID)
+    # for ts_code, name in stockList[:10]:
+    for ts_code, name in stockList:
+        print('正在处理:', ts_code)
         try:
-            result = adfTestProfits1(stockID, startDate, endDate)
+            result = adfTestProfits1(ts_code, startDate, endDate)
         except Exception as e:
-            print(stockID, e)
+            print(ts_code, e)
         else:
             flag = (result[0] < result[4]['1%'] and
                     result[0] < result[4]['5%'] and
                     result[0] < result[4]['10%'] and
                     result[1] < 0.05)
-            stockIDs.append(stockID)
+            ts_codes.append(ts_code)
             stockNames.append(name)
             adfs.append(result[0])
             pvalues.append(round(result[1], 4))
@@ -164,7 +164,7 @@ def adfTestAllProfits():
             cvalue5s.append(round(result[4]['5%'], 4))
             cvalue10s.append(round(result[4]['10%'], 4))
 
-    df = pd.DataFrame({'stockid': stockIDs,
+    df = pd.DataFrame({'ts_code': ts_codes,
                        'name': stockNames,
                        'adf': adfs,
                        'pvalue': pvalues,
@@ -185,33 +185,33 @@ def adfTestAllPE(stockList, startDate, endDate, plotFlag):
     :param endDate: 
     :return: 
     """
-    stockIDs = []
+    ts_codes = []
     adfs = []
     pvalues = []
     flags = []
     cvalue1s = []
     cvalue5s = []
     cvalue10s = []
-    # for stockID, name in stockList[:10]:
-    for stockID in stockList:
-        print('正在处理:', stockID)
+    # for ts_code, name in stockList[:10]:
+    for ts_code in stockList:
+        print('正在处理:', ts_code)
         try:
-            result = adfTestPE(stockID, startDate, endDate, plotFlag=plotFlag)
+            result = adfTestPE(ts_code, startDate, endDate, plotFlag=plotFlag)
         except Exception as e:
-            print(stockID, e)
+            print(ts_code, e)
         else:
             flag = (result[0] < result[4]['1%'] and
                     result[0] < result[4]['5%'] and
                     result[0] < result[4]['10%'] and
                     result[1] < 0.05)
-            stockIDs.append(stockID)
+            ts_codes.append(ts_code)
             adfs.append(result[0])
             pvalues.append(round(result[1], 4))
             cvalue1s.append(round(result[4]['1%'], 4))
             cvalue5s.append(round(result[4]['5%'], 4))
             cvalue10s.append(round(result[4]['10%'], 4))
             flags.append(flag)
-    df = pd.DataFrame({'stockid': stockIDs,
+    df = pd.DataFrame({'ts_code': ts_codes,
                        'adf': adfs,
                        'pvalue': pvalues,
                        'cvalue1': cvalue1s,
@@ -220,7 +220,7 @@ def adfTestAllPE(stockList, startDate, endDate, plotFlag):
                        'flag': flags
                        })
     nameDf = pd.DataFrame(readStockListFromSQL(), columns=['id', 'name'])
-    df = pd.merge(df, nameDf, left_on='stockid', right_on='id')
+    df = pd.merge(df, nameDf, left_on='ts_code', right_on='id')
     df.to_excel('adf_pe.xlsx')
     # print(df)
 
