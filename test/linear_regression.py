@@ -263,8 +263,8 @@ def linearAll():
     """
     pro = ts.pro_api()
     indexDf = pro.index_weight(index_code='399300.SZ', start_date='20200301')
-    codeList = indexDf.con_code.str[:6].to_list()
-    nameDf = pd.DataFrame(readStockListFromSQL(), columns=['id', 'name'])
+    codeList = indexDf.con_code.to_list()
+    nameDf = pd.DataFrame(readStockList(), columns=['id', 'name'])
     startDate = '20140101'
     endDate = '20191231'
     # codeList = codeList[:6]

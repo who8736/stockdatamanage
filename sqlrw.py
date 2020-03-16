@@ -106,24 +106,24 @@ def writeGubenToSQL(gubenDf, replace=False):
         return writeSQL(gubenDf, tablename)
 
 
-def checkGuben(tradeDate):
+def del_checkGuben(tradeDate):
     """
         以下方法用于从tushare.pro下载日频信息中的股本数据
         与数据库保存的股本数据比较，某股票的总股本存在差异时说明股本有变动
         返回需更新的股票列表
     """
     pro = ts.pro_api()
-    dfFromTushare = pro.daily_basic(ts_code='', trade_date=tradeDate,
+    dfTushare = pro.daily_basic(ts_code='', trade_date=tradeDate,
                                     fields='ts_code,total_share')
-    dfFromTushare['ts_code'] = dfFromTushare['ts_code'].str[:6]
+    dfTushare['ts_code'] = dfTushare['ts_code'].str[:6]
 
     sql = """ select a.ts_code, a.trade_date, a.totalshares from guben as a, 
             (SELECT ts_code, max(trade_date) as maxdate FROM stockdata.guben 
             group by ts_code) as b 
             where a.ts_code=b.ts_code and a.trade_date = b.maxdate;
             """
-    dfFromSQL = pd.read_sql(sql, con=engine)
-    df = pd.merge(dfFromTushare, dfFromSQL, how='left', on='ts_code')
+    dfSQL = pd.read_sql(sql, con=engine)
+    df = pd.merge(dfTushare, dfSQL, how='left', on='ts_code')
     df.loc[0:, 'cha'] = df.apply(
         lambda x: abs(x['total_share'] * 10000 - x['totalshares']) / (
                 x['total_share'] * 10000), axis=1)
@@ -645,9 +645,9 @@ def readValuationSammary():
     stocks = pd.read_sql(sql, engine)
 
     # 行业名称
-    sql = ('select a.ts_code, a.name, c.hyname'
-           ' from stocklist a, hangyestock b, hangyename c'
-           ' where a.ts_code=b.ts_code and b.hyid=c.hyid order by ts_code;')
+    sql = ('select a.ts_code, a.name, c.name'
+           ' from stock_basic a, classify_memeber b, classify c'
+           ' where a.ts_code=b.ts_code and b.id=c.id order by ts_code;')
     hyname = pd.read_sql(sql, engine)
     stocks = pd.merge(stocks, hyname, how='left')
 
@@ -659,7 +659,6 @@ def readValuationSammary():
            ' from fina_indicator group by ts_code) b'
            ' where a.ts_code = b.ts_code and a.end_date = b.fina_date;')
     finastat = pd.read_sql(sql, engine)
-    finastat['ts_code'] = finastat.ts_code.str[:6]
     finastat['grossprofit_margin'] = finastat.grossprofit_margin.round(2)
     finastat['roe'] = finastat.roe.round(2)
     finastat = finastat[['ts_code', 'fina_date', 'grossprofit_margin', 'roe']]

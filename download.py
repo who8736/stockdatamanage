@@ -48,6 +48,39 @@ from initlog import initlog
 from misc import tsCode
 
 
+class Downloader:
+    """限时下载器
+
+    :param tablename:
+    :param stocks:
+    :param perTimes:
+    :param downLimit:
+    :return:
+    """
+    def __init__(self, perTimes=0, downLimit=0):
+        pass
+        self.times = []
+        self.cur = 0
+        self.perTimes = perTimes
+        self.downLimit = downLimit
+
+    def run(self, fun, **kwargs):
+        nowtime = datetime.now()
+        if (self.perTimes > 0 and self.downLimit > 0
+                and self.cur >= self.downLimit
+                and (nowtime < self.times[self.cur - self.downLimit]
+                     + timedelta(seconds=self.perTimes))):
+            _timedelta = nowtime - self.times[self.cur - self.downLimit]
+            sleeptime = self.perTimes - _timedelta.seconds
+            print(f'******暂停{sleeptime}秒******')
+            time.sleep(sleeptime)
+
+        result = fun(kwargs)
+        nowtime = datetime.now()
+        self.times.append(nowtime)
+        self.cur += 1
+        return result
+
 # def downGubenToSQL(ts_code, retry=3, timeout=10):
 #     """下载单个股票股本数据写入数据库"""
 #     logging.debug('downGubenToSQL: %s', ts_code)
@@ -221,7 +254,7 @@ def dataToFile(url, filename, timeout=10, retry_count=3):
     return True
 
 
-def downloadClassified():
+def del_downloadClassified():
     """ 旧版下载行业分类， 计划删除本函数
     """
     classifiedDf = ts.get_industry_classified(standard='sw')
@@ -314,7 +347,7 @@ def downChengfen180():
         writeSQL(df1, 'chengfen')
 
 
-def downChengfen(ID, startDate, endDate=None):
+def del_downChengfen(ID, startDate, endDate=None):
     """
     下载指数成份股，月度数据
     :param ID:
@@ -330,10 +363,10 @@ def downChengfen(ID, startDate, endDate=None):
                           # trade_date='20190105',
                           start_date=startDate.strftime('%Y%m%d'),
                           end_date=endDate.strftime('%Y%m%d'))
-    df['indexid'] = df.index_code.str[:6]
-    df['ts_code'] = df.con_code.str[:6]
-    df.rename(columns={'trade_date': 'date', }, inplace=True)
-    df = df[['indexid', 'ts_code', 'date', 'weight']]
+    # df['index_code'] = df.index_code.str[:6]
+    # df['ts_code'] = df.con_code.str[:6]
+    # df.rename(columns={'trade_date': 'date', }, inplace=True)
+    # df = df[['index_code', 'ts_code', 'trade_date', 'weight']]
 
     print(df.head())
     writeSQL(df, 'chengfen')
@@ -348,7 +381,7 @@ def downGuzhi(ts_code):
     return dataToFile(url, filename)
 
 
-def downKline(tradeDate):
+def del_downKline(tradeDate):
     """
     使用tushare下载日交易数据
     :return:
@@ -386,7 +419,7 @@ def __downKline(ts_code, startDate=None, endDate=None, retry_count=6):
     # downKlineFromBaostock(ts_code, startDate, endDate, retry_count)
 
     # 数据源：　tushare
-    downKlineFromTushare(ts_code, startDate, endDate, retry_count)
+    # downKlineFromTushare(ts_code, startDate, endDate, retry_count)
 
 
 def del_downKlineFromBaostock(ts_code, startDate=None,
@@ -545,14 +578,15 @@ def downGuben(ts_code='300445', replace=False):
         writeGubenToSQL(df, replace)
 
 
-def _downGubenTusharePro(ts_code='300445'):
+def del_downGubenTusharePro(ts_code='300445'):
     """
     从tushare.pro下载股本数据
     :param ts_code:
     :return:
     """
     print('start update guben: %s' % ts_code)
-    updateDate = gubenUpdateDate(ts_code)
+    # updateDate = gubenUpdateDate(ts_code)
+    updateDate = None # 暂时移除
     # print(type(updateDate))
     # print(updateDate.strftime('%Y%m%d'))
     startDate = updateDate.strftime('%Y%m%d')
@@ -821,9 +855,9 @@ def downDailyBasic(ts_code=None, tradeDate=None, startDate=None, endDate=None):
     elif tradeDate is not None:
         df = pro.daily_basic(trade_date=tradeDate)
     if isinstance(df, pd.DataFrame):
-        df.rename(columns={'ts_code': 'ts_code', 'trade_date': 'date'},
-                  inplace=True)
-        df['ts_code'] = df['ts_code'].str[:6]
+        # df.rename(columns={'ts_code': 'ts_code', 'trade_date': 'date'},
+        #           inplace=True)
+        # df['ts_code'] = df['ts_code'].str[:6]
         df.set_index(keys=['ts_code'], inplace=True)
         sqlrw.writeSQL(df, 'dailybasic')
     return df
@@ -836,11 +870,11 @@ def downPledgeStat(ts_code):
     :return:
     """
     pro = ts.pro_api()
-    df = None
+    # df = None
     df = pro.pledge_stat(ts_code=tsCode(ts_code))
-    df.rename(columns={'ts_code': 'ts_code', 'end_date': 'date'}, inplace=True)
-    df['ts_code'] = df['ts_code'].str[:6]
-    df.set_index(keys=['ts_code'], inplace=True)
+    # df.rename(columns={'ts_code': 'ts_code', 'end_date': 'date'}, inplace=True)
+    # df['ts_code'] = df['ts_code'].str[:6]
+    # df.set_index(keys=['ts_code'], inplace=True)
     writeSQL(df, 'pledgestat')
     return df
 
@@ -880,15 +914,13 @@ def downBalancesheet(ts_code, startDate='', endDate=''):
     # writeSQL(df, 'income')
 
 
-def downloaderStock(tablename, perTimes=0, downLimit=0):
+def downloaderStock(tablename, stocks, perTimes=0, downLimit=0):
     """tushare用的下载器，可限制对tushare的访问量
     tushare下载限制，每perTimes秒限制下载downLimit次
     本函数只适用于股票类表格
     :return:
     """
     pro = ts.pro_api()
-    IDs = readStockList().ts_code.to_list()
-    # IDs = IDs[:10]
     times = []
     cnt = len(IDs)
 
@@ -915,7 +947,7 @@ def downloaderStock(tablename, perTimes=0, downLimit=0):
                 # df = downPledgeStat(ts_code)
                 # 下载利润表
                 # df = downIncome(ts_code)
-                df = fun(ts_code=tsCode(ts_code))
+                df = fun(ts_code=ts_code, stocks=stocks)
                 flag = False
             except Exception as e:
                 print(e)
@@ -930,6 +962,8 @@ def downTradeCal(year):
     pro = ts.pro_api()
     df = pro.trade_cal(exchange='SSE', start_date=f'{year}0101')
     writeSQL(df, 'trade_cal')
+
+
 
 
 def downIndexWeight():
@@ -1092,4 +1126,4 @@ if __name__ == '__main__':
     pass
     ts_code = '000651'
     startDate = '2019-04-01'
-    downKlineFromBaostock(ts_code, startDate)
+    # downKlineFromBaostock(ts_code, startDate)

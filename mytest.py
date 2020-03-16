@@ -482,11 +482,55 @@ def __testUpdate():
     """测试专用函数:数据下载
     """
     pass
-    ##############################################
-    # 数据更新
-    ##############################################
+    # 自动更新全部数据，包括K线历史数据、利润数据、K线表中的TTM市盈率
+    # 更新交易日历
+    updateTradeCal()
 
-    # 更新股票市值与PE
+    # 更新股票列表
+    downStockList()
+    #     stockList = stockList[:10]
+
+    # 更新每日指标
+    updateDailybasic()
+
+    # 更新行业列表
+    downHYList()
+
+    # 更新股票季报数据
+    updateQuarterData()
+
+    # 更新股本
+    # 因新浪反爬虫策略，更新股本数据改用单线程
+    #     updateGuben(stockList, threadNum)
+    # updateGubenSingleThread()
+
+    # 更新股票日交易数据
+    # TODO: 用新的更新方法
+    threadNum = 10
+    stockList = sqlrw.readStockList()
+    # updateKlineBaseData(stockList, threadNum)
+    updateKline()
+    # updateKlineEXTData(stockList, threadNum)
+
+    # 因新浪反爬虫策略，更新股本数据改用单线程, 20170903
+    # 主表数据暂时没用，停止更新， 20170904
+    #     updateMainTableSingleThread(stockList, threadNum)
+    #     updateMainTable(stockList, threadNum)
+
+    # 更新股票估值
+    updateGuzhiData()
+
+    # 更新股票评分
+    updatePf()
+
+    # 更新指数数据及PE
+    updateIndex()
+
+    # 更新全市PE
+    updateAllMarketPE()
+
+
+# 更新股票市值与PE
     # stockList = sqlrw.readts_codesFromSQL()
     # for ts_code in stockList:
     #     print(ts_code)
@@ -538,7 +582,7 @@ def __testUpdate():
     # print('行业PE：', pe)
 
     # 更新指数数据及PE
-    updateIndex()
+    # updateIndex()
 
     # 更新全市PE
     # datamanage.updateAllMarketPE()

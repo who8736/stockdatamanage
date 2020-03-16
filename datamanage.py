@@ -24,16 +24,17 @@ import dataanalyse
 import sqlrw
 import valuation
 from sqlconn import engine
-from sqlrw import checkGuben, setGubenLastUpdate
-from sqlrw import getStockKlineUpdateDate, getIndexPEUpdateDate
-from sqlrw import getAllMarketPEUpdateDate
+# from sqlrw import checkGuben, setGubenLastUpdate
+# from sqlrw import getStockKlineUpdateDate
+from sqlrw import getIndexPEUpdateDate
 import download
-from download import downGuben, downGuzhi, downKline
+from download import downGuben, downGuzhi
 from download import downMainTable, downloadLirun, downStockList
 from download import downIndex
 from download import downDailyBasic, downTradeCal
 from download import downIndexDaily, downIndexDailyBasic
 from download import downIndexBasic, downIndexWeight
+from download import Downloader
 # from download import downHYList
 from initlog import initlog
 from datatrans import dateList
@@ -52,7 +53,8 @@ def logfun(func):
         logging.info('===========end %s===========', func.__name__)
         logging.info('%s cost time: %s ',
                      func.__name__, endTime - startTime)
-#         return _func
+
+    #         return _func
     return wrapper
 
 
@@ -65,7 +67,7 @@ def startUpdate():
 
     # 更新股票列表
     downStockList()
-#     stockList = stockList[:10]
+    #     stockList = stockList[:10]
 
     # 更新每日指标
     updateDailybasic()
@@ -74,25 +76,25 @@ def startUpdate():
     downHYList()
 
     # 更新股票利润数据
-    updateLirun()
+    # updateLirun()
 
-    # 更新股本
+    # 每日指标里包含股本数据, 不再单独更新
     # 因新浪反爬虫策略，更新股本数据改用单线程
     #     updateGuben(stockList, threadNum)
-    updateGubenSingleThread()
+    # updateGubenSingleThread()
 
     # 更新股票日交易数据
     # TODO: 用新的更新方法
     threadNum = 10
     stockList = sqlrw.readStockList()
     # updateKlineBaseData(stockList, threadNum)
-    updateKline()
+    # updateKline()
     # updateKlineEXTData(stockList, threadNum)
 
     # 因新浪反爬虫策略，更新股本数据改用单线程, 20170903
     # 主表数据暂时没用，停止更新， 20170904
-#     updateMainTableSingleThread(stockList, threadNum)
-#     updateMainTable(stockList, threadNum)
+    #     updateMainTableSingleThread(stockList, threadNum)
+    #     updateMainTable(stockList, threadNum)
 
     # 更新股票估值
     updateGuzhiData()
@@ -113,8 +115,8 @@ def updateAllMarketPE():
     更新全市场PE
     :return:
     """
-    startDate = getAllMarketPEUpdateDate()
-    dataanalyse.calAllPEHistory(startDate)
+    # startDate = getAllMarketPEUpdateDate()
+    dataanalyse.calAllPEHistory()
 
 
 @logfun
@@ -141,31 +143,22 @@ def downHYList():
 
 
 @logfun
-def updateLirun():
-    startQuarter = sqlrw.getLirunUpdateStartQuarter()
-    endQuarter = sqlrw.getLirunUpdateEndQuarter()
+def updateQurtarData():
+    """更新股票季报数据
 
-    dates = datatrans.QuarterList(startQuarter, endQuarter)
-    for date in dates:
-        #         print date
-        logging.debug('updateLirun: %s', date)
-        try:
-            df = downloadLirun(date)
-        except ValueError:
-            continue
-        if df is None:
-            continue
-        # 读取已存储的利润数据，从下载数据中删除该部分，对未存储的利润写入数据库
-        lirunCur = sqlrw.readLirunForDate(date)
-        df = df[~df.ts_code.isin(lirunCur.ts_code)]
-        df = df[df.profits.notnull()]
-#         print df
+    :return:
+    """
+    # TODO: 调用download文件中相应的下载函数
+    tables = ['']
+    sql = ('select a.ts_code ts_code from '
+           '(select ts_code, max(end_date) datea '
+           ' from income group by ts_code) a, '
+           '(select ts_code, max(end_date) dateb '
+           ' from fina_indicator group by ts_code) b '
+           'where a.ts_code=b.ts_code and datea>dateb;')
 
-        # 对未存储的利润写入数据库，并重新计算TTM利润
-        if not df.empty:
-            sqlrw.writeLirun(df)
-            sqlrw.calAllTTMLirun(date)
-            updateHYData(date)
+    # 下载利润表
+    downloader =
 
 
 @logfun
@@ -187,7 +180,7 @@ def updateGuben(stockList, threadNum):
 
 
 @logfun
-def updateGubenSingleThread():
+def del_updateGubenSingleThread():
     """ 更新股本单线程版
     """
     # stockList = sqlrw.readGubenUpdateList()
@@ -208,11 +201,11 @@ def updateGubenSingleThread():
     df = pro.trade_cal(exchange='SSE', start_date=startDate,
                        end_date=endDate)
     date = df[df.is_open == 1].cal_date.max()
-    gubenUpdateDf = checkGuben(date)
-    for ts_code in gubenUpdateDf['ts_code']:
-        downGuben(ts_code)
-        setGubenLastUpdate(ts_code, date)
-        time.sleep(2)
+    # gubenUpdateDf = checkGuben(date)
+    # for ts_code in gubenUpdateDf['ts_code']:
+    #     downGuben(ts_code)
+    #     setGubenLastUpdate(ts_code, date)
+    #     time.sleep(2)
 
 
 @logfun
@@ -231,12 +224,13 @@ def updatePf():
     endDate = endDate.strftime('%Y%m%d')
     pro = ts.pro_api()
     df = pro.trade_cal(exchange='', start_date=startDate, end_date=endDate)
-    dateList = df['cal_date'].loc[df.is_open==1].tolist()
+    dateList = df['cal_date'].loc[df.is_open == 1].tolist()
     # print(type(dateList))
     # print(dateList)
     for date in dateList:
         print('计算评分：', date)
         valuation.calpfnew(date)
+
 
 #
 # def updateDataTest(stockList):
@@ -248,30 +242,31 @@ def updateGuzhi(stockList, threadNum):
     """ 因东方财富修改估值文件下载功能， 暂不能用
     """
     pool = ThreadPool(processes=threadNum)
-#     pool.map(sqlrw.downGuzhiToFile, stockList)
+    #     pool.map(sqlrw.downGuzhiToFile, stockList)
     pool.map(downGuzhi, stockList)
     pool.close()
     pool.join()
 
 
 @logfun
-def updateKlineBaseData(stockList, threadNum):
+def del_updateKlineBaseData(stockList, threadNum):
     """ 启动多线程更新K线历史数据主函数
     """
     pool = ThreadPool(processes=threadNum)
-    pool.map(downKline, stockList)
+    # pool.map(downKline, stockList)
     pool.close()
     pool.join()
 
 
 @logfun
-def updateKline():
+def del_updateKline():
     """ 更新日交易数据
     """
-    startDate = getStockKlineUpdateDate() + timedelta(days=1)
-    endDate = datetime.today().date() - timedelta(days=1)
-    for tradeDate in dateList(startDate, endDate):
-        downKline(tradeDate)
+    pass
+    # startDate = getStockKlineUpdateDate() + timedelta(days=1)
+    # endDate = datetime.today().date() - timedelta(days=1)
+    # for tradeDate in dateList(startDate, endDate):
+    #     downKline(tradeDate)
 
 
 @logfun
@@ -341,9 +336,9 @@ def updateTradeCal():
 if __name__ == '__main__':
     initlog()
 
-#     logging.debug('This is debug message')
-#     logging.info('This is info message')
-#     logging.warning('This is warning message')
+    #     logging.debug('This is debug message')
+    #     logging.info('This is info message')
+    #     logging.warning('This is warning message')
 
     # 使用baostock数据源时需先做登录操作
     lg = bs.login()
@@ -355,7 +350,7 @@ if __name__ == '__main__':
     ts.set_token(cf.tushareToken)
     print('设置访问tushare的token:', cf.tushareToken)
 
-#     updateDataTest()
+    #     updateDataTest()
 
     startUpdate()
 

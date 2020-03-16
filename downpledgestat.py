@@ -7,4 +7,5 @@ from download import downloaderStock
 
 
 if __name__ == '__main__':
+    pass
     downloaderStock('pledge_stat', perTimes=60, downLimit=50)
