@@ -34,7 +34,8 @@ from misc import urlGuzhi, urlMainTable
 # from misc import filenameGuben
 from misc import filenameMainTable, filenameGuzhi
 from misc import longts_code, tsCode
-import datatrans
+# import datatrans
+from datatrans import dateStrList
 # import hyanalyse
 import sqlrw
 from sqlrw import engine, readStockList, writeSQL
@@ -840,15 +841,28 @@ def downIndexBasic():
     writeSQL(df_index_basic_sz, 'index_basic')
 
 
-def downDaily(trade_date):
+def downDaily(trade_date=None):
     """下载日K线数据
 
     :param trade_date:
     :return:
     """
     pro = ts.pro_api()
-    df = pro.daily(trade_date=trade_date)
-    writeSQL(df, 'daily')
+    dates = []
+    if trade_date is None:
+        sql = 'select max(trade_date) from daily'
+        startDate = engine.execute(sql).fetchone()[0]
+        assert isinstance(startDate, datetime.date), 'startDate应为date类型'
+        startDate += timedelta(days=1)
+        endDate = datetime.now().date()
+        dates = dateStrList(startDate.strftime('%Y%m%d'),
+                            endDate.strftime('%Y%m%d'))
+    else:
+        dates.append(trade_date)
+    for d in dates:
+        logging.debug('下载日线:', d)
+        df = pro.daily(trade_date=d)
+        writeSQL(df, 'daily')
 
 
 def downDailyRepair():

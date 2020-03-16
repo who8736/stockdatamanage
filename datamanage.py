@@ -69,10 +69,10 @@ def startUpdate():
     # downStockList()
 
     # 更新股票日交易数据
-    # TODO: 用新的更新方法
+    # downDaily()
 
     # 更新每日指标
-    updateDailybasic()
+    # updateDailybasic()
 
     # 更新非季报表格
     # 财务披露表
