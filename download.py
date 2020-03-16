@@ -57,6 +57,7 @@ class Downloader:
     :param downLimit:
     :return:
     """
+
     def __init__(self, perTimes=0, downLimit=0):
         pass
         self.times = []
@@ -80,6 +81,7 @@ class Downloader:
         self.times.append(nowtime)
         self.cur += 1
         return result
+
 
 # def downGubenToSQL(ts_code, retry=3, timeout=10):
 #     """下载单个股票股本数据写入数据库"""
@@ -423,7 +425,7 @@ def __downKline(ts_code, startDate=None, endDate=None, retry_count=6):
 
 
 def del_downKlineFromBaostock(ts_code, startDate=None,
-                          endDate=None, retry_count=6):
+                              endDate=None, retry_count=6):
     """下载单个股票K线历史写入数据库, 下载源为baostock
     :type ts_code: str
     :param startDate: date, 开始日期
@@ -468,13 +470,13 @@ def del_downKlineFromBaostock(ts_code, startDate=None,
 
 
 def del_downKlineFromTushare(ts_code: str, startDate=None, endDate=None,
-                         retry_count=6):
+                             retry_count=6):
     """下载单个股票K线历史写入数据库, 下载源为tushare"""
     # logging.debug('download kline: %s', ts_code)
     # if startDate is None:  # startDate为空时取股票最后更新日期
     #     startDate = getStockKlineUpdateDate() + dt.timedelta(days=1)
-        #         print ts_code, startDate
-        # startDate = startDate.strftime('%Y-%m-%d')
+    #         print ts_code, startDate
+    # startDate = startDate.strftime('%Y-%m-%d')
     if endDate is None:
         endDate = dt.datetime.today().strftime('%Y-%m-%d')
     #     retryCount = 0
@@ -496,11 +498,12 @@ def del_downKlineFromTushare(ts_code: str, startDate=None, endDate=None,
     logging.error('fail download %s Kline data!', ts_code)
 
 
-def downloadLirun(date):
+def del_downloadLirun(date):
     """
     # 获取业绩报表数据
     """
-    return downloadLirunFromTushare(date)
+    pass
+    # return downloadLirunFromTushare(date)
 
 
 #     return downloadLirunFromEastmoney(date)
@@ -537,7 +540,7 @@ def del_downloadLirunFromEastmoney(stockList, date):
 #     return lirunList
 
 
-def downloadLirunFromTushare(date):
+def del_downloadLirunFromTushare(date):
     """
     获取业绩报表数据,数据源为Tushare
     Parameters
@@ -586,7 +589,7 @@ def del_downGubenTusharePro(ts_code='300445'):
     """
     print('start update guben: %s' % ts_code)
     # updateDate = gubenUpdateDate(ts_code)
-    updateDate = None # 暂时移除
+    updateDate = None  # 暂时移除
     # print(type(updateDate))
     # print(updateDate.strftime('%Y%m%d'))
     startDate = updateDate.strftime('%Y%m%d')
@@ -623,7 +626,7 @@ def del_downGubenTusharePro(ts_code='300445'):
     return resultDf
 
 
-def downMainTable(ts_code):
+def del_downMainTable(ts_code):
     mainTableType = ['BalanceSheet', 'ProfitStatement', 'CashFlow']
     result = None
     for tableType in mainTableType:
@@ -837,6 +840,27 @@ def downIndexBasic():
     writeSQL(df_index_basic_sz, 'index_basic')
 
 
+def downDaily(trade_date):
+    """下载日K线数据
+
+    :param trade_date:
+    :return:
+    """
+    pro = ts.pro_api()
+    df = pro.daily(trade_date=trade_date)
+    writeSQL(df, 'daily')
+
+
+def downDailyRepair():
+    """修复日K线"""
+    stocks = readStockList()
+    pro = ts.pro_api()
+    for ts_code in stocks.ts_code.to_list():
+        print('下载日K线：', ts_code)
+        df = pro.daily(ts_code=ts_code)
+        writeSQL(df, 'daily')
+
+
 def downDailyBasic(ts_code=None, tradeDate=None, startDate=None, endDate=None):
     """
     从tushare下载股票每日指标
@@ -922,7 +946,7 @@ def downloaderStock(tablename, stocks, perTimes=0, downLimit=0):
     """
     pro = ts.pro_api()
     times = []
-    cnt = len(IDs)
+    cnt = len(stocks)
 
     # tablename = 'income'
     for i in range(cnt):
@@ -962,8 +986,6 @@ def downTradeCal(year):
     pro = ts.pro_api()
     df = pro.trade_cal(exchange='SSE', start_date=f'{year}0101')
     writeSQL(df, 'trade_cal')
-
-
 
 
 def downIndexWeight():

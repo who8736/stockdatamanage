@@ -266,13 +266,6 @@ def testReadStockListFromSQL():
     print('相差的股票：', [i for i in stocksA if i not in stocksB])
 
 
-def testReadLastTTMPE():
-    date = '20191202'
-    stocks = readStockListDf(int(date))
-    result = readLastTTMPEs(stocks.ts_code.tolist(), date)
-    print(result)
-
-
 def testWriteSQL():
     data = [{'username': 'a', 'email': 'aa@bb.cc', 'password': 'aaa_modify1'},
             {'username': 'b', 'email': 'bb@bb.cc', 'password': 'bbb_modify2'}, ]
@@ -484,38 +477,34 @@ def __testUpdate():
     pass
     # 自动更新全部数据，包括K线历史数据、利润数据、K线表中的TTM市盈率
     # 更新交易日历
-    updateTradeCal()
+    # updateTradeCal()
 
     # 更新股票列表
-    downStockList()
+    # downStockList()
     #     stockList = stockList[:10]
-
-    # 更新每日指标
-    updateDailybasic()
-
-    # 更新行业列表
-    downHYList()
-
-    # 更新股票季报数据
-    updateQuarterData()
-
-    # 更新股本
-    # 因新浪反爬虫策略，更新股本数据改用单线程
-    #     updateGuben(stockList, threadNum)
-    # updateGubenSingleThread()
 
     # 更新股票日交易数据
     # TODO: 用新的更新方法
-    threadNum = 10
-    stockList = sqlrw.readStockList()
-    # updateKlineBaseData(stockList, threadNum)
-    updateKline()
-    # updateKlineEXTData(stockList, threadNum)
 
-    # 因新浪反爬虫策略，更新股本数据改用单线程, 20170903
-    # 主表数据暂时没用，停止更新， 20170904
-    #     updateMainTableSingleThread(stockList, threadNum)
-    #     updateMainTable(stockList, threadNum)
+    # 更新每日指标
+    # updateDailybasic()
+
+    # 更新非季报表格
+    # 财务披露表
+    # 质押表（另外单独更新）
+    # 业绩预告
+    # 业绩快报
+    # 分红送股
+
+    # 更新股票季报数据
+    # 资产负债表
+    # 利润表
+    # 现金流量表
+    # 财务指标表
+    updateQuarterData()
+
+    # 更新行业列表
+    downHYList()
 
     # 更新股票估值
     updateGuzhiData()
@@ -612,9 +601,8 @@ def __testRepair():
     """测试专用函数:数据修复
     """
     pass
-    ##############################################
-    # 数据修复
-    ##############################################
+    # 修复股票日K线
+    downDailyRepair()
 
     # resetKlineExtData()
 
@@ -742,8 +730,8 @@ if __name__ == "__main__":
     # __testDownload()
     # __testMisc()
     # __testPlot()
-    # __testRepair()
-    __testUpdate()
+    __testRepair()
+    # __testUpdate()
     # __testValuation()
 
     print('程序正常退出')

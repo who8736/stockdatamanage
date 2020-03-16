@@ -63,50 +63,45 @@ def startUpdate():
     """自动更新全部数据，包括K线历史数据、利润数据、K线表中的TTM市盈率
     """
     # 更新交易日历
-    updateTradeCal()
+    # updateTradeCal()
 
     # 更新股票列表
-    downStockList()
-    #     stockList = stockList[:10]
+    # downStockList()
+
+    # 更新股票日交易数据
+    # TODO: 用新的更新方法
 
     # 更新每日指标
     updateDailybasic()
 
+    # 更新非季报表格
+    # 财务披露表
+    # 质押表（另外单独更新）
+    # 业绩预告
+    # 业绩快报
+    # 分红送股
+
+    # 更新股票季报数据
+    # 资产负债表
+    # 利润表
+    # 现金流量表
+    # 财务指标表
+    # updateQuarterData()
+
     # 更新行业列表
-    downHYList()
-
-    # 更新股票利润数据
-    # updateLirun()
-
-    # 每日指标里包含股本数据, 不再单独更新
-    # 因新浪反爬虫策略，更新股本数据改用单线程
-    #     updateGuben(stockList, threadNum)
-    # updateGubenSingleThread()
-
-    # 更新股票日交易数据
-    # TODO: 用新的更新方法
-    threadNum = 10
-    stockList = sqlrw.readStockList()
-    # updateKlineBaseData(stockList, threadNum)
-    # updateKline()
-    # updateKlineEXTData(stockList, threadNum)
-
-    # 因新浪反爬虫策略，更新股本数据改用单线程, 20170903
-    # 主表数据暂时没用，停止更新， 20170904
-    #     updateMainTableSingleThread(stockList, threadNum)
-    #     updateMainTable(stockList, threadNum)
+    # downHYList()
 
     # 更新股票估值
-    updateGuzhiData()
+    # updateGuzhiData()
 
     # 更新股票评分
-    updatePf()
+    # updatePf()
 
     # 更新指数数据及PE
-    updateIndex()
+    # updateIndex()
 
     # 更新全市PE
-    updateAllMarketPE()
+    # updateAllMarketPE()
 
 
 @logfun
@@ -143,7 +138,7 @@ def downHYList():
 
 
 @logfun
-def updateQurtarData():
+def updateQuarterData():
     """更新股票季报数据
 
     :return:
@@ -158,7 +153,8 @@ def updateQurtarData():
            'where a.ts_code=b.ts_code and datea>dateb;')
 
     # 下载利润表
-    downloader =
+    # TODO: 财报披露表增加索引end_date
+    downloader = Downloader()
 
 
 @logfun
@@ -308,9 +304,26 @@ def readStockListFromFile(filename):
 
 @logfun
 def updateDailybasic():
+    """更新日K线
+    """
+    sql = 'select max(trade_date) from daily'
+    lastdate = engine.execute(sql).fetchone()[0]
+    if isinstance(lastdate, datetime.date):
+        lastdate += timedelta(days=1)
+    else:
+        lastdate = datetime.date(1990, 1, 1)
+    startDate = lastdate.strftime('%Y%m%d')
+    endDate = datetime.today().date() - timedelta(days=1)
+    endDate = endDate.strftime('%Y%m%d')
+    dates = datatrans.dateStrList(startDate, endDate)
+    for d in dates:
+        download.downDaily(trade_date=d)
+
+@logfun
+def updateDailybasic():
     """更新每日指标
     """
-    sql = 'select max(date) from dailybasic'
+    sql = 'select max(trade_date) from dailybasic'
     lastdate = engine.execute(sql).fetchone()[0]
     lastdate += timedelta(days=1)
     startDate = lastdate.strftime('%Y%m%d')
