@@ -154,16 +154,17 @@ def downGubenTest():
         time.sleep(1)
 
 
-def del_resetKlineExtData():
-    """
-
-    :return:
-    """
-    stockList = sqlrw.readStockList()
-    print(type(stockList))
-    print(stockList)
-    for ts_code in stockList:
-        updateKlineEXTData(ts_code, '2016-01-01')
+# def del_resetKlineExtData():
+#     """
+#
+#     :return:
+#     """
+#     stockList = sqlrw.readStockList()
+#     print(type(stockList))
+#     print(stockList)
+#     for ts_code in stockList:
+#         pass
+        # updateKlineEXTData(ts_code, '2016-01-01')
 
     # for()
 
@@ -481,7 +482,6 @@ def __testUpdate():
 
     # 更新股票列表
     # downStockList()
-    #     stockList = stockList[:10]
 
     # 更新股票日交易数据
     # TODO: 用新的更新方法
@@ -504,19 +504,19 @@ def __testUpdate():
     updateQuarterData()
 
     # 更新行业列表
-    downHYList()
+    # downHYList()
 
     # 更新股票估值
-    updateGuzhiData()
+    # updateGuzhiData()
 
     # 更新股票评分
-    updatePf()
+    # updatePf()
 
     # 更新指数数据及PE
-    updateIndex()
+    # updateIndex()
 
     # 更新全市PE
-    updateAllMarketPE()
+    # updateAllMarketPE()
 
 
 # 更新股票市值与PE
@@ -602,7 +602,7 @@ def __testRepair():
     """
     pass
     # 修复股票日K线
-    downDailyRepair()
+    # downDailyRepair()
 
     # resetKlineExtData()
 
@@ -730,8 +730,8 @@ if __name__ == "__main__":
     # __testDownload()
     # __testMisc()
     # __testPlot()
-    __testRepair()
-    # __testUpdate()
+    # __testRepair()
+    __testUpdate()
     # __testValuation()
 
     print('程序正常退出')

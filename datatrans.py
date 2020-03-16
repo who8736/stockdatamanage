@@ -5,7 +5,7 @@ Created on 2016年5月6日
 @author: who8736
 """
 # import datetime as dt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import logging
 
 import pandas as pd
@@ -85,11 +85,11 @@ def parse_ymd(s):
     return datetime(int(year_s), int(mon_s), int(day_s))
 
 
-def transDateToQuarter(date):
+def transDateToQuarter(_date):
     """ 将datetime.datetime类型的日期转换为季度格式
     # 2015年4月7日，返回20152
     """
-    return date.year * 10 + int((date.month + 2) / 3)
+    return _date.year * 10 + int((_date.month + 2) / 3)
 
 
 def getLastQuarter():
@@ -241,13 +241,19 @@ def transDfToList(df):
     return outList
 
 
-def transQuarterToDate(date):
-    year = date / 10
-    month = (date % 10) * 3
+def transQuarterToDate(_date):
+    year = _date / 10
+    month = (_date % 10) * 3
     days = {3: 31, 6: 30, 9: 30, 12: 31}
     day = days[month]
     return '%(year)d-%(month)02d-%(day)d' % locals()
 
+
+def lastQarterDate(_date):
+    if isinstance(_date, str):
+        _date = datetime.strptime(_date, '%Y%m%d')
+    quarterFirstDay = date(_date.year, (_date.month - 1) // 3 * 3 + 1, 1)
+    return quarterFirstDay - timedelta(days=1)
 
 def transTushareDateToQuarter(date):
     year = int(date[:4])

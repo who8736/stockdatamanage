@@ -20,8 +20,8 @@ import initsql
 import hyanalyse
 import dataanalyse
 import sqlrw
-from sqlrw import engine
-from sqlrw import readStockListDf, readLastTTMPEs
+from sqlconn import engine
+from sqlrw import readLastTTMPEs, readStockList
 import pushdata
 from config import Config
 
@@ -107,7 +107,7 @@ def calpf():
     """ 根据各指标计算评分，分别写入文件和数据库
     """
 #    stocks = readStockListDf()[:10]
-    stocks = readStockListDf()
+    stocks = readStockList()
     # print(stocks)
     # 低市盈率
     peDf = readLastTTMPEs(stocks.ts_code.tolist())
@@ -208,7 +208,7 @@ def calpfnew(date, replace=False):
         if result > 0:
             return
 
-    stocks = readStockListDf(date)
+    stocks = readStockList()
     # print(stocks)
     # 低市盈率
     peDf = readLastTTMPEs(stocks.ts_code.tolist(), date)

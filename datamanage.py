@@ -14,11 +14,13 @@ from datetime import datetime, timedelta
 # import ConfigParser
 from multiprocessing.dummy import Pool as ThreadPool
 from functools import wraps
-import datetime as dt
+
+import pandas as pd
 import baostock as bs
 import tushare as ts
 
-import datatrans
+# import datatrans
+from datatrans import lastQarterDate, dateStrList
 import hyanalyse
 import dataanalyse
 import sqlrw
@@ -29,7 +31,8 @@ from sqlconn import engine
 from sqlrw import getIndexPEUpdateDate
 import download
 from download import downGuben, downGuzhi
-from download import downMainTable, downloadLirun, downStockList
+from download import downStockQuarterData
+from download import downStockList
 from download import downIndex
 from download import downDailyBasic, downTradeCal
 from download import downIndexDaily, downIndexDailyBasic
@@ -47,9 +50,9 @@ def logfun(func):
         #         def _func(*args):
         #         print "hello, %s" % func.__name__
         logging.info('===========start %s===========', func.__name__)
-        startTime = dt.datetime.now()
+        startTime = datetime.now()
         func(*args, **kwargs)
-        endTime = dt.datetime.now()
+        endTime = datetime.now()
         logging.info('===========end %s===========', func.__name__)
         logging.info('%s cost time: %s ',
                      func.__name__, endTime - startTime)
@@ -75,18 +78,18 @@ def startUpdate():
     # updateDailybasic()
 
     # 更新非季报表格
-    # 财务披露表
+    # 财务披露表（另外单独更新）
     # 质押表（另外单独更新）
-    # 业绩预告
-    # 业绩快报
-    # 分红送股
+    # 业绩预告（另外单独更新）
+    # 业绩快报（另外单独更新）
+    # 分红送股（另外单独更新）
 
     # 更新股票季报数据
     # 资产负债表
     # 利润表
     # 现金流量表
     # 财务指标表
-    # updateQuarterData()
+    updateQuarterData()
 
     # 更新行业列表
     # downHYList()
@@ -128,7 +131,7 @@ def updateIndex():
     ID = '000010.SH'
     # startDate = getIndexKlineUpdateDate() + dt.timedelta(days=1)
     # startDate = getIndexPEUpdateDate()
-    startDate = getIndexPEUpdateDate() + dt.timedelta(days=1)
+    startDate = getIndexPEUpdateDate() + timedelta(days=1)
     dataanalyse.calPEHistory(ID, startDate)
 
 
@@ -143,26 +146,40 @@ def updateQuarterData():
 
     :return:
     """
+    #
     # TODO: 调用download文件中相应的下载函数
-    tables = ['']
-    sql = ('select a.ts_code ts_code from '
-           '(select ts_code, max(end_date) datea '
-           ' from income group by ts_code) a, '
-           '(select ts_code, max(end_date) dateb '
-           ' from fina_indicator group by ts_code) b '
-           'where a.ts_code=b.ts_code and datea>dateb;')
+    # 表格名称及tushare函数调用频次
+    # table, perTimes, limit
+    tables = [['balancesheet', 60, 80],
+              ['income', 60, 80],
+              ['cashflow', 60, 80],
+              ['fina_indicator', 60, 60]]
+    _today = datetime.today().date()
+    end_date = lastQarterDate(_today)
+    todayStr = _today.strftime('%Y%m%d')
+    for table, perTimes, limit in tables:
+        sql = (f'select a.ts_code, a.end_date, a.pre_date'
+               f' from disclosure_date a,'
+               f' (select ts_code, max(end_date) e_date'
+               f' from {table} group by ts_code'
+               f' having e_date<"{end_date}") b'
+               f' where a.ts_code=b.ts_code and a.end_date>b.e_date'
+               f' and a.pre_date<"{todayStr}";')
+        print(sql)
+        df = pd.read_sql(sql, engine)
+        downloader = Downloader(perTimes=perTimes, downLimit=limit)
+        for ts_code in df.ts_code.to_list():
+            downloader.run(fun=downStockQuarterData,
+                           table=table, ts_code=ts_code)
 
-    # 下载利润表
-    # TODO: 财报披露表增加索引end_date
-    downloader = Downloader()
 
 
-@logfun
-def updateKlineEXTData(stockList, threadNum):
-    pool = ThreadPool(processes=threadNum)
-    pool.map(sqlrw.updateKlineEXTData, stockList)
-    pool.close()
-    pool.join()
+# @logfun
+# def updateKlineEXTData(stockList, threadNum):
+#     pool = ThreadPool(processes=threadNum)
+#     pool.map(sqlrw.updateKlineEXTData, stockList)
+#     pool.close()
+#     pool.join()
 
 
 @logfun
@@ -265,23 +282,23 @@ def del_updateKline():
     #     downKline(tradeDate)
 
 
-@logfun
-def updateMainTable(stockList, threadNum):
-    """ 更新主表数据多线程版， # 因新浪反爬虫策略，改用单线程
-    """
-    pool = ThreadPool(processes=threadNum)
-    pool.map(downMainTable, stockList)
-    pool.close()
-    pool.join()
+# @logfun
+# def updateMainTable(stockList, threadNum):
+#     """ 更新主表数据多线程版， # 因新浪反爬虫策略，改用单线程
+#     """
+#     pool = ThreadPool(processes=threadNum)
+#     pool.map(downMainTable, stockList)
+#     pool.close()
+#     pool.join()
 
 
-@logfun
-def updateMainTableSingleThread(stockList):
-    """ 更新主表数据单线程版， 因主表数据暂时无用
-    """
-    for ts_code in stockList:
-        downMainTable(ts_code)
-        time.sleep(1)
+# @logfun
+# def updateMainTableSingleThread(stockList):
+#     """ 更新主表数据单线程版， 因主表数据暂时无用
+#     """
+#     for ts_code in stockList:
+#         downMainTable(ts_code)
+#         time.sleep(1)
 
 
 @logfun
@@ -315,9 +332,10 @@ def updateDailybasic():
     startDate = lastdate.strftime('%Y%m%d')
     endDate = datetime.today().date() - timedelta(days=1)
     endDate = endDate.strftime('%Y%m%d')
-    dates = datatrans.dateStrList(startDate, endDate)
+    dates = dateStrList(startDate, endDate)
     for d in dates:
         download.downDaily(trade_date=d)
+
 
 @logfun
 def updateDailybasic():
@@ -329,7 +347,7 @@ def updateDailybasic():
     startDate = lastdate.strftime('%Y%m%d')
     endDate = datetime.today().date() - timedelta(days=1)
     endDate = endDate.strftime('%Y%m%d')
-    dates = datatrans.dateStrList(startDate, endDate)
+    dates = dateStrList(startDate, endDate)
     for d in dates:
         download.downDailyBasic(tradeDate=d)
 

@@ -35,7 +35,7 @@ from misc import urlGuzhi, urlMainTable
 from misc import filenameMainTable, filenameGuzhi
 from misc import longts_code, tsCode
 # import datatrans
-from datatrans import dateStrList
+from datatrans import dateStrList, gubenDataToDfSina
 # import hyanalyse
 import sqlrw
 from sqlrw import engine, readStockList, writeSQL
@@ -59,29 +59,46 @@ class Downloader:
     :return:
     """
 
-    def __init__(self, perTimes=0, downLimit=0):
+    def __init__(self, perTimes=0, downLimit=0, retry=3):
         pass
         self.times = []
         self.cur = 0
         self.perTimes = perTimes
         self.downLimit = downLimit
+        self.retry = retry
 
     def run(self, fun, **kwargs):
-        nowtime = datetime.now()
-        if (self.perTimes > 0 and self.downLimit > 0
-                and self.cur >= self.downLimit
-                and (nowtime < self.times[self.cur - self.downLimit]
-                     + timedelta(seconds=self.perTimes))):
-            _timedelta = nowtime - self.times[self.cur - self.downLimit]
-            sleeptime = self.perTimes - _timedelta.seconds
-            print(f'******暂停{sleeptime}秒******')
-            time.sleep(sleeptime)
+        result = None
+        for _ in range(self.retry):
+            nowtime = datetime.now()
+            if (self.perTimes > 0 and self.downLimit > 0
+                    and self.cur >= self.downLimit
+                    and (nowtime < self.times[self.cur - self.downLimit]
+                         + timedelta(seconds=self.perTimes))):
+                _timedelta = nowtime - self.times[self.cur - self.downLimit]
+                sleeptime = self.perTimes - _timedelta.seconds
+                print(f'******暂停{sleeptime}秒******')
+                time.sleep(sleeptime)
+            try:
+                result = fun(**kwargs)
+            except socket.timeout:
+                logging.warning('downloader timeout:', fun.__name__)
+            else:
+                break
+            finally:
+                nowtime = datetime.now()
+                self.times.append(nowtime)
+                self.cur += 1
 
-        result = fun(kwargs)
-        nowtime = datetime.now()
-        self.times.append(nowtime)
-        self.cur += 1
         return result
+
+
+def downStockQuarterData(table, ts_code):
+    print(f'downStockQuarterData table:{table}, ts_code:{ts_code}')
+    pro = ts.pro_api()
+    fun = getattr(pro, table)
+    df = fun(ts_code=ts_code)
+    writeSQL(df, table)
 
 
 # def downGubenToSQL(ts_code, retry=3, timeout=10):
@@ -510,61 +527,61 @@ def del_downloadLirun(date):
 #     return downloadLirunFromEastmoney(date)
 
 
-def del_downloadLirunFromEastmoney(stockList, date):
-    """
-    获取业绩报表数据,数据源为Eastmoney
-    Parameters
-    --------
-    stockList: list 股票代码列表
-    date: int 年度季度 e.g 20191表示2019年1季度
-    说明：由于是从网站获取的数据，需要一页页抓取，速度取决于您当前网络速度
-
-    Return
-    --------
-    DataFrame
-        code,代码
-        net_profits,净利润(万元)
-        report_date,发布日期
-
-    # 缺点： 数据中无准确的报表发布日期
-    """
-    lirunList = []
-    date = datatrans.transQuarterToDate(date).replace('-', '')
-    for ts_code in stockList:
-        lirun = None
-        # lirun = lirunFileToList(ts_code, date)
-        if lirun:
-            lirunList.append(lirun)
-    return DataFrame(lirunList)
+# def del_downloadLirunFromEastmoney(stockList, date):
+#     """
+#     获取业绩报表数据,数据源为Eastmoney
+#     Parameters
+#     --------
+#     stockList: list 股票代码列表
+#     date: int 年度季度 e.g 20191表示2019年1季度
+#     说明：由于是从网站获取的数据，需要一页页抓取，速度取决于您当前网络速度
+#
+#     Return
+#     --------
+#     DataFrame
+#         code,代码
+#         net_profits,净利润(万元)
+#         report_date,发布日期
+#
+#     # 缺点： 数据中无准确的报表发布日期
+#     """
+#     lirunList = []
+#     date = datatrans.transQuarterToDate(date).replace('-', '')
+#     for ts_code in stockList:
+#         lirun = None
+#         # lirun = lirunFileToList(ts_code, date)
+#         if lirun:
+#             lirunList.append(lirun)
+#     return DataFrame(lirunList)
 
 
 #     return lirunList
 
 
-def del_downloadLirunFromTushare(date):
-    """
-    获取业绩报表数据,数据源为Tushare
-    Parameters
-    --------
-    date: int 年度季度 e.g 20191表示2019年1季度
-    说明：由于是从网站获取的数据，需要一页页抓取，速度取决于您当前网络速度
-
-    Return
-    --------
-    DataFrame
-        code,代码
-        net_profits,净利润(万元)
-        report_date,发布日期
-    """
-    year = date // 10
-    quarter = date % 10
-    #     df = ts.get_report_data(year, quarter)
-    # 因tushare的利润下载函数不支持重试和指定超时值，使用下面的改进版本
-    df = get_report_data(year, quarter)
-    if df is None:
-        return None
-    df = df.loc[:, ['code', 'net_profits', 'report_date']]
-    return datatrans.transLirunDf(df, year, quarter)
+# def del_downloadLirunFromTushare(date):
+#     """
+#     获取业绩报表数据,数据源为Tushare
+#     Parameters
+#     --------
+#     date: int 年度季度 e.g 20191表示2019年1季度
+#     说明：由于是从网站获取的数据，需要一页页抓取，速度取决于您当前网络速度
+#
+#     Return
+#     --------
+#     DataFrame
+#         code,代码
+#         net_profits,净利润(万元)
+#         report_date,发布日期
+#     """
+#     year = date // 10
+#     quarter = date % 10
+#     #     df = ts.get_report_data(year, quarter)
+#     # 因tushare的利润下载函数不支持重试和指定超时值，使用下面的改进版本
+#     df = get_report_data(year, quarter)
+#     if df is None:
+#         return None
+#     df = df.loc[:, ['code', 'net_profits', 'report_date']]
+#     return datatrans.transLirunDf(df, year, quarter)
 
 
 # def downGuben(ts_code='300445', date='2019-04-19'):
@@ -788,7 +805,7 @@ def _downGubenSina(ts_code):
     # else:
     #         sock.close()
     #     print guben
-    df = datatrans.gubenDataToDfSina(ts_code, guben)
+    df = gubenDataToDfSina(ts_code, guben)
     return df
 
 
@@ -867,7 +884,10 @@ def downDaily(trade_date=None):
 
 def downDailyRepair():
     """修复日K线"""
-    stocks = readStockList()
+    # stocks = readStockList()
+    sql = ('select ts_code from stock_basic'
+           ' where ts_code not in (select distinct ts_code from daily);')
+    stocks = pd.read_sql(sql, engine)
     pro = ts.pro_api()
     for ts_code in stocks.ts_code.to_list():
         print('下载日K线：', ts_code)
@@ -974,7 +994,7 @@ def downloaderStock(tablename, stocks, perTimes=0, downLimit=0):
             nowtime = datetime.now()
         times.append(nowtime)
         print(f'第{i}个，时间：{nowtime}')
-        ts_code = IDs[i]
+        ts_code = stocks[i]
         print(ts_code)
         flag = True
         df = None
