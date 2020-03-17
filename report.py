@@ -7,7 +7,7 @@ Created on 2016年12月5日
 import codecs
 
 import sqlrw
-import hyanalyse
+import classifyanalyse
 import datatrans
 
 
@@ -39,29 +39,29 @@ def report(ts_code):
     reportStr += '当前TTMPE参考最近200个工作日水平： %+6.2f\n' % guzhiData[16]
     reportStr += '当前TTMPE参考最近1000个工作日水平： %+6.2f\n' % guzhiData[17]
 
-    hyIDlv4 = hyanalyse.getHYIDForStock(ts_code)
+    hyIDlv4 = classifyanalyse.getClassify(ts_code)
     hyIDlv3 = hyIDlv4[:6]
     hyIDlv2 = hyIDlv4[:4]
     hyIDlv1 = hyIDlv4[:2]
     reportStr += '=' * 20 + '\n\n'
     reportStr += '行业比较：\n' + '-' * 20 + '\n'
     reportStr += ('最近三年TTM利润增长率水平：%+10.2f%+10.2f%+10.2f\n\n' %
-                  hyanalyse.getStockProfitsIncRates(ts_code))
+                  classifyanalyse.getStockProfitsIncRates(ts_code))
 
-    reportStr += '所属一级行业：%s\n' % hyanalyse.getHYName(hyIDlv1)
+    reportStr += '所属一级行业：%s\n' % classifyanalyse.getHYName(hyIDlv1)
     reportStr += ('最近三年TTM利润增长率水平：%+10.2f%+10.2f%+10.2f\n\n' %
-                  hyanalyse.getHYProfitsIncRates(hyIDlv1))
-    reportStr += '所属二级行业：%s\n' % hyanalyse.getHYName(hyIDlv2)
+                  classifyanalyse.getHYProfitsIncRates(hyIDlv1))
+    reportStr += '所属二级行业：%s\n' % classifyanalyse.getHYName(hyIDlv2)
     reportStr += ('最近三年TTM利润增长率水平：%+10.2f%+10.2f%+10.2f\n\n' %
-                  hyanalyse.getHYProfitsIncRates(hyIDlv2))
-    reportStr += '所属三级行业：%s\n' % hyanalyse.getHYName(hyIDlv3)
+                  classifyanalyse.getHYProfitsIncRates(hyIDlv2))
+    reportStr += '所属三级行业：%s\n' % classifyanalyse.getHYName(hyIDlv3)
     reportStr += ('最近三年TTM利润增长率水平：%+10.2f%+10.2f%+10.2f\n\n' %
-                  hyanalyse.getHYProfitsIncRates(hyIDlv3))
-    reportStr += '所属四级行业：%s\n' % hyanalyse.getHYName(hyIDlv4)
+                  classifyanalyse.getHYProfitsIncRates(hyIDlv3))
+    reportStr += '所属四级行业：%s\n' % classifyanalyse.getHYName(hyIDlv4)
     reportStr += ('最近三年TTM利润增长率水平：%+10.2f%+10.2f%+10.2f\n\n' %
-                  hyanalyse.getHYProfitsIncRates(hyIDlv4))
+                  classifyanalyse.getHYProfitsIncRates(hyIDlv4))
 
-    stockList = hyanalyse.getStockListForHY(hyIDlv4)
+    stockList = classifyanalyse.getStockListForHY(hyIDlv4)
     print(stockList)
     for sameHYts_code in stockList:
         if sameHYts_code[0] not in ['0', '3', '6']:
@@ -70,7 +70,7 @@ def report(ts_code):
         reportStr += '同行业股票代码: %s\t' % sameHYts_code
         reportStr += '股票名称: %s\n\n' % sqlrw.getStockName(sameHYts_code)
         reportStr += ('最近三年TTM利润增长率水平：%+10.2s%+10.2s%+10.2s\n\n' %
-                      hyanalyse.getStockProfitsIncRates(sameHYts_code))
+                      classifyanalyse.getStockProfitsIncRates(sameHYts_code))
 
     outFilename = './data/report%s.txt' % ts_code
     outfile = codecs.open(outFilename, 'wb', 'utf-8')
@@ -102,35 +102,35 @@ def report1(ts_code):
     # 当前TTMPE参考最近1000个工作日水平
     myItem.PERate1000 = guzhiData[17]
 
-    hyIDlv4 = hyanalyse.getHYIDForStock(ts_code)
+    hyIDlv4 = classifyanalyse.getClassify(ts_code)
     hyIDlv3 = hyIDlv4[:6]
     hyIDlv2 = hyIDlv4[:4]
     hyIDlv1 = hyIDlv4[:2]
 
     # 最近三年TTM利润增长率水平
-    myItem.profitsInc3Years = hyanalyse.getStockProfitsIncRates(ts_code)
+    myItem.profitsInc3Years = classifyanalyse.getStockProfitsIncRates(ts_code)
     # 所属1级行业
     myItem.hyIDlv1 = hyIDlv1
-    myItem.hyLv1 = hyanalyse.getHYName(hyIDlv1)
+    myItem.hyLv1 = classifyanalyse.getHYName(hyIDlv1)
     # 最近三年TTM利润增长率水平
-    myItem.hyIncLv1 = hyanalyse.getHYProfitsIncRates(hyIDlv1)
+    myItem.hyIncLv1 = classifyanalyse.getHYProfitsIncRates(hyIDlv1)
     # 所属2级行业
     myItem.hyIDlv2 = hyIDlv2
-    myItem.hyLv2 = hyanalyse.getHYName(hyIDlv2)
+    myItem.hyLv2 = classifyanalyse.getHYName(hyIDlv2)
     # 最近三年TTM利润增长率水平
-    myItem.hyIncLv2 = hyanalyse.getHYProfitsIncRates(hyIDlv2)
+    myItem.hyIncLv2 = classifyanalyse.getHYProfitsIncRates(hyIDlv2)
     # 所属3级行业
     myItem.hyIDlv3 = hyIDlv3
-    myItem.hyLv3 = hyanalyse.getHYName(hyIDlv3)
+    myItem.hyLv3 = classifyanalyse.getHYName(hyIDlv3)
     # 最近三年TTM利润增长率水平
-    myItem.hyIncLv3 = hyanalyse.getHYProfitsIncRates(hyIDlv3)
+    myItem.hyIncLv3 = classifyanalyse.getHYProfitsIncRates(hyIDlv3)
     # 所属4级行业
     myItem.hyIDlv4 = hyIDlv4
-    myItem.hyLv4 = hyanalyse.getHYName(hyIDlv4)
+    myItem.hyLv4 = classifyanalyse.getHYName(hyIDlv4)
     # 最近三年TTM利润增长率水平
-    myItem.hyIncLv4 = hyanalyse.getHYProfitsIncRates(hyIDlv4)
+    myItem.hyIncLv4 = classifyanalyse.getHYProfitsIncRates(hyIDlv4)
 #
-    stockList = hyanalyse.getStockListForHY(hyIDlv4)
+    stockList = classifyanalyse.getStockListForHY(hyIDlv4)
 #     print stockList
     sameHYList = []
     for sameHYts_code in stockList:
@@ -139,7 +139,7 @@ def report1(ts_code):
 #         print u'sameHYts_code:', sameHYts_code
         sameHYList.append([sameHYts_code,
                            sqlrw.getStockName(sameHYts_code),
-                           hyanalyse.getStockProfitsIncRates(sameHYts_code)])
+                           classifyanalyse.getStockProfitsIncRates(sameHYts_code)])
     myItem.sameHYList = sameHYList
 #     outFilename = u'./data/report%s.txt' % ts_code
 #     outfile = codecs.open(outFilename, 'wb', 'utf-8')
@@ -191,35 +191,35 @@ def reportValuation(ts_code):
     myItem.PERate1000 = myStockValuation[26]
     myItem.PEZ1000 = myStockValuation[23]
 
-    hyIDlv4 = hyanalyse.getHYIDForStock(ts_code)
+    hyIDlv4 = classifyanalyse.getClassify(ts_code)
     hyIDlv3 = hyIDlv4[:6]
     hyIDlv2 = hyIDlv4[:4]
     hyIDlv1 = hyIDlv4[:2]
 
     # 最近三年TTM利润增长率水平
-    myItem.profitsInc3Years = hyanalyse.getStockProfitsIncRates(ts_code)
+    myItem.profitsInc3Years = classifyanalyse.getStockProfitsIncRates(ts_code)
     # 所属1级行业
     myItem.hyIDlv1 = hyIDlv1
-    myItem.hyLv1 = hyanalyse.getHYName(hyIDlv1)
+    myItem.hyLv1 = classifyanalyse.getHYName(hyIDlv1)
     # 最近三年TTM利润增长率水平
-    myItem.hyIncLv1 = hyanalyse.getHYProfitsIncRates(hyIDlv1)
+    myItem.hyIncLv1 = classifyanalyse.getHYProfitsIncRates(hyIDlv1)
     # 所属2级行业
     myItem.hyIDlv2 = hyIDlv2
-    myItem.hyLv2 = hyanalyse.getHYName(hyIDlv2)
+    myItem.hyLv2 = classifyanalyse.getHYName(hyIDlv2)
     # 最近三年TTM利润增长率水平
-    myItem.hyIncLv2 = hyanalyse.getHYProfitsIncRates(hyIDlv2)
+    myItem.hyIncLv2 = classifyanalyse.getHYProfitsIncRates(hyIDlv2)
     # 所属3级行业
     myItem.hyIDlv3 = hyIDlv3
-    myItem.hyLv3 = hyanalyse.getHYName(hyIDlv3)
+    myItem.hyLv3 = classifyanalyse.getHYName(hyIDlv3)
     # 最近三年TTM利润增长率水平
-    myItem.hyIncLv3 = hyanalyse.getHYProfitsIncRates(hyIDlv3)
+    myItem.hyIncLv3 = classifyanalyse.getHYProfitsIncRates(hyIDlv3)
     # 所属4级行业
     myItem.hyIDlv4 = hyIDlv4
-    myItem.hyLv4 = hyanalyse.getHYName(hyIDlv4)
+    myItem.hyLv4 = classifyanalyse.getHYName(hyIDlv4)
     # 最近三年TTM利润增长率水平
-    myItem.hyIncLv4 = hyanalyse.getHYProfitsIncRates(hyIDlv4)
+    myItem.hyIncLv4 = classifyanalyse.getHYProfitsIncRates(hyIDlv4)
 #
-    stockList = hyanalyse.getStockListForHY(hyIDlv4)
+    stockList = classifyanalyse.getStockListForHY(hyIDlv4)
 #     print stockList
     sameHYList = []
     for sameHYts_code in stockList:
@@ -228,7 +228,7 @@ def reportValuation(ts_code):
 #         print u'sameHYts_code:', sameHYts_code
         sameHYList.append([sameHYts_code,
                            sqlrw.getStockName(sameHYts_code),
-                           hyanalyse.getStockProfitsIncRates(sameHYts_code)])
+                           classifyanalyse.getStockProfitsIncRates(sameHYts_code)])
     myItem.sameHYList = sameHYList
 #     outFilename = u'./data/report%s.txt' % ts_code
 #     outfile = codecs.open(outFilename, 'wb', 'utf-8')

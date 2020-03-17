@@ -110,7 +110,7 @@ def createGuzhiTable():
 
 
 def createHYProfitsTable():
-    sql = ('CREATE TABLE hyprofits('
+    sql = ('CREATE TABLE classify_profits('
            'hyid VARCHAR(8),'
            'date INT(11),'
            'profitsInc DOUBLE,'
@@ -404,7 +404,7 @@ if __name__ == '__main__':
         createHY()
     if not existTable('hangyename'):
         createHYName()
-    if not existTable('hyprofits'):
+    if not existTable('classify_profits'):
         createHYProfitsTable()
     if not existTable('chigu'):
         createChiguTable()

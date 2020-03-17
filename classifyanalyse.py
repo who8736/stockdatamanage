@@ -10,7 +10,7 @@ import datetime as dt
 from datetime import timedelta
 import logging
 
-# import pandas as pd
+import pandas as pd
 from pandas.core.frame import DataFrame
 
 import sqlrw
@@ -34,17 +34,15 @@ def getStockListForHY(hyID):
     return stockList
 
 
-def getHYIDForStock(ts_code):
+def getClassify(ts_code):
     """ 当查询指定股票的4级行业的代码
     """
-    sql = ('select hyid from hangyestock where ts_code="%(ts_code)s";'
-           % locals())
+    sql = f'select classify_code from classify_member where ts_code="{ts_code}";'
     result = engine.execute(sql).fetchone()
     if result is None:
         return None
     else:
-        hyID = result[0]
-        return hyID
+        return result[0]
 
 
 # def getHYStock():
@@ -60,7 +58,7 @@ def getHYIDForStock(ts_code):
 def getHYLirunCount(hyID, quarter):
     """ 查询行业在指定季度中已发布财报的股票数量
     """
-    sql = ('select count(1) from hyprofits where hyid="%(hyID)s" and '
+    sql = ('select count(1) from classify_profits where hyid="%(hyID)s" and '
            'date="%(quarter)s"') % locals()
     result = engine.execute(sql)
     return result.fetchone()[0]
@@ -115,7 +113,7 @@ def getHYStockCount(hyID):
 
 
 def getHYProfitsIncRate(hyID, quarter):
-    sql = ('select profitsIncRate from hyprofits '
+    sql = ('select profitsIncRate from classify_profits '
            'where hyid="%(hyID)s" and date="%(quarter)s";'
            % locals())
     print(sql)
@@ -138,7 +136,7 @@ def getHYProfitsIncRates(hyID):
 
 
 def getStockProfitsIncRate(ts_code, quarter):
-    sql = ('select incrate from ttmlirun '
+    sql = ('select incrate from ttmprofits '
            'where ts_code="%(ts_code)s" and date="%(quarter)s";'
            % locals())
     result = engine.execute(sql).fetchone()
@@ -160,18 +158,18 @@ def getStockProfitsIncRates(ts_code):
     return incRate1, incRate2, incRate3
 
 
-def calHYTTMLirun(hyID, date):
+def calHYTTMProfits(hyID, date):
     """ 计算指定行业的TTMLirun
     date: 格式YYYYQ, 4位年+1位季度，利润所属日期
     """
-    print("calHTTTMLirun hyID: %s, date: %d" % (hyID, date))
+    print("calHYTTMProfits hyID: %s, date: %d" % (hyID, date))
     if len(hyID) == 8:
-        return calHYTTMLirunLowLevel(hyID, date)
+        return calHYTTMProfitsLowLevel(hyID, date)
     else:
-        return calHYTTMLirunHighLevel(hyID, date)
+        return calHYTTMProfitsHighLevel(hyID, date)
 
 
-def calHYTTMLirunHighLevel(hyID, date):
+def calHYTTMProfitsHighLevel(hyID, date):
     """ 计算第1、2、3级行业的TTM利润
     """
     level = len(hyID) // 2
@@ -181,7 +179,7 @@ def calHYTTMLirunHighLevel(hyID, date):
     profitsCur = 0
     profitsLast = 0
     for subHyID in subHyIDList:
-        sql = ('select profits, profitsLast from hyprofits '
+        sql = ('select profits, profitsLast from classify_profits '
                'where hyid="%(subHyID)s" and date=%(date)s;') % locals()
 #         print sql
         result = engine.execute(sql).fetchone()
@@ -193,7 +191,7 @@ def calHYTTMLirunHighLevel(hyID, date):
             profitsLast += result[1]
 
 #     LastDate = date - 10
-#     sql = ('select profits from hyprofits '
+#     sql = ('select profits from classify_profits '
 #            'where hyid="%(subHyID)s" and date="%(LastDate)s";') % locals()
 # #     print sql
 #     result = engine.execute(sql).fetchone()
@@ -205,12 +203,12 @@ def calHYTTMLirunHighLevel(hyID, date):
 #         profitsLast = result[0]
 
     if profitsLast == 0:
-        sql = (('replace into hyprofits(hyid, date, profits) '
+        sql = (('replace into classify_profits(hyid, date, profits) '
                 'values("%(hyID)s", "%(date)s", %(profitsCur)s);') % locals())
     else:
         profitsInc = profitsCur - profitsLast
         profitsIncRate = round(profitsInc / abs(profitsLast) * 100, 2)
-        sql = (('replace into hyprofits'
+        sql = (('replace into classify_profits'
                 '(hyid, date, profits, profitsLast, '
                 'profitsInc, profitsIncRate) '
                 'values("%(hyID)s", "%(date)s", '
@@ -225,20 +223,18 @@ def calHYTTMLirunHighLevel(hyID, date):
 #         return result[0]
 
 
-def calHYTTMLirunLowLevel(hyID, date):
+def calHYTTMProfitsLowLevel(code, date):
     """ 计算第4级行业的TTM利润
     """
-    stockList = getStockListForHY(hyID)
-    allTTMLirunCur = sqlrw.readTTMLirunForDate(date)
-    allTTMLirunLast = sqlrw.readTTMLirunForDate(date - 10)
-    allTTMLirunLast = allTTMLirunLast[
-        allTTMLirunLast['ts_code'].isin(stockList)]
-    if allTTMLirunLast.empty or allTTMLirunCur.empty:
+    stockList = getStockListForHY(code)
+    curProfits = sqlrw.readTTMProfitsForDate(date)
+    lastProfits = sqlrw.readTTMProfitsForDate(date - 10)
+    lastProfits = lastProfits[lastProfits['ts_code'].isin(stockList)]
+    if lastProfits.empty or curProfits.empty:
         return False
-    allTTMLirunCur = allTTMLirunCur[
-        allTTMLirunCur['ts_code'].isin(allTTMLirunLast['ts_code'])]
-    profitsCur = sum(allTTMLirunCur['ttmprofits'])
-    profitsLast = sum(allTTMLirunLast['ttmprofits'])
+    curProfits = curProfits[curProfits['ts_code'].isin(lastProfits['ts_code'])]
+    profitsCur = sum(curProfits['ttmprofits'])
+    profitsLast = sum(lastProfits['ttmprofits'])
 
     profitsInc = profitsCur - profitsLast
 #     print 'allTTMLirunCur', allTTMLirunCur
@@ -248,28 +244,27 @@ def calHYTTMLirunLowLevel(hyID, date):
     profitsIncRate = round(profitsInc / abs(profitsLast) * 100, 2)
 #     print profitsInc, profitsIncRate
 #     return [profitsInc, profitsIncRate]
-    sql = (('replace into hyprofits'
-            '(hyid, date, profits, profitsLast, profitsInc, profitsIncRate) '
-            'values("%(hyID)s", "%(date)s", '
-            '"%(profitsCur)s", "%(profitsLast)s", '
-            '"%(profitsInc)s", "%(profitsIncRate)s");') % locals())
-#     print sql
+    sql = ('replace into classify_profits'
+            '(code, date, profits, profitsLast, profitsInc, profitsIncRate) '
+            f'values("{code}", "{date}", '
+            f'"{profitsCur}", "{profitsLast}", '
+            f'"{profitsInc}", "{profitsIncRate}");')
     engine.execute(sql)
     return True
 
 
-def calAllHYTTMLirun(date):
+def calAllHYTTMProfits(date):
     """ 计算各级行业TTM利润，依次计算第4、3、2、1级
     """
     for level in range(4, 0, -1):
-        sql = 'select hyid from hangyename where hylevel=%(level)s;' % locals()
+        sql = 'select code from hangyename where hylevel=%(level)s;' % locals()
         result = engine.execute(sql)
         hyIDList = result.fetchall()
         hyIDList = [i[0] for i in hyIDList]
         print(hyIDList)
         for hyID in hyIDList:
             print(hyID)
-            calHYTTMLirun(hyID, date)
+            calHYTTMProfits(hyID, date)
 
 
 def getHYQuarters():
@@ -333,18 +328,19 @@ def getHYPE(hyID, date, reset=False):
         return pe
 
 
-def calHYsPE(date=None):
+def calClassifyPE(date):
     """ 计算所有行业在指定日期的市盈率
     """
-    if date is None:
-        date = dt.datetime.today() - timedelta(days=1)
-        date = date.strftime('%Y%m%d')
+    # if date is None:
+    #     date = dt.datetime.today() - timedelta(days=1)
+    #     date = date.strftime('%Y%m%d')
+    # TODO: 重写sql, 可用daily_basic中的总市值与ttmpe计算ttmprofits
     logging.debug(f'update hangyepe: {date}')
-    sql = (f'insert into hangyepe (hyid, `date`, hype)'
+    sql = (f'insert into classify_pe (code, `date`, pe)'
            f' select hyid, "{date}" as date,'
            f' round(sum(totalmarketvalue)/sum(ttmprofits), 2) as pe'
-           f' from (select a.ts_code, b.hyid as hyid, a.totalmarketvalue,'
-           f' a.ttmprofits from klinestock as a inner join hangyestock as b'
+           f' from (select a.ts_code, b.classify_code as classify_code, a.totalmarketvalue,'
+           f' a.ttmprofits from klinestock as a inner join classify_member as b'
            f' on a.ts_code=b.ts_code where a.date="{date}"'
            f' and a.ttmprofits > 0) as c group by hyid;')
     try:
@@ -353,24 +349,15 @@ def calHYsPE(date=None):
         logging.error(f'failed to read hangyepe for date:{date}:', e)
 
 
-def getHYsPE(date=None, replace=False):
+def getClassifyPE(date=None, replace=False):
     """ 读取所有行业在指定日期的市盈率
     """
+    sql = f'select code, date, pe from classify_pe where date='
     if date is None:
-        date = dt.datetime.today() - timedelta(days=1)
-        date = date.strftime('%Y%m%d')
-
-    sql = f'select hyid, hype from hangyepe where date="{date}"'
-    result = None
-    try:
-        result = engine.execute(sql).fetchall()
-    except Exception as e:
-        logging.error(f'failed to read hangyepe for date: {date}:', e)
-        return
-    if not result:
-        return
-    hyIDs, hyPEs = list(zip(*result))
-    df = DataFrame({'hyid': hyIDs, 'hype': hyPEs, 'date': date})
+        sql += '(select max(date) from classify_pe)'
+    else:
+        sql += '"{date}"'
+    df = pd.read_sql(sql, engine)
     return df
 
 
@@ -381,7 +368,7 @@ def resetHYTTMLirun(startQuarter=20191, endQuarter=20191):
     """
     dates = datatrans.QuarterList(startQuarter, endQuarter)
     for date in dates:
-        calAllHYTTMLirun(date)
+        calAllHYTTMProfits(date)
 
 
 def test1():
@@ -391,7 +378,7 @@ def test1():
                 '002573', '300072', '000910']
     for ts_code in ts_codes:
         stockName = sqlrw.getStockName(ts_code)
-        hyID = getHYIDForStock(ts_code)
+        hyID = getClassify(ts_code)
         hyName = getHYName(hyID)
         hyCount = getHYStockCount(hyID)
         print(ts_code, stockName, hyID, hyName, hyCount)
@@ -424,6 +411,6 @@ if __name__ == '__main__':
 
     #     calAllHYTTMLirun(20154)
     hyID = '000101'
-    calHYTTMLirun(hyID, 20184)
+    calHYTTMProfits(hyID, 20184)
     #     calHYTTMLirun(hyID, 20162)
     #     stockList = ['000732', '', '', '', '', '', '', ]

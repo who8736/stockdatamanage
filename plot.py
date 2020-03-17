@@ -141,7 +141,7 @@ def plotKlineStock(ID, days):
     :return:
     """
     sql = (f'select a.trade_date, a.open, a.high, a.low, a.close, b.ttmpe '
-           f'from daily a, dailybasic b '
+           f'from daily a, daily_basic b '
            f'where a.ts_code="{ID}" and a.ts_code=b.ts_code '
            f'and a.trade_date=b.trade_date'
            f'order by date desc limit {days};')

@@ -76,7 +76,7 @@ def writeHYNameToSQL(filename):
     hyLevel2IDList = [hyID[:4] for hyID in hyIDList]
     hyLevel3IDList = [hyID[:6] for hyID in hyIDList]
     hyNameDf = pd.DataFrame({'code': hyIDList,
-                             'hyname': hyNameList,
+                             'name': hyNameList,
                              'level': hyLevelList,
                              'level1id': hyLevel1IDList,
                              'level2id': hyLevel2IDList,
@@ -666,13 +666,13 @@ def readValuationSammary():
 
     # 每日指标
     # sql = ('select a.ts_code, a.dv_ttm,'
-    #        ' from dailybasic a,'
+    #        ' from daily_basic a,'
     #        ' (select ts_code, max(date) as daily_date'
-    #        ' from dailybasic group by ts_code) b'
+    #        ' from daily_basic group by ts_code) b'
     #        ' where a.ts_code=b.ts_code and a.date = b.daily_date')
-    sql = """select a.ts_code, a.dv_ttm from dailybasic a,
+    sql = """select a.ts_code, a.dv_ttm from daily_basic a,
             (select ts_code, max(date) as daily_date 
-            from dailybasic group by ts_code) b
+            from daily_basic group by ts_code) b
             where a.ts_code = b.ts_code and a.date = b.daily_date;"""
 
     daily = pd.read_sql(sql, engine)
@@ -785,7 +785,7 @@ def readLastTTMLirunForts_code(ts_code, limit=1, date=None):
     --------
     list: 返回list格式TTM利润
     """
-    sql = f'select incrate from ttmlirun where ts_code="{ts_code}" '
+    sql = f'select incrate from ttmprofits where ts_code="{ts_code}" '
     if date is not None:
         sql += f' and reportdate<="{date}"'
     sql += f' order by date desc limit {limit}'
@@ -851,7 +851,7 @@ def readLastTTMLirun(stockList, limit=1, date=None):
     return TTMLirunDf
 
 
-def readTTMLirunForDate(date):
+def readTTMProfitsForDate(date):
     """从TTMLirun表读取某季度股票TTM利润
     date: 格式YYYYQ, 4位年+1位季度，利润所属日期
     return: 返回DataFrame格式TTM利润
@@ -906,21 +906,20 @@ def readLastTTMPE(ts_code, date=None):
         return result[0]
 
 
-def readLastTTMPEs(stockList, date=None):
+def readLastTTMPEs(stockList, trade_date=None):
     """
     读取stockList中股票指定日期的TTMPE, 默认取最后一天的TTMPE
     :param stockList: list
         股票列表
-    :param date: str
+    :param trade_date: str
         'YYYYmmdd'格式的日期
     :return:
     """
-    #     idList = []
-    if date is None:
-        sql = (f'select ts_code, ttmpe from klinestock '
-               'where date=(select max(date) from klinestock)')
+    sql = 'select ts_code, pe_ttm from daily_basic where trade_date='
+    if trade_date is None:
+        sql += '(select max(trade_date) from daily_basic)'
     else:
-        sql = f'select ts_code, ttmpe from klinestock where date={date}'
+        sql += f'{trade_date}'
 
     result = engine.execute(sql).fetchall()
     ts_codes, ttmpes = zip(*result)
@@ -969,7 +968,7 @@ def calAllTTMLirun(date, incrementUpdate=True):
     #         return writeSQL(TTMLirun, 'ttmlirun')
     else:
         if incrementUpdate:
-            TTMLirunCur = readTTMLirunForDate(date)
+            TTMLirunCur = readTTMProfitsForDate(date)
             lirunCur = lirunCur[~lirunCur.ts_code.isin(TTMLirunCur.ts_code)]
 
         # 上年第四季度利润, 仅取利润字段并更名为profits1
@@ -1027,10 +1026,10 @@ def calTTMLirunIncRate(date, incrementUpdate=True):
     date: 格式YYYYQ， 4位年+1位季度
     # 计算公式： TTM利润增长率= (本期TTM利润  - 上年同期TTM利润) / TTM利润 * 100
     """
-    TTMLirunCur = readTTMLirunForDate(date)
+    TTMLirunCur = readTTMProfitsForDate(date)
     if incrementUpdate:
         TTMLirunCur = TTMLirunCur[TTMLirunCur.incrate.isnull()]
-    TTMLirunLastYear = readTTMLirunForDate(date - 10)
+    TTMLirunLastYear = readTTMProfitsForDate(date - 10)
     TTMLirunLastYear = TTMLirunLastYear[['ts_code', 'ttmprofits']]
     TTMLirunLastYear.columns = ['ts_code', 'ttmprofits1']
     TTMLirunLastYear = TTMLirunLastYear[TTMLirunLastYear.ttmprofits1 != 0]

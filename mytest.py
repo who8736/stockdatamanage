@@ -30,7 +30,7 @@ from misc import *
 # from initlog import initlog
 from datatrans import *
 from dataanalyse import *
-from hyanalyse import *
+from classifyanalyse import *
 import bokehtest
 
 
@@ -180,10 +180,10 @@ def resetTTMLirun():
     for date in dates:
         logging.debug('updateLirun: %s', date)
         calAllTTMLirun(date, incrementUpdate=False)
-        calAllHYTTMLirun(date)
+        calAllHYTTMProfits(date)
 
 
-def resetLirun():
+def del_resetLirun():
     """
     下载所有股票的利润数据更新到数据库， 主要用于修复库内历史数据缺失的情况
     :return:
@@ -224,7 +224,7 @@ def testBokeh():
     show(p)  # open a browser
 
 
-def gatherKline():
+def del_gatherKline():
     stockList = readStockList()
     for ts_code in stockList:
         # ts_code = '000002'
@@ -359,6 +359,13 @@ def __testDownload():
     """测试专用函数:数据下载
     """
     pass
+    # 下载行业分类
+    # downHYFile()
+    # filename = 'csi20200317.xls'
+    # writeHYToSQL(filename)
+    # writeHYNameToSQL(filename)
+
+
     # 下载k线
     # startDate = datetime.strptime('2018-01-27', '%Y-%m-%d')
     # endDate = datetime.strptime('2018-03-29', '%Y-%m-%d')
@@ -501,7 +508,7 @@ def __testUpdate():
     # 利润表
     # 现金流量表
     # 财务指标表
-    updateQuarterData()
+    # updateQuarterData()
 
     # 更新行业列表
     # downHYList()
@@ -510,7 +517,7 @@ def __testUpdate():
     # updateGuzhiData()
 
     # 更新股票评分
-    # updatePf()
+    updatePf()
 
     # 更新指数数据及PE
     # updateIndex()
@@ -681,6 +688,8 @@ def __testMisc():
     """测试专用函数:杂项测试
     """
     pass
+    # testChigu()
+    # testShaixuan()
     ##############################################
     # 杂项测试
     ##############################################

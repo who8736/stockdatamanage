@@ -21,7 +21,7 @@ import tushare as ts
 
 # import datatrans
 from datatrans import lastQarterDate, dateStrList
-import hyanalyse
+import classifyanalyse
 import dataanalyse
 import sqlrw
 import valuation
@@ -303,7 +303,7 @@ def del_updateKline():
 
 @logfun
 def updateHYData(date):
-    hyanalyse.calAllHYTTMLirun(date)
+    classifyanalyse.calAllHYTTMProfits(date)
 
 
 @logfun
@@ -341,7 +341,7 @@ def updateDailybasic():
 def updateDailybasic():
     """更新每日指标
     """
-    sql = 'select max(trade_date) from dailybasic'
+    sql = 'select max(trade_date) from daily_basic'
     lastdate = engine.execute(sql).fetchone()[0]
     lastdate += timedelta(days=1)
     startDate = lastdate.strftime('%Y%m%d')

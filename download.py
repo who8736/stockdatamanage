@@ -171,7 +171,7 @@ def downHYList():
     result = sqlrw.engine.execute(sql).fetchall()
     # 股票列表中上市日期不为0，即为已上市
     # 且不在行业列表中，表示需更新行业数据
-    if result[0][0] is not None:
+    if result:
         HYDataFilename = downHYFile()
         writeHYToSQL(HYDataFilename)
         writeHYNameToSQL(HYDataFilename)
@@ -194,6 +194,7 @@ def downHYFile(timeout=10):
     myTree = etree.HTML(htmlresult)
     dateStr = myTree.xpath('''//html//body//div//div//div//div
                                 //div//form//label//input//@value''')
+    # dateStr = myTree.xpath('//a[@id="link1"]/@href')
     dateStr = dateStr[0]
     #     print dateStr
     #     print dateStr.split('-')
@@ -201,7 +202,7 @@ def downHYFile(timeout=10):
     #     print dateStr
 
     # 下载并解压行业数据文件
-    HYFileUrl = 'http://115.29.204.48/syl/csi%s.zip' % dateStr
+    HYFileUrl = 'http://47.97.204.47/syl/csi%s.zip' % dateStr
     print(HYFileUrl)
     HYZipFilename = './data/csi%s.zip' % dateStr
     HYDataFilename = 'csi%s.xls' % dateStr
@@ -917,7 +918,7 @@ def downDailyBasic(ts_code=None, tradeDate=None, startDate=None, endDate=None):
         #           inplace=True)
         # df['ts_code'] = df['ts_code'].str[:6]
         df.set_index(keys=['ts_code'], inplace=True)
-        sqlrw.writeSQL(df, 'dailybasic')
+        sqlrw.writeSQL(df, 'daily_basic')
     return df
 
 

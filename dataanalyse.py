@@ -129,7 +129,7 @@ def calGuzhi(stockList=None):
     guzhiDf.replace([np.inf, -np.inf], -9999, inplace=True)
 
     # 增加股票名称
-    nameDf = sqlrw.readStockListDf()
+    nameDf = sqlrw.readStockList()
     guzhiDf = pd.merge(guzhiDf, nameDf, on='ts_code', how='left')
     #     print pegDf
 
@@ -203,7 +203,7 @@ def _calHistoryStatus(TTMLirunDf, date):
     return [integrity, seculargrowth, growthmadrate, lirunAverage]
 
 
-def peHistRate(stockList, dayCount, date=None):
+def peHistRate(stockList, dayCount, trade_date=None):
     """ 计算一组股票在过去指定天数内的PE水平，
         # 最低为0，最高为100
         # 历史交易天数不足时，PE水平为-1
@@ -212,26 +212,24 @@ def peHistRate(stockList, dayCount, date=None):
     perates = []
     for ts_code in stockList:
         # print(ts_code)
-        sql = f'select ttmpe from klinestock where ts_code="{ts_code}" '
-        if date is not None:
-            sql += f' and date<="{date}"'
-        sql += f'order by `date` desc limit {dayCount};'
-        result = sqlrw.engine.execute(sql)
-        peList = result.fetchall()
+        sql = f'select pe_ttm from daily_basic where ts_code="{ts_code}" '
+        if trade_date is not None:
+            sql += f' and trade_date<="{trade_date}"'
+        # sql += ' and pe_ttm is not null'
+        sql += f' order by `trade_date` desc limit {dayCount};'
+        result = sqlrw.engine.execute(sql).fetchall()
+        peList = [i[0] for i in result if i[0] is not None]
         # 如果历史交易天数不足，则历史PE水平为-1
-        if len(peList) != dayCount or peList[0] is None:
+        if len(peList) != dayCount:
             perates.append(-1)
         else:
-            peList = [i[0] for i in peList]
             peCur = peList[0]
-            perate = float(sum(1 for i in peList if
-                               i is not None and i < peCur)) / dayCount * 100
-            #             print ts_code, perate, peList
+            perate = sum(1 for i in peList if i < peCur) / dayCount * 100
             perates.append(perate)
     return pd.DataFrame({'ts_code': stockList, f'pe{dayCount}': perates})
 
 
-def youzhiSelect(pegDf):
+def del_youzhiSelect(pegDf):
     """ 从估值分析中筛选出各项指标都合格的
     # 筛选条件：1、 peg不为空，且大于0，小于1
              2、平均增长率大于0
@@ -297,21 +295,21 @@ def testChigu():
 
 
 def testShaixuan():
-    stockList = sqlrw.readStockListDf().ts_code.values
+    stockList = sqlrw.readStockList().ts_code.values
     df = calGuzhi(stockList)
     df = df.dropna()
     sqlrw.engine.execute('TRUNCATE TABLE guzhiresult')
     sqlrw.writeSQL(df, 'guzhiresult')
-    df = youzhiSelect(df)
-    print('youzhiSelect result:')
-    print(df.head())
-    outFilename = './data/youzhi.csv'
+    # df = youzhiSelect(df)
+    # print('youzhiSelect result:')
+    # print(df.head())
+    # outFilename = './data/youzhi.csv'
     #    dfToCsvFile(df, outFilename)
-    df.to_csv(outFilename)
+    # df.to_csv(outFilename)
     #     outFilename = './data/youzhiid.txt'
     #     sqlrw.writets_codeListToFile(df['ts_code'], outFilename)
-    sqlrw.engine.execute('TRUNCATE TABLE youzhiguzhi')
-    sqlrw.writeSQL(df, 'youzhiguzhi')
+    # sqlrw.engine.execute('TRUNCATE TABLE youzhiguzhi')
+    # sqlrw.writeSQL(df, 'youzhiguzhi')
 
 
 def calAllPEHistory(startDate, endDate=None):
@@ -397,6 +395,7 @@ def analysePEHist(ts_code, startDate, endDate, dayCount=200,
                        'lowpe': lowPEs, 'highpe': highPEs})
     print(df)
     return df
+
 
 if __name__ == '__main__':
     initlog()
