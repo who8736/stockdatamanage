@@ -23,3 +23,14 @@ select a.ts_code, c.name, round(a.ttmprofits / 10000 / 10000, 2) profits_a, roun
 (select ts_code, ttmprofits from ttmlirun where ts_code='000002' and date='20193') b,
 stocklist c
 where a.ts_code=b.ts_code and a.ts_code=c.ts_code order by zz desc;
+
+-- 查每只股票前几条ttm利润
+select * from ttmprofits a
+where date>=20081 and (select count(1) from ttmprofits where ts_code=a.ts_code and date>a.date) < 3
+order by ts_code, date desc;
+
+-- 查每只股票前几条ttm利润, 按组合并结果
+select ts_code, group_concat(date), group_concat(incrate) from ttmprofits a
+where (select count(1) from ttmprofits where ts_code=a.ts_code and date>a.date) < 6
+group by ts_code
+order by ts_code, date desc;

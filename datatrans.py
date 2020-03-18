@@ -4,8 +4,8 @@ Created on 2016年5月6日
 
 @author: who8736
 """
-# import datetime as dt
-from datetime import datetime, timedelta, date
+import datetime as dt
+# from datetime import datetime, timedelta, date
 import logging
 
 import pandas as pd
@@ -56,16 +56,16 @@ def dateStrList(startDate, endDate, formatStr='%Y%m%d'):
     :param formatStr:
     :return:
     """
-    if isinstance(startDate, datetime):
+    if isinstance(startDate, dt.date):
         startDate = startDate.strftime(formatStr)
-    if isinstance(endDate, datetime):
+    if isinstance(endDate, dt.date):
         endDate = endDate.strftime(formatStr)
     dateList = []
-    start = datetime.strptime(startDate, formatStr)
-    end = datetime.strptime(endDate, formatStr)
+    start = dt.datetime.strptime(startDate, formatStr)
+    end = dt.datetime.strptime(endDate, formatStr)
     while start <= end:
         dateList.append(start.strftime(formatStr))
-        start = start + timedelta(days=1)
+        start = start + dt.timedelta(days=1)
     return dateList
 
 
@@ -74,7 +74,7 @@ def dateList(startDate, endDate):
     curDate = startDate
     while curDate <= endDate:
         dateList.append(curDate)
-        curDate = curDate + timedelta(days=1)
+        curDate = curDate + dt.timedelta(days=1)
     return dateList
 
 
@@ -96,12 +96,12 @@ def getLastQuarter():
     """ 返回当前日期的上一个季度
     # 如今天是2015年4月7日，返回20151
     """
-    curQuarter = transDateToQuarter(datetime.today())
+    curQuarter = transDateToQuarter(dt.datetime.today())
     return quarterSub(curQuarter, 1)
 
 
 def getCurYear():
-    return datetime.today().year
+    return dt.datetime.today().year
 
 
 def gubenDataToDfSina(ts_code, guben):
@@ -166,7 +166,7 @@ def gubenDataToDfEastymoney(ts_code, guben):
 
 
 def gubenDfToList(df):
-    timea = datetime.now()
+    timea = dt.datetime.now()
     gubenList = []
     for date, row in df.iterrows():
         ts_code = row['ts_code']
@@ -178,7 +178,7 @@ def gubenDfToList(df):
                  'totalshares': totalshares
                  }
         gubenList.append(guben)
-    timeb = datetime.now()
+    timeb = dt.datetime.now()
     logging.debug('klineDfToList took %s' % (timeb - timea))
     return gubenList
 
@@ -251,9 +251,9 @@ def transQuarterToDate(_date):
 
 def lastQarterDate(_date):
     if isinstance(_date, str):
-        _date = datetime.strptime(_date, '%Y%m%d')
-    quarterFirstDay = date(_date.year, (_date.month - 1) // 3 * 3 + 1, 1)
-    return quarterFirstDay - timedelta(days=1)
+        _date = dt.datetime.strptime(_date, '%Y%m%d')
+    quarterFirstDay = dt.date(_date.year, (_date.month - 1) // 3 * 3 + 1, 1)
+    return quarterFirstDay - dt.timedelta(days=1)
 
 def transTushareDateToQuarter(date):
     year = int(date[:4])

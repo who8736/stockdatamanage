@@ -332,9 +332,9 @@ def testDownIndexWeightRepair():
     for code in codeList:
         initDate = dt.date(2001, 1, 1)
         while initDate < dt.datetime.today().date():
-            nowtime = datetime.now()
+            nowtime = dt.datetime.now()
             if (perTimes > 0 and downLimit > 0 and cur >= downLimit
-                    and (nowtime < times[cur - downLimit] + timedelta(
+                    and (nowtime < times[cur - downLimit] + dt.timedelta(
                         seconds=perTimes))):
                 _timedelta = nowtime - times[cur - downLimit]
                 sleeptime = perTimes - _timedelta.seconds
@@ -342,15 +342,15 @@ def testDownIndexWeightRepair():
                 time.sleep(sleeptime)
 
             startDate = initDate.strftime('%Y%m%d')
-            initDate += timedelta(days=30)
+            initDate += dt.timedelta(days=30)
             endDate = initDate.strftime('%Y%m%d')
-            initDate += timedelta(days=1)
+            initDate += dt.timedelta(days=1)
             print(f'下载{code},日期{startDate}-{endDate}')
             df = pro.index_weight(index_code=code,
                                   start_date=startDate, end_date=endDate)
             writeSQL(df, 'index_weight')
 
-            nowtime = datetime.now()
+            nowtime = dt.datetime.now()
             times.append(nowtime)
             cur += 1
 
@@ -491,7 +491,7 @@ def __testUpdate():
     # downStockList()
 
     # 更新股票日交易数据
-    # TODO: 用新的更新方法
+    # updateDaily()
 
     # 更新每日指标
     # updateDailybasic()
@@ -508,13 +508,13 @@ def __testUpdate():
     # 利润表
     # 现金流量表
     # 财务指标表
-    # updateQuarterData()
+    updateQuarterData()
 
     # 更新行业列表
-    # downHYList()
+    downHYList()
 
     # 更新股票估值
-    # updateGuzhiData()
+    updateGuzhiData()
 
     # 更新股票评分
     updatePf()

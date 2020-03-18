@@ -4,7 +4,7 @@ import logging
 from email.mime.text import MIMEText
 from email.header import Header
 from email.mime.multipart import MIMEMultipart
-import datetime
+import datetime as dt
 
 import config
 from initlog import initlog
@@ -20,7 +20,7 @@ def push(title, filename):
     user = cf.mailUser
     receivers = [f'aa<{s}>' for s in cf.sendTo.split('|')]
     # receivers = [f'{s}' for s in cf.sendTo.split('|')]
-    sendTime = datetime.datetime.now().strftime('%Y%m%d %H:%M:%S')
+    sendTime = dt.datetime.now().strftime('%Y%m%d %H:%M:%S')
 
     message = MIMEMultipart()
     message['From'] = f'aa<{user}>'
@@ -62,7 +62,7 @@ def push1(title, filename):
     user = cf.mailUser
     receivers = [f'aa<{s}>' for s in cf.sendTo.split('|')]
     # receivers = [f'{s}' for s in cf.sendTo.split('|')]
-    sendTime = datetime.datetime.now().strftime('%Y%m%d %H:%M:%S')
+    sendTime = dt.datetime.now().strftime('%Y%m%d %H:%M:%S')
 
     message = MIMEMultipart()
     message['From'] = f'aa<{user}>'

@@ -10,7 +10,8 @@ Created on 2016年1月10日
 import logging
 import time
 import configparser
-from datetime import datetime, timedelta
+import datetime as dt
+# from datetime import datetime, timedelta
 # import ConfigParser
 from multiprocessing.dummy import Pool as ThreadPool
 from functools import wraps
@@ -34,6 +35,7 @@ from download import downGuben, downGuzhi
 from download import downStockQuarterData
 from download import downStockList
 from download import downIndex
+from download import downDaily
 from download import downDailyBasic, downTradeCal
 from download import downIndexDaily, downIndexDailyBasic
 from download import downIndexBasic, downIndexWeight
@@ -50,9 +52,9 @@ def logfun(func):
         #         def _func(*args):
         #         print "hello, %s" % func.__name__
         logging.info('===========start %s===========', func.__name__)
-        startTime = datetime.now()
+        startTime = dt.datetime.now()
         func(*args, **kwargs)
-        endTime = datetime.now()
+        endTime = dt.datetime.now()
         logging.info('===========end %s===========', func.__name__)
         logging.info('%s cost time: %s ',
                      func.__name__, endTime - startTime)
@@ -131,7 +133,7 @@ def updateIndex():
     ID = '000010.SH'
     # startDate = getIndexKlineUpdateDate() + dt.timedelta(days=1)
     # startDate = getIndexPEUpdateDate()
-    startDate = getIndexPEUpdateDate() + timedelta(days=1)
+    startDate = getIndexPEUpdateDate() + dt.timedelta(days=1)
     dataanalyse.calPEHistory(ID, startDate)
 
 
@@ -147,14 +149,13 @@ def updateQuarterData():
     :return:
     """
     #
-    # TODO: 调用download文件中相应的下载函数
     # 表格名称及tushare函数调用频次
     # table, perTimes, limit
     tables = [['balancesheet', 60, 80],
               ['income', 60, 80],
               ['cashflow', 60, 80],
               ['fina_indicator', 60, 60]]
-    _today = datetime.today().date()
+    _today = dt.datetime.today().date()
     end_date = lastQarterDate(_today)
     todayStr = _today.strftime('%Y%m%d')
     for table, perTimes, limit in tables:
@@ -202,10 +203,10 @@ def del_updateGubenSingleThread():
     #     time.sleep(5)
     # 以上代码为原股本下载代码
 
-    endTime = datetime.now()
-    endTime = endTime + timedelta(days=-1)
+    endTime = dt.datetime.now()
+    endTime = endTime + dt.timedelta(days=-1)
     # 选择要提前的天数
-    startTime = endTime + timedelta(days=-10)
+    startTime = endTime + dt.timedelta(days=-10)
     # 格式化处理
     startDate = startTime.strftime('%Y%m%d')
     endDate = endTime.strftime('%Y%m%d')
@@ -231,9 +232,9 @@ def updatePf():
     if result is None:
         startDate = '20090101'
     else:
-        startDate = result[0] + timedelta(days=1)
+        startDate = result[0] + dt.timedelta(days=1)
         startDate = startDate.strftime('%Y%m%d')
-    endDate = datetime.today() - timedelta(days=1)
+    endDate = dt.datetime.today() - dt.timedelta(days=1)
     endDate = endDate.strftime('%Y%m%d')
     pro = ts.pro_api()
     df = pro.trade_cal(exchange='', start_date=startDate, end_date=endDate)
@@ -277,7 +278,7 @@ def del_updateKline():
     """
     pass
     # startDate = getStockKlineUpdateDate() + timedelta(days=1)
-    # endDate = datetime.today().date() - timedelta(days=1)
+    # endDate = dt.datetime.today().date() - timedelta(days=1)
     # for tradeDate in dateList(startDate, endDate):
     #     downKline(tradeDate)
 
@@ -332,9 +333,9 @@ def updateDailybasic():
     """
     sql = 'select max(trade_date) from daily_basic'
     lastdate = engine.execute(sql).fetchone()[0]
-    lastdate += timedelta(days=1)
+    lastdate += dt.timedelta(days=1)
     startDate = lastdate.strftime('%Y%m%d')
-    endDate = datetime.today().date() - timedelta(days=1)
+    endDate = dt.datetime.today().date() - dt.timedelta(days=1)
     endDate = endDate.strftime('%Y%m%d')
     dates = dateStrList(startDate, endDate)
     for d in dates:
@@ -349,7 +350,7 @@ def updateTradeCal():
     lastYear = engine.execute(sql).fetchone()[0]
     if lastYear is None:
         downTradeCal('1990')
-    elif lastYear < datetime.today().year:
+    elif lastYear < dt.datetime.today().year:
         downTradeCal(str(int(lastYear) + 1))
 
 

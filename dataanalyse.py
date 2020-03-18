@@ -75,7 +75,7 @@ def calGuzhi(stockList=None):
     # TODO:　假设当前为第2季度，但第1季度上市公司的财务报告未公布，导致缺少数据如何处理
     sectionNum = 6  # 取6个季度
     # 新取TTM利润方法，取每支股票最后N季度数据
-    incDf = sqlrw.readLastTTMLirun(stockList, sectionNum)
+    incDf = sqlrw.readLastTTMProfits(stockList, sectionNum)
     #     print 'incDf:'
     #     print incDf
     guzhiDf = pd.merge(peDf, incDf, on='ts_code', how='left')
@@ -320,7 +320,7 @@ def calAllPEHistory(startDate, endDate=None):
     :return:
     """
     # startDate = datetime.strptime('2010-01-01', '%Y-%m-%d').date()
-    endDate = datetime.today().date()
+    endDate = dt.datetime.today().date()
     session = Session()
     for tradeDate in dateList(startDate, endDate):
         sql = 'call calallpe("%(tradeDate)s");' % locals()
@@ -344,7 +344,7 @@ def calPEHistory(ID, startDate, endDate=None):
     # assert len(ID) == 6, '指数代码错误， 正确格式：000010'
     ID = ID.upper()
     if endDate is None:
-        endDate = datetime.today().date()
+        endDate = dt.datetime.today().date()
     # session = Session()
     for tradeDate in dateList(startDate, endDate):
         sql = f'call calchengfenpe("{ID}", "{tradeDate}");'

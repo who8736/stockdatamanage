@@ -773,11 +773,11 @@ def readTTMLirunForts_code(ts_code, startDate=None, endDate=None):
     return df
 
 
-def readLastTTMLirunForts_code(ts_code, limit=1, date=None):
+def readLastTTMProfit(ts_code, limit=1, date=None):
     """取指定股票最近几期TTM利润
     Parameters
     --------
-    ts_code: str 股票代码  e.g: '600519'
+    ts_code: str 股票代码  e.g: '600519.SH'
     date: str 查询截止日期， e.g: '20191231'
     limit: 取最近期数的数据
 
@@ -827,11 +827,11 @@ def readStockKlineDf(ts_code, days):
     return klineDf
 
 
-def readLastTTMLirun(stockList, limit=1, date=None):
+def readLastTTMProfits(stockList, limit=1, date=None):
     """取股票列表最近几期TTM利润
     Parameters
     --------
-    stockList: str 股票代码  e.g: ['600519', '002518']
+    stockList: str 股票代码  e.g: ['600519.SH', '002518.SZ']
     limit: 取最近期数的数据
 
     Return
@@ -840,7 +840,7 @@ def readLastTTMLirun(stockList, limit=1, date=None):
     """
     TTMLirunList = []
     for ts_code in stockList:
-        TTMLirun = readLastTTMLirunForts_code(ts_code, limit, date)
+        TTMLirun = readLastTTMProfit(ts_code, limit, date)
         TTMLirun.insert(0, ts_code)
         TTMLirunList.append(TTMLirun)
 

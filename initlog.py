@@ -1,11 +1,12 @@
 import logging
 import os
-from datetime import datetime
+# from datetime import datetime
+import datetime as dt
 
 
 def initlog():
     # 取得当前年份，按年记录日志
-    nowTime = datetime.now()
+    nowTime = dt.datetime.now()
     logDate = nowTime.strftime('%Y')
     logfilename = 'datamanage%s.log' % logDate
     logfilename = os.path.join(os.path.abspath(os.curdir), logfilename)

@@ -7,7 +7,7 @@ Created on 2016年12月2日
 """
 
 import datetime as dt
-from datetime import timedelta
+# from datetime import timedelta
 import logging
 
 import pandas as pd
@@ -16,6 +16,8 @@ from pandas.core.frame import DataFrame
 import sqlrw
 import datatrans
 from sqlconn import engine
+
+
 # import logging
 # from wtforms.ext import dateutil
 
@@ -24,13 +26,13 @@ def getStockListForHY(hyID):
     """ 返回指定行业的所有股票代码列表
     """
     levelNum = len(hyID) / 2
-#     levels = ['level1', 'level2', 'level3', 'level4']
-#     level = levels[levelNum - 1]
+    #     levels = ['level1', 'level2', 'level3', 'level4']
+    #     level = levels[levelNum - 1]
     sql = 'select ts_code from hangyestock where hyid="%(hyID)s";' % locals()
     result = engine.execute(sql)
-#     stockList = result.fetchall()
+    #     stockList = result.fetchall()
     stockList = [i[0] for i in result.fetchall()]
-#     print len(stockList), stockList
+    #     print len(stockList), stockList
     return stockList
 
 
@@ -68,7 +70,7 @@ def getHYList(level=4):
     """ 查询指定级别的所有行业代码
     """
     sql = 'select hyid from hangyename where hylevel=%(level)s;' % locals()
-#     print sql
+    #     print sql
     result = engine.execute(sql)
     return [i[0] for i in result.fetchall()]
 
@@ -80,10 +82,10 @@ def getSubHY(hyID, subLevel):
     sql = ('select hyid from hangyename '
            'where hylevel%(level)sid="%(hyID)s" and '
            'hylevel="%(subLevel)s";') % locals()
-#     print sql
+    #     print sql
     result = engine.execute(sql)
     result = result.fetchall()
-#     print 'getSubHY:', result
+    #     print 'getSubHY:', result
     if result is None:
         return None
     else:
@@ -181,26 +183,26 @@ def calHYTTMProfitsHighLevel(hyID, date):
     for subHyID in subHyIDList:
         sql = ('select profits, profitsLast from classify_profits '
                'where hyid="%(subHyID)s" and date=%(date)s;') % locals()
-#         print sql
+        #         print sql
         result = engine.execute(sql).fetchone()
-#         print 'result:', result
+        #         print 'result:', result
         if result is None or result[0] is None:
             continue
         profitsCur += result[0]
         if result[1] is not None:
             profitsLast += result[1]
 
-#     LastDate = date - 10
-#     sql = ('select profits from classify_profits '
-#            'where hyid="%(subHyID)s" and date="%(LastDate)s";') % locals()
-# #     print sql
-#     result = engine.execute(sql).fetchone()
-# #     print 'result 145:', result
-#     if result is None:
-#         profitsLast = None
-# #         profitsIncRate = None
-#     else:
-#         profitsLast = result[0]
+    #     LastDate = date - 10
+    #     sql = ('select profits from classify_profits '
+    #            'where hyid="%(subHyID)s" and date="%(LastDate)s";') % locals()
+    # #     print sql
+    #     result = engine.execute(sql).fetchone()
+    # #     print 'result 145:', result
+    #     if result is None:
+    #         profitsLast = None
+    # #         profitsIncRate = None
+    #     else:
+    #         profitsLast = result[0]
 
     if profitsLast == 0:
         sql = (('replace into classify_profits(hyid, date, profits) '
@@ -214,8 +216,10 @@ def calHYTTMProfitsHighLevel(hyID, date):
                 'values("%(hyID)s", "%(date)s", '
                 '%(profitsCur)s, %(profitsLast)s, '
                 '%(profitsInc)s, %(profitsIncRate)s);') % locals())
-#     print sql
+    #     print sql
     result = engine.execute(sql)
+
+
 #     print 'result 158:', result
 #     if result is None:
 #         return False
@@ -237,18 +241,18 @@ def calHYTTMProfitsLowLevel(code, date):
     profitsLast = sum(lastProfits['ttmprofits'])
 
     profitsInc = profitsCur - profitsLast
-#     print 'allTTMLirunCur', allTTMLirunCur
-#     print 'allTTMLirunLast', allTTMLirunLast
-#     print 'profitsCur', profitsCur
-#     print 'profitsLast', profitsLast
+    #     print 'allTTMLirunCur', allTTMLirunCur
+    #     print 'allTTMLirunLast', allTTMLirunLast
+    #     print 'profitsCur', profitsCur
+    #     print 'profitsLast', profitsLast
     profitsIncRate = round(profitsInc / abs(profitsLast) * 100, 2)
-#     print profitsInc, profitsIncRate
-#     return [profitsInc, profitsIncRate]
+    #     print profitsInc, profitsIncRate
+    #     return [profitsInc, profitsIncRate]
     sql = ('replace into classify_profits'
-            '(code, date, profits, profitsLast, profitsInc, profitsIncRate) '
-            f'values("{code}", "{date}", '
-            f'"{profitsCur}", "{profitsLast}", '
-            f'"{profitsInc}", "{profitsIncRate}");')
+           '(code, date, profits, profitsLast, profitsInc, profitsIncRate) '
+           f'values("{code}", "{date}", '
+           f'"{profitsCur}", "{profitsLast}", '
+           f'"{profitsInc}", "{profitsIncRate}");')
     engine.execute(sql)
     return True
 
@@ -319,12 +323,12 @@ def getHYPE(hyID, date, reset=False):
             if profit is None or profit < 0 or value is None:
                 continue
 
-#            print ts_code, result[0], result[1], result[2], result[3]
+            #            print ts_code, result[0], result[1], result[2], result[3]
             valueSum += value
             profitSum += profit
     if profitSum != 0:
         pe = round(valueSum / profitSum, 2)
-#        print 'htHYPE', date, valueSum, profitSum, pe
+        #        print 'htHYPE', date, valueSum, profitSum, pe
         return pe
 
 
@@ -336,7 +340,8 @@ def calClassifyPE(date):
     #     date = date.strftime('%Y%m%d')
     # TODO: 重写sql, 可用daily_basic中的总市值与ttmpe计算ttmprofits
     logging.debug(f'update hangyepe: {date}')
-    sql = (f'select classify_code, '
+    sql = (f'replace into classify_pe(code, date, pe)'
+           f' select classify_code, "{date}",'
            f' round(sum(b.total_mv) / sum(b.profits_ttm), 2) pe_ttm '
            f' from classify_member a left join'
            f' (select ts_code, trade_date, pe_ttm, total_mv,'
@@ -356,7 +361,7 @@ def getClassifyPE(date=None, replace=False):
     if date is None:
         sql += '(select max(date) from classify_pe)'
     else:
-        sql += '"{date}"'
+        sql += f'"{date}"'
     df = pd.read_sql(sql, engine)
     return df
 

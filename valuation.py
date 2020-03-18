@@ -124,7 +124,7 @@ def calpf():
 
     # 过去6个季度利润稳定增长
     sectionNum = 6  # 取6个季度
-    incDf = sqlrw.readLastTTMLirun(stocks.ts_code.tolist(), sectionNum)
+    incDf = sqlrw.readLastTTMProfits(stocks.ts_code.tolist(), sectionNum)
     stocks = pd.merge(stocks, incDf, on='ts_code', how='left')
     stocks['avg'] = incDf.mean(axis=1).round(2)
     stocks['std'] = incDf.std(axis=1).round(2)
@@ -228,7 +228,7 @@ def calpfnew(date, replace=False):
 
     # 过去6个季度利润稳定增长
     sectionNum = 6  # 取6个季度
-    incDf = sqlrw.readLastTTMLirun(stocks.ts_code.tolist(), sectionNum, date)
+    incDf = sqlrw.readLastTTMProfits(stocks.ts_code.tolist(), sectionNum, date)
     stocks = pd.merge(stocks, incDf, on='ts_code', how='left')
     stocks['avg'] = incDf.mean(axis=1).round(2)
     stocks['std'] = incDf.std(axis=1).round(2)

@@ -18,7 +18,7 @@ import tushare
 from lxml import etree
 import lxml
 import datetime as dt
-from datetime import datetime, timedelta
+# from datetime import datetime, timedelta
 
 import tushare as ts
 import pandas as pd
@@ -61,20 +61,33 @@ class Downloader:
 
     def __init__(self, perTimes=0, downLimit=0, retry=3):
         pass
-        self.times = []
-        self.cur = 0
-        self.perTimes = perTimes
-        self.downLimit = downLimit
+        tables = {'balancesheet': (60, 80),
+                  'income': (60, 80),
+                  'cashflow': (60, 80),
+                  'fina_indicator': (60, 60)}
+        calltimes = {'balancesheet': [],
+                     'income': [],
+                     'cashflow': [],
+                     'fina_indicator': []}
+        curcall = {'balancesheet': 0,
+                     'income': 0,
+                     'cashflow': 0,
+                     'fina_indicator': 0}
+        # self.cur = 0
+        # self.perTimes = perTimes
+        # self.downLimit = downLimit
         self.retry = retry
 
+    # TODO: 每个股票一个下载器，下载第一张无数据时可跳过其他表
+    # 下载限制由类静态成员记载与控制
     def run(self, fun, **kwargs):
         result = None
         for _ in range(self.retry):
-            nowtime = datetime.now()
+            nowtime = dt.datetime.now()
             if (self.perTimes > 0 and self.downLimit > 0
                     and self.cur >= self.downLimit
                     and (nowtime < self.times[self.cur - self.downLimit]
-                         + timedelta(seconds=self.perTimes))):
+                         + dt.timedelta(seconds=self.perTimes))):
                 _timedelta = nowtime - self.times[self.cur - self.downLimit]
                 sleeptime = self.perTimes - _timedelta.seconds
                 print(f'******暂停{sleeptime}秒******')
@@ -86,7 +99,7 @@ class Downloader:
             else:
                 break
             finally:
-                nowtime = datetime.now()
+                nowtime = dt.datetime.now()
                 self.times.append(nowtime)
                 self.cur += 1
 
@@ -377,7 +390,7 @@ def del_downChengfen(ID, startDate, endDate=None):
     :return:
     """
     if endDate is None:
-        endDate = datetime.today().date()
+        endDate = dt.datetime.today().date()
     pro = ts.pro_api()
     # ID = ID + '.SH'
     df = pro.index_weight(index_code=ID,
@@ -820,7 +833,7 @@ def downIndex(ID, startDate, endDate=None):
     """
     # startDate = getKlineUpdateDate() + timedelta(days=1)
     if endDate is None:
-        endDate = datetime.today().date()
+        endDate = dt.datetime.today().date()
     pro = ts.pro_api()
     df = pro.index_daily(ts_code=ID,
                          start_date=startDate.strftime('%Y%m%d'),
@@ -870,15 +883,15 @@ def downDaily(trade_date=None):
     if trade_date is None:
         sql = 'select max(trade_date) from daily'
         startDate = engine.execute(sql).fetchone()[0]
-        assert isinstance(startDate, datetime.date), 'startDate应为date类型'
-        startDate += timedelta(days=1)
-        endDate = datetime.now().date()
+        assert isinstance(startDate, dt.date), 'startDate应为date类型'
+        startDate += dt.timedelta(days=1)
+        endDate = dt.datetime.now().date()
         dates = dateStrList(startDate.strftime('%Y%m%d'),
                             endDate.strftime('%Y%m%d'))
     else:
         dates.append(trade_date)
     for d in dates:
-        logging.debug('下载日线:', d)
+        logging.debug(f'下载日线:{d}')
         df = pro.daily(trade_date=d)
         writeSQL(df, 'daily')
 
@@ -985,14 +998,15 @@ def downloaderStock(tablename, stocks, perTimes=0, downLimit=0):
 
     # tablename = 'income'
     for i in range(cnt):
-        nowtime = datetime.now()
+        nowtime = dt.datetime.now()
         if perTimes > 0 and downLimit > 0 and i >= downLimit and (
-                nowtime < times[i - downLimit] + timedelta(seconds=perTimes)):
+                nowtime < times[i - downLimit] + dt.timedelta(
+            seconds=perTimes)):
             _timedelta = nowtime - times[i - 50]
             sleeptime = 60 - _timedelta.seconds
             print(f'******暂停{sleeptime}秒******')
             time.sleep(sleeptime)
-            nowtime = datetime.now()
+            nowtime = dt.datetime.now()
         times.append(nowtime)
         print(f'第{i}个，时间：{nowtime}')
         ts_code = stocks[i]
@@ -1065,9 +1079,9 @@ def downIndexWeight():
             initDate = dt.date(2001, 1, 1)
         assert isinstance(initDate, dt.date)
         while initDate < dt.datetime.today().date():
-            nowtime = datetime.now()
+            nowtime = dt.datetime.now()
             if (perTimes > 0 and downLimit > 0 and cur >= downLimit
-                    and (nowtime < times[cur - downLimit] + timedelta(
+                    and (nowtime < times[cur - downLimit] + dt.timedelta(
                         seconds=perTimes))):
                 _timedelta = nowtime - times[cur - downLimit]
                 sleeptime = perTimes - _timedelta.seconds
@@ -1075,15 +1089,15 @@ def downIndexWeight():
                 time.sleep(sleeptime)
 
             startDate = initDate.strftime('%Y%m%d')
-            initDate += timedelta(days=30)
+            initDate += dt.timedelta(days=30)
             endDate = initDate.strftime('%Y%m%d')
-            initDate += timedelta(days=1)
+            initDate += dt.timedelta(days=1)
             print(f'下载{code},日期{startDate}-{endDate}')
             df = pro.index_weight(index_code=code,
                                   start_date=startDate, end_date=endDate)
             writeSQL(df, 'index_weight')
 
-            nowtime = datetime.now()
+            nowtime = dt.datetime.now()
             times.append(nowtime)
             cur += 1
 
@@ -1126,7 +1140,7 @@ def downIndexDaily():
         startDate = None
         endDate = None
         if isinstance(result, dt.date):
-            result = result + timedelta(days=1)
+            result = result + dt.timedelta(days=1)
             startDate = result.strftime('YYYYmmdd')
         df = pro.index_daily(ts_code=code,
                              start_date=startDate, end_date=endDate)
