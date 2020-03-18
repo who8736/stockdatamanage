@@ -59,8 +59,9 @@ class Downloader:
     :return:
     """
 
-    def __init__(self, perTimes=0, downLimit=0, retry=3):
+    def __init__(self, ts_code, perTimes=0, downLimit=0, retry=3):
         pass
+        self.ts_code = ts_code
         tables = {'balancesheet': (60, 80),
                   'income': (60, 80),
                   'cashflow': (60, 80),
@@ -80,7 +81,14 @@ class Downloader:
 
     # TODO: 每个股票一个下载器，下载第一张无数据时可跳过其他表
     # 下载限制由类静态成员记载与控制
-    def run(self, fun, **kwargs):
+    def run(self):
+        pass
+        result = None
+        for table in Downloader.tables:
+            for _ in range(self.retry):
+                nowtime = dt.datetime.now()
+
+    def _run(self, fun, **kwargs):
         result = None
         for _ in range(self.retry):
             nowtime = dt.datetime.now()

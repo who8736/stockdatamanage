@@ -511,10 +511,10 @@ def __testUpdate():
     updateQuarterData()
 
     # 更新行业列表
-    downHYList()
+    # downHYList()
 
     # 更新股票估值
-    updateGuzhiData()
+    # updateGuzhiData()
 
     # 更新股票评分
     updatePf()
