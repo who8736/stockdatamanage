@@ -336,13 +336,13 @@ def calClassifyPE(date):
     #     date = date.strftime('%Y%m%d')
     # TODO: 重写sql, 可用daily_basic中的总市值与ttmpe计算ttmprofits
     logging.debug(f'update hangyepe: {date}')
-    sql = (f'insert into classify_pe (code, `date`, pe)'
-           f' select hyid, "{date}" as date,'
-           f' round(sum(totalmarketvalue)/sum(ttmprofits), 2) as pe'
-           f' from (select a.ts_code, b.classify_code as classify_code, a.totalmarketvalue,'
-           f' a.ttmprofits from klinestock as a inner join classify_member as b'
-           f' on a.ts_code=b.ts_code where a.date="{date}"'
-           f' and a.ttmprofits > 0) as c group by hyid;')
+    sql = (f'select classify_code, '
+           f' round(sum(b.total_mv) / sum(b.profits_ttm), 2) pe_ttm '
+           f' from classify_member a left join'
+           f' (select ts_code, trade_date, pe_ttm, total_mv,'
+           f' round(total_mv / pe_ttm, 2) as profits_ttm'
+           f'from daily_basic where trade_date = "{date}" and pe_ttm > 0) b'
+           f'on a.ts_code = b.ts_code group by classify_code;')
     try:
         engine.execute(sql)
     except Exception as e:

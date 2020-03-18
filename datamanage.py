@@ -72,7 +72,7 @@ def startUpdate():
     # downStockList()
 
     # 更新股票日交易数据
-    # downDaily()
+    # updateDaily()
 
     # 更新每日指标
     # updateDailybasic()
@@ -320,21 +320,10 @@ def readStockListFromFile(filename):
 
 
 @logfun
-def updateDailybasic():
+def updateDaily():
     """更新日K线
     """
-    sql = 'select max(trade_date) from daily'
-    lastdate = engine.execute(sql).fetchone()[0]
-    if isinstance(lastdate, datetime.date):
-        lastdate += timedelta(days=1)
-    else:
-        lastdate = datetime.date(1990, 1, 1)
-    startDate = lastdate.strftime('%Y%m%d')
-    endDate = datetime.today().date() - timedelta(days=1)
-    endDate = endDate.strftime('%Y%m%d')
-    dates = dateStrList(startDate, endDate)
-    for d in dates:
-        download.downDaily(trade_date=d)
+    downDaily()
 
 
 @logfun
