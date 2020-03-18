@@ -156,20 +156,6 @@ def downStockList(retry=10):
     pro = ts.pro_api()
     df = pro.stock_basic()
     writeSQL(df, 'stock_basic')
-    # sl = pd.DataFrame()
-    # for _ in range(retry):
-    #     try:
-    #         sl = ts.get_stock_basics().fillna(value=0)
-    #     except socket.timeout:
-    #         logging.warning('updateStockList timeout!!!')
-    #     else:
-    #         logging.debug('updateStockList ok')
-    #         break
-    # if sl.empty:
-    #     logging.error('updateStockList fail!!!')
-    #     return False
-    # sl.index.name = 'ts_code'
-    # writeStockList(sl)
 
 
 def downHYList():
@@ -823,7 +809,7 @@ def _downGubenSina(ts_code):
     return df
 
 
-def downIndex(ID, startDate, endDate=None):
+def del_downIndex(ID, startDate, endDate=None):
     """
 
     :param ID:

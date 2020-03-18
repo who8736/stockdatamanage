@@ -71,7 +71,7 @@ def startUpdate():
     # updateTradeCal()
 
     # 更新股票列表
-    # downStockList()
+    # updateStockList()
 
     # 更新股票日交易数据
     # updateDaily()
@@ -352,6 +352,11 @@ def updateTradeCal():
         downTradeCal('1990')
     elif lastYear < dt.datetime.today().year:
         downTradeCal(str(int(lastYear) + 1))
+
+
+@logfun
+def updateStockList():
+    downStockList()
 
 
 if __name__ == '__main__':
