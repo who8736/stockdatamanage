@@ -38,7 +38,8 @@ def lowpe(stock):
 def lowhype(stock):
     """ 判断某支股票低于行业市盈率时返回1，否则返回0
     """
-    return 1 if 0 < stock.pe < stock.hype else 0
+    return 1 if (stock.pe is not None and stock.classify_pe is not None
+                 and 0 < stock.pe < stock.classify_pe) else 0
 
 
 def wdzz(stock):
@@ -74,20 +75,20 @@ def peZ(stock, dayCount, date=None):
         # 历史交易天数不足时，PE水平为-1
     """
     ts_code = stock.ts_code
-    sql = f'select ttmpe from klinestock where ts_code="{ts_code}"'
+    sql = f'select pe_ttm from daily_basic where ts_code="{ts_code}"'
     if date is not None:
-           sql += f' and date<="{date}"'
-    sql += f' order by `date` desc limit {dayCount};'
+        sql += f' and trade_date<="{date}"'
+    sql += f' order by trade_date desc limit {dayCount};'
     # print(sql)
     peDf = pd.read_sql(sql, engine)
     # 如果历史交易天数不足，则本项指标为0
     if len(peDf.index) != dayCount:
         return 0
-    pe = peDf.ttmpe[0]
-    avg = peDf.ttmpe.mean()
-    std = peDf.ttmpe.std()
+    pe = peDf.pe_ttm[0]
+    avg = peDf.pe_ttm.mean()
+    std = peDf.pe_ttm.std()
     z = (pe - avg) / std
-#    peDf['z'] = (peDf.ttmpe - avg) / std
+    #    peDf['z'] = (peDf.ttmpe - avg) / std
     return z
 
 
@@ -106,7 +107,7 @@ def lowPEZ1000(stock):
 def calpf():
     """ 根据各指标计算评分，分别写入文件和数据库
     """
-#    stocks = readStockListDf()[:10]
+    #    stocks = readStockListDf()[:10]
     stocks = readStockList()
     # print(stocks)
     # 低市盈率
@@ -139,12 +140,12 @@ def calpf():
     stocks['lowpeg'] = stocks.apply(lowPEG, axis=1)
 
     # 200天Z值小于-1
-    stocks['pez200'] = stocks.apply(peZ, axis=1, args=(200, ))
+    stocks['pez200'] = stocks.apply(peZ, axis=1, args=(200,))
     stocks['pez200'] = stocks['pez200'].round(2)
     stocks['lowpez200'] = stocks.apply(lowPEZ200, axis=1)
 
     # 1000天Z值小于-1
-    stocks['pez1000'] = stocks.apply(peZ, axis=1, args=(1000, ))
+    stocks['pez1000'] = stocks.apply(peZ, axis=1, args=(1000,))
     stocks['pez1000'] = stocks['pez1000'].round(2)
     stocks['lowpez1000'] = stocks.apply(lowPEZ1000, axis=1)
 
@@ -166,22 +167,22 @@ def calpf():
     stocks = stocks.sort_values(by='pf', ascending=False)
 
     # 设置输出列与列顺序
-#     guzhiDf = guzhiDf[['ts_code', 'name', 'pe',
-#                        'incrate0', 'incrate1', 'incrate2',
-#                        'incrate3', 'incrate4', 'incrate5',
-#                        'avgrate', 'madrate', 'stdrate', 'pe200', 'pe1000'
-#                        ]]
+    #     guzhiDf = guzhiDf[['ts_code', 'name', 'pe',
+    #                        'incrate0', 'incrate1', 'incrate2',
+    #                        'incrate3', 'incrate4', 'incrate5',
+    #                        'avgrate', 'madrate', 'stdrate', 'pe200', 'pe1000'
+    #                        ]]
 
-#     mystocks = ['002508', '600261', '002285', '000488',
-#                 '002573', '300072', '000910']
-#     mystockspf = stocks[stocks['ts_code'].isin(mystocks)]
-#     mystockspf.set_index(['ts_code'], inplace=True)
-#     mystockspf.to_csv('./data/valuationmystocks.csv')
+    #     mystocks = ['002508', '600261', '002285', '000488',
+    #                 '002573', '300072', '000910']
+    #     mystockspf = stocks[stocks['ts_code'].isin(mystocks)]
+    #     mystockspf.set_index(['ts_code'], inplace=True)
+    #     mystockspf.to_csv('./data/valuationmystocks.csv')
 
     # 保存评价结果
     stocks.set_index(['ts_code'], inplace=True)
     stocks.to_csv('./data/valuation.csv')
-#    print stocks
+    #    print stocks
     if initsql.existTable('valuation'):
         engine.execute('TRUNCATE TABLE valuation')
     stocks = stocks.dropna()
@@ -212,18 +213,20 @@ def calpfnew(date, replace=False):
     # print(stocks)
     # 低市盈率
     peDf = readLastTTMPEs(stocks.ts_code.tolist(), date)
+    if peDf is None:
+        return
     stocks = pd.merge(stocks, peDf, on='ts_code', how='inner')
     stocks['lowpe'] = stocks.apply(lowpe, axis=1)
 
     # 市盈率低于行业平均
     sql = 'select ts_code, classify_code from classify_member;'
-    hyDf = pd.read_sql(sql, engine)
-    stocks = pd.merge(stocks, hyDf, on='ts_code', how='left')
+    classifyDf = pd.read_sql(sql, engine)
+    stocks = pd.merge(stocks, classifyDf, on='ts_code', how='left')
     classifyPEDf = classifyanalyse.getClassifyPE(date)
     if classifyPEDf is None or classifyPEDf.empty:
         classifyanalyse.calClassifyPE(date)
         classifyPEDf = classifyanalyse.getClassifyPE(date)
-    stocks = pd.merge(stocks, classifyPEDf, on='hyid', how='left')
+    stocks = pd.merge(stocks, classifyPEDf, on='classify_code', how='left')
     stocks['lowhype'] = stocks.apply(lowhype, axis=1)
 
     # 过去6个季度利润稳定增长

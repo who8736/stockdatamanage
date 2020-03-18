@@ -59,6 +59,7 @@ def writeHYToSQL(filename):
     xlsFile = xlrd.open_workbook(filename, encoding_override="cp1252")
     table = xlsFile.sheets()[4]
     ts_codeList = table.col_values(0)[1:]
+    ts_codeList = [i + ('.SH' if i[0]=='6' else '.SZ') for i in ts_codeList]
     hyIDList = table.col_values(8)[1:]
     hyDf = pd.DataFrame({'ts_code': ts_codeList, 'classify_code': hyIDList})
     engine.execute('TRUNCATE TABLE classify_member')
@@ -359,7 +360,7 @@ def getIndexPEUpdateDate():
     指数PE更新日期,当前仅有上证180指数的PE值需手动计算
     :return:
     """
-    sql = f'select max(trade_date) from pehistory where ts_code="000010.SH";'
+    sql = f'select max(trade_date) from index_pe where ts_code="000010.SH";'
     return _getLastUpdate(sql)
 
 
@@ -919,9 +920,12 @@ def readLastTTMPEs(stockList, trade_date=None):
     if trade_date is None:
         sql += '(select max(trade_date) from daily_basic)'
     else:
-        sql += f'{trade_date}'
+        sql += f'"{trade_date}"'
 
     result = engine.execute(sql).fetchall()
+    if not result:
+        logging.warning(f'缺少{trade_date}每日指标')
+        return None
     ts_codes, ttmpes = zip(*result)
     df = pd.DataFrame({'ts_code': ts_codes, 'pe': ttmpes})
     df = df.loc[df['ts_code'].isin(stockList)]

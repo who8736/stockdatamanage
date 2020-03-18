@@ -508,7 +508,7 @@ def __testUpdate():
     # 利润表
     # 现金流量表
     # 财务指标表
-    updateQuarterData()
+    # updateQuarterData()
 
     # 更新行业列表
     # downHYList()
@@ -517,13 +517,13 @@ def __testUpdate():
     # updateGuzhiData()
 
     # 更新股票评分
-    updatePf()
+    # updatePf()
 
     # 更新指数数据及PE
-    # updateIndex()
+    updateIndex()
 
     # 更新全市PE
-    # updateAllMarketPE()
+    updateAllMarketPE()
 
 
 # 更新股票市值与PE
@@ -688,6 +688,7 @@ def __testMisc():
     """测试专用函数:杂项测试
     """
     pass
+    # calClassifyPE('20200310')
     # testChigu()
     # testShaixuan()
     ##############################################

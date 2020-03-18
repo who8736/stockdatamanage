@@ -338,7 +338,6 @@ def calClassifyPE(date):
     # if date is None:
     #     date = dt.datetime.today() - timedelta(days=1)
     #     date = date.strftime('%Y%m%d')
-    # TODO: 重写sql, 可用daily_basic中的总市值与ttmpe计算ttmprofits
     logging.debug(f'update hangyepe: {date}')
     sql = (f'replace into classify_pe(code, date, pe)'
            f' select classify_code, "{date}",'
@@ -346,8 +345,9 @@ def calClassifyPE(date):
            f' from classify_member a left join'
            f' (select ts_code, trade_date, pe_ttm, total_mv,'
            f' round(total_mv / pe_ttm, 2) as profits_ttm'
-           f'from daily_basic where trade_date = "{date}" and pe_ttm > 0) b'
-           f'on a.ts_code = b.ts_code group by classify_code;')
+           f' from daily_basic where trade_date="{date}" and pe_ttm > 0) b'
+           f' on a.ts_code = b.ts_code group by classify_code;')
+    print(sql)
     try:
         engine.execute(sql)
     except Exception as e:
@@ -357,7 +357,8 @@ def calClassifyPE(date):
 def getClassifyPE(date=None, replace=False):
     """ 读取所有行业在指定日期的市盈率
     """
-    sql = f'select code, date, pe from classify_pe where date='
+    sql = (f'select code as classify_code, pe classify_pe'
+           ' from classify_pe where date=')
     if date is None:
         sql += '(select max(date) from classify_pe)'
     else:

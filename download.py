@@ -59,67 +59,102 @@ class Downloader:
     :return:
     """
 
-    def __init__(self, ts_code, perTimes=0, downLimit=0, retry=3):
+    tables = ['balancesheet', 'income', 'cashflow', 'fina_indicator']
+    # 调用时间限制，如60秒调用80次
+    perTimes = {'balancesheet': 60,
+                'income': 60,
+                'cashflow': 60,
+                'fina_indicator': 60}
+    # 一定时间内调用次数限制
+    limit = {'balancesheet': 80,
+             'income': 80,
+             'cashflow': 80,
+             'fina_indicator': 60}
+    # 下载开始时间，按表格保存不同的时间
+    times = {'balancesheet': [],
+             'income': [],
+             'cashflow': [],
+             'fina_indicator': []}
+    # 记录当前调用某个表的累计次数
+    curcall = {'balancesheet': 0,
+               'income': 0,
+               'cashflow': 0,
+               'fina_indicator': 0}
+
+    def __init__(self, ts_code, period, retry=3):
         pass
         self.ts_code = ts_code
-        tables = {'balancesheet': (60, 80),
-                  'income': (60, 80),
-                  'cashflow': (60, 80),
-                  'fina_indicator': (60, 60)}
-        calltimes = {'balancesheet': [],
-                     'income': [],
-                     'cashflow': [],
-                     'fina_indicator': []}
-        curcall = {'balancesheet': 0,
-                     'income': 0,
-                     'cashflow': 0,
-                     'fina_indicator': 0}
-        # self.cur = 0
-        # self.perTimes = perTimes
-        # self.downLimit = downLimit
+        self.period = period
         self.retry = retry
 
     # TODO: 每个股票一个下载器，下载第一张无数据时可跳过其他表
     # 下载限制由类静态成员记载与控制
     def run(self):
         pass
-        result = None
         for table in Downloader.tables:
+            result = pd.DataFrame()
+            perTimes = Downloader.perTimes[table]
+            limit = Downloader.limit[table]
+            cur = Downloader.curcall[table]
             for _ in range(self.retry):
                 nowtime = dt.datetime.now()
+                if (perTimes > 0 and limit > 0 and cur >= limit
+                        and (nowtime < Downloader.times[table][cur - limit]
+                             + dt.timedelta(seconds=perTimes))):
+                    _timedelta = nowtime - Downloader.times[table][cur - limit]
+                    sleeptime = Downloader.perTimes[table] - _timedelta.seconds
+                    print(f'******暂停{sleeptime}秒******')
+                    time.sleep(sleeptime)
+                try:
+                    result = downStockQuarterData(table,
+                                                  self.ts_code, self.period)
+                except socket.timeout:
+                    logging.warning(f'downloader timeout: '
+                                    f'{table}-{self.ts_code}-{self.period}')
+                else:
+                    if result.empty:
+                        return
+                    else:
+                        break
+                finally:
+                    nowtime = dt.datetime.now()
+                    Downloader.times[table].append(nowtime)
+                    Downloader.curcall[table] += 1
 
-    def _run(self, fun, **kwargs):
-        result = None
-        for _ in range(self.retry):
+
+def _run(self, fun, **kwargs):
+    result = None
+    for _ in range(self.retry):
+        nowtime = dt.datetime.now()
+        if (self.perTimes > 0 and self.downLimit > 0
+                and self.cur >= self.downLimit
+                and (nowtime < self.times[self.cur - self.downLimit]
+                     + dt.timedelta(seconds=self.perTimes))):
+            _timedelta = nowtime - self.times[self.cur - self.downLimit]
+            sleeptime = self.perTimes - _timedelta.seconds
+            print(f'******暂停{sleeptime}秒******')
+            time.sleep(sleeptime)
+        try:
+            result = fun(**kwargs)
+        except socket.timeout:
+            logging.warning('downloader timeout:', fun.__name__)
+        else:
+            break
+        finally:
             nowtime = dt.datetime.now()
-            if (self.perTimes > 0 and self.downLimit > 0
-                    and self.cur >= self.downLimit
-                    and (nowtime < self.times[self.cur - self.downLimit]
-                         + dt.timedelta(seconds=self.perTimes))):
-                _timedelta = nowtime - self.times[self.cur - self.downLimit]
-                sleeptime = self.perTimes - _timedelta.seconds
-                print(f'******暂停{sleeptime}秒******')
-                time.sleep(sleeptime)
-            try:
-                result = fun(**kwargs)
-            except socket.timeout:
-                logging.warning('downloader timeout:', fun.__name__)
-            else:
-                break
-            finally:
-                nowtime = dt.datetime.now()
-                self.times.append(nowtime)
-                self.cur += 1
+            self.times.append(nowtime)
+            self.cur += 1
 
-        return result
+    return result
 
 
-def downStockQuarterData(table, ts_code):
+def downStockQuarterData(table, ts_code, period):
     print(f'downStockQuarterData table:{table}, ts_code:{ts_code}')
     pro = ts.pro_api()
     fun = getattr(pro, table)
-    df = fun(ts_code=ts_code)
+    df = fun(ts_code=ts_code, period=period)
     writeSQL(df, table)
+    return df
 
 
 # def downGubenToSQL(ts_code, retry=3, timeout=10):

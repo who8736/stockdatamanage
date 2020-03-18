@@ -34,7 +34,7 @@ import download
 from download import downGuben, downGuzhi
 from download import downStockQuarterData
 from download import downStockList
-from download import downIndex
+# from download import downIndex
 from download import downDaily
 from download import downDailyBasic, downTradeCal
 from download import downIndexDaily, downIndexDailyBasic
@@ -151,27 +151,18 @@ def updateQuarterData():
     #
     # 表格名称及tushare函数调用频次
     # table, perTimes, limit
-    tables = [['balancesheet', 60, 80],
-              ['income', 60, 80],
-              ['cashflow', 60, 80],
-              ['fina_indicator', 60, 60]]
-    _today = dt.datetime.today().date()
-    end_date = lastQarterDate(_today)
-    todayStr = _today.strftime('%Y%m%d')
-    for table, perTimes, limit in tables:
-        sql = (f'select a.ts_code, a.end_date, a.pre_date'
-               f' from disclosure_date a,'
-               f' (select ts_code, max(end_date) e_date'
-               f' from {table} group by ts_code'
-               f' having e_date<"{end_date}") b'
-               f' where a.ts_code=b.ts_code and a.end_date>b.e_date'
-               f' and a.pre_date<"{todayStr}";')
-        print(sql)
-        df = pd.read_sql(sql, engine)
-        downloader = Downloader(perTimes=perTimes, downLimit=limit)
-        for ts_code in df.ts_code.to_list():
-            downloader.run(fun=downStockQuarterData,
-                           table=table, ts_code=ts_code)
+    today = dt.datetime.today().date().strftime('%Y%m%d')
+    sql = (f'select a.ts_code, a.end_date'
+           f' from disclosure_date a,'
+           f' (select ts_code, max(end_date) e_date'
+           f' from balancesheet group by ts_code) b'
+           f' where a.ts_code=b.ts_code and a.end_date>b.e_date'
+           f' and a.pre_date<="{today}";')
+    result = engine.execute(sql).fetchall()
+    for ts_code, period in result:
+        periodStr = period.strftime('%Y%m%d')
+        downloader = Downloader(ts_code=ts_code, period=periodStr)
+        downloader.run()
 
 
 
