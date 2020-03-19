@@ -68,16 +68,16 @@ def startUpdate():
     """自动更新全部数据，包括K线历史数据、利润数据、K线表中的TTM市盈率
     """
     # 更新交易日历
-    # updateTradeCal()
+    updateTradeCal()
 
     # 更新股票列表
-    # updateStockList()
+    updateStockList()
 
     # 更新股票日交易数据
-    # updateDaily()
+    updateDaily()
 
     # 更新每日指标
-    # updateDailybasic()
+    updateDailybasic()
 
     # 更新非季报表格
     # 财务披露表（另外单独更新）
@@ -94,16 +94,16 @@ def startUpdate():
     updateQuarterData()
 
     # 更新行业列表
-    # downHYList()
+    downHYList()
 
     # 更新股票估值
-    # updateGuzhiData()
+    updateGuzhiData()
 
     # 更新股票评分
     # updatePf()
 
     # 更新指数数据及PE
-    # updateIndex()
+    updateIndex()
 
     # 更新全市PE
     # updateAllMarketPE()

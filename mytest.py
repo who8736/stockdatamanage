@@ -688,6 +688,7 @@ def __testMisc():
     """测试专用函数:杂项测试
     """
     pass
+    calPEHistory('000010.SH', '20200317')
     # calClassifyPE('20200310')
     # testChigu()
     # testShaixuan()
@@ -738,10 +739,10 @@ if __name__ == "__main__":
     initlog()
 
     # __testDownload()
-    # __testMisc()
+    __testMisc()
     # __testPlot()
     # __testRepair()
-    __testUpdate()
+    # __testUpdate()
     # __testValuation()
 
     print('程序正常退出')

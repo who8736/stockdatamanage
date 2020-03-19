@@ -15,7 +15,7 @@ import pandas as pd
 import numpy as np
 
 import datatrans
-from datatrans import dateList
+from datatrans import dateStrList
 import sqlrw
 from sqlrw import engine, Session
 from initlog import initlog
@@ -346,10 +346,12 @@ def calPEHistory(ID, startDate, endDate=None):
     if endDate is None:
         endDate = dt.datetime.today().date()
     # session = Session()
-    for tradeDate in dateList(startDate, endDate):
+    for tradeDate in dateStrList(startDate, endDate):
         sql = f'call calchengfenpe("{ID}", "{tradeDate}");'
         print(sql)
-        engine.execute(sql)
+        result = engine.execute(sql)
+        # result = result.fetchall()
+        print(result)
         # session.execute(sql)
     # session.commit()
     # session.close()
