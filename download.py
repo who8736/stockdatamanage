@@ -11,6 +11,7 @@ import logging
 import zipfile
 import socket
 from urllib import request
+from requests.exceptions import ConnectTimeout
 import time
 import re
 
@@ -108,7 +109,7 @@ class Downloader:
                 try:
                     result = downStockQuarterData(table,
                                                   self.ts_code, self.period)
-                except socket.timeout:
+                except(socket.timeout, ConnectTimeout):
                     logging.warning(f'downloader timeout: '
                                     f'{table}-{self.ts_code}-{self.period}')
                 else:
@@ -677,7 +678,7 @@ def del_downGubenTusharePro(ts_code='300445'):
         gubenValue.append(result[1])
     for idx in reversed(df.index):
         if df.total_share[idx] != gubenValue[pos]:
-            gubenDate.append(datetime.strptime(df.trade_date[idx - 1],
+            gubenDate.append(dt.datetime.strptime(df.trade_date[idx - 1],
                                                '%Y%m%d'))
             gubenValue.append(df.total_share[idx - 1] * 10000)
             pos += 1

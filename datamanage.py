@@ -100,13 +100,13 @@ def startUpdate():
     updateGuzhiData()
 
     # 更新股票评分
-    # updatePf()
+    updatePf()
 
     # 更新指数数据及PE
     updateIndex()
 
     # 更新全市PE
-    # updateAllMarketPE()
+    updateAllMarketPE()
 
 
 @logfun

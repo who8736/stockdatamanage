@@ -326,7 +326,7 @@ def calAllPEHistory(startDate, endDate=None):
         sql = 'call calallpe("%(tradeDate)s");' % locals()
         print(sql)
         session.execute(sql)
-    session.commit()
+        session.commit()
     session.close()
 
 
@@ -345,16 +345,17 @@ def calPEHistory(ID, startDate, endDate=None):
     ID = ID.upper()
     if endDate is None:
         endDate = dt.datetime.today().date()
-    # session = Session()
+    session = Session()
     for tradeDate in dateStrList(startDate, endDate):
         sql = f'call calchengfenpe("{ID}", "{tradeDate}");'
         print(sql)
-        result = engine.execute(sql)
+        # result = engine.execute(sql)
+        result = session.execute(sql)
+        session.commit()
         # result = result.fetchall()
-        print(result)
+        # print(result)
         # session.execute(sql)
-    # session.commit()
-    # session.close()
+    session.close()
 
 
 def analysePEHist(ts_code, startDate, endDate, dayCount=200,

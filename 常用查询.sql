@@ -34,3 +34,50 @@ select ts_code, group_concat(date), group_concat(incrate) from ttmprofits a
 where (select count(1) from ttmprofits where ts_code=a.ts_code and date>a.date) < 6
 group by ts_code
 order by ts_code, date desc;
+
+CREATE DEFINER=`root`@`%` PROCEDURE `calallpe`(in tradedate varchar(20))
+BEGIN
+replace into index_pe(ts_code, trade_date, pe) select 'all', tradedate,
+    ROUND(a.value / a.profits, 2)
+FROM
+    (SELECT
+        SUM(total_mv) AS value, SUM(total_mv / pe_ttm) AS profits
+    FROM
+        stockdata.daily_basic
+    WHERE
+		trade_date = tradedate
+		AND total_mv IS NOT NULL
+		AND pe_ttm > 0
+    GROUP BY trade_date) AS a;
+END
+
+CREATE DEFINER=`root`@`%` PROCEDURE `calchengfenpe`(in chengfenname varCHAR(9), in tradedate date)
+BEGIN
+replace into index_pe(ts_code, trade_date, pe) select chengfenname, tradedate,
+    ROUND(a.marketvalue / a.profits, 2) as pe
+FROM
+    (SELECT
+        SUM(total_mv) AS marketvalue, SUM(total_mv / pe_ttm) AS profits
+    FROM
+        stockdata.daily_basic
+    WHERE
+        ts_code IN (SELECT
+						con_code
+					FROM
+						stockdata.index_weight
+					where
+						index_code=chengfenname
+                        and trade_date=(select
+										max(trade_date)
+									from
+										stockdata.index_weight
+									where
+										index_code="000010.SH"
+											and trade_date<=tradedate))
+		AND trade_date = tradedate
+		AND total_mv IS NOT NULL
+		AND pe_ttm > 0
+	) AS a
+where a.marketvalue is not null and a.profits is not null;
+
+END
