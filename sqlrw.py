@@ -328,12 +328,12 @@ def del_clearStockList():
         engine.execute('TRUNCATE TABLE stocklist')
 
 
-def del_getAllMarketPEUpdateDate():
+def getAllMarketPEUpdateDate():
     """
     全市场PE更新日期
     :return:
     """
-    sql = 'select max(date) from pehistory where id="all";'
+    sql = 'select max(trade_date) from index_pe where ts_code="all";'
     return _getLastUpdate(sql)
 
 

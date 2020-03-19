@@ -29,7 +29,7 @@ import valuation
 from sqlconn import engine
 # from sqlrw import checkGuben, setGubenLastUpdate
 # from sqlrw import getStockKlineUpdateDate
-from sqlrw import getIndexPEUpdateDate
+from sqlrw import getIndexPEUpdateDate, getAllMarketPEUpdateDate
 import download
 from download import downGuben, downGuzhi
 from download import downStockQuarterData
@@ -115,8 +115,8 @@ def updateAllMarketPE():
     更新全市场PE
     :return:
     """
-    # startDate = getAllMarketPEUpdateDate()
-    dataanalyse.calAllPEHistory()
+    startDate = getAllMarketPEUpdateDate()
+    dataanalyse.calAllPEHistory(startDate)
 
 
 @logfun

@@ -322,7 +322,7 @@ def calAllPEHistory(startDate, endDate=None):
     # startDate = datetime.strptime('2010-01-01', '%Y-%m-%d').date()
     endDate = dt.datetime.today().date()
     session = Session()
-    for tradeDate in dateList(startDate, endDate):
+    for tradeDate in dateStrList(startDate, endDate):
         sql = 'call calallpe("%(tradeDate)s");' % locals()
         print(sql)
         session.execute(sql)
