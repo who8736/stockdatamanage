@@ -13,7 +13,8 @@ import matplotlib
 import pandas as pd
 import matplotlib.pyplot as plt  # @IgnorePep8
 # from matplotlib.finance import candlestick_ohlc  # @IgnorePep8
-from mpl_finance import candlestick_ohlc  # @IgnorePep8
+# from mplfinance import candlestick_ohlc  # @IgnorePep8
+import mplfinance as mpf
 import matplotlib.gridspec as gs  # @IgnorePep8
 from matplotlib.dates import DateFormatter, MonthLocator  # @IgnorePep8
 from matplotlib.ticker import FixedLocator  # @IgnorePep8
@@ -58,46 +59,46 @@ def scatter(startDate, endDate):
 #         plt.show()
 
 
-def plotKlineOld(ts_code):
-    #     return plotKline(ts_code)
-    #     ax2 = fig.add_subplot(2, 1, 2)
-    sql = ('select date, open, high, low, close, ttmpe '
-           'from klinestock where ts_code="%(ts_code)s" '
-           'order by date desc limit 1000;' % locals())
-    result = engine.execute(sql)
-    stockDatas = result.fetchall()
-    klineDatas = []
-    dates = []
-    peDatas = []
-    #     klineDatas = result.fetchall()
-    for date, _open, high, low, close, ttmpe in stockDatas:
-        klineDatas.append([time.mktime(date.timetuple()),
-                           _open, high, low, close])
-        dates.append(time.mktime(date.timetuple()))
-        peDatas.append(ttmpe)
-
-    print(dates)
-    print(peDatas)
-    gs1 = gs.GridSpec(3, 1)
-    gs1.update(hspace=0)
-    fig = plt.figure()
-    ax1 = fig.add_subplot(gs1[0:2, :])
-    candlestick_ohlc(ax1, klineDatas)
-    ax1.set_title(ts_code)
-    ax2 = fig.add_subplot(gs1[2:3, :])
-    ax2.plot(dates, peDatas)
-    ax2.xaxis.set_major_locator(MonthLocator())
-    ax2.xaxis.set_major_formatter(DateFormatter('%Y-%m'))
-    fig.autofmt_xdate()
-
-    #     ax1.subplots_adjust(hspace=None)
-    #     fig.subplots_adjust(hspace=0)
-    #     plt.show()
-    imgData = BytesIO()
-    fig.savefig(imgData, format='png')
-    #     imgData.seek(0)
-
-    return imgData
+# def plotKlineOld(ts_code):
+#     #     return plotKline(ts_code)
+#     #     ax2 = fig.add_subplot(2, 1, 2)
+#     sql = ('select date, open, high, low, close, ttmpe '
+#            'from klinestock where ts_code="%(ts_code)s" '
+#            'order by date desc limit 1000;' % locals())
+#     result = engine.execute(sql)
+#     stockDatas = result.fetchall()
+#     klineDatas = []
+#     dates = []
+#     peDatas = []
+#     #     klineDatas = result.fetchall()
+#     for date, _open, high, low, close, ttmpe in stockDatas:
+#         klineDatas.append([time.mktime(date.timetuple()),
+#                            _open, high, low, close])
+#         dates.append(time.mktime(date.timetuple()))
+#         peDatas.append(ttmpe)
+#
+#     print(dates)
+#     print(peDatas)
+#     gs1 = gs.GridSpec(3, 1)
+#     gs1.update(hspace=0)
+#     fig = plt.figure()
+#     ax1 = fig.add_subplot(gs1[0:2, :])
+#     candlestick_ohlc(ax1, klineDatas)
+#     ax1.set_title(ts_code)
+#     ax2 = fig.add_subplot(gs1[2:3, :])
+#     ax2.plot(dates, peDatas)
+#     ax2.xaxis.set_major_locator(MonthLocator())
+#     ax2.xaxis.set_major_formatter(DateFormatter('%Y-%m'))
+#     fig.autofmt_xdate()
+#
+#     #     ax1.subplots_adjust(hspace=None)
+#     #     fig.subplots_adjust(hspace=0)
+#     #     plt.show()
+#     imgData = BytesIO()
+#     fig.savefig(imgData, format='png')
+#     #     imgData.seek(0)
+#
+#     return imgData
 
 
 #     datetime.date
@@ -150,49 +151,95 @@ def plotKlineStock(ID, days):
     bokehplot = BokehPlot(ID, df)
     return bokehplot.plot()
 
-def __del_plotKline():
-    sql = ('select date, open, high, low, close, ttmpe '
-           'from klinestock where ts_code="%(ts_code)s" '
-           'order by date desc limit %(days)s;' % locals())
-    result = engine.execute(sql).fetchall()
-    stockDatas = [i for i in reversed(result)]
-    klineDatas = []
-    dates = []
-    peDatas = []
-    indexes = list(range(len(stockDatas)))
-    for i in indexes:
-        date, _open, high, low, close, ttmpe = stockDatas[i]
-        klineDatas.append([i, _open, high, low, close])
-        dates.append(date.strftime("%Y-%m-%d"))
-        peDatas.append(ttmpe)
+# def __del_plotKline():
+#     sql = ('select date, open, high, low, close, ttmpe '
+#            'from klinestock where ts_code="%(ts_code)s" '
+#            'order by date desc limit %(days)s;' % locals())
+#     result = engine.execute(sql).fetchall()
+#     stockDatas = [i for i in reversed(result)]
+#     klineDatas = []
+#     dates = []
+#     peDatas = []
+#     indexes = list(range(len(stockDatas)))
+#     for i in indexes:
+#         date, _open, high, low, close, ttmpe = stockDatas[i]
+#         klineDatas.append([i, _open, high, low, close])
+#         dates.append(date.strftime("%Y-%m-%d"))
+#         peDatas.append(ttmpe)
+#
+#     gs1 = gs.GridSpec(3, 1)
+#     gs1.update(hspace=0)
+#     fig = plt.figure()
+#     ax1 = fig.add_subplot(gs1[0:2, :])
+#     candlestick_ohlc(ax1, klineDatas)
+#     # ax1.set_title(ID)
+#     plt.grid(True)
+#     ax2 = fig.add_subplot(gs1[2:3, :])
+#     ax2.plot(indexes, peDatas)
+#     ax1.set_xlim((0, len(stockDatas)))
+#     ax2.set_xlim((0, len(stockDatas)))
+#     tickerIndex, tickerLabels = getMonthIndex(dates)
+#     locator = FixedLocator(tickerIndex)
+#     ax1.xaxis.set_major_locator(locator)
+#     ax2.xaxis.set_major_locator(locator)
+#     ax2.set_xticklabels(tickerLabels)
+#     #     for label in ax2.get_xticklabels():
+#     #         label.set_rotation(45)
+#     plt.grid(True)
+#     plt.legend()
+#     plt.show()
+#     imgData = BytesIO()
+#     fig.savefig(imgData, format='png')
+#     return imgData
 
-    gs1 = gs.GridSpec(3, 1)
-    gs1.update(hspace=0)
+
+def plotPE(df):
+
+    # klineDatas = []
+    # dates = []
+    # peDatas = []
+    indexes = list(range(len(df)))
+    # for i in indexes:
+    #     date, _open, high, low, close, ttmpe = stockDatas[i]
+    #     klineDatas.append([i, _open, high, low, close])
+    #     dates.append(date.strftime("%Y-%m-%d"))
+    #     peDatas.append(ttmpe)
+
+    # gs1 = gs.GridSpec(3, 1)
+    # gs1.update(hspace=0)
     fig = plt.figure()
-    ax1 = fig.add_subplot(gs1[0:2, :])
-    candlestick_ohlc(ax1, klineDatas)
+    # ax1 = fig.add_subplot(gs1[0:2, :])
+    ax1 = fig.add_subplot()
+
     # ax1.set_title(ID)
-    plt.grid(True)
-    ax2 = fig.add_subplot(gs1[2:3, :])
-    ax2.plot(indexes, peDatas)
-    ax1.set_xlim((0, len(stockDatas)))
-    ax2.set_xlim((0, len(stockDatas)))
+    # ax2 = fig.add_subplot(gs1[2:3, :])
+    # ax2.plot(indexes, peDatas)
+    ax1.plot(indexes, df.pe.to_list())
+    ax1.set_xlim((0, len(df)))
+    # ax2.set_xlim((0, len(stockDatas)))
+    dates = [date.strftime('%Y%m%d') for date in df.trade_date]
     tickerIndex, tickerLabels = getMonthIndex(dates)
     locator = FixedLocator(tickerIndex)
     ax1.xaxis.set_major_locator(locator)
-    ax2.xaxis.set_major_locator(locator)
-    ax2.set_xticklabels(tickerLabels)
+    # ax2.xaxis.set_major_locator(locator)
+    ax1.set_xticklabels(tickerLabels)
     #     for label in ax2.get_xticklabels():
     #         label.set_rotation(45)
     plt.grid(True)
     plt.legend()
     plt.show()
-    imgData = BytesIO()
-    fig.savefig(imgData, format='png')
-    return imgData
+    return
+    # imgData = BytesIO()
+    # fig.savefig(imgData, format='png')
+    # return imgData
 
 
 def getMonthIndex(dates):
+    """
+
+    :param dates: str, '20200320'
+    :return:
+    """
     month = ''
     monthIndex = []
     monthstr = []
