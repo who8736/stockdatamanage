@@ -156,7 +156,7 @@ def calGuzhi(stockList=None):
 
 
 def calHistoryStatus(ts_code):
-    TTMLirunDf = sqlrw.readTTMLirunForts_code(ts_code)
+    TTMLirunDf = sqlrw.readTTMProfits(ts_code)
     dates = TTMLirunDf['date']
     for _date in dates:
         #         print i

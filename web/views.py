@@ -19,7 +19,7 @@ from report import reportIndex
 from sqlrw import getChiguList, getGuzhiList, getYouzhiList
 from sqlrw import getStockName, readLastTTMPE
 from sqlrw import readCurrentClose, readCurrentPEG
-from sqlrw import readPERate, readStockKlineDf, readIndexKlineDf
+from sqlrw import readPERate, readStockKline, readIndexKline
 from sqlrw import readStockList, writeChigu
 from sqlrw import readValuationSammary
 from . import app
@@ -119,12 +119,12 @@ def klineimg(ts_code):
 
 @app.route('/stockklineimgnew/<ts_code>')
 def stockklineimgnew(ts_code):
-    df = readStockKlineDf(ts_code, days=1000)
+    df = readStockKline(ts_code, days=1000)
     return _klineimg(ts_code, df)
 
 @app.route('/indexklineimgnew/<ID>')
 def indexklineimgnew(ID):
-    df = readIndexKlineDf(ID, days=3000)
+    df = readIndexKline(ID, days=3000)
     return _klineimg(ID, df)
 
 def _klineimg(ID, df):

@@ -390,7 +390,7 @@ def getGuzhi(ts_code):
     return result.fetchone()
 
 
-def readStockListFromSQL(date=None):
+def del_readStockListFromSQL(date=None):
     """
     查询已上市且上市日期小于等于指定日期的股票列表
     缺省为查询当前所有已上市股票
@@ -431,16 +431,16 @@ def del_readStockListFromFile(filename):
     return ts_codeList
 
 
-def del_readStockListDf(date=None):
-    """查询已上市且上市日期小于等于指定日期的股票列表,返回DataFrame格式数据
-    缺省为查询当前所有已上市股票
-    :param date: int, YYYYmmdd, 8位数字代表的年月日
-    :return:
-    """
-    stockList = readStockListFromSQL(date)
-    ts_codes, names = zip(*stockList)
-    stockListDf = DataFrame({'ts_code': ts_codes, 'name': names})
-    return stockListDf
+# def del_readStockListDf(date=None):
+#     """查询已上市且上市日期小于等于指定日期的股票列表,返回DataFrame格式数据
+#     缺省为查询当前所有已上市股票
+#     :param date: int, YYYYmmdd, 8位数字代表的年月日
+#     :return:
+#     """
+#     stockList = readStockListFromSQL(date)
+#     ts_codes, names = zip(*stockList)
+#     stockListDf = DataFrame({'ts_code': ts_codes, 'name': names})
+#     return stockListDf
 
 
 def del_updateKlineMarketValue(ts_code, startDate=None, endDate=None):
@@ -474,7 +474,7 @@ def del_updateKlineTTMLirun(ts_code, startDate=None):
     """
     if startDate is None:
         return
-    TTMLirunDf = readTTMLirunForts_code(ts_code, startDate)
+    TTMLirunDf = readTTMProfits(ts_code, startDate)
     klineTablename = 'klinestock'
     TTMLirunCount = TTMLirunDf['date'].count()
 
@@ -646,9 +646,10 @@ def readValuationSammary():
     stocks = pd.read_sql(sql, engine)
 
     # 行业名称
-    sql = ('select a.ts_code, a.name, c.name'
-           ' from stock_basic a, classify_memeber b, classify c'
-           ' where a.ts_code=b.ts_code and b.id=c.id order by ts_code;')
+    sql = ('select a.ts_code, a.name, c.name as classify_name'
+           ' from stock_basic a, classify_member b, classify c'
+           ' where a.ts_code=b.ts_code and b.classify_code=c.code'
+           ' order by ts_code;')
     hyname = pd.read_sql(sql, engine)
     stocks = pd.merge(stocks, hyname, how='left')
 
@@ -672,9 +673,9 @@ def readValuationSammary():
     #        ' from daily_basic group by ts_code) b'
     #        ' where a.ts_code=b.ts_code and a.date = b.daily_date')
     sql = """select a.ts_code, a.dv_ttm from daily_basic a,
-            (select ts_code, max(date) as daily_date 
+            (select ts_code, max(trade_date) as daily_date 
             from daily_basic group by ts_code) b
-            where a.ts_code = b.ts_code and a.date = b.daily_date;"""
+            where a.ts_code = b.ts_code and a.trade_date = b.daily_date;"""
 
     daily = pd.read_sql(sql, engine)
     stocks = pd.merge(stocks, daily, how='left')
@@ -732,7 +733,7 @@ def readPERate(ts_code):
         return result
 
 
-def readTTMLirunForts_code(ts_code, startDate=None, endDate=None):
+def readTTMProfits(ts_code, startDate=None, endDate=None):
     """取指定股票一段日间的TTM利润，startDate当日无数据时，取之前最近一次数据
     Parameters
     --------
@@ -1071,70 +1072,70 @@ def calTTMLirun(stockdf, date):
     return [ts_code, date, lirun, reportdate]
 
 
-def del_updateKlineEXTData(ts_code, startDate=None):
-    """
-    # 更新Kline表MarketValue、TTMPE等附加数据
-    Parameters
-    --------
-    ts_code: str 股票代码  e.g:600519
-    startDate: str 更新起始日期  e.g: 2016-01-01
-
-    Return
-    --------
-    # 无返回值
-    """
-    if startDate is None:
-        startDate = getTTMPELastUpdate(ts_code) + dt.timedelta(days=1)
-        if startDate == dt.datetime.today().date():
-            return
-    # startDateStr = startDate.strftime('%Y-%m-%d')
-    logging.debug(
-        'updateKlineEXTData: %(ts_code)s, date: %(startDate)s' % locals())
-    try:
-        # updateKlineMarketValue(ts_code, startDate)
-        # updateKlineTTMLirun(ts_code, startDate)
-        endDate = updateKlineTTMPE(ts_code, startDate)
-        setKlineTTMPELastUpdate(ts_code, endDate)
-    except Exception as e:
-        logging.error('fail to updateKlineEXTData: %s,[%s]', ts_code, e)
-
-
-def getTTMPELastUpdate(ts_code):
-    """TTMPE最近更新日期，
-    Parameters
-    --------
-    ts_code:str 股票代码 e.g:600519
-
-    Return
-    --------
-    datetime：TTMPE最近更新日期
-    """
-    sql = ('select ttmpe from lastupdate where ts_code="%(ts_code)s"'
-           % locals())
-    return _getLastUpdate(sql)
+# def del_updateKlineEXTData(ts_code, startDate=None):
+#     """
+#     # 更新Kline表MarketValue、TTMPE等附加数据
+#     Parameters
+#     --------
+#     ts_code: str 股票代码  e.g:600519
+#     startDate: str 更新起始日期  e.g: 2016-01-01
+#
+#     Return
+#     --------
+#     # 无返回值
+#     """
+#     if startDate is None:
+#         startDate = getTTMPELastUpdate(ts_code) + dt.timedelta(days=1)
+#         if startDate == dt.datetime.today().date():
+#             return
+#     # startDateStr = startDate.strftime('%Y-%m-%d')
+#     logging.debug(
+#         'updateKlineEXTData: %(ts_code)s, date: %(startDate)s' % locals())
+#     try:
+#         # updateKlineMarketValue(ts_code, startDate)
+#         # updateKlineTTMLirun(ts_code, startDate)
+#         endDate = updateKlineTTMPE(ts_code, startDate)
+#         setKlineTTMPELastUpdate(ts_code, endDate)
+#     except Exception as e:
+#         logging.error('fail to updateKlineEXTData: %s,[%s]', ts_code, e)
 
 
-def getLirunUpdateStartQuarter():
-    """根据利润表数据判断本次利润表更新的起始日期
-    选取利润表中每支股票的财报最大日期，且为在stocklist股票基本信息表中存在的股票
-    再找出财报日期中最小的数值作为本次利润表更新的起始日期
-    Parameters
-    --------
+# def getTTMPELastUpdate(ts_code):
+#     """TTMPE最近更新日期，
+#     Parameters
+#     --------
+#     ts_code:str 股票代码 e.g:600519
+#
+#     Return
+#     --------
+#     datetime：TTMPE最近更新日期
+#     """
+#     sql = ('select ttmpe from lastupdate where ts_code="%(ts_code)s"'
+#            % locals())
+#     return _getLastUpdate(sql)
 
 
-    Return
-    --------
-    startQuarter：YYYYQ 起始更新日期
-    """
-    sql = ('select min(maxdate) from (SELECT ts_code, max(date) as maxdate '
-           'FROM stockdata.lirun group by ts_code '
-           'having ts_code in (select ts_code from stocklist WHERE '
-           'LEFT(name, 1) != "*")) as temp;')
-
-    result = engine.execute(sql)
-    lastQuarter = result.first()[0]
-    startQuarter = datatrans.quarterAdd(lastQuarter, 1)
-    return startQuarter
+# def getLirunUpdateStartQuarter():
+#     """根据利润表数据判断本次利润表更新的起始日期
+#     选取利润表中每支股票的财报最大日期，且为在stocklist股票基本信息表中存在的股票
+#     再找出财报日期中最小的数值作为本次利润表更新的起始日期
+#     Parameters
+#     --------
+#
+#
+#     Return
+#     --------
+#     startQuarter：YYYYQ 起始更新日期
+#     """
+#     sql = ('select min(maxdate) from (SELECT ts_code, max(date) as maxdate '
+#            'FROM stockdata.lirun group by ts_code '
+#            'having ts_code in (select ts_code from stocklist WHERE '
+#            'LEFT(name, 1) != "*")) as temp;')
+#
+#     result = engine.execute(sql)
+#     lastQuarter = result.first()[0]
+#     startQuarter = datatrans.quarterAdd(lastQuarter, 1)
+#     return startQuarter
 
 
 def getLirunUpdateEndQuarter():
@@ -1178,46 +1179,46 @@ def writeChigu(stockList):
         engine.execute(sql)
 
 
-def savePELirunIncrease(startDate='2007-01-01', endDate=None):
-    stockList = readStockListFromSQL()
-    for ts_code, stockName_ in stockList:
-        #     sql = (u'insert ignore into pelirunincrease(ts_code, date, pe) '
-        #            u'select "%(ts_code)s", date, ttmpe '
-        #            u'from klinestock%(ts_code)s '
-        #            u'where `date`>="%(startDate)s";') % locals()
-        #
-        #     engine.execute(sql)
+# def savePELirunIncrease(startDate='2007-01-01', endDate=None):
+#     stockList = readStockListFromSQL()
+#     for ts_code, stockName_ in stockList:
+#         #     sql = (u'insert ignore into pelirunincrease(ts_code, date, pe) '
+#         #            u'select "%(ts_code)s", date, ttmpe '
+#         #            u'from klinestock%(ts_code)s '
+#         #            u'where `date`>="%(startDate)s";') % locals()
+#         #
+#         #     engine.execute(sql)
+#
+#         TTMLirunDf = readTTMProfits(ts_code, startDate)
+#         TTMLirunDf = TTMLirunDf.dropna().reset_index(drop=True)
+#         klineTablename = 'klinestock'
+#         TTMLirunCount = len(TTMLirunDf)
+#         for i in range(TTMLirunCount):
+#             incrate = TTMLirunDf['incrate'].iloc[i]
+#             startDate_ = TTMLirunDf['reportdate'].iloc[i]
+#             try:
+#                 endDate_ = TTMLirunDf['reportdate'].iloc[i + 1]
+#             except IndexError:
+#                 endDate_ = None
+#
+#             sql = ('update pelirunincrease '
+#                    'set lirunincrease = %(incrate)s'
+#                    ' where ts_code="%(ts_code)s"'
+#                    ' and date>="%(startDate_)s"') % locals()
+#             if endDate_ is not None:
+#                 sql += (' and date<"%(endDate_)s"' % locals())
+#             engine.execute(sql)
+#
+#
+# #         break
 
-        TTMLirunDf = readTTMLirunForts_code(ts_code, startDate)
-        TTMLirunDf = TTMLirunDf.dropna().reset_index(drop=True)
-        klineTablename = 'klinestock'
-        TTMLirunCount = len(TTMLirunDf)
-        for i in range(TTMLirunCount):
-            incrate = TTMLirunDf['incrate'].iloc[i]
-            startDate_ = TTMLirunDf['reportdate'].iloc[i]
-            try:
-                endDate_ = TTMLirunDf['reportdate'].iloc[i + 1]
-            except IndexError:
-                endDate_ = None
 
-            sql = ('update pelirunincrease '
-                   'set lirunincrease = %(incrate)s'
-                   ' where ts_code="%(ts_code)s"'
-                   ' and date>="%(startDate_)s"') % locals()
-            if endDate_ is not None:
-                sql += (' and date<"%(endDate_)s"' % locals())
-            engine.execute(sql)
-
-
-#         break
-
-
-def setKlineTTMPELastUpdate(ts_code, endDate):
-    sql = ('insert into lastupdate (`ts_code`, `ttmpe`) '
-           'values ("%(ts_code)s", "%(endDate)s") '
-           'on duplicate key update `ttmpe`="%(endDate)s";' % locals())
-    result = engine.execute(sql)
-    return result
+# def setKlineTTMPELastUpdate(ts_code, endDate):
+#     sql = ('insert into lastupdate (`ts_code`, `ttmpe`) '
+#            'values ("%(ts_code)s", "%(endDate)s") '
+#            'on duplicate key update `ttmpe`="%(endDate)s";' % locals())
+#     result = engine.execute(sql)
+#     return result
 
 
 def setGubenLastUpdate(ts_code, endDate=None):
@@ -1298,7 +1299,7 @@ def updateKlineTTMPE(ts_code, startDate, endDate=None):
 #     return guben
 
 
-def readTTMLirunFromDf(df, date):
+def del_readTTMLirunFromDf(df, date):
     """从TTM利润列表中读取指定日期的TTM利润数值
     # 指定日期无TTM利润数据时，选取之前最近的TTM利润数据
     """
@@ -1462,7 +1463,7 @@ def getClassifiedForStocksID(ts_code):
 
 
 def getStockName(ts_code):
-    sql = 'select name from stocklist where ts_code="%s";' % ts_code
+    sql = f'select name from stock_basic where ts_code="{ts_code}";'
     result = engine.execute(sql).first()
     if result is not None:
         return result[0]
@@ -1470,7 +1471,7 @@ def getStockName(ts_code):
         return None
 
 
-def readStockKlineDf(ts_code, days):
+def readStockKline(ts_code, days):
     """
     读取股票K线数据
     :param ts_code: str, 6位股票代码
@@ -1483,13 +1484,14 @@ def readStockKlineDf(ts_code, days):
                             'low': lowList,
                             'pe': peList})
     """
-    sql = ('select date, open, high, low, close, ttmpe '
-           'from klinestock where ts_code="%(ts_code)s" '
-           'order by date desc limit %(days)s;' % locals())
-    return _readKlineDf(sql)
+    sql = (f'select a.trade_date, a.open, a.high, a.low, a.close, b.pe_ttm'
+           f' from daily a, daily_basic b where a.ts_code="{ts_code}" '
+           f' and a.ts_code=b.ts_code and a.trade_date=b.trade_date'
+           f' order by a.trade_date desc limit {days};')
+    return _readKline(sql)
 
 
-def readIndexKlineDf(indexID, days):
+def readIndexKline(indexID, days):
     """
     读取指数K线数据
     :param indexID: str, 9位指数代码
@@ -1506,10 +1508,10 @@ def readIndexKlineDf(indexID, days):
            f'from index_daily a, index_dailybasic b '
            f'where a.ts_code="{indexID}" and a.ts_code=b.ts_code '
            f'order by date desc limit {days};')
-    return _readKlineDf(sql)
+    return _readKline(sql)
 
 
-def _readKlineDf(sql):
+def _readKline(sql):
     result = engine.execute(sql).fetchall()
     stockDatas = [i for i in reversed(result)]
     # klineDatas = []

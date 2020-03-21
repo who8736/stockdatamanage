@@ -24,7 +24,7 @@ from bokeh.layouts import column
 from bokeh.models import ColumnDataSource, RangeTool
 from bokeh.models import Slider, CustomJS
 
-from sqlrw import engine, readStockKlineDf  # @IgnorePep8
+from sqlrw import engine, readStockKline  # @IgnorePep8
 from datatrans import dateStrList  # @IgnorePep8
 
 matplotlib.use('Agg')  # @UndefinedVariable

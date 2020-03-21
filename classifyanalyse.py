@@ -25,10 +25,10 @@ from sqlconn import engine
 def getStockListForHY(hyID):
     """ 返回指定行业的所有股票代码列表
     """
-    levelNum = len(hyID) / 2
+    # levelNum = len(hyID) / 2
     #     levels = ['level1', 'level2', 'level3', 'level4']
     #     level = levels[levelNum - 1]
-    sql = 'select ts_code from hangyestock where hyid="%(hyID)s";' % locals()
+    sql = f'select ts_code from classify_member where classify_code="{hyID}";'
     result = engine.execute(sql)
     #     stockList = result.fetchall()
     stockList = [i[0] for i in result.fetchall()]
@@ -94,8 +94,7 @@ def getSubHY(hyID, subLevel):
 
 def getHYName(hyID):
     print('getHYName(hyID):hyID: ', hyID)
-    sql = ('select hyname from hangyename where hyid="%(hyID)s";'
-           % locals())
+    sql = (f'select name from classify where code="{hyID}";')
     result = engine.execute(sql).fetchone()
     if result is None:
         return None
@@ -115,9 +114,8 @@ def getHYStockCount(hyID):
 
 
 def getHYProfitsIncRate(hyID, quarter):
-    sql = ('select profitsIncRate from classify_profits '
-           'where hyid="%(hyID)s" and date="%(quarter)s";'
-           % locals())
+    sql = (f'select profitsIncRate from classify_profits '
+           f'where code="{hyID}" and date="{quarter}";')
     print(sql)
     result = engine.execute(sql).fetchone()
     if result is None:

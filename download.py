@@ -50,7 +50,7 @@ from initlog import initlog
 from misc import tsCode
 
 
-class Downloader:
+class DownloaderQuarter:
     """限时下载器
 
     :param tablename:
@@ -88,22 +88,25 @@ class Downloader:
         self.period = period
         self.retry = retry
 
-    # TODO: 每个股票一个下载器，下载第一张无数据时可跳过其他表
+    # 每个股票一个下载器，下载第一张无数据时可跳过其他表
     # 下载限制由类静态成员记载与控制
     def run(self):
         pass
-        for table in Downloader.tables:
+        for table in DownloaderQuarter.tables:
             result = pd.DataFrame()
-            perTimes = Downloader.perTimes[table]
-            limit = Downloader.limit[table]
-            cur = Downloader.curcall[table]
+            perTimes = DownloaderQuarter.perTimes[table]
+            limit = DownloaderQuarter.limit[table]
+            cur = DownloaderQuarter.curcall[table]
             for _ in range(self.retry):
                 nowtime = dt.datetime.now()
                 if (perTimes > 0 and limit > 0 and cur >= limit
-                        and (nowtime < Downloader.times[table][cur - limit]
+                        and (nowtime < DownloaderQuarter.times[table][
+                            cur - limit]
                              + dt.timedelta(seconds=perTimes))):
-                    _timedelta = nowtime - Downloader.times[table][cur - limit]
-                    sleeptime = Downloader.perTimes[table] - _timedelta.seconds
+                    _timedelta = nowtime - DownloaderQuarter.times[table][
+                        cur - limit]
+                    sleeptime = DownloaderQuarter.perTimes[
+                                    table] - _timedelta.seconds
                     print(f'******暂停{sleeptime}秒******')
                     time.sleep(sleeptime)
                 try:
@@ -119,8 +122,52 @@ class Downloader:
                         break
                 finally:
                     nowtime = dt.datetime.now()
-                    Downloader.times[table].append(nowtime)
-                    Downloader.curcall[table] += 1
+                    DownloaderQuarter.times[table].append(nowtime)
+                    DownloaderQuarter.curcall[table] += 1
+
+
+class DownloaderMisc:
+    """限时下载器, 不定期更新
+
+    :param tablename:
+    :param stocks:
+    :param perTimes:
+    :param downLimit:
+    :return:
+    """
+
+    def __init__(self, perTimes, limit, retry=3):
+        pass
+        self.perTimes = perTimes
+        self.limit = limit
+        self.retry = retry
+        self.cur = 0
+        self.times = []
+
+    # 下载限制由类静态成员记载与控制
+    def run(self, table, **kwargs):
+        pass
+        pro = ts.pro_api()
+        fun = getattr(pro, table)
+        for _ in range(self.retry):
+            nowtime = dt.datetime.now()
+            if (self.cur >= self.limit
+                    and (nowtime < self.times[self.cur - self.limit]
+                         + dt.timedelta(seconds=self.perTimes))):
+                _timedelta = nowtime - self.times[self.cur - self.limit]
+                sleeptime = self.perTimes - _timedelta.seconds
+                print(f'******暂停{sleeptime}秒******')
+                time.sleep(sleeptime)
+            try:
+                result = fun(**kwargs)
+            except(socket.timeout, ConnectTimeout):
+                logging.warning(f'downloader timeout: {table}')
+            else:
+                return result
+            finally:
+                nowtime = dt.datetime.now()
+                self.times.append(nowtime)
+                self.cur += 1
 
 
 def _run(self, fun, **kwargs):
@@ -679,7 +726,7 @@ def del_downGubenTusharePro(ts_code='300445'):
     for idx in reversed(df.index):
         if df.total_share[idx] != gubenValue[pos]:
             gubenDate.append(dt.datetime.strptime(df.trade_date[idx - 1],
-                                               '%Y%m%d'))
+                                                  '%Y%m%d'))
             gubenValue.append(df.total_share[idx - 1] * 10000)
             pos += 1
     resultDf = pd.DataFrame({'ts_code': ts_code,
@@ -972,13 +1019,8 @@ def downPledgeStat(ts_code):
     :return:
     """
     pro = ts.pro_api()
-    # df = None
     df = pro.pledge_stat(ts_code=tsCode(ts_code))
-    # df.rename(columns={'ts_code': 'ts_code', 'end_date': 'date'}, inplace=True)
-    # df['ts_code'] = df['ts_code'].str[:6]
-    # df.set_index(keys=['ts_code'], inplace=True)
     writeSQL(df, 'pledgestat')
-    return df
 
 
 def downIncome(ts_code, startDate='', endDate=''):

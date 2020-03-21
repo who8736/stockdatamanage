@@ -39,7 +39,7 @@ from download import downDaily
 from download import downDailyBasic, downTradeCal
 from download import downIndexDaily, downIndexDailyBasic
 from download import downIndexBasic, downIndexWeight
-from download import Downloader
+from download import DownloaderQuarter
 # from download import downHYList
 from initlog import initlog
 from datatrans import dateList
@@ -161,7 +161,7 @@ def updateQuarterData():
     result = engine.execute(sql).fetchall()
     for ts_code, period in result:
         periodStr = period.strftime('%Y%m%d')
-        downloader = Downloader(ts_code=ts_code, period=periodStr)
+        downloader = DownloaderQuarter(ts_code=ts_code, period=periodStr)
         downloader.run()
 
 
