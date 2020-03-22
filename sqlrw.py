@@ -59,7 +59,7 @@ def writeHYToSQL(filename):
     xlsFile = xlrd.open_workbook(filename, encoding_override="cp1252")
     table = xlsFile.sheets()[4]
     ts_codeList = table.col_values(0)[1:]
-    ts_codeList = [i + ('.SH' if i[0]=='6' else '.SZ') for i in ts_codeList]
+    ts_codeList = [i + ('.SH' if i[0] == '6' else '.SZ') for i in ts_codeList]
     hyIDList = table.col_values(8)[1:]
     hyDf = pd.DataFrame({'ts_code': ts_codeList, 'classify_code': hyIDList})
     engine.execute('TRUNCATE TABLE classify_member')
@@ -115,7 +115,7 @@ def del_checkGuben(tradeDate):
     """
     pro = ts.pro_api()
     dfTushare = pro.daily_basic(ts_code='', trade_date=tradeDate,
-                                    fields='ts_code,total_share')
+                                fields='ts_code,total_share')
     dfTushare['ts_code'] = dfTushare['ts_code'].str[:6]
 
     sql = """ select a.ts_code, a.trade_date, a.totalshares from guben as a, 
@@ -721,8 +721,8 @@ def readPERate(ts_code):
     """ 读取一只股票的PE历史水平，
     # 返回PE200， PE1000两个数值，分别代表该股票当前PE值在过去200、1000个交易日中的水平
     """
-    sql = ('select pe200, pe1000 from guzhiresult '
-           'where ts_code="%(ts_code)s" limit 1' % locals())
+    sql = (f'select round(pe200, 2) pe200, round(pe1000, 2) pe1000'
+           f' from guzhiresult where ts_code="{ts_code}" limit 1')
     print(sql)
     # 指定日期（含）前无TTM利润数据的，查询起始日期设定为startDate
     # 否则设定为最近一次数据日期
@@ -893,13 +893,13 @@ def readLastTTMPE(ts_code, date=None):
         指定日期， 格式'YYYYmmdd'
     :return:
     """
-    sql = (f'select ttmpe from klinestock where ts_code="{ts_code}" '
-           f'and date=(select max(`date`) from klinestock where '
+    sql = (f'select pe_ttm from daily_basic where ts_code="{ts_code}" '
+           f'and trade_date=(select max(`trade_date`) from daily_basic where '
            f'ts_code="{ts_code}"')
     if date is None:
         sql += ')'
     else:
-        sql += f' and date<={date})'
+        sql += f' and trade_date<={date})'
 
     result = engine.execute(sql).fetchone()
     if result is None:
@@ -1389,10 +1389,9 @@ def readClose(ts_code):
 
 
 def readCurrentClose(ts_code):
-    sql = ('select close from klinestock where ts_code="%(ts_code)s" '
-           'and date=('
-           'select max(`date`) from klinestock where ts_code="%(ts_code)s"'
-           ')' % locals())
+    sql = (f'select close from daily where ts_code="{ts_code}" '
+           f' and trade_date=(select max(`trade_date`)'
+           f' from daily where ts_code="{ts_code}")')
     result = engine.execute(sql)
     return result.fetchone()[0]
 
@@ -1491,10 +1490,10 @@ def readStockKline(ts_code, days):
     return _readKline(sql)
 
 
-def readIndexKline(indexID, days):
+def readIndexKline(index_code, days):
     """
     读取指数K线数据
-    :param indexID: str, 9位指数代码
+    :param index_code: str, 9位指数代码
     :param days: int, 读取的天数
     :return: Dataframe
     indexDf = pd.DataFrame({'date': dateList,
@@ -1504,11 +1503,25 @@ def readIndexKline(indexID, days):
                             'low': lowList,
                             'pe': peList})
     """
+    peTable = 'index_pe' if index_code=='000010.SH' else 'index_dailybasic'
+    # sql = f'select a.trade_date, a.open, a.high, a.low, a.close, b.pe_ttm '
+    # if index_code == '000010.SH':
+    #     sql += f' from index_daily a, index_pe b '
+    # else:
+    #     sql += f' from index_daily a, index_dailybasic b '
+    # sql += (f' where a.ts_code="{index_code}" and a.ts_code=b.ts_code '
+    #         f' and a.trade_date=b.trade_date'
+    #         f' order by trade_date desc limit {days};')
     sql = (f'select a.trade_date, a.open, a.high, a.low, a.close, b.pe_ttm '
-           f'from index_daily a, index_dailybasic b '
-           f'where a.ts_code="{indexID}" and a.ts_code=b.ts_code '
-           f'order by date desc limit {days};')
-    return _readKline(sql)
+           f' from index_daily a, {peTable} b '
+           f' where a.ts_code="{index_code}" and a.ts_code=b.ts_code '
+           f' and a.trade_date=b.trade_date'
+           f' order by trade_date desc limit {days};')
+    df = pd.read_sql(sql, engine)
+    df.rename(columns={'pe_ttm': 'pe'}, inplace=True)
+    df['date'] = df.trade_date.apply(lambda x: x.strftime('%Y%m%d'))
+    return df
+    # return _readKline(sql)
 
 
 def _readKline(sql):

@@ -77,12 +77,10 @@ def tsCode(ts_code):
         600000->600000.SH
         000651->000651.SZ
     """
-    if(len(ts_code) == 9):
-        return ts_code
-    if(ts_code[0] == '6'):
-        return '%s.SH' % ts_code
+    if(len(ts_code) == 6):
+        return ts_code + ('.SH' if ts_code[0] == '6' else '.SZ')
     else:
-        return '%s.SZ' % ts_code
+        return ts_code
 
 if __name__ == '__main__':
     pass

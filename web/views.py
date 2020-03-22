@@ -22,6 +22,7 @@ from sqlrw import readCurrentClose, readCurrentPEG
 from sqlrw import readPERate, readStockKline, readIndexKline
 from sqlrw import readStockList, writeChigu
 from sqlrw import readValuationSammary
+from misc import tsCode
 from . import app
 from .forms import StockListForm
 
@@ -42,7 +43,8 @@ def setStockList():
         chiguStr = form.stockList.data
         # print(stockListStr)
         chigu = chiguStr.split("|")
-        allstocks = readStockList()
+        chigu = [tsCode(ts_code) for ts_code in chigu]
+        allstocks = readStockList().ts_code.to_list()
         checkFlag = True
         for ts_code in chigu:
             if ts_code not in allstocks:

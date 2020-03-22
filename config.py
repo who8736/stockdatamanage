@@ -8,6 +8,8 @@ import os
 import sys
 import configparser
 
+SECRET_KEY = 'Sm9obiBTY2hyb20ga2lja3MgYXNz'
+
 # options格式：类成员变量名，配置文件中的段，配置文件中的选项，
 #              缺省值, 值类型
 options = [['secretkey', 'main', 'secretkey',

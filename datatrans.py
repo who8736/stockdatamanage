@@ -78,11 +78,11 @@ def dateList(startDate, endDate):
     return dateList
 
 
-def parse_ymd(s):
-    """ 日期字符串转换为datetime
-    """
-    year_s, mon_s, day_s = s.split('-')
-    return datetime(int(year_s), int(mon_s), int(day_s))
+# def parse_ymd(s):
+#     """ 日期字符串转换为datetime
+#     """
+#     year_s, mon_s, day_s = s.split('-')
+#     return datetime(int(year_s), int(mon_s), int(day_s))
 
 
 def transDateToQuarter(_date):
