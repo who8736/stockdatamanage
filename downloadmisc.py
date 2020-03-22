@@ -8,18 +8,22 @@
     # 分红送股（另外单独更新）
 
 """
+from multiprocessing.dummy import Pool as ThreadPool
+
 import pandas as pd
 import tushare as ts
 
 from sqlrw import readStockList, writeSQL
 from sqlconn import engine
 from download import DownloaderMisc
+from datamanage import logfun
+from initlog import initlog
 
 tables = [
     ['pledge_stat', 60, 50],
     ['forecast', 60, 50],
-    ['express', 60, 60],
-    ['disclosure_date', 60, 80],
+    ['express', 60, 50],
+    ['disclosure_date', 60, 50],
 ]
 # def pledge_stat():
 #     """下载股权质押信息
@@ -39,8 +43,11 @@ tables = [
 #         cnt += 1
 
 
-def _download(table, pertimes, limit):
+# def _download(table, pertimes, limit):
+@logfun
+def _download(args):
     """下载非定期更新数据"""
+    table, pertimes, limit = args
     stocks = readStockList()
     total = len(stocks)
     cnt = 1
@@ -68,10 +75,14 @@ def _download(table, pertimes, limit):
 #         writeSQL(df, table)
 #         cnt += 1
 
+@logfun
+def runner():
+    pool = ThreadPool(processes=4)
+    pool.map(_download, tables)
+    pool.join()
+
 if __name__ == '__main__':
     pass
+    initlog()
+    runner()
 
-    for table, pertimes, limit in tables:
-        _download(table, pertimes, limit)
-    # pledge_stat()
-    # test()
