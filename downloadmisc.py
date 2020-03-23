@@ -79,6 +79,7 @@ def _download(args):
 def runner():
     pool = ThreadPool(processes=4)
     pool.map(_download, tables)
+    pool.close()
     pool.join()
 
 if __name__ == '__main__':
