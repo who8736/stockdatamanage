@@ -372,7 +372,7 @@ class BokehPlot:
                              plot_height=klineHeight,
                              plot_width=width,
                              x_axis_location="above",
-                             x_range=(dataLen - 200, dataLen - 1),
+                             x_range=(dataLen - 200, dataLen),
                              y_range=(start, end),
                              tooltips=tooltips)
         self.pkline.xaxis.major_label_overrides = self.df['date'].to_dict()
@@ -393,7 +393,7 @@ class BokehPlot:
 
         self.select = figure(plot_height=selectHeight,
                              plot_width=width,
-                             x_range=(0, days - 1),
+                             x_range=(-2, days + 2),
                              y_axis_type=None,
                              tools="",
                              toolbar_location=None,
@@ -412,7 +412,7 @@ class BokehPlot:
                 var xstart = parseInt(ppe.x_range.start);
                 if(xstart<0){xstart=0;}
                 var xend = parseInt(ppe.x_range.end);
-                if(xend>maxdays - 1){xend=maxdays - 1;}
+                if(xend>maxdays){xend=maxdays;}
                 console.log('xstart: ', xstart);
                 console.log('xend: ', xend);
                 console.log('maxdays: ', maxdays);
@@ -426,7 +426,7 @@ class BokehPlot:
                 var peymax = pedata[xstart];
                 var peymin = pedata[xstart];
                 
-                for (var i = xstart + 1; i < xend; i++) {
+                for (var i = xstart + 1; i <= xend; i++) {
                     klineymax =  Math.max(klineymax, highdata[i]);
                     klineymin =  Math.min(klineymin, lowdata[i]);
                     peymax =  Math.max(peymax, pedata[i]);
@@ -450,7 +450,7 @@ class BokehPlot:
         callback = CustomJS(args=dict(ppe=self.ppe,
                                       pkline=self.pkline,
                                       source=self.source,
-                                      maxdays=days),
+                                      maxdays=days - 1),
                             code=code)
         self.ppe.x_range.js_on_change('start', callback)
         self.ppe.x_range.js_on_change('end', callback)

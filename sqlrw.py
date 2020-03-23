@@ -1504,14 +1504,6 @@ def readIndexKline(index_code, days):
                             'pe': peList})
     """
     peTable = 'index_pe' if index_code=='000010.SH' else 'index_dailybasic'
-    # sql = f'select a.trade_date, a.open, a.high, a.low, a.close, b.pe_ttm '
-    # if index_code == '000010.SH':
-    #     sql += f' from index_daily a, index_pe b '
-    # else:
-    #     sql += f' from index_daily a, index_dailybasic b '
-    # sql += (f' where a.ts_code="{index_code}" and a.ts_code=b.ts_code '
-    #         f' and a.trade_date=b.trade_date'
-    #         f' order by trade_date desc limit {days};')
     sql = (f'select a.trade_date, a.open, a.high, a.low, a.close, b.pe_ttm '
            f' from index_daily a, {peTable} b '
            f' where a.ts_code="{index_code}" and a.ts_code=b.ts_code '
@@ -1520,8 +1512,11 @@ def readIndexKline(index_code, days):
     df = pd.read_sql(sql, engine)
     df.rename(columns={'pe_ttm': 'pe'}, inplace=True)
     df['date'] = df.trade_date.apply(lambda x: x.strftime('%Y%m%d'))
+    df.sort_values(by='date', inplace=True)
+    df.set_index(keys='date', inplace=True)
+    df.reset_index(inplace=True)
+    # df.sort_values(by='trade_date', inplace=True)
     return df
-    # return _readKline(sql)
 
 
 def _readKline(sql):

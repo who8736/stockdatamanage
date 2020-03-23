@@ -1213,7 +1213,7 @@ def downIndexDaily():
         endDate = None
         if isinstance(result, dt.date):
             result = result + dt.timedelta(days=1)
-            startDate = result.strftime('YYYYmmdd')
+            startDate = result.strftime('%Y%m%d')
         df = pro.index_daily(ts_code=code,
                              start_date=startDate, end_date=endDate)
         writeSQL(df, 'index_daily')
