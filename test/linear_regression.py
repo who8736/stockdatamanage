@@ -15,28 +15,29 @@ from sklearn.metrics import mean_squared_error, r2_score
 import tushare as ts
 
 from sqlconn import engine
-from sqlrw import readStockListFromSQL
+from sqlrw import readStockList
 
 
 def studyTime():
-    examDict={
-        '学习时间':[0.50,0.75,1.00,1.25,1.50,1.75,1.75,2.00,2.25,
-                2.50,2.75,3.00,3.25,3.50,4.00,4.25,4.50,4.75,5.00,5.50],
-        '分数':    [10,  22,  13,  43,  20,  22,  33,  50,  62,
-                  48,  55,  75,  62,  73,  81,  76,  64,  82,  90,  93]
+    examDict = {
+        '学习时间': [0.50, 0.75, 1.00, 1.25, 1.50, 1.75, 1.75, 2.00, 2.25,
+                 2.50, 2.75, 3.00, 3.25, 3.50, 4.00, 4.25, 4.50, 4.75, 5.00,
+                 5.50],
+        '分数': [10, 22, 13, 43, 20, 22, 33, 50, 62,
+               48, 55, 75, 62, 73, 81, 76, 64, 82, 90, 93]
     }
-    examOrderDict=OrderedDict(examDict)
-    exam=pd.DataFrame(examOrderDict)
+    examOrderDict = OrderedDict(examDict)
+    exam = pd.DataFrame(examOrderDict)
 
     print(exam)
 
-    #从dataframe中把标签和特征导出来
+    # 从dataframe中把标签和特征导出来
     exam_X = exam['学习时间']
     exam_Y = exam['分数']
 
-    #绘制散点图，得出结果后记得注释掉以下4行代码
-    plt.scatter(exam_X, exam_Y, color = 'green')
-    #设定X,Y轴标签和title
+    # 绘制散点图，得出结果后记得注释掉以下4行代码
+    plt.scatter(exam_X, exam_Y, color='green')
+    # 设定X,Y轴标签和title
     plt.ylabel('Scores')
     plt.xlabel('Times(h)')
     plt.title('Exam Data')
@@ -44,12 +45,39 @@ def studyTime():
     plt.show()
 
 
-def linearRegressionTest():
+def linearRegressionTest(ts_code, startQuarter):
     """
     对单一自变量进行线性回归，返回（截距， 系数，平均方差）
     :return:
     """
     pass
+    sql = (f'SELECT ttmprofits FROM stockdata.ttmprofits'
+           f' where ts_code="{ts_code}" and date>={startQuarter};')
+    result = engine.execute(sql).fetchall()
+    y = [i[0] for i in result]
+    cnt = len(result)
+    x = np.array(range(cnt))
+    x = x[:, np.newaxis]
+
+    regr = linear_model.LinearRegression()
+    regr.fit(x, y)
+    print(f'截距:{regr.intercept_}, 系数:{regr.coef_}')
+
+    fig = plt.figure()
+    # gs = gridspec.GridSpec(1, 2)
+    ax = plt.subplot()
+    ax.scatter(x, y)
+    x1 = int(min(x))
+    x2 = int(max(x) + 1)
+    X = [x1, x2]
+    y1 = regr.intercept_ + x1 * regr.coef_[0]
+    y2 = regr.intercept_ + x2 * regr.coef_[0]
+    # Y = [y1, y2]
+    Y = [regr.intercept_ + i * regr.coef_[0] for i in x]
+    ax.plot(x, Y, color='r')
+    plt.show()
+
+    return result
 
 
 def findPairs(ts_codea, ts_codeb, startDate='20090101', endDate='20191231'):
@@ -213,6 +241,7 @@ def findPairs1(ts_codea, ts_codeb, startDate='20090101', endDate='20191231'):
     # print('score:', score)
     return score
 
+
 def diabetesTest():
     # Load the diabetes dataset
     diabetes_X, diabetes_y = datasets.load_diabetes(return_X_y=True)
@@ -309,13 +338,17 @@ def linearAll():
     f.close()
 
 
-
 if __name__ == '__main__':
     pass
     ts_codea = '601985'
     ts_codeb = '600170'
     startDate = '20140101'
     endDate = '20191231'
-    findPairs(ts_codea, ts_codeb, startDate=startDate)
+    # findPairs(ts_codea, ts_codeb, startDate=startDate)
     # linearAll()
     # diabetesTest()
+
+    ts_code = '002161.SZ'
+    startQuarter = 20091
+    df = linearRegressionTest(ts_code, startQuarter)
+    print(df)
