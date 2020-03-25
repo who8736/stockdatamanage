@@ -1,6 +1,7 @@
 """
 
 """
+from math import sqrt
 from collections import OrderedDict
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt  # @IgnorePep8
@@ -16,6 +17,7 @@ import tushare as ts
 
 from sqlconn import engine
 from sqlrw import readStockList
+from sqlrw import getStockName
 
 
 def studyTime():
@@ -45,7 +47,7 @@ def studyTime():
     plt.show()
 
 
-def linearRegressionTest(ts_code, startQuarter):
+def linearRegressionTest(ts_code, startQuarter, fig):
     """
     对单一自变量进行线性回归，返回（截距， 系数，平均方差）
     :return:
@@ -54,30 +56,40 @@ def linearRegressionTest(ts_code, startQuarter):
     sql = (f'SELECT ttmprofits FROM stockdata.ttmprofits'
            f' where ts_code="{ts_code}" and date>={startQuarter};')
     result = engine.execute(sql).fetchall()
-    y = [i[0] for i in result]
     cnt = len(result)
+    if cnt<10:
+        return (None, None, None)
+    y = [i[0] / 10000 / 10000 for i in result]
     x = np.array(range(cnt))
     x = x[:, np.newaxis]
 
+    # 拟合
     regr = linear_model.LinearRegression()
     regr.fit(x, y)
-    print(f'截距:{regr.intercept_}, 系数:{regr.coef_}')
+    intercept = regr.intercept_
+    coef = regr.coef_[0]
+    # print(f'截距:{intercept}, 系数:{coef}')
 
-    fig = plt.figure()
-    # gs = gridspec.GridSpec(1, 2)
-    ax = plt.subplot()
+    # 计算平均残差
+    Y = [intercept + i * coef for i in x]
+    try:
+        cha = sum(map(lambda a, b: abs(sqrt((a - b) ** 2) / a), y, Y)) / cnt
+    except ZeroDivisionError:
+        return (None, None, None)
+
+    # 绘图
+    # ax = plt.subplot()
+    ax = fig.add_subplot()
     ax.scatter(x, y)
-    x1 = int(min(x))
-    x2 = int(max(x) + 1)
-    X = [x1, x2]
-    y1 = regr.intercept_ + x1 * regr.coef_[0]
-    y2 = regr.intercept_ + x2 * regr.coef_[0]
-    # Y = [y1, y2]
-    Y = [regr.intercept_ + i * regr.coef_[0] for i in x]
     ax.plot(x, Y, color='r')
-    plt.show()
+    name = getStockName(ts_code)
+    plt.title(f'{ts_code} {name}', fontproperties='simsun', fontsize=26)
+    # plt.show()
+    filename = f'../data/linear_img/{ts_code[:6]}.png'
+    plt.savefig(filename)
+    plt.clf()
 
-    return result
+    return (intercept, coef, cha)
 
 
 def findPairs(ts_codea, ts_codeb, startDate='20090101', endDate='20191231'):
@@ -348,7 +360,31 @@ if __name__ == '__main__':
     # linearAll()
     # diabetesTest()
 
-    ts_code = '002161.SZ'
+    fig = plt.figure(figsize=(10, 10))
+    stocks = readStockList()
+    # stocks = stocks[455 + 1398:]
+    intercept = []
+    coef = []
+    chas = []
     startQuarter = 20091
-    df = linearRegressionTest(ts_code, startQuarter)
-    print(df)
+    cnt = len(stocks)
+    cur = 1
+    for ts_code in stocks.ts_code:
+        # ts_code = '002161.SZ'
+        _intercept, _coef, cha = linearRegressionTest(ts_code, startQuarter,
+                                                      fig)
+        if _intercept is not None:
+            print(f'{cur}/{cnt} {ts_code} 截距: {round(_intercept, 2)}'
+                  f' 系数: {round(_coef, 2)}'
+                  f' 平均残差率: {round(cha, 2)}')
+        else:
+            print(f'{cur}/{cnt} {ts_code} 无数据')
+        intercept.append(_intercept)
+        coef.append(_coef)
+        chas.append(cha)
+        cur += 1
+
+    stocks['intercept'] = intercept
+    stocks['coef'] = coef
+    stocks['cha'] = chas
+    stocks.to_excel('../data/profits_linear_regression.xlsx')
