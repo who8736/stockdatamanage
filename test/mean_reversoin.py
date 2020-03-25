@@ -17,7 +17,9 @@ from statsmodels.tsa.stattools import adfuller
 import tushare as ts
 
 from sqlconn import engine
-from sqlrw import readStockListFromSQL
+from sqlrw import readStockList
+from sqlrw import getStockName
+from test.linear_regression import linearPlot
 
 
 def adfTestPE(ts_code, startDate, endDate, plotFlag=False):
@@ -86,8 +88,9 @@ def adfTestProfits(ts_code, startDate, endDate):
     return resultb[0], resultb[1], flag
 
 
-def adfTestProfits1(ts_code, startDate, endDate):
+def adfTestProfitsInc(data):
     """
+    分析归属母公司股东的净利润-扣除非经常损益同比增长率(%)历年变化情况
 
     :param ts_code:
     :param startDate:
@@ -110,71 +113,89 @@ def adfTestProfits1(ts_code, startDate, endDate):
     resstore （ResultStore，可选）
     一个虚拟类，其结果作为属性附加
     """
-    sql = (f'select incrate from ttmlirun '
-           f'where ts_code="{ts_code}" '
-           f'and date>="{startDate}" and date<="{endDate}"')
-    df = pd.read_sql(sql, engine)
-    resulta = adfuller(df['incrate'])
-    df1 = np.diff(df['incrate'])
-    resultb = adfuller(df1)
-    print('resulta:\n', resulta)
-    print('resultb:\n', resultb)
-    # flag = (resultb[0] < resultb[4]['1%']
-    #         and resultb[0] < resultb[4]['5%']
-    #         and resultb[0] < resultb[4]['10%'])
+    mean = np.mean(data)
+    result = adfuller(data)
+    diffdata = np.diff(data)
+    diffmean = np.mean(diffdata)
+    diffresult = adfuller(diffdata)
+    # print('resulta:\n', resulta)
+    # print('resultb:\n', resultb)
+    flag = (result[0] < result[4]['1%']
+            and result[0] < result[4]['5%']
+            and result[0] < result[4]['10%']
+            and result[1] < 0.05)
+    diffflag = (diffresult[0] < diffresult[4]['1%']
+                and diffresult[0] < diffresult[4]['5%']
+                and diffresult[0] < diffresult[4]['10%']
+                and diffresult[1] < 0.05)
     # return (round(resultb[0], 2), round(resultb[1], 2), flag)
-    return resultb
+    resultdict = {'mean': mean,
+                  'flag': flag,
+                  'adf': result[0],
+                  'pvalue': result[1],
+                  'cvalue1': result[4]['1%'],
+                  'cvalue5': result[4]['5%'],
+                  'cvalue10': result[4]['10%'],
+                  'diffmean': diffmean,
+                  'diffflag': diffflag,
+                  'diffadf': diffresult[0],
+                  'diffpvalue': diffresult[1],
+                  'diffcvalue1': diffresult[4]['1%'],
+                  'diffcvalue5': diffresult[4]['5%'],
+                  'diffcvalue10': diffresult[4]['10%'],
+                  }
+    return resultdict
 
 
-def adfTestAllProfits():
+def adfTestAllProfitsInc():
     """对所有股票2009年1季度至2020年1季度TTM利润增长率进行ADF检测"""
-    ts_code = '000651'
-    startDate = '20091'
-    endDate = '20201'
-    adfTestProfits(ts_code, startDate, endDate)
+    # ts_code = '000651'
+    startDate = '20090331'
+    endDate = '20200331'
+    # adfTestProfits(ts_code, startDate, endDate)
 
-    stockList = readStockListFromSQL()
-    print(stockList)
-    ts_codes = []
-    stockNames = []
-    adfs = []
-    pvalues = []
-    flags = []
-    cvalue1s = []
-    cvalue5s = []
-    cvalue10s = []
+    stocks = readStockList()
+    # stocks = stocks[:20]
+    cnt = len(stocks)
+    cur = 1
+    # print(stocks)
+
+    resultList = []
     # for ts_code, name in stockList[:10]:
-    for ts_code, name in stockList:
-        print('正在处理:', ts_code)
+    for ts_code in stocks.ts_code:
+        print(f'{cur}/{cnt}: {ts_code}')
+        cur += 1
+        sql = (f'select dt_netprofit_yoy from fina_indicator'
+               f' where ts_code="{ts_code}"'
+               f' and end_date>="{startDate}" and end_date<="{endDate}"')
+        data = engine.execute(sql).fetchall()
+        if len(data) < 10:
+            continue
+        data = [i[0] for i in data]
         try:
-            result = adfTestProfits1(ts_code, startDate, endDate)
+            result = adfTestProfitsInc(data)
+            plotProfitInc(ts_code, data)
         except Exception as e:
             print(ts_code, e)
-        else:
-            flag = (result[0] < result[4]['1%'] and
-                    result[0] < result[4]['5%'] and
-                    result[0] < result[4]['10%'] and
-                    result[1] < 0.05)
-            ts_codes.append(ts_code)
-            stockNames.append(name)
-            adfs.append(result[0])
-            pvalues.append(round(result[1], 4))
-            flags.append(flag)
-            cvalue1s.append(round(result[4]['1%'], 4))
-            cvalue5s.append(round(result[4]['5%'], 4))
-            cvalue10s.append(round(result[4]['10%'], 4))
+            result = None
+        if result is not None:
+            result['ts_code'] = ts_code
+            resultList.append(result)
 
-    df = pd.DataFrame({'ts_code': ts_codes,
-                       'name': stockNames,
-                       'adf': adfs,
-                       'pvalue': pvalues,
-                       'flag': flags,
-                       'cvalue1': cvalue1s,
-                       'cvalue5': cvalue5s,
-                       'cvalue10': cvalue10s
-                       })
-    df.to_excel('test.xlsx')
-    print(df)
+    df = pd.DataFrame(resultList)
+    stocks = pd.merge(stocks, df, left_on='ts_code', right_on='ts_code')
+    stocks.to_excel('adf_profit_inc.xlsx')
+    # print(df)
+
+
+def plotProfitInc(ts_code, data):
+    # sql = select
+    # data = getProfitsInc(ts_code, startDate, endDate)
+    filename = f'profit_inc_{ts_code[:6]}.png'
+    name = getStockName(ts_code)
+    title = f'{ts_code} {name}'
+    # linearPlot(data, plot=True, title=title, filename=filename)
+    linearPlot(data, plot=False, title=title, filename=filename)
 
 
 def adfTestAllPE(stockList, startDate, endDate, plotFlag):
@@ -224,6 +245,7 @@ def adfTestAllPE(stockList, startDate, endDate, plotFlag):
     df.to_excel('adf_pe.xlsx')
     # print(df)
 
+
 if __name__ == '__main__':
     pass
     # stockList = ['000651', '000333', '000002']
@@ -235,4 +257,5 @@ if __name__ == '__main__':
     # stockList = indexDf.con_code.str[:6].to_list()
     # adfTestAllPE(stockList, startDate, endDate, plotFlag=False)
 
-    adfTestPE('000651', startDate, endDate, plotFlag=True)
+    # adfTestPE('000651', startDate, endDate, plotFlag=True)
+    adfTestAllProfitsInc()

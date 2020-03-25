@@ -1,7 +1,9 @@
 """
 
 """
+import os
 from math import sqrt
+
 from collections import OrderedDict
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt  # @IgnorePep8
@@ -47,7 +49,120 @@ def studyTime():
     plt.show()
 
 
-def linearRegressionTest(ts_code, startQuarter, fig):
+def _adfTest(data):
+    """计算一组数据的均值及adf检测结果"""
+    mean = np.mean(data)
+    result = adfuller(data)
+    return (mean, result)
+
+def _linear(data, plot=False, title=None, filename=None):
+    """线性回归通用函数，对一组数据进行线性回归
+    :param data:
+    :param plot: 是否显示绘图结果
+    :param title: 绘图标题，plot为True时，title为必选项
+    :param filename: 不为空时，自动保存图片
+    :return:
+    该组数据均值，均方差，adf检测结果
+    该组数据一阶差分的均值，均方差，adf检测结果
+    """
+    pass
+    cnt = len(data)
+    if cnt<10:
+        return (None, None, None)
+    x = np.array(range(cnt))
+    x = x[:, np.newaxis]
+
+    # 拟合
+    regr = linear_model.LinearRegression()
+    regr.fit(x, data)
+    intercept = regr.intercept_
+    coef = regr.coef_[0]
+    # print(f'截距:{intercept}, 系数:{coef}')
+
+    # 计算平均残差
+    Y = [intercept + i * coef for i in x]
+    try:
+        cha = sum(map(lambda a, b: abs(sqrt((a - b) ** 2) / a), y, Y)) / cnt
+    except ZeroDivisionError:
+        return (None, None, None)
+
+
+    return (intercept, coef, cha)
+
+def linearPlot(data, plot=False, title=None, filename=None):
+    """绘图函数，接受_linear产生的数据绘制原始数据和一阶差分的散点图和回归直线"""
+    pass
+    cnt = len(data)
+    x = list(range(cnt))
+
+    # 绘图
+    # ax = plt.subplot()
+    fig = plt.figure(figsize=(10, 5))
+    gs = gridspec.GridSpec(1, 2)
+    ax1 = plt.subplot(gs[0, 0])
+    ax2 = plt.subplot(gs[0, 1])
+
+    # 拟合
+    trainx = np.array(x)
+    trainx = trainx[:, np.newaxis]
+    regr = linear_model.LinearRegression()
+    regr.fit(trainx, data)
+    intercept = regr.intercept_
+    coef = regr.coef_[0]
+    y = [intercept + coef * i for i in x]
+    ax1.scatter(x, data)
+    ax1.plot(x, y, color='r')
+
+    diff_data = np.diff(data)
+    diff_cnt = len(diff_data)
+    diff_x = list(range(diff_cnt))
+    diff_trainx = np.array(diff_x)
+    diff_trainx = diff_trainx[:, np.newaxis]
+    regr = linear_model.LinearRegression()
+    regr.fit(diff_trainx, diff_data)
+    intercept = regr.intercept_
+    coef = regr.coef_[0]
+    diff_y = [intercept + coef * i for i in diff_x]
+    ax2.scatter(diff_x, diff_data)
+    ax2.plot(diff_x, diff_y, color='r')
+
+    plt.title(title, fontproperties='simsun', fontsize=26)
+    if plot:
+        plt.show()
+    if filename is not None:
+        plt.savefig(os.path.join('../data/linear_img', filename))
+    plt.close()
+
+
+def linearProfitInc():
+    ts_code = '000651.SZ'
+    startDate = '20090331'
+    # result = _linearProfitInc(ts_code, startDate)
+
+    sql = (f'select dt_netprofit_yoy from fina_indicator'
+           f' where ts_code="{ts_code}" and end_date>="{startDate}"')
+    data = engine.execute(sql).fetchall()
+    data = [i[0] for i in data]
+    adf = _adfTest(data)
+    print(adf)
+
+
+def _linearProfitInc(ts_code, startDate):
+    """
+    分析归属母公司股东的净利润-扣除非经常损益同比增长率(%)历年变化情况
+    :param ts_code:
+    :param startDate:
+    :return:
+    """
+    pass
+    sql = (f'select dt_netprofit_yoy from fina_indicator'
+           f' where ts_code="{ts_code}" and end_date>="{startDate}')
+    data = engine.execute(sql).fetchall()
+    data = [i[0] for i in data]
+    return _linear(data)
+
+
+def _linearProfits(ts_code, startQuarter, fig):
     """
     对单一自变量进行线性回归，返回（截距， 系数，平均方差）
     :return:
@@ -92,38 +207,14 @@ def linearRegressionTest(ts_code, startQuarter, fig):
     return (intercept, coef, cha)
 
 
-def findPairs(ts_codea, ts_codeb, startDate='20090101', endDate='20191231'):
-    """两支股票的TTMPE是否存在协整关系
-    时间区间为20090101至20191231
-    1.两只股票TTMPE的折线图
-    2.两只股票TTMPE的散点图
-    3.两只股票的线性回归
-    4.根据线性回归结果计算残差，返回残差的ADF检验结果
-    """
-    sql = (f'select date, ttmpe from klinestock where ts_code="{ts_codea}"'
-           f' and date>="{startDate}" and date<="{endDate}"')
-    dfa = pd.read_sql(sql, engine)
-    dfa.rename(columns={'ttmpe': 'ttmpea'}, inplace=True)
-    dfa.set_index('date', inplace=True)
-    # print(dfa)
-
-    sql = (f'select date, ttmpe from klinestock where ts_code="{ts_codeb}"'
-           f' and date>="{startDate}" and date<="{endDate}"')
-    dfb = pd.read_sql(sql, engine)
-    dfb.rename(columns={'ttmpe': 'ttmpeb'}, inplace=True)
-    dfb.set_index('date', inplace=True)
-    # print(dfb)
-
-    df = pd.merge(dfa, dfb, left_index=True, right_index=True)
-    # print(df)
-
+def plotPairs(df, intercept, coef):
     fig = plt.figure(figsize=(10, 5))
     gs = gridspec.GridSpec(1, 2)
     ax1 = plt.subplot(gs[0, 0])
     ax2 = plt.subplot(gs[0, 1])
     # 绘制拆线图
-    ax1.plot(dfa.index, dfa.ttmpea, color='blue', label=ts_codea)
-    ax1.plot(dfb.index, dfb.ttmpeb, color='yellow', label=ts_codeb)
+    ax1.plot(df.index, df.ttmpea, color='blue', label=ts_codea)
+    ax1.plot(df.index, df.ttmpeb, color='yellow', label=ts_codeb)
     ax1.legend()
     # 设置X轴的刻度间隔
     # 可选:YearLocator,年刻度; MonthLocator,月刻度; DayLocator,日刻度
@@ -140,6 +231,46 @@ def findPairs(ts_codea, ts_codeb, startDate='20090101', endDate='20191231'):
 
     plt.grid(True)
 
+    x1 = int(min(df.ttmpea))
+    x2 = int(max(df.ttmpea) + 1)
+    X = [x1, x2]
+    y1 = intercept + x1 * coef
+    y2 = intercept + x2 * coef
+    Y = [y1, y2]
+    ax2.plot(X, Y, color='r')
+    # print('X:', X)
+    # print('Y:', Y)
+
+    plt.show()
+
+
+def findPairs(ts_codea, ts_codeb, startDate='20090101', endDate='20191231',
+              plot=False):
+    """两支股票的TTMPE是否存在协整关系
+    时间区间为20090101至20191231
+    1.两只股票TTMPE的折线图
+    2.两只股票TTMPE的散点图
+    3.两只股票的线性回归
+    4.根据线性回归结果计算残差，返回残差的ADF检验结果
+    """
+    sql = (f'select trade_date, pe_ttm'
+           f' from daily_basic where ts_code="{ts_codea}"'
+           f' and trade_date>="{startDate}" and trade_date<="{endDate}"')
+    dfa = pd.read_sql(sql, engine)
+    dfa.rename(columns={'pe_ttm': 'ttmpea', 'trade_date': 'date'}, inplace=True)
+    dfa.set_index('date', inplace=True)
+    # print(dfa)
+
+    sql = (f'select trade_date, pe_ttm'
+           f' from daily_basic where ts_code="{ts_codeb}"'
+           f' and trade_date>="{startDate}" and trade_date<="{endDate}"')
+    dfb = pd.read_sql(sql, engine)
+    dfb.rename(columns={'pe_ttm': 'ttmpeb', 'trade_date': 'date'}, inplace=True)
+    dfb.set_index('date', inplace=True)
+    # print(dfb)
+
+    df = pd.merge(dfa, dfb, left_index=True, right_index=True)
+    # print(df)
     cnt = len(df)
     trainCnt = int(cnt * .8)
     xTrain = np.array(df.ttmpea.to_list()[:trainCnt])
@@ -151,19 +282,12 @@ def findPairs(ts_codea, ts_codeb, startDate='20090101', endDate='20191231'):
 
     regr = linear_model.LinearRegression()
     regr.fit(xTrain, yTrain)
+    intercept = regr.intercept_
+    coef = regr.coef_[0]
     # print('截距 regr.intercept_:', regr.intercept_)
     # print('系数 regr.coef_:', regr.coef_)
-    x1 = int(min(df.ttmpea))
-    x2 = int(max(df.ttmpea) + 1)
-    X = [x1, x2]
-    y1 = regr.intercept_ + x1 * regr.coef_[0]
-    y2 = regr.intercept_ + x2 * regr.coef_[0]
-    Y = [y1, y2]
-    ax2.plot(X, Y, color='r')
-    # print('X:', X)
-    # print('Y:', Y)
-
-    plt.show()
+    if plot:
+        plotPairs(df, intercept, coef)
 
     # 使用测试集进行评分
     yPredict = regr.predict(xTest)
@@ -172,86 +296,86 @@ def findPairs(ts_codea, ts_codeb, startDate='20090101', endDate='20191231'):
     return score
 
 
-def findPairs1(ts_codea, ts_codeb, startDate='20090101', endDate='20191231'):
-    """两支股票的TTMPE是否存在协整关系
-    时间区间为20090101至20191231
-    1.两只股票TTMPE的折线图
-    2.两只股票TTMPE的散点图
-    3.两只股票的线性回归
-    4.根据线性回归结果计算残差，返回残差的ADF检验结果
-    """
-    sql = (f'select date, ttmpe from klinestock where ts_code="{ts_codea}"'
-           f' and date>="{startDate}" and date<="{endDate}"')
-    dfa = pd.read_sql(sql, engine)
-    dfa.rename(columns={'ttmpe': 'ttmpea'}, inplace=True)
-    dfa.set_index('date', inplace=True)
-    # print(dfa)
-
-    sql = (f'select date, ttmpe from klinestock where ts_code="{ts_codeb}"'
-           f' and date>="{startDate}" and date<="{endDate}"')
-    dfb = pd.read_sql(sql, engine)
-    dfb.rename(columns={'ttmpe': 'ttmpeb'}, inplace=True)
-    dfb.set_index('date', inplace=True)
-    # print(dfb)
-
-    df = pd.merge(dfa, dfb, left_index=True, right_index=True)
-    # print(df)
-
-    """
-    fig = plt.figure(figsize=(10, 5))
-    gs = gridspec.GridSpec(1, 2)
-    ax1 = plt.subplot(gs[0, 0])
-    ax2 = plt.subplot(gs[0, 1])
-    # 绘制拆线图
-    ax1.plot(dfa.index, dfa.ttmpea, color='blue', label=ts_codea)
-    ax1.plot(dfb.index, dfb.ttmpeb, color='yellow', label=ts_codeb)
-    ax1.legend()
-    # 设置X轴的刻度间隔
-    # 可选:YearLocator,年刻度; MonthLocator,月刻度; DayLocator,日刻度
-    ax1.xaxis.set_major_locator(YearLocator())
-    # 设置X轴主刻度的显示格式
-    ax1.xaxis.set_major_formatter(DateFormatter('%Y'))
-    # 设置鼠标悬停时，在左下显示的日期格式
-    ax1.fmt_xdata = mdates.DateFormatter('%Y-%m-%d')
-    # 自动调整X轴标签角度
-    fig.autofmt_xdate()
-
-    # 绘制散点图
-    ax2.scatter(df.ttmpea, df.ttmpeb)
-
-    plt.grid(True)
-    """
-
-    cnt = len(df)
-    trainCnt = int(cnt * .8)
-    xTrain = np.array(df.ttmpea.to_list()[:trainCnt])
-    xTrain = xTrain[:, np.newaxis]
-    xTest = np.array(df.ttmpea.to_list()[trainCnt:])
-    xTest = xTest[:, np.newaxis]
-    yTrain = df.ttmpeb.to_list()[:trainCnt]
-    yTest = df.ttmpeb.to_list()[trainCnt:]
-
-    regr = linear_model.LinearRegression()
-    regr.fit(xTrain, yTrain)
-    # print('截距 regr.intercept_:', regr.intercept_)
-    # print('系数 regr.coef_:', regr.coef_)
-    x1 = int(min(df.ttmpea))
-    x2 = int(max(df.ttmpea) + 1)
-    X = [x1, x2]
-    y1 = regr.intercept_ + x1 * regr.coef_[0]
-    y2 = regr.intercept_ + x2 * regr.coef_[0]
-    Y = [y1, y2]
-    # ax2.plot(X, Y, color='r')
-    # print('X:', X)
-    # print('Y:', Y)
-
-    # plt.show()
-
-    # 使用测试集进行评分
-    yPredict = regr.predict(xTest)
-    score = r2_score(yTest, yPredict)
-    # print('score:', score)
-    return score
+# def findPairs1(ts_codea, ts_codeb, startDate='20090101', endDate='20191231'):
+#     """两支股票的TTMPE是否存在协整关系
+#     时间区间为20090101至20191231
+#     1.两只股票TTMPE的折线图
+#     2.两只股票TTMPE的散点图
+#     3.两只股票的线性回归
+#     4.根据线性回归结果计算残差，返回残差的ADF检验结果
+#     """
+#     sql = (f'select date, ttmpe from klinestock where ts_code="{ts_codea}"'
+#            f' and date>="{startDate}" and date<="{endDate}"')
+#     dfa = pd.read_sql(sql, engine)
+#     dfa.rename(columns={'ttmpe': 'ttmpea'}, inplace=True)
+#     dfa.set_index('date', inplace=True)
+#     # print(dfa)
+#
+#     sql = (f'select date, ttmpe from klinestock where ts_code="{ts_codeb}"'
+#            f' and date>="{startDate}" and date<="{endDate}"')
+#     dfb = pd.read_sql(sql, engine)
+#     dfb.rename(columns={'ttmpe': 'ttmpeb'}, inplace=True)
+#     dfb.set_index('date', inplace=True)
+#     # print(dfb)
+#
+#     df = pd.merge(dfa, dfb, left_index=True, right_index=True)
+#     # print(df)
+#
+#     """
+#     fig = plt.figure(figsize=(10, 5))
+#     gs = gridspec.GridSpec(1, 2)
+#     ax1 = plt.subplot(gs[0, 0])
+#     ax2 = plt.subplot(gs[0, 1])
+#     # 绘制拆线图
+#     ax1.plot(dfa.index, dfa.ttmpea, color='blue', label=ts_codea)
+#     ax1.plot(dfb.index, dfb.ttmpeb, color='yellow', label=ts_codeb)
+#     ax1.legend()
+#     # 设置X轴的刻度间隔
+#     # 可选:YearLocator,年刻度; MonthLocator,月刻度; DayLocator,日刻度
+#     ax1.xaxis.set_major_locator(YearLocator())
+#     # 设置X轴主刻度的显示格式
+#     ax1.xaxis.set_major_formatter(DateFormatter('%Y'))
+#     # 设置鼠标悬停时，在左下显示的日期格式
+#     ax1.fmt_xdata = mdates.DateFormatter('%Y-%m-%d')
+#     # 自动调整X轴标签角度
+#     fig.autofmt_xdate()
+#
+#     # 绘制散点图
+#     ax2.scatter(df.ttmpea, df.ttmpeb)
+#
+#     plt.grid(True)
+#     """
+#
+#     cnt = len(df)
+#     trainCnt = int(cnt * .8)
+#     xTrain = np.array(df.ttmpea.to_list()[:trainCnt])
+#     xTrain = xTrain[:, np.newaxis]
+#     xTest = np.array(df.ttmpea.to_list()[trainCnt:])
+#     xTest = xTest[:, np.newaxis]
+#     yTrain = df.ttmpeb.to_list()[:trainCnt]
+#     yTest = df.ttmpeb.to_list()[trainCnt:]
+#
+#     regr = linear_model.LinearRegression()
+#     regr.fit(xTrain, yTrain)
+#     # print('截距 regr.intercept_:', regr.intercept_)
+#     # print('系数 regr.coef_:', regr.coef_)
+#     x1 = int(min(df.ttmpea))
+#     x2 = int(max(df.ttmpea) + 1)
+#     X = [x1, x2]
+#     y1 = regr.intercept_ + x1 * regr.coef_[0]
+#     y2 = regr.intercept_ + x2 * regr.coef_[0]
+#     Y = [y1, y2]
+#     # ax2.plot(X, Y, color='r')
+#     # print('X:', X)
+#     # print('Y:', Y)
+#
+#     # plt.show()
+#
+#     # 使用测试集进行评分
+#     yPredict = regr.predict(xTest)
+#     score = r2_score(yTest, yPredict)
+#     # print('score:', score)
+#     return score
 
 
 def diabetesTest():
@@ -324,7 +448,7 @@ def linearAll():
             ts_codeb = codeList[j]
             print(f'第{cnt}个，共{total}个：', ts_codea, ts_codeb)
             try:
-                result = findPairs1(ts_codea, ts_codeb)
+                result = findPairs(ts_codea, ts_codeb)
             except Exception as e:
                 print(f'ERROR {ts_codea}-{ts_codeb}:', e)
                 errorList.append(f'ERROR {ts_codea}-{ts_codeb}: {e}')
@@ -350,16 +474,8 @@ def linearAll():
     f.close()
 
 
-if __name__ == '__main__':
-    pass
-    ts_codea = '601985'
-    ts_codeb = '600170'
-    startDate = '20140101'
-    endDate = '20191231'
-    # findPairs(ts_codea, ts_codeb, startDate=startDate)
-    # linearAll()
-    # diabetesTest()
-
+def linearProfits():
+    """一定时期利润进行线性回归"""
     fig = plt.figure(figsize=(10, 10))
     stocks = readStockList()
     # stocks = stocks[455 + 1398:]
@@ -371,8 +487,8 @@ if __name__ == '__main__':
     cur = 1
     for ts_code in stocks.ts_code:
         # ts_code = '002161.SZ'
-        _intercept, _coef, cha = linearRegressionTest(ts_code, startQuarter,
-                                                      fig)
+        _intercept, _coef, cha = _linearProfits(ts_code, startQuarter,
+                                                fig)
         if _intercept is not None:
             print(f'{cur}/{cnt} {ts_code} 截距: {round(_intercept, 2)}'
                   f' 系数: {round(_coef, 2)}'
@@ -388,3 +504,17 @@ if __name__ == '__main__':
     stocks['coef'] = coef
     stocks['cha'] = chas
     stocks.to_excel('../data/profits_linear_regression.xlsx')
+
+
+if __name__ == '__main__':
+    pass
+    ts_codea = '601985'
+    ts_codeb = '600170'
+    startDate = '20140101'
+    endDate = '20191231'
+    # findPairs(ts_codea, ts_codeb, startDate=startDate)
+    # linearAll()
+    # diabetesTest()
+
+    linearProfitInc()
+
