@@ -5,69 +5,128 @@ Created on Mon Mar 25 10:22:14 2019
 @author: ff
 """
 
-import pandas as pd
-import sqlrw
-import baostock as bs
+from os import path
+import datetime as dt
+import sys
 
-def histTTMPETrend(ts_code, histLen=1000):
-    """返回某股票PE水平
-    histLen为参照时间长度，如当前TTMPE与前1000个交易日的TTMPE比较
-    取值0-100
-    为0时表示当前TTMPE处于历史最低位
-    为100时表示当前TTMPE处于历史最高位
-    """
-#    添加一列记录pe1000
-#    遍历1001至2000号记录， 计算每一天的pe1000
-#    写入pe1000
-#    ttmpe1.iat[0, 0] = 10
-    
-#    绘图， 调整双坐标系
-    ts_code = '000651'
-    ttmpe = sqlrw.readTTMPE(ts_code)
-#    ttmpe = ttmpe[-15:]
-    ttmpe = ttmpe.set_index('date')
-    ttmpe['pe1000'] = 0
-#    print(ttmpe)
-    
-#    histLen = 10
-    for cur in range(histLen, len(ttmpe)):
-        begin = cur - histLen
-        tmp = ttmpe[begin:cur]
-        tmp = tmp[tmp.ttmpe <= ttmpe.iloc[cur, 0]]
-#        print('-----------------')
-#        print(tmp)
-#        print('cur ttmpe: %d' % ttmpe.iloc[cur, 0])
-#        print(begin, cur, len(tmp))
-        ttmpe.iloc[cur, 1] = len(tmp) / histLen * 100
-    
-    return ttmpe
-        
-def downHFQ(ts_code):
-    lg = bs.login()
-    print 
-    if lg.error_code != '0':
-        return None
-    if ts_code[0] == "6":
-        ts_code = "sh." + ts_code
-    else:
-        ts_code = "sz." + ts_code
-        
-    rs =  bs.query_history_k_data_plus(ts_code,
-    "date,close",
-    frequency="d", adjustflag="3")
-    reList = []
-    while rs.next():
-        reList.append(rs.get_row_data())
-    result = pd.DataFrame(reList, columns=rs.fields)
-    result = result.set_index('date')
-    bs.logout()
-    return result
-        
+import backtrader as bt
+import pandas as pd
+
+from sqlconn import engine
+from sqlrw import readStockKline
+
+
+class TestStrategy(bt.Strategy):
+    """交易策略"""
+    # 设置类参数， exitbars最大持有期
+    params = (('exitbars', 5),)
+
+    def __init__(self):
+        self.dataclose = self.datas[0].close
+        # self.datape200 = self.datas[0].pe200
+        # self.datape1000 = self.datas[0].pe1000
+
+        self.order = None
+        self.buyprice = None
+        self.buycomm = None
+
+    def notify_order(self, order):
+        # 交易指令状态为submitted，accepted时不做任何操作
+        if order.status in [order.Submitted, order.Accepted]:
+            return
+
+        # 交易指令状态为completed时执行交易
+        if order.status in [order.Completed]:
+            if order.isbuy():
+                self.log(f'BUY EXECUTED, price: {order.executed.price:.2f}'
+                         f' cost: {order.executed.value:.2f}'
+                         f' comm: {order.executed.comm:.2f}')
+                self.buyprice = order.executed.price
+                self.buycomm = order.executed.comm
+            elif order.issell():
+                self.log(f'SELL EXECUTED, price: {order.executed.price:.2f}'
+                         f' cost: {order.executed.value:.2f}'
+                         f' comm: {order.executed.comm:.2f}')
+
+            self.bar_executed = len(self)
+        elif order.status in [order.Canceled, order.Margin, order.Rejected]:
+            self.log(f'Order Canceled/Margin/Rejected')
+
+        self.order = None
+
+    def log(self, txt, dt=None):
+        """记录交易过程"""
+        dt = dt or self.datas[0].datetime.date(0)
+        print(f'{dt} {txt}')
+
+    def notify_trade(self, trade):
+        if not trade.isclosed:
+            return
+
+        self.log(f'OPERATION PROFIT, GROSS {trade.pnl:.2f},'
+        f' NET {trade.pnlcomm:.2f}')
+
+    def next(self):
+        self.log(f'close: {self.dataclose[0]}')
+        # self.log(f'close: {self.dataclose[0]}, pe200: {self.datape200[0]}'
+        #          f' pe1000: {self.datape1000[0]}')
+
+        if self.order:
+            return
+
+        # 检查是否开市
+        if not self.position:
+            # 开市前执行买入
+            if (self.dataclose[0] < self.dataclose[-1]
+                and self.dataclose[-1] < self.dataclose[-2]):
+                self.log(f'buy stock close {self.dataclose[0]}')
+                # 追踪交易指令，避免发送重复指令
+                self.order = self.buy()
+
+        else:
+            # 开市后执行卖出
+            if len(self) >= self.bar_executed + self.params.exitbars:
+                self.log(f'SELL STOCK, {self.dataclose[0]}')
+                # 追踪交易指令，避免发送重复指令
+                self.order = self.sell()
+
+
+def getData(ts_code, startDate):
+    df = readStockKline(ts_code, startDate=startDate)
+    df.set_index(keys='date', inplace=True)
+    sql = (f'select date, pe200, pe1000 from valuation'
+           f' where ts_code="{ts_code}" and date>="{startDate}"')
+    dfpe = pd.read_sql(sql, engine)
+    dfpe.date = pd.to_datetime(dfpe.date)
+    dfpe = dfpe.set_index('date')
+    dfpe.rename(columns={'pe200': 'volume'})
+    df = pd.merge(df, dfpe, how='left', left_index=True, right_index=True)
+    return df
+
+
 if __name__ == '__main__':
-    ts_code = '000651'
-    histLen = 200
-    ttmpe = histTTMPETrend(ts_code, histLen)
-    print(ttmpe)
-    
-    # histClose = downHFQ(ts_code)
-    
+    ts_code = '000651.SZ'
+    startDate = '20180101'
+    cerebro = bt.Cerebro()
+
+    modpath = path.dirname(path.abspath(sys.argv[0]))
+    datapath = path.join(modpath, '../data/test.csv')
+
+    df = getData(ts_code, startDate)
+    print(df.head())
+    data = bt.feeds.PandasData(dataname=df)
+    # 添加数据
+    cerebro.adddata(data)
+    # 添加交易策略
+    cerebro.addstrategy(TestStrategy)
+    # 设置初始资金
+    cerebro.broker.set_cash(100000)
+    # 设置固定交易股数
+    cerebro.addsizer(bt.sizers.FixedSize, stake=10)
+    # 设置交易费率，0.001=0.1%
+    cerebro.broker.setcommission(commission=0.001)
+
+    print(f'开始回测:资金{cerebro.broker.get_value():.2f}')
+    cerebro.run()
+    print(f'回测结束:资金{cerebro.broker.get_value():.2f}')
+    # cerebro.plot()

@@ -141,13 +141,14 @@ def plotKlineStock(ID, days):
     :param days:
     :return:
     """
-    sql = (f'select a.trade_date, a.open, a.high, a.low, a.close, b.ttmpe '
-           f'from daily a, daily_basic b '
-           f'where a.ts_code="{ID}" and a.ts_code=b.ts_code '
-           f'and a.trade_date=b.trade_date'
-           f'order by date desc limit {days};')
-    df = pd.read_sql(sql, engine)
-    print(df.head())
+    # sql = (f'select a.trade_date, a.open, a.high, a.low, a.close, b.pe_ttm '
+    #        f' from daily a, daily_basic b '
+    #        f' where a.ts_code="{ID}" and a.ts_code=b.ts_code '
+    #        f' and a.trade_date=b.trade_date'
+    #        f' order by date desc limit {days};')
+    # df = pd.read_sql(sql, engine)
+    df = readStockKline(ts_code=ID, days=days)
+    # print(df.head())
     bokehplot = BokehPlot(ID, df)
     return bokehplot.plot()
 
@@ -351,6 +352,7 @@ class BokehPlot:
     """
 
     def __init__(self, ID, df):
+        df['date'] = [i.strftime('%Y%m%d') for i in df.date]
         self.df = df
         days = df.shape[0]
         self.source = ColumnDataSource(self.df)

@@ -797,7 +797,7 @@ def readLastTTMProfit(ts_code, limit=1, date=None):
     return result
 
 
-def readStockKlineDf(ts_code, days):
+def del_readStockKlineDf(ts_code, days):
     sql = ('select date, open, high, low, close, ttmpe '
            'from klinestock where ts_code="%(ts_code)s" '
            'order by date desc limit %(days)s;' % locals())
@@ -1470,7 +1470,7 @@ def getStockName(ts_code):
         return None
 
 
-def readStockKline(ts_code, days):
+def readStockKline(ts_code, startDate=None, endDate=None, days=0):
     """
     读取股票K线数据
     :param ts_code: str, 6位股票代码
@@ -1484,9 +1484,14 @@ def readStockKline(ts_code, days):
                             'pe': peList})
     """
     sql = (f'select a.trade_date, a.open, a.high, a.low, a.close, b.pe_ttm'
-           f' from daily a, daily_basic b where a.ts_code="{ts_code}" '
-           f' and a.ts_code=b.ts_code and a.trade_date=b.trade_date'
-           f' order by a.trade_date desc limit {days};')
+           f' from daily a, daily_basic b where a.ts_code="{ts_code}" ')
+    if startDate is not None:
+        sql += f' and a.trade_date>="{startDate}"'
+    if endDate is not None:
+        sql += f' and a.trade_date<="{endDate}"'
+    sql += f' and a.ts_code=b.ts_code and a.trade_date=b.trade_date'
+    if days != 0:
+        sql += f' order by a.trade_date desc limit {days}'
     return _readKline(sql)
 
 
@@ -1509,43 +1514,51 @@ def readIndexKline(index_code, days):
            f' where a.ts_code="{index_code}" and a.ts_code=b.ts_code '
            f' and a.trade_date=b.trade_date'
            f' order by trade_date desc limit {days};')
-    df = pd.read_sql(sql, engine)
-    df.rename(columns={'pe_ttm': 'pe'}, inplace=True)
-    df['date'] = df.trade_date.apply(lambda x: x.strftime('%Y%m%d'))
-    df.sort_values(by='date', inplace=True)
-    df.set_index(keys='date', inplace=True)
-    df.reset_index(inplace=True)
+    df = _readKline(sql)
+    # df = pd.read_sql(sql, engine)
+    # df.rename(columns={'pe_ttm': 'pe'}, inplace=True)
+    # df['date'] = df.trade_date.apply(lambda x: x.strftime('%Y%m%d'))
+    # df.sort_values(by='date', inplace=True)
+    # df.set_index(keys='date', inplace=True)
+    # df.reset_index(inplace=True)
     # df.sort_values(by='trade_date', inplace=True)
     return df
 
 
 def _readKline(sql):
-    result = engine.execute(sql).fetchall()
-    stockDatas = [i for i in reversed(result)]
-    # klineDatas = []
-    dateList = []
-    openList = []
-    closeList = []
-    highList = []
-    lowList = []
-    peList = []
-    indexes = list(range(len(result)))
-    for i in indexes:
-        date, _open, high, low, close, ttmpe = stockDatas[i]
-        dateList.append(date.strftime("%Y-%m-%d"))
-        # QuarterList.append(date)
-        openList.append(_open)
-        closeList.append(close)
-        highList.append(high)
-        lowList.append(low)
-        peList.append(ttmpe)
-    klineDf = pd.DataFrame({'date': dateList,
-                            'open': openList,
-                            'close': closeList,
-                            'high': highList,
-                            'low': lowList,
-                            'pe': peList})
-    return klineDf
+    df = pd.read_sql(sql, engine)
+    df.rename(columns={'trade_date': 'date', 'pe_ttm': 'pe'}, inplace=True)
+    df.date = pd.to_datetime(df.date)
+    df = df.set_index('date')
+    df = df.sort_index()
+    df = df.reset_index()
+    return df
+    # result = engine.execute(sql).fetchall()
+    # stockDatas = [i for i in reversed(result)]
+    # # klineDatas = []
+    # dateList = []
+    # openList = []
+    # closeList = []
+    # highList = []
+    # lowList = []
+    # peList = []
+    # indexes = list(range(len(result)))
+    # for i in indexes:
+    #     date, _open, high, low, close, ttmpe = stockDatas[i]
+    #     dateList.append(date.strftime("%Y-%m-%d"))
+    #     # QuarterList.append(date)
+    #     openList.append(_open)
+    #     closeList.append(close)
+    #     highList.append(high)
+    #     lowList.append(low)
+    #     peList.append(ttmpe)
+    # klineDf = pd.DataFrame({'date': dateList,
+    #                         'open': openList,
+    #                         'close': closeList,
+    #                         'high': highList,
+    #                         'low': lowList,
+    #                         'pe': peList})
+    # return klineDf
 
 
 if __name__ == '__main__':
