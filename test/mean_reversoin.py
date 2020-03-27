@@ -240,8 +240,9 @@ def adfTestAllPE(stockList, startDate, endDate, plotFlag):
                        'cvalue10': cvalue10s,
                        'flag': flags
                        })
-    nameDf = pd.DataFrame(readStockListFromSQL(), columns=['id', 'name'])
-    df = pd.merge(df, nameDf, left_on='ts_code', right_on='id')
+    nameDf = readStockList()
+    # nameDf = pd.DataFrame(readStockListFromSQL(), columns=['id', 'name'])
+    df = pd.merge(df, nameDf, left_on='ts_code', right_on='ts_code')
     df.to_excel('adf_pe.xlsx')
     # print(df)
 

@@ -19,16 +19,29 @@ from sqlrw import readStockKline
 class TestStrategy(bt.Strategy):
     """交易策略"""
     # 设置类参数， exitbars最大持有期
-    params = (('exitbars', 5),)
+    params = (('maperiod', 15), ('printlog', False))
 
     def __init__(self):
         self.dataclose = self.datas[0].close
+        self.datavolume = self.datas[0].volume
         # self.datape200 = self.datas[0].pe200
         # self.datape1000 = self.datas[0].pe1000
 
         self.order = None
         self.buyprice = None
         self.buycomm = None
+
+        # 添加移动平均指标
+        self.sma = bt.indicators.SimpleMovingAverage(self.datas[0],
+                                                     period=self.params.maperiod)
+
+        # bt.indicators.ExponentialMovingAverage(self.datas[0], period=25)
+        # bt.indicators.WeightedMovingAverage(self.datas[0], period=25)
+        # bt.indicators.StochasticSlow(self.datas[0])
+        # bt.indicators.MACDHisto(self.datas[0])
+        # rsi = bt.indicators.RSI(self.datas[0])
+        # bt.indicators.SmoothedMovingAverage(self.datas[0])
+        # bt.indicators.ATR(self.datas[0], plot=False)
 
     def notify_order(self, order):
         # 交易指令状态为submitted，accepted时不做任何操作
@@ -54,17 +67,18 @@ class TestStrategy(bt.Strategy):
 
         self.order = None
 
-    def log(self, txt, dt=None):
+    def log(self, txt, dt=None, doprint=False):
         """记录交易过程"""
-        dt = dt or self.datas[0].datetime.date(0)
-        print(f'{dt} {txt}')
+        if self.params.printlog or doprint:
+            dt = dt or self.datas[0].datetime.date(0)
+            print(f'{dt} {txt}')
 
     def notify_trade(self, trade):
         if not trade.isclosed:
             return
 
         self.log(f'OPERATION PROFIT, GROSS {trade.pnl:.2f},'
-        f' NET {trade.pnlcomm:.2f}')
+                 f' NET {trade.pnlcomm:.2f}')
 
     def next(self):
         self.log(f'close: {self.dataclose[0]}')
@@ -77,18 +91,28 @@ class TestStrategy(bt.Strategy):
         # 检查是否开市
         if not self.position:
             # 开市前执行买入
-            if (self.dataclose[0] < self.dataclose[-1]
-                and self.dataclose[-1] < self.dataclose[-2]):
+            # if (self.dataclose[0] < self.dataclose[-1]
+            #     and self.dataclose[-1] < self.dataclose[-2]):
+            if self.dataclose[0] < self.sma[0]:
+                # if self.datavolume[0] < 5:
                 self.log(f'buy stock close {self.dataclose[0]}')
                 # 追踪交易指令，避免发送重复指令
                 self.order = self.buy()
 
         else:
             # 开市后执行卖出
-            if len(self) >= self.bar_executed + self.params.exitbars:
-                self.log(f'SELL STOCK, {self.dataclose[0]}')
+            # if len(self) >= self.bar_executed + self.params.exitbars:
+            #     self.log(f'SELL STOCK, {self.dataclose[0]}')
+            if self.dataclose[0] > self.sma[0]:
+                # if self.datavolume[0] > 95:
                 # 追踪交易指令，避免发送重复指令
                 self.order = self.sell()
+
+    def stop(self):
+        # print('stop')
+        txt = (f'(MA period {self.params.maperiod})'
+               f' Ending Value {self.broker.getvalue()}')
+        self.log(txt, doprint = True)
 
 
 def getData(ts_code, startDate):
@@ -99,10 +123,9 @@ def getData(ts_code, startDate):
     dfpe = pd.read_sql(sql, engine)
     dfpe.date = pd.to_datetime(dfpe.date)
     dfpe = dfpe.set_index('date')
-    dfpe.rename(columns={'pe200': 'volume'})
+    dfpe.rename(columns={'pe200': 'volume'}, inplace=True)
     df = pd.merge(df, dfpe, how='left', left_index=True, right_index=True)
     return df
-
 
 if __name__ == '__main__':
     ts_code = '000651.SZ'
@@ -113,20 +136,22 @@ if __name__ == '__main__':
     datapath = path.join(modpath, '../data/test.csv')
 
     df = getData(ts_code, startDate)
-    print(df.head())
+    # print(df.head())
     data = bt.feeds.PandasData(dataname=df)
     # 添加数据
     cerebro.adddata(data)
     # 添加交易策略
-    cerebro.addstrategy(TestStrategy)
+    # cerebro.addstrategy(TestStrategy)
+    strats = cerebro.optstrategy(TestStrategy, maperiod=range(10, 31))
+    # cerebro.addstrategy(strats)
     # 设置初始资金
     cerebro.broker.set_cash(100000)
     # 设置固定交易股数
-    cerebro.addsizer(bt.sizers.FixedSize, stake=10)
+    cerebro.addsizer(bt.sizers.FixedSize, stake=1000)
     # 设置交易费率，0.001=0.1%
     cerebro.broker.setcommission(commission=0.001)
 
     print(f'开始回测:资金{cerebro.broker.get_value():.2f}')
     cerebro.run()
     print(f'回测结束:资金{cerebro.broker.get_value():.2f}')
-    # cerebro.plot()
+    # cerebro.plot(valume=False, valumes=False, volabel=False)
