@@ -11,7 +11,7 @@ import logging
 import zipfile
 import socket
 from urllib import request
-from requests.exceptions import ConnectTimeout
+from requests.exceptions import ConnectTimeout, ReadTimeout
 import time
 import re
 
@@ -160,7 +160,7 @@ class DownloaderMisc:
                 time.sleep(sleeptime)
             try:
                 result = fun(**kwargs)
-            except(socket.timeout, ConnectTimeout):
+            except(socket.timeout, ConnectTimeout, ReadTimeout):
                 logging.warning(f'downloader timeout: {table}')
             else:
                 return result
@@ -184,7 +184,8 @@ def _run(self, fun, **kwargs):
             time.sleep(sleeptime)
         try:
             result = fun(**kwargs)
-        except socket.timeout:
+        except(socket.timeout, ConnectTimeout, ReadTimeout):
+        # except socket.timeout:
             logging.warning('downloader timeout:', fun.__name__)
         else:
             break
