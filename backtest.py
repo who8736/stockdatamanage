@@ -25,8 +25,10 @@ class PandasData(bt.feeds.PandasData):
 
 
 class MySizer(bt.Sizer):
-
-    params = (('test', 0),)
+    """
+    ratio: float, 首次仓位比率，1：首次全仓买入， 0.5：首次半仓买入
+    """
+    params = (('ratio', 1),)
 
     def __init__(self):
         pass
@@ -41,7 +43,7 @@ class MySizer(bt.Sizer):
         # print('-' * 80)
         if isbuy:
             if position.size == 0:
-                size = cash // 2 // data[0] // 100 * 100
+                size = cash * self.params.ratio // data[0] // 100 * 100
             else:
                 size = cash // data[0] // 100 * 100
             return size
@@ -421,7 +423,8 @@ def getData(ts_code, startDate=None, endDate=None):
 
 
 def runstrat():
-    ts_code = '000651.SZ'
+    # ts_code = '000651.SZ'
+    ts_code = '000002.SZ'
     startDate = '20100101'
     endDate = '20191231'
     cerebro = bt.Cerebro()
@@ -437,27 +440,27 @@ def runstrat():
     # 添加数据
     cerebro.adddata(data)
     # 添加交易策略
-    # cerebro.addstrategy(TestStrategy)
-    # kwargs = dict(maperiod=27,
-    #               ssa_window=27,
-    # kwargs = dict(maperiod=1,
-    #               ssa_window=1,
-    #               ts_code='000651.SZ',
-    #               startDate=startDate,
-    #               endDate=endDate,
-    #               pe200buy=5,
-    #               pe200sell=95,
-    #               pe1000buy=20,
-    #               pe1000sell=95)
+    # 单进程
     kwargs = dict(maperiod=1,
                   ssa_window=1,
                   ts_code='000651.SZ',
                   startDate=startDate,
-                  endDate=endDate, )
-    # cerebro.addstrategy(TestStrategy, **kwargs)
-    strats = cerebro.optstrategy(TestStrategy, pe1000buy=range(0, 20),
-                                 pe1000sell=range(80, 100),
-                                 **kwargs)
+                  endDate=endDate,
+                  pe200buy=5,
+                  pe200sell=95,
+                  pe1000buy=10,
+                  pe1000sell=90)
+    cerebro.addstrategy(TestStrategy, **kwargs)
+
+    # 多进程，用于参数优化
+    # kwargs = dict(maperiod=1,
+    #               ssa_window=1,
+    #               ts_code='000651.SZ',
+    #               startDate=startDate,
+    #               endDate=endDate, )
+    # strats = cerebro.optstrategy(TestStrategy, pe1000buy=range(0, 20),
+    #                              pe1000sell=range(80, 100),
+    #                              **kwargs)
     # cerebro.addstrategy(strats)
     # 设置初始资金
     cerebro.broker.set_cash(100000)
@@ -470,18 +473,20 @@ def runstrat():
     cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name='SharpeRatio')
     cerebro.addanalyzer(bt.analyzers.DrawDown, _name='DW')
 
-    # print(f'开始回测:资金{cerebro.broker.get_value():.2f}')
+    print(f'开始回测:资金{cerebro.broker.get_value():.2f}')
     result = cerebro.run()
     print(f'回测结束:资金{cerebro.broker.get_value():.2f}')
-    # strat = result[0]
-    # sharpe = strat.analyzers.SharpeRatio.get_analysis()["sharperatio"]
-    # if sharpe is not None:
-    #     print(f'夏普比率: {sharpe:.2f}')
-    # else:
-    #     print(f'夏普比率: {sharpe}')
-    # dw = strat.analyzers.DW.get_analysis()['max']['drawdown']
-    # print(f'DW: {dw:.2f}')
-    # cerebro.plot(volume=False, volabel=False)
+
+    # 回测结果评价
+    strat = result[0]
+    sharpe = strat.analyzers.SharpeRatio.get_analysis()["sharperatio"]
+    if sharpe is not None:
+        print(f'夏普比率: {sharpe:.2f}')
+    else:
+        print(f'夏普比率: {sharpe}')
+    dw = strat.analyzers.DW.get_analysis()['max']['drawdown']
+    print(f'DW: {dw:.2f}')
+    cerebro.plot(volume=False, volabel=False)
 
 
 if __name__ == '__main__':
