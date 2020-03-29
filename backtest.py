@@ -424,7 +424,8 @@ def getData(ts_code, startDate=None, endDate=None):
 
 def runstrat():
     # ts_code = '000651.SZ'
-    ts_code = '000002.SZ'
+    # ts_code = '000002.SZ'
+    ts_code = '600036.SH'
     startDate = '20100101'
     endDate = '20191231'
     cerebro = bt.Cerebro()
