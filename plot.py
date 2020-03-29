@@ -18,6 +18,8 @@ import mplfinance as mpf
 import matplotlib.gridspec as gs  # @IgnorePep8
 from matplotlib.dates import DateFormatter, MonthLocator  # @IgnorePep8
 from matplotlib.ticker import FixedLocator  # @IgnorePep8
+# 三维图需引用下面这句
+from mpl_toolkits.mplot3d import Axes3D
 import tushare  # @IgnorePep8
 from bokeh.plotting import figure, show, output_file
 from bokeh.layouts import column
