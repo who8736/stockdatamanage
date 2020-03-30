@@ -34,7 +34,7 @@ class Config:
     def __init__(self):
         self.cf = configparser.ConfigParser()
         if not os.path.isfile(CFILE):
-            self.initConfig()
+            # self.initConfig()
             print('请修改配置stockdata.conf后，重新运行程序')
             sys.exit(1)
         else:

@@ -62,6 +62,8 @@ class TestStrategy(bt.Strategy):
               ('ts_code', ''),
               ('startDate', None),
               ('endDate', None),
+              ('pebuy', 9),
+              ('pesell', 14),
               ('pe200buy', 5),
               ('pe200sell', 95),
               ('pe1000buy', 5),
@@ -250,7 +252,8 @@ class TestStrategy(bt.Strategy):
             # if self.dataclose[0] < self.sma[0]:
             # self.log(f'pe200:{self.datas[0].pe200[0]}')
             # if self.datas[0].pe1000 < 10 or self.datas[0].pe200 < 30:
-            if self.datas[0].pe1000 <= self.params.pe1000buy:
+            # if self.datas[0].pe1000 <= self.params.pe1000buy:
+            if self.datas[0].pe <= self.p.pebuy:
                 pass
                 # self.log(f'buy stock close {self.dataclose[0]}')
                 # 追踪交易指令，避免发送重复指令
@@ -279,7 +282,9 @@ class TestStrategy(bt.Strategy):
             # if self.datas[0].pe1000 > 90 or self.datas[0].pe200 > 60:
 
             # 补仓
-            if (self.datas[0].pe1000 <= self.params.pe1000buy
+            # if (self.datas[0].pe <= self.params.pe1000buy
+            #         and self.datas[0].close <= self.position.price * 0.8):
+            if (self.datas[0].pe <= self.p.pebuy
                     and self.datas[0].close <= self.position.price * 0.8):
                 pass
                 # self.log(f'buy stock close {self.dataclose[0]}')
@@ -287,7 +292,8 @@ class TestStrategy(bt.Strategy):
                 self.order = self.buy()
 
             # 卖出
-            if self.datas[0].pe1000 >= self.params.pe1000sell:
+            # if self.datas[0].pe1000 >= self.params.pe1000sell:
+            if self.datas[0].pe >= self.p.pesell:
                 # self.log(f'sell stock close {self.dataclose[0]}')
                 # 追踪交易指令，避免发送重复指令
                 # self.order = self.sell(size=self.position.size)
@@ -304,8 +310,11 @@ class TestStrategy(bt.Strategy):
 
     def stop(self):
         # print('stop')
-        txt = (f'(pe1000buy {self.params.pe1000buy})'
-               f'(pe1000sell {self.params.pe1000sell})'
+        # txt = (f'(pe1000buy {self.params.pe1000buy})'
+        #        f'(pe1000sell {self.params.pe1000sell})'
+        #        f' Ending Value {self.broker.getvalue():.2f}')
+        txt = (f'(pebuy {self.params.pebuy})'
+               f'(pesell {self.params.pesell})'
                f' Ending Value {self.broker.getvalue():.2f}')
         self.log(txt, doprint=True)
 
@@ -423,18 +432,25 @@ def getData(ts_code, startDate=None, endDate=None):
 
 
 def runstrat():
-    # ts_code = '000651.SZ'
+    ts_code = '000651.SZ'
     # ts_code = '000002.SZ'
-    ts_code = '600036.SH'
+    # ts_code = '600036.SH'
     startDate = '20100101'
     endDate = '20191231'
+    pe200buy = 10
+    pe200sell = 90
+    pe1000buy = 10
+    pe1000sell = 90
+    # 首次买入仓位， 1为全仓， 0.5为半仓
+    posratio = 1
+
     cerebro = bt.Cerebro()
 
     # modpath = path.dirname(path.abspath(sys.argv[0]))
     # datapath = path.join(modpath, '../data/test.csv')
     df = getData(ts_code, startDate, endDate)
     # df['volume'] = 1
-    # print(df.head())
+    print(df.head())
     # print(df.dtypes)
     kwargs = dict(pe=4, pe200=5, pe1000=6, volume=None)
     data = PandasData(dataname=df, **kwargs)
@@ -442,31 +458,36 @@ def runstrat():
     cerebro.adddata(data)
     # 添加交易策略
     # 单进程
+    # kwargs = dict(maperiod=1,
+    #               ssa_window=1,
+    #               ts_code=ts_code,
+    #               startDate=startDate,
+    #               endDate=endDate,
+    #               pebuy=9,
+    #               pesell=14,
+    #               pe200buy=pe200buy,
+    #               pe200sell=pe200sell,
+    #               pe1000buy=pe1000buy,
+    #               pe1000sell=pe1000sell)
+    # cerebro.addstrategy(TestStrategy, **kwargs)
+
+    # 多进程，用于参数优化
     kwargs = dict(maperiod=1,
                   ssa_window=1,
                   ts_code='000651.SZ',
                   startDate=startDate,
-                  endDate=endDate,
-                  pe200buy=5,
-                  pe200sell=95,
-                  pe1000buy=10,
-                  pe1000sell=90)
-    cerebro.addstrategy(TestStrategy, **kwargs)
-
-    # 多进程，用于参数优化
-    # kwargs = dict(maperiod=1,
-    #               ssa_window=1,
-    #               ts_code='000651.SZ',
-    #               startDate=startDate,
-    #               endDate=endDate, )
+                  endDate=endDate, )
+    kwargs['pebuy'] = range(7, 10)
+    kwargs['pesell'] = range(14, 20)
     # strats = cerebro.optstrategy(TestStrategy, pe1000buy=range(0, 20),
     #                              pe1000sell=range(80, 100),
     #                              **kwargs)
+    strats = cerebro.optstrategy(TestStrategy, **kwargs)
     # cerebro.addstrategy(strats)
     # 设置初始资金
     cerebro.broker.set_cash(100000)
     # 设置固定交易股数
-    cerebro.addsizer(MySizer)
+    cerebro.addsizer(MySizer, ratio=posratio)
     # cerebro.addsizer(bt.sizers.FixedSize, stake=1000)
     # 设置交易费率，0.001=0.1%
     cerebro.broker.setcommission(commission=0.001)
@@ -474,20 +495,20 @@ def runstrat():
     cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name='SharpeRatio')
     cerebro.addanalyzer(bt.analyzers.DrawDown, _name='DW')
 
-    print(f'开始回测:资金{cerebro.broker.get_value():.2f}')
+    # print(f'开始回测:资金{cerebro.broker.get_value():.2f}')
     result = cerebro.run()
-    print(f'回测结束:资金{cerebro.broker.get_value():.2f}')
+    # print(f'回测结束:资金{cerebro.broker.get_value():.2f}')
 
     # 回测结果评价
-    strat = result[0]
-    sharpe = strat.analyzers.SharpeRatio.get_analysis()["sharperatio"]
-    if sharpe is not None:
-        print(f'夏普比率: {sharpe:.2f}')
-    else:
-        print(f'夏普比率: {sharpe}')
-    dw = strat.analyzers.DW.get_analysis()['max']['drawdown']
-    print(f'DW: {dw:.2f}')
-    cerebro.plot(volume=False, volabel=False)
+    # strat = result[0]
+    # sharpe = strat.analyzers.SharpeRatio.get_analysis()["sharperatio"]
+    # if sharpe is not None:
+    #     print(f'夏普比率: {sharpe:.2f}')
+    # else:
+    #     print(f'夏普比率: {sharpe}')
+    # dw = strat.analyzers.DW.get_analysis()['max']['drawdown']
+    # print(f'DW: {dw:.2f}')
+    # cerebro.plot(volume=False, volabel=False)
 
 
 if __name__ == '__main__':
