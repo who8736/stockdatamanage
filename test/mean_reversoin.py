@@ -114,6 +114,7 @@ def adfTestProfitsInc(data):
     一个虚拟类，其结果作为属性附加
     """
     mean = np.mean(data)
+    std = np.std(data)
     result = adfuller(data)
     diffdata = np.diff(data)
     diffmean = np.mean(diffdata)
@@ -130,6 +131,8 @@ def adfTestProfitsInc(data):
                 and diffresult[1] < 0.05)
     # return (round(resultb[0], 2), round(resultb[1], 2), flag)
     resultdict = {'mean': mean,
+                  'std': std,
+                  'sharp': round(mean/std, 2),
                   'flag': flag,
                   'adf': result[0],
                   'pvalue': result[1],
@@ -150,7 +153,7 @@ def adfTestProfitsInc(data):
 def adfTestAllProfitsInc():
     """对所有股票2009年1季度至2020年1季度TTM利润增长率进行ADF检测"""
     # ts_code = '000651'
-    startDate = '20090331'
+    startDate = '20150331'
     endDate = '20200331'
     # adfTestProfits(ts_code, startDate, endDate)
 

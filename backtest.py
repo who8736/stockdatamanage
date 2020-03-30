@@ -442,7 +442,7 @@ def runstrat():
     pe1000buy = 10
     pe1000sell = 90
     # 首次买入仓位， 1为全仓， 0.5为半仓
-    posratio = 1
+    posratio = 0.8
 
     cerebro = bt.Cerebro()
 
@@ -458,31 +458,31 @@ def runstrat():
     cerebro.adddata(data)
     # 添加交易策略
     # 单进程
-    # kwargs = dict(maperiod=1,
-    #               ssa_window=1,
-    #               ts_code=ts_code,
-    #               startDate=startDate,
-    #               endDate=endDate,
-    #               pebuy=9,
-    #               pesell=14,
-    #               pe200buy=pe200buy,
-    #               pe200sell=pe200sell,
-    #               pe1000buy=pe1000buy,
-    #               pe1000sell=pe1000sell)
-    # cerebro.addstrategy(TestStrategy, **kwargs)
-
-    # 多进程，用于参数优化
     kwargs = dict(maperiod=1,
                   ssa_window=1,
-                  ts_code='000651.SZ',
+                  ts_code=ts_code,
                   startDate=startDate,
-                  endDate=endDate, )
-    kwargs['pebuy'] = range(7, 10)
-    kwargs['pesell'] = range(14, 20)
+                  endDate=endDate,
+                  pebuy=12,
+                  pesell=15,
+                  pe200buy=pe200buy,
+                  pe200sell=pe200sell,
+                  pe1000buy=pe1000buy,
+                  pe1000sell=pe1000sell)
+    cerebro.addstrategy(TestStrategy, **kwargs)
+
+    # 多进程，用于参数优化
+    # kwargs = dict(maperiod=1,
+    #               ssa_window=1,
+    #               ts_code='000651.SZ',
+    #               startDate=startDate,
+    #               endDate=endDate, )
+    # kwargs['pebuy'] = range(7, 14)
+    # kwargs['pesell'] = range(14, 20)
     # strats = cerebro.optstrategy(TestStrategy, pe1000buy=range(0, 20),
     #                              pe1000sell=range(80, 100),
     #                              **kwargs)
-    strats = cerebro.optstrategy(TestStrategy, **kwargs)
+    # strats = cerebro.optstrategy(TestStrategy, **kwargs)
     # cerebro.addstrategy(strats)
     # 设置初始资金
     cerebro.broker.set_cash(100000)
@@ -500,15 +500,15 @@ def runstrat():
     # print(f'回测结束:资金{cerebro.broker.get_value():.2f}')
 
     # 回测结果评价
-    # strat = result[0]
-    # sharpe = strat.analyzers.SharpeRatio.get_analysis()["sharperatio"]
-    # if sharpe is not None:
-    #     print(f'夏普比率: {sharpe:.2f}')
-    # else:
-    #     print(f'夏普比率: {sharpe}')
-    # dw = strat.analyzers.DW.get_analysis()['max']['drawdown']
-    # print(f'DW: {dw:.2f}')
-    # cerebro.plot(volume=False, volabel=False)
+    strat = result[0]
+    sharpe = strat.analyzers.SharpeRatio.get_analysis()["sharperatio"]
+    if sharpe is not None:
+        print(f'夏普比率: {sharpe:.2f}')
+    else:
+        print(f'夏普比率: {sharpe}')
+    dw = strat.analyzers.DW.get_analysis()['max']['drawdown']
+    print(f'DW: {dw:.2f}')
+    cerebro.plot(volume=False, volabel=False)
 
 
 if __name__ == '__main__':

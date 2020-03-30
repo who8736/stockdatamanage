@@ -39,7 +39,7 @@ class Config:
             sys.exit(1)
         else:
             self.readConfig()
-            self.saveConf()
+            # self.saveConf()
 
     def initConfig(self):
         """初始化配置文件，
