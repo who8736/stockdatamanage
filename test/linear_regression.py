@@ -68,8 +68,8 @@ def _linear(data, plot=False, title=None, filename=None):
     pass
     cnt = len(data)
     if cnt<10:
-        return (None, None, None)
-    x = np.array(range(cnt))
+        return None
+    x = np.array(range(1, cnt + 1))
     x = x[:, np.newaxis]
 
     # 拟合
@@ -79,15 +79,10 @@ def _linear(data, plot=False, title=None, filename=None):
     coef = regr.coef_[0]
     # print(f'截距:{intercept}, 系数:{coef}')
 
-    # 计算平均残差
+    # 计算r2
     Y = [intercept + i * coef for i in x]
-    try:
-        cha = sum(map(lambda a, b: abs(sqrt((a - b) ** 2) / a), y, Y)) / cnt
-    except ZeroDivisionError:
-        return (None, None, None)
-
-
-    return (intercept, coef, cha)
+    r2 = r2_score(data, Y)
+    return dict(intercept=intercept, coef=coef, r2=r2)
 
 def linearPlot(data, plot=False, title=None, filename=None):
     """绘图函数，接受_linear产生的数据绘制原始数据和一阶差分的散点图和回归直线"""
@@ -135,19 +130,29 @@ def linearPlot(data, plot=False, title=None, filename=None):
 
 
 def linearProfitInc():
-    ts_code = '000651.SZ'
-    startDate = '20090331'
-    # result = _linearProfitInc(ts_code, startDate)
+    stocks = readStockList()
+    # stocks = stocks[456:]
+    startDate = '20150331'
+    endDate = '20191231'
+    filename = '../data/profits_inc_linear.xlsx'
 
-    sql = (f'select dt_netprofit_yoy from fina_indicator'
-           f' where ts_code="{ts_code}" and end_date>="{startDate}"')
-    data = engine.execute(sql).fetchall()
-    data = [i[0] for i in data]
-    adf = _adfTest(data)
-    print(adf)
+    resultList = []
+    cnt = len(stocks)
+    cur = 1
+    for ts_code in stocks.ts_code:
+        print(f'{cur}/{cnt}: {ts_code}')
+        cur += 1
+        result = _linearProfitInc(ts_code, startDate, endDate)
+        if result is not None:
+            resultList.append(result)
+    df = pd.DataFrame(resultList)
+    stocks = pd.merge(stocks, df, how='right',
+                      left_on='ts_code', right_on='ts_code')
+
+    stocks.to_excel(filename)
 
 
-def _linearProfitInc(ts_code, startDate):
+def _linearProfitInc(ts_code, startDate, endDate):
     """
     分析归属母公司股东的净利润-扣除非经常损益同比增长率(%)历年变化情况
     :param ts_code:
@@ -155,11 +160,15 @@ def _linearProfitInc(ts_code, startDate):
     :return:
     """
     pass
-    sql = (f'select dt_netprofit_yoy from fina_indicator'
-           f' where ts_code="{ts_code}" and end_date>="{startDate}')
-    data = engine.execute(sql).fetchall()
-    data = [i[0] for i in data]
-    return _linear(data)
+    sql = (f'select dt_netprofit_yoy inc from fina_indicator'
+           f' where ts_code="{ts_code}" and end_date>="{startDate}"'
+           f' and end_date<="{endDate}"')
+    df = pd.read_sql(sql, engine)
+    df.dropna(inplace=True)
+    result = _linear(df.inc.values)
+    if result is not None:
+        result['ts_code'] = ts_code
+    return result
 
 
 def _linearProfits(ts_code, startQuarter, fig):
@@ -517,4 +526,3 @@ if __name__ == '__main__':
     # diabetesTest()
 
     linearProfitInc()
-

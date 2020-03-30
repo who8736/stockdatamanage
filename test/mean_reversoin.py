@@ -187,7 +187,7 @@ def adfTestAllProfitsInc():
 
     df = pd.DataFrame(resultList)
     stocks = pd.merge(stocks, df, left_on='ts_code', right_on='ts_code')
-    stocks.to_excel('adf_profit_inc.xlsx')
+    stocks.to_excel('../data/profits_inc_adf.xlsx')
     # print(df)
 
 

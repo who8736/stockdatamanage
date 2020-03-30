@@ -927,8 +927,9 @@ def readLastTTMPEs(stockList, trade_date=None):
     if not result:
         logging.warning(f'缺少{trade_date}每日指标')
         return None
-    ts_codes, ttmpes = zip(*result)
-    df = pd.DataFrame({'ts_code': ts_codes, 'pe': ttmpes})
+    df = pd.read_sql(sql, engine)
+    # ts_codes, ttmpes = zip(*result)
+    # df = pd.DataFrame({'ts_code': ts_codes, 'pe': ttmpes})
     df = df.loc[df['ts_code'].isin(stockList)]
     df = df.dropna()
     return df

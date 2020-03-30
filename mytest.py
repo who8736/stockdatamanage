@@ -12,7 +12,7 @@ from urllib.request import urlopen
 # from datetime import datetime
 # import baostock as bs
 # import tushare as ts
-from bokeh.plotting import figure
+# from bokeh.plotting import figure
 
 # from download import getreq
 from xml import etree
@@ -20,11 +20,11 @@ from xml import etree
 from download import *
 from sqlrw import *
 from bokeh.plotting import show, output_file
-from sqlalchemy.ext.declarative import declarative_base
+# from sqlalchemy.ext.declarative import declarative_base
 
 from datamanage import *
 from sqlrw import readStockList
-from sqlconn import Session
+# from sqlconn import Session
 # from misc import urlGubenEastmoney
 from misc import *
 # from initlog import initlog
@@ -83,6 +83,27 @@ def urlGuben(ts_code):
     return ('http://vip.stock.finance.sina.com.cn/corp/go.php'
             '/vCI_StockStructureHistory/ts_code'
             '/%s/stocktype/TotalStock.phtml' % ts_code)
+
+
+def profits_inc_linear_adf():
+    df_adf = pd.read_excel('data/profits_inc_adf.xlsx')
+    df_adf.set_index('ts_code', inplace=True)
+    df_adf = df_adf[['name', 'mean', 'std', 'sharp', 'flag']]
+
+    df_linear = pd.read_excel('data/profits_inc_linear.xlsx')
+    df_linear.set_index('ts_code', inplace=True)
+    df_linear = df_linear[['intercept', 'coef', 'r2']]
+
+    df_pe = readLastTTMPEs(df_adf.index)
+    df_pe.set_index('ts_code', inplace=True)
+    # df = pd.merge(df_adf, df_linear, how='left',
+    #               left_on='ts_code', right_on='ts_code')
+    df = pd.merge(df_adf, df_linear, left_index=True, right_index=True)
+    # df = pd.merge(df, df_pe, how='left',
+    #               left_on='ts_code', right_on='ts_code')
+    df = pd.merge(df, df_pe, left_index=True, right_index=True)
+
+    df.to_excel('data/profits_inc_adf_linear.xlsx')
 
 
 def del_downLiutongGubenFromBaostock():
@@ -165,9 +186,9 @@ def downGubenTest():
 #     print(stockList)
 #     for ts_code in stockList:
 #         pass
-        # updateKlineEXTData(ts_code, '2016-01-01')
+# updateKlineEXTData(ts_code, '2016-01-01')
 
-    # for()
+# for()
 
 
 def resetTTMLirun():
@@ -229,14 +250,13 @@ def del_gatherKline():
     stockList = readStockList()
     for ts_code in stockList:
         # ts_code = '000002'
-        sql = ("insert ignore stockdata.kline(`ts_code`, `date`, `open`, "
-               "                              `high`, `close`, `low`, "
-               "                              `volume`, `totalmarketvalue`, "
-               "                              `ttmprofits`, `ttmpe`) "
-               "select '%s', s.`date`, s.`open`, s.`high`, s.`close`, s.`low`, "
-               "       s.`volume`, s.`totalmarketvalue`, s.`ttmprofits`, "
-               "       s.`ttmpe` from klinestock where ts_code='%s' as s;\n") % (
-                  ts_code, ts_code)
+        sql = f"""insert ignore stockdata.kline(`ts_code`, `date`, `open`, 
+                    `high`, `close`, `low`, `volume`, `totalmarketvalue`, 
+                    `ttmprofits`, `ttmpe`) 
+                select '{ts_code}', s.`date`, s.`open`, s.`high`, s.`close`, 
+                    s.`low`, s.`volume`, s.`totalmarketvalue`, s.`ttmprofits`, 
+                    s.`ttmpe` from klinestock where ts_code='{ts_code}' as s;
+              """
         print('process ts_code: ', ts_code)
         # print(sql)
         engine.execute(sql)
@@ -253,47 +273,6 @@ def testBokehtest():
     myplot = mybokeh.plot()
     output_file("kline.html", title="kline plot test")
     show(myplot)  # open a browser
-
-
-def testReadStockListFromSQL():
-    stocksA = readStockListFromSQL()
-    print(stocksA)
-    stocksALen = len(stocksA)
-    print('A股票总数:', len(stocksA))
-    stocksB = readStockListFromSQL(20191201)
-    print(stocksB)
-    stocksBLen = len(stocksB)
-    print('B股票总数:', len(stocksB))
-    print('相差：', stocksALen - stocksBLen)
-    print('相差的股票：', [i for i in stocksA if i not in stocksB])
-
-
-def testWriteSQL():
-    data = [{'username': 'a', 'email': 'aa@bb.cc', 'password': 'aaa_modify1'},
-            {'username': 'b', 'email': 'bb@bb.cc', 'password': 'bbb_modify2'}, ]
-    print(data)
-    df = pd.DataFrame(data)
-    print(df)
-    # return
-    # datafield = ['username', 'email', 'password']
-    session = Session()
-    metadata = MetaData(bind=engine)
-    Base = declarative_base()
-
-    class TableTest(Base):
-        # __table__ = Table('user', Base.metadata, autoload=True)
-        __table__ = Table('user', Base.metadata,
-                          autoload=True, autoload_with=engine)
-
-    for index, row in df.iterrows():
-        d = {key: getattr(row, key) for key in row.keys()}
-        table = TableTest(**d)
-        session.merge(table)
-
-    # for d in data:
-    #     u1 = TableTest(**d)
-    #     session.merge(u1)
-    session.commit()
 
 
 def testDownIndexWeightRepair():
@@ -334,7 +313,10 @@ def testDownIndexWeightRepair():
         initDate = dt.date(2001, 1, 1)
         while initDate < dt.datetime.today().date():
             nowtime = dt.datetime.now()
-            if (perTimes > 0 and downLimit > 0 and cur >= downLimit
+            # if (perTimes > 0 and downLimit > 0 and cur >= downLimit
+            #         and (nowtime < times[cur - downLimit] + dt.timedelta(
+            #             seconds=perTimes))):
+            if (perTimes > 0 and 0 < downLimit <= cur
                     and (nowtime < times[cur - downLimit] + dt.timedelta(
                         seconds=perTimes))):
                 _timedelta = nowtime - times[cur - downLimit]
@@ -365,7 +347,6 @@ def __testDownload():
     # filename = 'csi20200317.xls'
     # writeHYToSQL(filename)
     # writeHYNameToSQL(filename)
-
 
     # 下载k线
     # startDate = datetime.strptime('2018-01-27', '%Y-%m-%d')
@@ -528,81 +509,81 @@ def __testUpdate():
 
 
 # 更新股票市值与PE
-    # stockList = sqlrw.readts_codesFromSQL()
-    # for ts_code in stockList:
-    #     print(ts_code)
-    # ts_code = '600306'
-    # ts_codes = ["002953", "002955", "300770", "300771",
-    #             "300772", "300773", "300775", "300776", "300777",
-    #             "300778", "300779", "300780", "300781", "600989",
-    #             "603267", "603327", "603697", "603967", "603982", ]
-    # for ts_code in ts_codes:
-    #     sqlrw.updateKlineEXTData(ts_code,
-    #                              datetime.strptime('2016-01-26', '%Y-%m-%d'))
+# stockList = sqlrw.readts_codesFromSQL()
+# for ts_code in stockList:
+#     print(ts_code)
+# ts_code = '600306'
+# ts_codes = ["002953", "002955", "300770", "300771",
+#             "300772", "300773", "300775", "300776", "300777",
+#             "300778", "300779", "300780", "300781", "600989",
+#             "603267", "603327", "603697", "603967", "603982", ]
+# for ts_code in ts_codes:
+#     sqlrw.updateKlineEXTData(ts_code,
+#                              datetime.strptime('2016-01-26', '%Y-%m-%d'))
 
-    # tushare.pro下载日交易数据
-    # updateKline()
+# tushare.pro下载日交易数据
+# updateKline()
 
-    # 更新全部股票数据
-    # startUpdate()
+# 更新全部股票数据
+# startUpdate()
 
-    # 更新股本数据
-    # updateGubenSingleThread()
-    # downGuben('603970', replace=True)
-    # downGubenTest()
+# 更新股本数据
+# updateGubenSingleThread()
+# downGuben('603970', replace=True)
+# downGubenTest()
 
-    # 更新股票日交易数据
-    # threadNum = 10
-    # stockList = sqlrw.readts_codesFromSQL()
-    # print(stockList)
-    # updateKlineEXTData(stockList, threadNum)
+# 更新股票日交易数据
+# threadNum = 10
+# stockList = sqlrw.readts_codesFromSQL()
+# print(stockList)
+# updateKlineEXTData(stockList, threadNum)
 
-    # 计算上证180指数PE
-    # startDate = datetime.strptime('20190617', '%Y%m%d').date()
-    # calPEHistory('000010', startDate)
-    # calPEHistory('000010.SH', startDate=None)
+# 计算上证180指数PE
+# startDate = datetime.strptime('20190617', '%Y%m%d').date()
+# calPEHistory('000010', startDate)
+# calPEHistory('000010.SH', startDate=None)
 
-    # 计算行业利润增长率
-    # hyID = '030201'
-    # date = 20184
-    # calHYTTMLirun('03020101', date)
-    # calHYTTMLirun('03020102', date)
-    # calHYTTMLirun('03020103', date)
-    # calHYTTMLirun('03020104', date)
-    # calHYTTMLirun(hyID, date)
+# 计算行业利润增长率
+# hyID = '030201'
+# date = 20184
+# calHYTTMLirun('03020101', date)
+# calHYTTMLirun('03020102', date)
+# calHYTTMLirun('03020103', date)
+# calHYTTMLirun('03020104', date)
+# calHYTTMLirun(hyID, date)
 
-    # 计算行业PE
-    # hyID = '03020101'
-    # date = '20200102'
-    # pe = getHYPE(hyID, date)
-    # pe = getHYsPE(date)
-    # print('行业PE：', pe)
+# 计算行业PE
+# hyID = '03020101'
+# date = '20200102'
+# pe = getHYPE(hyID, date)
+# pe = getHYsPE(date)
+# print('行业PE：', pe)
 
-    # 更新指数数据及PE
-    # updateIndex()
+# 更新指数数据及PE
+# updateIndex()
 
-    # 更新全市PE
-    # datamanage.updateAllMarketPE()
+# 更新全市PE
+# datamanage.updateAllMarketPE()
 
-    # 更新历史评分
-    # startDate = '20191220'
-    # endDate = '20191231'
-    # formatStr = '%Y%m%d'
-    # cf = configparser.ConfigParser()
-    # cf.read('stockdata.conf')
-    # if cf.has_option('main', 'token'):
-    #     token = cf.get('main', 'token')
-    # else:
-    #     token = ''
-    # ts.set_token(token)
-    # print(token)
-    # pro = ts.pro_api()
-    # df = pro.trade_cal(exchange='', start_date='20200101', end_date='20201231')
-    # dateList = df['cal_date'].loc[df.is_open==1].tolist()
-    # for date in dateList:
-    #     print('计算评分：', date)
-    #     calpfnew(date, False)
-    # calpfnew('20200228', True)
+# 更新历史评分
+# startDate = '20191220'
+# endDate = '20191231'
+# formatStr = '%Y%m%d'
+# cf = configparser.ConfigParser()
+# cf.read('stockdata.conf')
+# if cf.has_option('main', 'token'):
+#     token = cf.get('main', 'token')
+# else:
+#     token = ''
+# ts.set_token(token)
+# print(token)
+# pro = ts.pro_api()
+# df = pro.trade_cal(exchange='', start_date='20200101', end_date='20201231')
+# dateList = df['cal_date'].loc[df.is_open==1].tolist()
+# for date in dateList:
+#     print('计算评分：', date)
+#     calpfnew(date, False)
+# calpfnew('20200228', True)
 
 
 def __testRepair():
@@ -635,6 +616,7 @@ def __testRepair():
     # createHangyePE()
     # createValuation()
 
+
 def __testValuation():
     """测试专用函数:股票评分
     """
@@ -664,6 +646,7 @@ def __testValuation():
     # print('=' * 20)
     # print(stockspf)
 
+
 def __testPlot():
     """测试专用函数:绘图
     """
@@ -685,14 +668,15 @@ def __testPlot():
     # 测试bokehtest模块中的功能
     # testBokehtest()
 
+
 def __testMisc():
     """测试专用函数:杂项测试
     """
     pass
-    matplotlib.use('Qt5Agg')  # @UndefinedVariable
-    sql = 'select trade_date, pe from index_pe where ts_code="000010.SH"'
-    df = pd.read_sql(sql, engine)
-    plotPE(df)
+    # matplotlib.use('Qt5Agg')  # @UndefinedVariable
+    # sql = 'select trade_date, pe from index_pe where ts_code="000010.SH"'
+    # df = pd.read_sql(sql, engine)
+    # plotPE(df)
     # calPEHistory('000010.SH', '20200317')
     # calClassifyPE('20200310')
     # testChigu()
@@ -736,6 +720,7 @@ def __testMisc():
     # datestr = '20200303'
     # from pushdata import push
     # push(f'评分{datestr}', f'valuations{datestr}.xlsx')
+
 
 if __name__ == "__main__":
     """
