@@ -111,6 +111,11 @@ def valuationView(ts_code):
                            stock=stockItem)
 
 
+@app.route('/test')
+def test():
+    return render_template('test.html')
+
+
 @app.route('/klineimg/<ts_code>')
 def klineimg(ts_code):
     plotImg = plotKline(ts_code)
