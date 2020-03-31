@@ -13,6 +13,7 @@ from bokeh.resources import INLINE
 from bokeh.util.string import encode_utf8
 
 from plot import plotKline, BokehPlot
+from plot import PlotProfitsInc
 from report import report1 as guzhiReport
 from report import reportValuation
 from report import reportIndex
@@ -146,6 +147,25 @@ def _klineimg(ID, df):
     )
     return encode_utf8(html)
 
+
+@app.route('/profitsinc/<ts_code>')
+def profitsIncImg(ts_code):
+    js_resources = INLINE.render_js()
+    css_resources = INLINE.render_css()
+
+    plotImg = PlotProfitsInc(ts_code,
+                             startDate='20150331',
+                             endDate='20191231')
+    scripts, div = components(plotImg.plot())
+    # return render_template("plotkline.html", the_div=div, the_script=scripts)
+    html = render_template(
+        'plotkline.html',
+        plot_script=scripts,
+        plot_div=div,
+        js_resources=js_resources,
+        css_resources=css_resources,
+    )
+    return encode_utf8(html)
 
 @app.route('/indexinfo/<ID>')
 def indexInfo(ID):

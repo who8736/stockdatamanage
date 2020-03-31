@@ -510,6 +510,71 @@ class BokehPlot:
         self.ppe.y_range = (peMin, peMax)
 
 
+class PlotProfitsInc:
+    """
+    绘制K线,pe走势图
+    :param ts_code: string, 股票代码, 600619
+    :param days: int, 走势图显示的总天数
+    :return:
+    """
+
+    def __init__(self, ts_code, startDate=None, endDate=None):
+        sql = (f'select end_date date, dt_netprofit_yoy inc from fina_indicator'
+               f' where ts_code="{ts_code}"')
+        sql += f' and end_date>="{startDate}"' if startDate else ''
+        sql += f' and end_date<="{endDate}"' if endDate else ''
+        print(sql)
+        df = pd.read_sql(sql, engine)
+        df.dropna(inplace=True)
+        df['date'] = [i.strftime('%Y%m%d') for i in df.date]
+        print(df)
+        # days = df.shape[0]
+        self.source = ColumnDataSource(df)
+
+        TOOLS = 'pan,wheel_zoom,box_zoom,reset,save,crosshair'
+        width = 1000
+        height = int(width / 16 * 6)
+        # peHeight = int(width / 16 * 3)
+        # selectHeight = int(width / 16 * 1)
+
+        # 绘制散点图
+        dataLen = df.shape[0]
+        tooltips = [('date', '@date'), ('inc', '@inc')]
+        # ymin = df.low[-200:].min()
+        # ymax = df.high[-200:].max()
+        # start = ymin - (ymax - ymin) * 0.05
+        # end = ymax + (ymax - ymin) * 0.05
+        self.pinc = figure(x_axis_type="datetime", tools=TOOLS,
+                             plot_height=height,
+                             plot_width=width,
+                             # x_axis_location="above",
+                             # x_range=(dataLen - 200, dataLen),
+                             # y_range=(start, end),
+                             tooltips=tooltips)
+        self.pinc.xaxis.major_label_overrides = df['date'].to_dict()
+        incSor = ColumnDataSource(df)
+        self.pinc.scatter(x='index', y='inc', source=incSor, color="red")
+        # a = [1, 2, 3, 4, 5]
+        # b = [1, 2, 3, 4, 5]
+        # self.pinc.scatter(x=a, y=b)
+        # self.plotCandlestick()
+
+        xmin = min(df.index)
+        xmax = max(df.index)
+        print(xmin, xmax)
+        filename = 'data/profits_inc_adf_linear.xlsx'
+        linearDf = pd.read_excel(filename)
+        intercept = linearDf[linearDf.ts_code==ts_code].intercept.values[0]
+        coef = linearDf[linearDf.ts_code==ts_code].coef.values[0]
+        r2 = linearDf[linearDf.ts_code==ts_code].r2.values[0]
+        print(intercept, coef, r2)
+        y = [intercept + x * coef for x in df.index]
+        self.pinc.line(df.index, y, color='blue')
+
+    def plot(self):
+        return self.pinc
+
+
 if __name__ == '__main__':
     startDate = '2017-01-01'
     endDate = '2017-03-31'

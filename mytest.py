@@ -651,9 +651,9 @@ def __testPlot():
     """测试专用函数:绘图
     """
     pass
-    ##############################################
-    # 绘图
-    ##############################################
+
+    p = PlotProfitsInc(ts_code='000651.SZ', startDate='20150331',
+                       endDate='20191231')
     # bokeh绘图
     # testBokeh()
 
@@ -673,6 +673,7 @@ def __testMisc():
     """测试专用函数:杂项测试
     """
     pass
+    profits_inc_linear_adf()
     # matplotlib.use('Qt5Agg')  # @UndefinedVariable
     # sql = 'select trade_date, pe from index_pe where ts_code="000010.SH"'
     # df = pd.read_sql(sql, engine)
