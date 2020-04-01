@@ -733,7 +733,7 @@ def readPERate(ts_code):
         return result
 
 
-def readTTMProfits(ts_code, startDate=None, endDate=None):
+def readTTMProfits(ts_code: str, startDate=None, endDate=None):
     """取指定股票一段日间的TTM利润，startDate当日无数据时，取之前最近一次数据
     Parameters
     --------
@@ -835,6 +835,7 @@ def readLastTTMProfits(stockList, limit=1, date=None):
     --------
     stockList: str 股票代码  e.g: ['600519.SH', '002518.SZ']
     limit: 取最近期数的数据
+    :param date:
 
     Return
     --------
