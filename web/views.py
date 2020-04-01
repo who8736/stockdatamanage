@@ -118,6 +118,17 @@ def test():
     return render_template('test.html', stocks=stocks)
 
 
+@app.route('/test1')
+def test1():
+    return render_template('test1.html')
+
+
+@app.route('/test2')
+def test2():
+    stocks = readProfitsIncAdf()
+    return render_template('test2.html', stocks=stocks)
+
+
 @app.route('/klineimg/<ts_code>')
 def klineimg(ts_code):
     plotImg = plotKline(ts_code)

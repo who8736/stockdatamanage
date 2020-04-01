@@ -97,7 +97,7 @@ def startUpdate():
     downHYList()
 
     # 更新股票估值
-    updateGuzhiData()
+    # updateGuzhiData()
 
     # 更新股票评分
     updatePf()

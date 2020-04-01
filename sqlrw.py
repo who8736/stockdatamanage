@@ -918,7 +918,7 @@ def readLastTTMPEs(stockList, trade_date=None):
         'YYYYmmdd'格式的日期
     :return:
     """
-    sql = 'select ts_code, pe_ttm from daily_basic where trade_date='
+    sql = 'select ts_code, pe_ttm pe from daily_basic where trade_date='
     if trade_date is None:
         sql += '(select max(trade_date) from daily_basic)'
     else:
