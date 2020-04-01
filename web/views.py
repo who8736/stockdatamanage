@@ -17,12 +17,11 @@ from plot import PlotProfitsInc
 from report import report1 as guzhiReport
 from report import reportValuation
 from report import reportIndex
-from sqlrw import getChiguList, getGuzhiList, getYouzhiList
-from sqlrw import getStockName, readLastTTMPE
-from sqlrw import readCurrentClose, readCurrentPEG
-from sqlrw import readPERate, readStockKline, readIndexKline
-from sqlrw import readStockList, writeChigu
-from sqlrw import readValuationSammary
+from sqlrw import (getChiguList, getGuzhiList, getYouzhiList,
+                   getStockName, readLastTTMPE, readCurrentClose,
+                   readCurrentPEG, readPERate, readStockKline, readIndexKline,
+                   readStockList, writeChigu, readValuationSammary,
+                   readProfitsIncAdf)
 from misc import tsCode
 from . import app
 from .forms import StockListForm
@@ -113,7 +112,10 @@ def valuationView(ts_code):
 
 @app.route('/test')
 def test():
-    return render_template('test.html')
+    stocks = readProfitsIncAdf()
+    print('profits_inc_adf')
+    print(stocks.head())
+    return render_template('test.html', stocks=stocks)
 
 
 @app.route('/klineimg/<ts_code>')
@@ -130,10 +132,12 @@ def stockklineimgnew(ts_code):
     df = readStockKline(ts_code, days=1000)
     return _klineimg(ts_code, df)
 
+
 @app.route('/indexklineimgnew/<ID>')
 def indexklineimgnew(ID):
     df = readIndexKline(ID, days=3000)
     return _klineimg(ID, df)
+
 
 def _klineimg(ID, df):
     # grab the static resources
@@ -172,9 +176,9 @@ def profitsIncImg(ts_code):
     )
     return encode_utf8(html)
 
+
 @app.route('/indexinfo/<ID>')
 def indexInfo(ID):
     stockItem = reportIndex(ID)
     return render_template('indexinfo.html',
                            stock=stockItem)
-

@@ -1496,6 +1496,16 @@ def readStockKline(ts_code, startDate=None, endDate=None, days=0):
     return _readKline(sql)
 
 
+def readProfitsIncAdf():
+    stocks = pd.read_excel('data/profits_inc_adf_linear.xlsx')
+    stocks = stocks.round(2)
+    stocks = stocks[(stocks['mean'] >= 10) &
+                    (stocks.sharp >= 0.8) &
+                    (stocks.pe_ttm <= 30)]
+    stocks.sort_values('sharp', ascending=False, inplace=True)
+    return stocks
+
+
 def readIndexKline(index_code, days):
     """
     读取指数K线数据

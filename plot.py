@@ -532,7 +532,7 @@ class PlotProfitsInc:
         self.source = ColumnDataSource(df)
 
         TOOLS = 'pan,wheel_zoom,box_zoom,reset,save,crosshair'
-        width = 1000
+        width = 500
         height = int(width / 16 * 6)
         # peHeight = int(width / 16 * 3)
         # selectHeight = int(width / 16 * 1)
