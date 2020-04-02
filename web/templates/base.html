@@ -10,6 +10,12 @@ http://jinja.pocoo.org/docs/templates/#template-inheritance
 #}
 {%- extends "bootstrap/base.html" %}
 
+{% block html_attribs %}
+{{ super() }}
+lang="zh-cn"
+{% endblock html_attribs %}
+
+
 {# We also set a default title, usually because we might forget to set one.
 In our sample app, we will most likely just opt not to change it #}
 {% block title %}Sample App for Flask-Bootstrap{% endblock %}
@@ -22,52 +28,49 @@ import the necessary macros: #}
 ``super()`` is used: #}
 {% block head %}
 {{super()}}
-
-<link rel="stylesheet"
-      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
-
-
-<link rel="stylesheet" type="text/css"
-      href="{{url_for('static', filename='sample-app.css')}}">
-<!--<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>-->
-<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>-->
-<!--<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>-->
-<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
 {#- Docs: http://pythonhosted.org/Flask-Bootstrap/macros.html#fixes
 The sample application already contains the required static files. #}
 {{fixes.ie8()}}
 {%- endblock %}
 
-
 {# Adding our own CSS files is also done here. Check the documentation at
 http://pythonhosted.org/Flask-Bootstrap/basic-usage.html#available-blocks
 for an overview. #}
 {% block styles -%}
-{{super()}}  {# do not forget to call super or Bootstrap's own stylesheets
-will disappear! #}
-<!--<link rel="stylesheet" type="text/css"-->
-<!--      href="{{url_for('static', filename='sample-app.css')}}">-->
-<!--<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>-->
-<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>-->
-<!--<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>-->
-
+<link rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css"
+      href="{{url_for('static', filename='sample-app.css')}}">
 {% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+{%- endblock scripts %}
 
 {# Finally, round things out with navigation #}
 {% block navbar %}
 {#nav.frontend_top.render()#}
 <div class="container-fluid">
     <div class="row">
-        <a class="col-1 btn btn-large btn-primary" href="/">首页</a>
-        <a class="col-1 btn btn-large btn-primary" href="/valuationtype/chigu">持股股票评分</a>
-        <a class="col-1 btn btn-large btn-primary" href="/valuationtype/youzhi">优质股票评分</a>
-        <a class="col-1 btn btn-large btn-primary" href="/valuationtype/all">全部股票评分</a>
-        <a class="col-1 btn btn-large btn-primary" href="/reporttype/chigu">持股股票估值数据</a>
-        <a class="col-1 btn btn-large btn-primary" href="/reporttype/youzhi">优质股票估值数据</a>
-        <a class="col-2 btn btn-large btn-primary" href="/reporttype/all">全部股票估值数据</a>
-        <a class="col-2 btn btn-large btn-primary"
+<!--        <a class="col-1 btn btn-primary" href="/">首页</a>-->
+<!--        <a class="col-1 btn btn-large btn-primary" href="/valuationtype/chigu">持股股票评分</a>-->
+<!--        <a class="col-1 btn btn-large btn-primary" href="/valuationtype/youzhi">优质股票评分</a>-->
+<!--        <a class="col-1 btn btn-large btn-primary" href="/valuationtype/all">全部股票评分</a>-->
+<!--        <a class="col-2 btn btn-large btn-primary" href="/reporttype/chigu">持股股票估值数据</a>-->
+<!--        <a class="col-2 btn btn-large btn-primary" href="/reporttype/youzhi">优质股票估值数据</a>-->
+<!--        <a class="col-2 btn btn-large btn-primary" href="/reporttype/all">全部股票估值数据</a>-->
+<!--        <a class="col-2 btn btn-large btn-primary"-->
+<!--           href="/indexklineimgnew/000010.SH">上证180历史PE</a>-->
+        <a class="col-1 btn-primary" href="/">首页</a>
+        <a class="col-1 btn-primary" href="/valuationtype/chigu">持股股票评分</a>
+        <a class="col-1 btn-primary" href="/valuationtype/youzhi">优质股票评分</a>
+        <a class="col-1 btn-primary" href="/valuationtype/all">全部股票评分</a>
+        <a class="col-2 btn-primary" href="/reporttype/chigu">持股股票估值数据</a>
+        <a class="col-2 btn-primary" href="/reporttype/youzhi">优质股票估值数据</a>
+        <a class="col-2 btn-primary" href="/reporttype/all">全部股票估值数据</a>
+        <a class="col-2 btn-primary"
            href="/indexklineimgnew/000010.SH">上证180历史PE</a>
     </div>
 </div>
