@@ -84,6 +84,36 @@ def _linear(data, plot=False, title=None, filename=None):
     r2 = r2_score(data, Y)
     return dict(intercept=intercept, coef=coef, r2=r2)
 
+def _linearHuber(data, plot=False, title=None, filename=None):
+    """线性回归通用函数，对一组数据进行线性回归
+    :param data:
+    :param plot: 是否显示绘图结果
+    :param title: 绘图标题，plot为True时，title为必选项
+    :param filename: 不为空时，自动保存图片
+    :return:
+    该组数据均值，均方差，adf检测结果
+    该组数据一阶差分的均值，均方差，adf检测结果
+    """
+    pass
+    cnt = len(data)
+    if cnt<10:
+        return None
+    x = np.array(range(1, cnt + 1))
+    x = x[:, np.newaxis]
+
+    # 拟合
+    regr = linear_model.HuberRegressor()
+    regr.fit(x, data)
+    intercept = regr.intercept_
+    coef = regr.coef_[0]
+    print('huber loss:', regr.epsilon)
+    # print(f'截距:{intercept}, 系数:{coef}')
+
+    # 计算r2
+    Y = [intercept + i * coef for i in x]
+    r2 = r2_score(data, Y)
+    return dict(intercept=intercept, coef=coef, r2=r2)
+
 def linearPlot(data, plot=False, title=None, filename=None):
     """绘图函数，接受_linear产生的数据绘制原始数据和一阶差分的散点图和回归直线"""
     pass
@@ -169,6 +199,27 @@ def _linearProfitInc(ts_code, startDate, endDate):
     if result is not None:
         result['ts_code'] = ts_code
     return result
+
+
+def _linearProfitIncDouble(ts_code, startDate, endDate):
+    """
+    比较最小二乘与HuberRegressor的区别
+    分析归属母公司股东的净利润-扣除非经常损益同比增长率(%)历年变化情况
+    :param ts_code:
+    :param startDate:
+    :return:
+    """
+    pass
+    sql = (f'select dt_netprofit_yoy inc from fina_indicator'
+           f' where ts_code="{ts_code}" and end_date>="{startDate}"'
+           f' and end_date<="{endDate}"')
+    df = pd.read_sql(sql, engine)
+    df.dropna(inplace=True)
+    result_linear = _linear(df.inc.values)
+    result_huber = _linearHuber(df.inc.values)
+    print('linear:', result_linear)
+    print('huber:', result_huber)
+    return (result_linear, result_huber)
 
 
 def _linearProfits(ts_code, startQuarter, fig):
@@ -525,4 +576,11 @@ if __name__ == '__main__':
     # linearAll()
     # diabetesTest()
 
-    linearProfitInc()
+    # linearProfitInc()
+
+    ts_code = '600036.SH'
+    startDate = '20150331'
+    endDate = '20191231'
+    result = _linearProfitIncDouble(ts_code=ts_code,
+                     startDate=startDate, endDate=endDate)
+    print(result)

@@ -34,8 +34,77 @@ from classifyanalyse import *
 import bokehtest
 from plot import *
 
+matplotlib.use('Qt5Agg')  # @UndefinedVariable
 
-# import dataanalyse
+
+def analyIndex():
+    """
+    分析指数历史走势，从2007年开始，划分多个阶段，比较每个阶段各指数的强弱
+    000001.SH	上证综指
+    000005.SH	上证商业类指数
+    000006.SH	上证房地产指数
+    000016.SH	上证50
+    000300.SH	沪深300
+    000905.SH	中证500
+    399001.SZ	深证成指
+    399005.SZ	中小板指
+    399006.SZ	创业板指
+    399016.SZ	深证创新
+    399300.SZ	沪深300
+    399905.SZ	中证500
+
+    :return:
+    """
+    # 000001.SH 上证综指 20071016最高点位6092.06
+    pass
+    indexname = {'000001.SH': '上证综指',
+                 '000005.SH': '上证商业类指数',
+                 '000006.SH': '上证房地产指数',
+                 '000016.SH': '上证50',
+                 '000300.SH': '沪深300',
+                 '000905.SH': '中证500',
+                 '399001.SZ': '深证成指',
+                 '399005.SZ': '中小板指',
+                 '399006.SZ': '创业板指',
+                 '399016.SZ': '深证创新',
+                 '399300.SZ': '沪深300',
+                 '399905.SZ': '中证500',
+                 }
+    startDate = '20070101'
+    code1 = '000001.SH'
+    code2 = '000016.SH'
+    sql = (f'select trade_date, close close_sh from index_daily'
+           f' where ts_code="{code1}" and trade_date >= "{startDate}"')
+    df1 = pd.read_sql(sql, engine)
+    print(df1)
+    max1 = df1[df1.close_sh == df1.close_sh.max()]
+
+    sql = (f'select trade_date, close close_sz from index_daily'
+           f' where ts_code="{code2}" and trade_date >= "{startDate}"')
+    df2 = pd.read_sql(sql, engine)
+    max2 = df2[df2.close_sz == df2.close_sz.max()]
+
+    df1['line1'] = df1.close_sh / df1.close_sh[0]
+    df2['line2'] = df2.close_sz / df2.close_sz[0]
+    df = pd.merge(df1, df2, left_on='trade_date', right_on='trade_date')
+    dfcolumn = ['trade_date', 'line1', 'line2']
+    df = df[dfcolumn]
+    # df.plot()
+    # plt.show()
+    fig = plt.figure()
+    ax = plt.subplot()
+    label1 = indexname[code1]
+    line1 = ax.plot(df.index, df.line1, label=label1, color='blue')
+    label2 = indexname[code2]
+    line2 = ax.plot(df.index, df.line2, label=label2, color='red')
+    # plt.legend(handles=[line1,], labels=[label1,], loc='best')
+
+    font1 = {'family': 'simsun',
+             'weight': 'normal',
+             'size': 12,
+             }
+    plt.legend(prop=font1)
+    plt.show()
 
 
 def downGubenFromEastmoney():
@@ -673,7 +742,8 @@ def __testMisc():
     """测试专用函数:杂项测试
     """
     pass
-    profits_inc_linear_adf()
+    analyIndex()
+    # profits_inc_linear_adf()
     # matplotlib.use('Qt5Agg')  # @UndefinedVariable
     # sql = 'select trade_date, pe from index_pe where ts_code="000010.SH"'
     # df = pd.read_sql(sql, engine)

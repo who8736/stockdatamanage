@@ -111,9 +111,9 @@ def scatter(startDate, endDate):
 def plotKline(ID, type='stock', days=1000):
     """ 绘制K线与TTMPE图
     """
-    if type=='stock':
+    if type == 'stock':
         return plotKlineStock(ID, days)
-    elif type=='index':
+    elif type == 'index':
         return plotKlineIndex(ID, days)
     else:
         return None
@@ -153,6 +153,7 @@ def plotKlineStock(ID, days):
     # print(df.head())
     bokehplot = BokehPlot(ID, df)
     return bokehplot.plot()
+
 
 # def __del_plotKline():
 #     sql = ('select date, open, high, low, close, ttmpe '
@@ -197,7 +198,6 @@ def plotKlineStock(ID, days):
 
 
 def plotPE(df):
-
     # klineDatas = []
     # dates = []
     # peDatas = []
@@ -545,12 +545,12 @@ class PlotProfitsInc:
         # start = ymin - (ymax - ymin) * 0.05
         # end = ymax + (ymax - ymin) * 0.05
         self.pinc = figure(x_axis_type="datetime", tools=TOOLS,
-                             plot_height=height,
-                             plot_width=width,
-                             # x_axis_location="above",
-                             # x_range=(dataLen - 200, dataLen),
-                             # y_range=(start, end),
-                             tooltips=tooltips)
+                           plot_height=height,
+                           plot_width=width,
+                           # x_axis_location="above",
+                           # x_range=(dataLen - 200, dataLen),
+                           # y_range=(start, end),
+                           tooltips=tooltips)
         self.pinc.xaxis.major_label_overrides = df['date'].to_dict()
         incSor = ColumnDataSource(df)
         self.pinc.scatter(x='index', y='inc', source=incSor, color="red")
@@ -564,9 +564,9 @@ class PlotProfitsInc:
         print(xmin, xmax)
         filename = 'data/profits_inc_adf_linear.xlsx'
         linearDf = pd.read_excel(filename)
-        intercept = linearDf[linearDf.ts_code==ts_code].intercept.values[0]
-        coef = linearDf[linearDf.ts_code==ts_code].coef.values[0]
-        r2 = linearDf[linearDf.ts_code==ts_code].r2.values[0]
+        intercept = linearDf[linearDf.ts_code == ts_code].intercept.values[0]
+        coef = linearDf[linearDf.ts_code == ts_code].coef.values[0]
+        r2 = linearDf[linearDf.ts_code == ts_code].r2.values[0]
         print(intercept, coef, r2)
         y = [intercept + x * coef for x in df.index]
         self.pinc.line(df.index, y, color='blue')
