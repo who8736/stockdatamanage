@@ -52,7 +52,7 @@ INDEXNAME = {'000001.SH': '上证综指',
              }
 
 
-def analyIndex(code1='000001.SH', code2='000016.SH', startDate='20170101',
+def analyIndex(code1='000001.SH', code2='000016.SH', startDate='20070101',
                plot=False):
     """
     分析指数历史走势，从2007年开始，划分多个阶段，比较每个阶段各指数的强弱
@@ -110,6 +110,7 @@ def analyIndex(code1='000001.SH', code2='000016.SH', startDate='20170101',
         locator = FixedLocator(tickerIndex)
         ax.xaxis.set_major_locator(locator)
         ax.set_xticklabels(tickerLabels)
+        # ax.ticker.FixedLocator(tickerIndex, nbins=20)
         for label in ax.get_xticklabels():
             label.set_rotation(45)
         font1 = {'family': 'simsun', 'weight': 'normal', 'size': 12, }
