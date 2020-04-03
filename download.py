@@ -1250,17 +1250,19 @@ def downIndexDailyBasic():
                 '399300.SZ',
                 '399905.SZ', ]
     for code in codeList:
-        # sql = (f'select max(trade_date) from index_dailybasic'
-        #        f' where ts_code="{code}"')
-        # result = engine.execute(sql).fetchone()[0]
-        # startDate = None
-        # if isinstance(result, type(datetime.date)):
-        #     result = result + timedelta(days=1)
-        #     startDate = result.strftime('YYYYmmdd')
-        startDate = '20040101'
-        endDate = '20080101'
-        df = pro.index_dailybasic(ts_code=code,
-                                  start_date=startDate, end_date=endDate)
+        sql = (f'select max(trade_date) from index_dailybasic'
+               f' where ts_code="{code}"')
+        result = engine.execute(sql).fetchone()[0]
+        startDate = None
+        if isinstance(result, dt.date):
+            result = result + dt.timedelta(days=1)
+            startDate = result.strftime('%Y%m%d')
+        # startDate = '20040101'
+        # endDate = '20080101'
+        df = pro.index_dailybasic(ts_code=code, start_date=startDate)
+        print('index_dailybasic:', startDate)
+        print('ts_code:', code)
+        print(df.head())
         writeSQL(df, 'index_dailybasic')
 
 
