@@ -38,21 +38,21 @@ from plot import *
 matplotlib.use('Qt5Agg')  # @UndefinedVariable
 
 INDEXNAME = {'000001.SH': '上证综指',
-             '000005.SH': '上证商业类指数',
-             '000006.SH': '上证房地产指数',
+             # '000005.SH': '上证商业类指数',
+             # '000006.SH': '上证房地产指数',
              '000016.SH': '上证50',
-             '000300.SH': '沪深300',
-             '000905.SH': '中证500',
+             # '000300.SH': '沪深300',
+             # '000905.SH': '中证500',
              '399001.SZ': '深证成指',
-             '399005.SZ': '中小板指',
+             # '399005.SZ': '中小板指',
              '399006.SZ': '创业板指',
-             '399016.SZ': '深证创新',
+             # '399016.SZ': '深证创新',
              '399300.SZ': '沪深300',
              '399905.SZ': '中证500',
              }
 
 
-def analyIndex(code1='000001.SH', code2='000016.SH', startDate='20070101',
+def analyIndex(code1='000001.SH', code2='000016.SH', startDate='20170101',
                plot=False):
     """
     分析指数历史走势，从2007年开始，划分多个阶段，比较每个阶段各指数的强弱
@@ -105,9 +105,18 @@ def analyIndex(code1='000001.SH', code2='000016.SH', startDate='20070101',
     if plot:
         line1 = ax.plot(df.index, df.line1, label=label1, color='blue')
         line2 = ax.plot(df.index, df.line2, label=label2, color='red')
+        dates = [date.strftime('%Y%m%d') for date in df.trade_date]
+        tickerIndex, tickerLabels = getMonthIndex(dates, type='year')
+        locator = FixedLocator(tickerIndex)
+        ax.xaxis.set_major_locator(locator)
+        ax.set_xticklabels(tickerLabels)
+        for label in ax.get_xticklabels():
+            label.set_rotation(45)
         font1 = {'family': 'simsun', 'weight': 'normal', 'size': 12, }
         plt.legend(prop=font1)
         cursor = Cursor(ax, useblit=True, color='black', linewidth=1)
+        # plt.savefig(f'data/incate-{code1}-{code2}.png')
+        plt.grid()
         plt.show()
 
     return df.line2.values[-1]
@@ -749,12 +758,15 @@ def __testMisc():
     """
     pass
     code1 = '000001.SH'
-    result = analyIndex(code1, code2='399905.SZ', plot=True)
-    results = []
+    code2 = '399300.SZ'
+    code3 = '399905.SZ'
+    result = analyIndex(code2, code2=code3, plot=True)
+    # results = []
     # for code2 in INDEXNAME.keys():
     #     result = analyIndex(code1, code2)
     #     results.append(dict(code=code2, name=INDEXNAME[code2], inc=result))
     # df = pd.DataFrame(results)
+    # df.to_excel('data/指数涨幅比较.xlsx')
     # print(df)
 
     # profits_inc_linear_adf()
@@ -814,10 +826,10 @@ if __name__ == "__main__":
     initlog()
 
     # __testDownload()
-    # __testMisc()
+    __testMisc()
     # __testPlot()
     # __testRepair()
-    __testUpdate()
+    # __testUpdate()
     # __testValuation()
 
     print('程序正常退出')

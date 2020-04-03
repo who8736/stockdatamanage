@@ -237,19 +237,27 @@ def plotPE(df):
     # return imgData
 
 
-def getMonthIndex(dates):
+def getMonthIndex(dates, type='year'):
     """
-
+    按日期生成主刻度标签
+    type为year时，刻度单位为年
+    type为month时，刻度单位为月
     :param dates: str, '20200320'
     :return:
     """
+    strcut = 4
+    if type=='year':
+        strcut = 4
+    elif type=='month':
+        strcut = 6
+
     month = ''
     monthIndex = []
     monthstr = []
     for i in range(len(dates)):
         date = dates[i]
-        if month != date[:4]:
-            month = date[:4]
+        if month != date[:strcut]:
+            month = date[:strcut]
             monthIndex.append(i)
             monthstr.append(month)
     return monthIndex, monthstr
