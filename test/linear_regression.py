@@ -584,3 +584,4 @@ if __name__ == '__main__':
     result = _linearProfitIncDouble(ts_code=ts_code,
                      startDate=startDate, endDate=endDate)
     print(result)
+    # TODO: 分析主要指数利润增长，及各指数间的比较

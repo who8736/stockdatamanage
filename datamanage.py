@@ -15,6 +15,7 @@ import datetime as dt
 # import ConfigParser
 from multiprocessing.dummy import Pool as ThreadPool
 from functools import wraps
+from dateutil.relativedelta import relativedelta
 
 import pandas as pd
 import baostock as bs
@@ -29,21 +30,19 @@ import valuation
 from sqlconn import engine
 # from sqlrw import checkGuben, setGubenLastUpdate
 # from sqlrw import getStockKlineUpdateDate
-from sqlrw import getIndexPEUpdateDate, getAllMarketPEUpdateDate
-import download
-from download import downGuben, downGuzhi
-from download import downStockQuarterData
-from download import downStockList
-# from download import downIndex
-from download import downDaily
-from download import downDailyBasic, downTradeCal
-from download import downIndexDaily, downIndexDailyBasic
-from download import downIndexBasic, downIndexWeight
-from download import DownloaderQuarter
+from sqlrw import (getIndexPEUpdateDate, getAllMarketPEUpdateDate,
+                   readStockList)
+# import download
+from download import (downGuzhi, downStockList,
+                      downDaily, downDailyBasic, downTradeCal,
+                      downIndexDaily, downIndexDailyBasic,
+                      downIndexBasic, downIndexWeight,
+                      DownloaderQuarter, downHYList)
 # from download import downHYList
 from initlog import initlog
 from datatrans import dateList
 import config
+from misc import checkQuarterData
 
 
 def logfun(func):
@@ -91,10 +90,13 @@ def startUpdate():
     # 利润表
     # 现金流量表
     # 财务指标表
+    # TODO: 优化是否存在待更新季度的判断条件
+    # 可按股票每日指标计算利润，与最后一期利润表中的利润比较
+    # 当利润与上期持平时如何处理？
     updateQuarterData()
 
     # 更新行业列表
-    downHYList()
+    updateHYList()
 
     # 更新股票估值
     # updateGuzhiData()
@@ -138,8 +140,8 @@ def updateIndex():
 
 
 @logfun
-def downHYList():
-    download.downHYList()
+def updateHYList():
+    downHYList()
 
 
 @logfun
@@ -151,19 +153,46 @@ def updateQuarterData():
     #
     # 表格名称及tushare函数调用频次
     # table, perTimes, limit
-    today = dt.datetime.today().date().strftime('%Y%m%d')
-    sql = (f'select a.ts_code, a.end_date'
-           f' from disclosure_date a,'
-           f' (select ts_code, max(end_date) e_date'
-           f' from balancesheet group by ts_code) b'
-           f' where a.ts_code=b.ts_code and a.end_date>b.e_date'
-           f' and a.pre_date<="{today}";')
-    result = engine.execute(sql).fetchall()
-    for ts_code, period in result:
-        periodStr = period.strftime('%Y%m%d')
-        downloader = DownloaderQuarter(ts_code=ts_code, period=periodStr)
+    # today = dt.datetime.today().date().strftime('%Y%m%d')
+    # sql = (f'select a.ts_code, a.end_date'
+    #        f' from disclosure_date a,'
+    #        f' (select ts_code, max(end_date) e_date'
+    #        f' from balancesheet group by ts_code) b'
+    #        f' where a.ts_code=b.ts_code and a.end_date>b.e_date'
+    #        f' and a.pre_date<="{today}";')
+    # result = engine.execute(sql).fetchall()
+    # for ts_code, period in result:
+    #     periodStr = period.strftime('%Y%m%d')
+    #     downloader = DownloaderQuarter(ts_code=ts_code, period=periodStr)
+    #     downloader.run()
+
+    stocks = readStockList()
+    sql = (f'select ts_code, max(end_date) end_date, max(f_ann_date) ann_date'
+           f' from income group by ts_code')
+    df = pd.read_sql(sql, engine)
+    stocks = pd.merge(stocks, df, how='left',
+                      left_on='ts_code', right_on='ts_code')
+    end_date = lastQarterDate(dt.datetime.today().date())
+    stocks = stocks[(stocks.end_date.isnull()) | (stocks.end_date < end_date)]
+    resultList = []
+    for ts_code in stocks.ts_code:
+        # print(ts_code)
+        result, div = checkQuarterData(ts_code)
+        # resultList.append(dict(ts_code=ts_code, result=result, div=div))
+        if result == 0:
+            continue
+        elif result == 1:
+            # 更新该股票全部财务数据
+            datestr = ''
+        else:
+            ann_date = stocks[stocks.ts_code == ts_code].ann_date.values[0]
+            ann_date += relativedelta(days=1)
+            datestr = ann_date.strftime('%Y%m%d')
+        downloader = DownloaderQuarter(ts_code=ts_code, startDate=datestr)
         downloader.run()
 
+    # df = pd.DataFrame(resultList)
+    # df.to_excel('data/mvpettm.xlsx')
 
 
 # @logfun
@@ -174,14 +203,14 @@ def updateQuarterData():
 #     pool.join()
 
 
-@logfun
-def updateGuben(stockList, threadNum):
-    """ 更新股本多线程版， 因新浪限制， 暂时无用
-    """
-    pool = ThreadPool(processes=threadNum)
-    pool.map(downGuben, stockList)
-    pool.close()
-    pool.join()
+# @logfun
+# def updateGuben(stockList, threadNum):
+#     """ 更新股本多线程版， 因新浪限制， 暂时无用
+#     """
+#     pool = ThreadPool(processes=threadNum)
+#     pool.map(downGuben, stockList)
+#     pool.close()
+#     pool.join()
 
 
 @logfun
@@ -330,7 +359,7 @@ def updateDailybasic():
     endDate = endDate.strftime('%Y%m%d')
     dates = dateStrList(startDate, endDate)
     for d in dates:
-        download.downDailyBasic(tradeDate=d)
+        downDailyBasic(tradeDate=d)
 
 
 @logfun

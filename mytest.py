@@ -20,11 +20,9 @@ from xml import etree
 
 from download import *
 from sqlrw import *
-from bokeh.plotting import show, output_file
 # from sqlalchemy.ext.declarative import declarative_base
 
 from datamanage import *
-from sqlrw import readStockList
 # from sqlconn import Session
 # from misc import urlGubenEastmoney
 from misc import *
@@ -81,7 +79,7 @@ def analyIndex(code1='000001.SH', code2='000016.SH', startDate='20070101',
     # print(df1)
     max1 = df1[df1.close_sh == df1.close_sh.max()]
     df1right = df1[df1.trade_date > max1.trade_date.values[0]]
-    min1 = df1right[df1right.close_sh==df1right.close_sh.min()]
+    min1 = df1right[df1right.close_sh == df1right.close_sh.min()]
 
     sql = (f'select trade_date, close close_sz from index_daily'
            f' where ts_code="{code2}" and trade_date >= "{startDate}"')
@@ -97,12 +95,12 @@ def analyIndex(code1='000001.SH', code2='000016.SH', startDate='20070101',
     df = df[dfcolumn]
     # df.plot()
     # plt.show()
-    fig = plt.figure()
-    ax = plt.subplot()
-    label1 = INDEXNAME[code1]
-    label2 = INDEXNAME[code2]
 
     if plot:
+        fig = plt.figure()
+        ax = plt.subplot()
+        label1 = INDEXNAME[code1]
+        label2 = INDEXNAME[code2]
         line1 = ax.plot(df.index, df.line1, label=label1, color='blue')
         line2 = ax.plot(df.index, df.line2, label=label2, color='red')
         dates = [date.strftime('%Y%m%d') for date in df.trade_date]
@@ -675,6 +673,8 @@ def __testRepair():
     """测试专用函数:数据修复
     """
     pass
+    # repairFinaIndicator()
+
     # 修复股票日K线
     # downDailyRepair()
 
@@ -758,10 +758,41 @@ def __testMisc():
     """测试专用函数:杂项测试
     """
     pass
-    code1 = '000001.SH'
-    code2 = '399300.SZ'
-    code3 = '399905.SZ'
-    result = analyIndex(code2, code2=code3, plot=True)
+
+    checkQuarterData()
+
+    # stocks = readStockList()
+    # sql = 'select ts_code from income where end_date="20191231"'
+    # stocks = pd.read_sql(sql, engine)
+    # results = []
+    # for ts_code in stocks.ts_code:
+    #     print(ts_code)
+    #     basicprofits, incomeprofits, div = testPEProfitsTTM1(ts_code)
+    #     results.append(dict(ts_code=ts_code,
+    #                         basicprofits=basicprofits,
+    #                         incomeprofits=incomeprofits,
+    #                         div=div))
+    # df = pd.DataFrame(results)
+    # df.to_excel('data/profitsdiv.xlsx')
+
+    # ts_code = '000029.SZ'
+    # result = testPEPRfitsTTM(ts_code)
+    # print('TTM result: ', result)
+
+    # stocks = readStockList()
+    # resultList = []
+    # for ts_code in stocks.ts_code:
+    #     print(ts_code)
+    #     result = testPEPRfitsTTM(ts_code)
+    #     resultList.append(dict(ts_code=ts_code, result=result))
+    # df = pd.DataFrame(resultList)
+    # df.to_excel('data/mvpettm.xlsx')
+
+    # code1 = '000001.SH'
+    # code2 = '399300.SZ'
+    # code3 = '399905.SZ'
+    # result = analyIndex(code2, code2=code3, plot=True)
+
     # results = []
     # for code2 in INDEXNAME.keys():
     #     result = analyIndex(code1, code2)
@@ -818,6 +849,66 @@ def __testMisc():
     # datestr = '20200303'
     # from pushdata import push
     # push(f'评分{datestr}', f'valuations{datestr}.xlsx')
+
+
+def repairFinaIndicator():
+    stocks = readStockList()
+    for ts_code in stocks.ts_code:
+        downloader = DownloaderFinaIndicator(ts_code)
+        downloader.run()
+
+
+def testPEProfitsTTM1(ts_code):
+    """
+    按每日指标和利润表分别计算TTM利润，
+    两者差异超过0.00001时表示需更新财务季报
+    利润表应取最后一季，最后一季上年同期，上年年末计算得到profits_ttm
+    :return:
+    无利润表 返回1
+    无每日指标 返回2
+    利润表数据不全 返回3
+    每日指标与利润表差异较大 返回4
+    无差异 返回0
+    """
+
+    sql = f"""select total_mv/pe_ttm mvpettm from daily_basic
+           where ts_code="{ts_code}" order by trade_date desc limit 1;
+        """
+    result = engine.execute(sql).fetchone()
+    if result is None or result[0] is None:
+        mvpettm = None
+    else:
+        mvpettm = result[0] * 10000
+
+    # d1 最后一季日期
+    # d2 上年末季日期
+    # d3 最后一季上年同期日期
+    # p1,p2,p3类似
+    sql = f"""select end_date, n_income_attr_p from income 
+                where ts_code="{ts_code}" 
+                order by end_date desc limit 5;
+            """
+    df = pd.read_sql(sql, engine)
+    if df.empty:
+        profitsttm = None
+    else:
+        d1 = df.end_date.values[0]
+        d2 = d1 - relativedelta(years=1, month=12, day=31)
+        d3 = d1 - relativedelta(years=1)
+        if ((d2 not in df.end_date.values)
+                or (d3 not in df.end_date.values)):
+            profitsttm = None
+        else:
+            p1 = df[df.end_date == d1].n_income_attr_p.values[0]
+            p2 = df[df.end_date == d2].n_income_attr_p.values[0]
+            p3 = df[df.end_date == d3].n_income_attr_p.values[0]
+            profitsttm = p1 + p2 - p3
+
+    if mvpettm is None or profitsttm is None:
+        div = None
+    else:
+        div = abs(mvpettm / profitsttm - 1)
+    return (mvpettm, profitsttm, div)
 
 
 if __name__ == "__main__":
