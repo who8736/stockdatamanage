@@ -72,7 +72,6 @@ def calGuzhi(stockList=None):
     #     pegDf = pd.merge(peDf, pegDf, on='ts_code', how='left')
     #     print pegDf.head()
 
-    # TODO:　假设当前为第2季度，但第1季度上市公司的财务报告未公布，导致缺少数据如何处理
     sectionNum = 6  # 取6个季度
     # 新取TTM利润方法，取每支股票最后N季度数据
     incDf = sqlrw.readLastTTMProfits(stockList, sectionNum)
