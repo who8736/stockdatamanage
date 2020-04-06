@@ -578,7 +578,7 @@ if __name__ == '__main__':
 
     # linearProfitInc()
 
-    ts_code = '600036.SH'
+    ts_code = '600340.SH'
     startDate = '20150331'
     endDate = '20191231'
     result = _linearProfitIncDouble(ts_code=ts_code,
