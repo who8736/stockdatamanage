@@ -244,4 +244,4 @@ def reportIndex(ID):
 
 if __name__ == '__main__':
     ts_code = '000002'
-    report(ts_code)
+    # report(ts_code)

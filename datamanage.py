@@ -22,9 +22,10 @@ import baostock as bs
 import tushare as ts
 
 # import datatrans
+import analyse.report
 from datatrans import lastQarterDate, dateStrList
 import classifyanalyse
-import dataanalyse
+import analyse
 import sqlrw
 import valuation
 from sqlconn import engine
@@ -42,7 +43,7 @@ from download import (downGuzhi, downStockList,
 from initlog import initlog
 from datatrans import dateList
 import config
-from misc import checkQuarterData
+from check import checkQuarterData
 
 
 def logfun(func):
@@ -115,7 +116,7 @@ def updateAllMarketPE():
     :return:
     """
     startDate = getAllMarketPEUpdateDate()
-    dataanalyse.calAllPEHistory(startDate)
+    analyse.report.calAllPEHistory(startDate)
 
 
 @logfun
@@ -133,7 +134,7 @@ def updateIndex():
     # startDate = getIndexKlineUpdateDate() + dt.timedelta(days=1)
     # startDate = getIndexPEUpdateDate()
     startDate = getIndexPEUpdateDate() + dt.timedelta(days=1)
-    dataanalyse.calPEHistory(ID, startDate)
+    analyse.report.calPEHistory(ID, startDate)
 
 
 @logfun
@@ -326,8 +327,8 @@ def updateHYData(date):
 
 @logfun
 def updateGuzhiData():
-    dataanalyse.testChigu()
-    dataanalyse.testShaixuan()
+    analyse.report.testChigu()
+    analyse.report.testShaixuan()
 
 
 def readStockListFromFile(filename):

@@ -28,9 +28,8 @@ from datamanage import *
 from misc import *
 # from initlog import initlog
 from datatrans import *
-from dataanalyse import *
 from classifyanalyse import *
-import bokehtest
+from test import bokehtest
 from plot import *
 
 matplotlib.use('Qt5Agg')  # @UndefinedVariable
@@ -40,13 +39,13 @@ INDEXNAME = {'000001.SH': '上证综指',
              # '000006.SH': '上证房地产指数',
              '000016.SH': '上证50',
              # '000300.SH': '沪深300',
-             # '000905.SH': '中证500',
+             '000905.SH': '中证500',
              '399001.SZ': '深证成指',
              # '399005.SZ': '中小板指',
              '399006.SZ': '创业板指',
              # '399016.SZ': '深证创新',
              '399300.SZ': '沪深300',
-             '399905.SZ': '中证500',
+             # '399905.SZ': '中证500',
              }
 
 
@@ -210,68 +209,6 @@ def del_downLiutongGubenFromBaostock():
     return result
 
 
-# def checkGuben(date='2019-04-19'):
-#     """ 以下方法用于从tushare.pro下载日频信息中的股本数据
-#         与数据库保存的股本数据比较，某股票的总股本存在差异时说明股本有变动
-#         返回需更新的股票列表
-#     """
-#     pro = ts.pro_api()
-#     tradeDate = '%s%s%s' % (date[:4], date[5:7], date[8:])
-#     dfFromTushare = pro.daily_basic(ts_code='', trade_date=tradeDate,
-#                                     fields='ts_code,total_share')
-#     dfFromTushare['ts_code'] = dfFromTushare['ts_code'].str[:6]
-#
-#     sql = """ select a.ts_code, a.date, a.totalshares from guben as a,
-#             (SELECT ts_code, max(date) as maxdate FROM stockdata.guben
-#             group by ts_code) as b
-#             where a.ts_code=b.ts_code and a.date = b.maxdate;
-#             """
-#     dfFromSQL = pd.read_sql(sql, con=engine)
-#     df = pd.merge(dfFromTushare, dfFromSQL, how='left', on='ts_code')
-#     df.loc[0:, 'cha'] = df.apply(
-#         lambda x: abs(x['total_share'] * 10000 - x['totalshares']) / (
-#                 x['total_share'] * 10000), axis=1)
-#
-#     chaRate = 0.0001
-#     dfUpdate = df[df.cha >= chaRate]
-#     print(dfUpdate)
-#     for ts_code in dfUpdate['ts_code']:
-#         sql = ('select max(date) from guben where ts_code="%s" limit 1;'
-#                % ts_code)
-#         dateA = _getLastUpdate(sql)
-#         setGubenLastUpdate(ts_code, dateA)
-#
-#     # 对于需更新股本的股票，逐个更新股本并修改更新日期
-#     # 对于无需更新股本的股票，将其更新日期修改为上一交易日
-#     dfFinished = df[df.cha < chaRate]
-#     for ts_code in dfFinished['ts_code']:
-#         setGubenLastUpdate(ts_code, date)
-#     # print(df3)
-#     return dfUpdate
-
-
-def downGubenTest():
-    """ 仅做测试用，下载单个股本数据，验证股本下载函数是否正确"""
-    # ts_codes = ["300539"]
-    ts_codes = readStockList().ts_code.to_list()
-    for ts_code in ts_codes:
-        downGuben(ts_code, replace=True)
-        time.sleep(1)
-
-
-# def del_resetKlineExtData():
-#     """
-#
-#     :return:
-#     """
-#     stockList = sqlrw.readStockList()
-#     print(type(stockList))
-#     print(stockList)
-#     for ts_code in stockList:
-#         pass
-# updateKlineEXTData(ts_code, '2016-01-01')
-
-# for()
 
 
 def resetTTMLirun():
@@ -322,7 +259,7 @@ def testBokeh():
     # b = BokehPlot('000651')
     # p = b.plot()
     # output_file("kline.html", title="kline plot test")
-    output_file('vbar.html')
+    output_file('../vbar.html')
     p = figure(plot_width=400, plot_height=400)
     p.vbar(x=[1, 2, 3], width=0.5, bottom=[1, 2, 3],
            top=[1.2, 2, 3.1], color="firebrick")
@@ -354,7 +291,7 @@ def testBokehtest():
     """
     mybokeh = bokehtest.BokehPlotStock('000651', 1000)
     myplot = mybokeh.plot()
-    output_file("kline.html", title="kline plot test")
+    output_file("../kline.html", title="kline plot test")
     show(myplot)  # open a browser
 
 
@@ -710,7 +647,7 @@ def __testValuation():
     # 股票评分
     ##############################################
     # 估值筛选
-    # dataanalyse.testShaixuan()
+    # analyse.testShaixuan()
 
     # 计算评分
     # calpf()

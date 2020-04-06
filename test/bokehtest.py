@@ -161,7 +161,7 @@ def testPlotKline(ts_code, days=1000):
     select.toolbar.active_multi = range_tool
 
     column_layout = column([pkline, ppe, select])
-    output_file("kline.html", title="kline plot test")
+    output_file("../kline.html", title="kline plot test")
     show(column_layout)  # open a browser
     # show(pkline)  # open a browser
 

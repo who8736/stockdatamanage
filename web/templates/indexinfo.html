@@ -6,7 +6,7 @@
 	<div class="container">
     {{ super() }}
 
-    <p><iframe src="/indexklineimgnew/{{ stock.ID }}" id="bokehplot"
+    <p><iframe src="/indexklineimgnew/{{ stock.ts_code }}" id="bokehplot"
         frameborder="0"  name="kline bokeh plot" scrolling="no"
 		onload="this.height=100">
     </iframe></p>

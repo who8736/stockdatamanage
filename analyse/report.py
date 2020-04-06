@@ -1,30 +1,13 @@
-# -*- coding: utf-8 -*-
-"""
-Created on 2016年5月4日
-
-@author: who8736
-"""
-
-import logging
-import os
 import datetime as dt
 from datetime import datetime
-# from functools import partial
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 import datatrans
-from datatrans import dateStrList
 import sqlrw
-from sqlrw import engine, Session
-from initlog import initlog
-
-
-# def getLowPEStockList(maxPE=40):
-#     """选取指定范围PE的股票
-#     maxPE: 最大PE
-#     """
+from datatrans import dateStrList
+from sqlrw import Session, engine
 
 
 def calGuzhi(stockList=None):
@@ -171,7 +154,6 @@ def calHistoryStatus(ts_code):
         sqlrw.engine.execute(sql)
 
 
-# def _calHistoryStatus(ts_code, TTMLirunDf, date):
 def _calHistoryStatus(TTMLirunDf, date):
     """
     """
@@ -263,11 +245,6 @@ def del_youzhiSelect(pegDf):
     return pegDf
 
 
-# def dfToCsvFile(df, filename):
-#    #     filename = u'.\\youzhi.csv'
-#    return df.to_csv(filename)
-
-
 def testChigu():
     #     youzhiSelect()
     #     inFilename = './data/chiguts_code.txt'
@@ -286,11 +263,6 @@ def testChigu():
     #     df.set_index('ts_code', inplace=True)
     #     print df.head()
     sqlrw.writeSQL(df, 'chiguguzhi')
-
-
-#     df.to_sql(u'chiguguzhi',
-#               sqlrw.engine,
-#               if_exists=u'append')
 
 
 def testShaixuan():
@@ -399,48 +371,9 @@ def analysePEHist(ts_code, startDate, endDate, dayCount=200,
     return df
 
 
-if __name__ == '__main__':
-    initlog()
-
-    timec = dt.datetime.now()
-    #    testts_code = u'601398'
-    ts_code = '000651'
-    startDate = '20130101'
-    endDate = '20191231'
-    logging.info('===================start=====================')
-
-    # 测试持股估值
-    #     testChigu()
-
-    # 测试筛选估值
-    # testShaixuan()
-
-    # 测试TTMPE直方图、概率分布
-    #     ttmdf = sqlrw.readTTMPE(testts_code)
-    #     ttmdf = ttmdf[-200:]
-    #     ttmdf.plot()
-    #     print ttmdf.head()
-    #     print ttmdf.tail()
-    #
-    #     a = ttmdf.plot(kind='kde')
-    #     print 'type a :', type(a)
-    #
-    #     b = ttmdf.hist(bins=20)
-    #     print 'type b :', type(b)
-
-    #    c = ttmdf.hist().get_figure()
-    #    print 'type c :', type(c)
-
-    # 生成历史估值状态
-    #     calHistoryStatus('000333')
-
-    # 测试估值计算函数
-    #     calGuzhi()
-
-    # 测试历史估值水平
-    df = analysePEHist(ts_code, startDate, endDate, dayCount=1000)
-    df.plot()
-
-    timed = dt.datetime.now()
-    logging.info('datamanage test took %s' % (timed - timec))
-    logging.info('===================end=====================')
+# timec = dt.datetime.now()
+# ts_code = '000651'
+# startDate = '20130101'
+# endDate = '20191231'
+# df = analysePEHist(ts_code, startDate, endDate, dayCount=1000)
+# timed = dt.datetime.now()

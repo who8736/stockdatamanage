@@ -436,17 +436,17 @@ def downGuzhi_del(ts_code):
     return data
 
 
-def downChengfen180():
-    """
-    从中证指数网下载指数成人股列表，考虑tushare仅提供月度数据，本函数暂时保留
-    :return:
-    """
-    url = 'http://www.csindex.com.cn/uploads/file/autofile/cons/000010cons.xls'
-    filename = './data/000010cons.xls'
-    if dataToFile(url, filename):
-        df = pd.read_excel(filename)
-        df1 = pd.DataFrame({'name': 'sse180', 'ts_code': df.iloc[:, 4]})
-        writeSQL(df1, 'chengfen')
+# def downChengfen180():
+#     """
+#     从中证指数网下载指数成人股列表，考虑tushare仅提供月度数据，本函数暂时保留
+#     :return:
+#     """
+#     url = 'http://www.csindex.com.cn/uploads/file/autofile/cons/000010cons.xls'
+#     filename = './data/000010cons.xls'
+#     if dataToFile(url, filename):
+#         df = pd.read_excel(filename)
+#         df1 = pd.DataFrame({'name': 'sse180', 'ts_code': df.iloc[:, 4]})
+#         writeSQL(df1, 'chengfen')
 
 
 def del_downChengfen(ID, startDate, endDate=None):
@@ -1034,12 +1034,14 @@ def downIndexDaily():
                 '000006.SH',
                 '000010.SH',
                 '000016.SH',
+                '000905.SH',
+
                 '399001.SZ',
                 '399005.SZ',
                 '399006.SZ',
                 '399016.SZ',
                 '399300.SZ',
-                '399905.SZ', ]
+                ]
     for code in codeList:
         sql = (f'select max(trade_date) from index_daily'
                f' where ts_code="{code}"')
@@ -1077,12 +1079,13 @@ def downIndexDailyBasic():
                 '000005.SH',
                 '000006.SH',
                 '000016.SH',
+                '000905.SH',
                 '399001.SZ',
                 '399005.SZ',
                 '399006.SZ',
                 '399016.SZ',
                 '399300.SZ',
-                '399905.SZ', ]
+                ]
     for code in codeList:
         sql = (f'select max(trade_date) from index_dailybasic'
                f' where ts_code="{code}"')

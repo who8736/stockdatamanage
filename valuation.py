@@ -16,9 +16,10 @@ import os
 import pandas as pd
 import numpy as np
 
+import analyse.report
 import initsql
 import classifyanalyse
-import dataanalyse
+import analyse
 import sqlrw
 from sqlconn import engine
 from sqlrw import readLastTTMPEs, readStockList
@@ -150,11 +151,11 @@ def calpf():
     stocks['lowpez1000'] = stocks.apply(lowPEZ1000, axis=1)
 
     # 计算pe200与pe1000
-    # stocks['pe200'] = dataanalyse.peHistRate(stocks.ts_code.tolist(), 200)
-    # stocks['pe1000'] = dataanalyse.peHistRate(stocks.ts_code.tolist(), 1000)
-    df = dataanalyse.peHistRate(stocks.ts_code.tolist(), 200)
+    # stocks['pe200'] = analyse.peHistRate(stocks.ts_code.tolist(), 200)
+    # stocks['pe1000'] = analyse.peHistRate(stocks.ts_code.tolist(), 1000)
+    df = analyse.report.peHistRate(stocks.ts_code.tolist(), 200)
     stocks = pd.merge(stocks, df, on='ts_code', how='left')
-    df = dataanalyse.peHistRate(stocks.ts_code.tolist(), 1000)
+    df = analyse.report.peHistRate(stocks.ts_code.tolist(), 1000)
     stocks = pd.merge(stocks, df, on='ts_code', how='left')
 
     # 计算总评分
@@ -257,11 +258,11 @@ def calpfnew(date, replace=False):
     # return stocks
 
     # 计算pe200与pe1000
-    # stocks['pe200'] = dataanalyse.peHistRate(stocks.ts_code.tolist(), 200)
-    # stocks['pe1000'] = dataanalyse.peHistRate(stocks.ts_code.tolist(), 1000)
-    df = dataanalyse.peHistRate(stocks.ts_code.tolist(), 200, date)
+    # stocks['pe200'] = analyse.peHistRate(stocks.ts_code.tolist(), 200)
+    # stocks['pe1000'] = analyse.peHistRate(stocks.ts_code.tolist(), 1000)
+    df = analyse.report.peHistRate(stocks.ts_code.tolist(), 200, date)
     stocks = pd.merge(stocks, df, on='ts_code', how='left')
-    df = dataanalyse.peHistRate(stocks.ts_code.tolist(), 1000, date)
+    df = analyse.report.peHistRate(stocks.ts_code.tolist(), 1000, date)
     stocks = pd.merge(stocks, df, on='ts_code', how='left')
 
     # 计算总评分

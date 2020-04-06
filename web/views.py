@@ -14,7 +14,7 @@ from bokeh.util.string import encode_utf8
 
 from plot import plotKline, BokehPlot
 from plot import PlotProfitsInc
-from report import report1 as guzhiReport
+# from report import report1 as guzhiReport
 from report import reportValuation
 from report import reportIndex
 from sqlrw import (getChiguList, getGuzhiList, getYouzhiList,
@@ -81,13 +81,13 @@ def reportnav(typeid):
     return render_template('reportnav.html', stockList=stockReportList)
 
 
-@app.route('/report/<ts_code>')
-def reportView(ts_code):
-    stockItem = guzhiReport(ts_code)
-    #     reportstr = reportstr[:20]
-    #     reportstr = 'test'
-    return render_template('report.html',
-                           stock=stockItem)
+# @app.route('/report/<ts_code>')
+# def reportView(ts_code):
+#     stockItem = guzhiReport(ts_code)
+#     #     reportstr = reportstr[:20]
+#     #     reportstr = 'test'
+#     return render_template('report.html',
+#                            stock=stockItem)
 
 
 @app.route('/valuationtype/<typeid>')
