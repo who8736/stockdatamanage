@@ -1,6 +1,9 @@
 # -*- coding:utf-8 -*-
 # author:who8736
 # datetime:2020/4/6 12:02
+"""
+主要股指成分股历年总体利润增长率
+"""
 
 import pandas as pd
 
