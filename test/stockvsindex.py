@@ -240,6 +240,7 @@ if __name__ == '__main__':
     df_name = df.name
     df.drop('name', axis=1, inplace=True)
     df.insert(1, 'name', df_name)
+    df = df.round(2)
     df.to_excel('../data/stockvsindex.xlsx')
 
     # divRangeStock()
