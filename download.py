@@ -1103,6 +1103,25 @@ def downIndexDailyBasic():
         writeSQL(df, 'index_dailybasic')
 
 
+def downAdjFactor(trade_date, retry=3):
+    """
+    下载复权因子
+    前复权 = 当日收盘价 × 当日复权因子 / 最新复权因子	qfq
+    后复权 = 当日收盘价 × 当日复权因子	hfq
+    :return:
+    """
+    logging.debug(f'下载复权因子: {trade_date}')
+    pro = ts.pro_api()
+    for _ in range(retry):
+        try:
+            df = pro.adj_factor(trade_date=trade_date)
+            writeSQL(df, 'adj_factor')
+        except (socket.timeout, ConnectTimeout):
+            continue
+        else:
+            break
+
+
 if __name__ == '__main__':
     initlog()
 

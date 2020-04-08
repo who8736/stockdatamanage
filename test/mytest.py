@@ -696,7 +696,9 @@ def __testMisc():
     """
     pass
 
-    checkQuarterData()
+    updateAdjFacotr()
+
+    # checkQuarterData()
 
     # stocks = readStockList()
     # sql = 'select ts_code from income where end_date="20191231"'

@@ -909,6 +909,18 @@ def readLastTTMPE(ts_code, date=None):
         return result[0]
 
 
+def readCal(startDate=None, endDate=None, exchange='SSE', is_open=1):
+    sql = (f'select cal_date trade_date from trade_cal'
+           f' where exchange="{exchange}"')
+    if startDate is not None:
+        sql += f' and cal_date>="{startDate}"'
+    if endDate is not None:
+        sql += f' and cal_date<="{endDate}"'
+    sql += f' and is_open={is_open}'
+    result = engine.execute(sql).fetchall()
+    return [d[0].strftime('%Y%m%d') for d in result]
+
+
 def readLastTTMPEs(stockList, trade_date=None):
     """
     读取stockList中股票指定日期的TTMPE, 默认取最后一天的TTMPE
@@ -1520,7 +1532,7 @@ def readIndexKline(index_code, days):
                             'low': lowList,
                             'pe': peList})
     """
-    peTable = 'index_pe' if index_code=='000010.SH' else 'index_dailybasic'
+    peTable = 'index_pe' if index_code == '000010.SH' else 'index_dailybasic'
     sql = (f'select a.trade_date, a.open, a.high, a.low, a.close, b.pe_ttm '
            f' from index_daily a, {peTable} b '
            f' where a.ts_code="{index_code}" and a.ts_code=b.ts_code '

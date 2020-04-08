@@ -7,6 +7,7 @@ Created on 2016年1月10日
 
 # import sys  # python的系统调用模块
 # import os
+import datetime
 import logging
 import time
 import configparser
@@ -15,6 +16,8 @@ import datetime as dt
 # import ConfigParser
 from multiprocessing.dummy import Pool as ThreadPool
 from functools import wraps
+
+import tushare
 from dateutil.relativedelta import relativedelta
 
 import pandas as pd
@@ -32,13 +35,13 @@ from sqlconn import engine
 # from sqlrw import checkGuben, setGubenLastUpdate
 # from sqlrw import getStockKlineUpdateDate
 from sqlrw import (getIndexPEUpdateDate, getAllMarketPEUpdateDate,
-                   readStockList)
+                   readStockList, engine, readCal)
 # import download
 from download import (downGuzhi, downStockList,
                       downDaily, downDailyBasic, downTradeCal,
                       downIndexDaily, downIndexDailyBasic,
                       downIndexBasic, downIndexWeight,
-                      DownloaderQuarter, downHYList)
+                      DownloaderQuarter, downHYList, downAdjFactor)
 # from download import downHYList
 from initlog import initlog
 from datatrans import dateList
@@ -78,6 +81,9 @@ def startUpdate():
 
     # 更新每日指标
     updateDailybasic()
+
+    # 更新复权因子
+    updateAdjFacotr()
 
     # 更新非季报表格
     # 财务披露表（另外单独更新）
@@ -377,6 +383,24 @@ def updateStockList():
     downStockList()
 
 
+@logfun
+def updateAdjFacotr():
+    """
+    下载复权因子
+    前复权 = 当日收盘价 × 当日复权因子 / 最新复权因子	qfq
+    后复权 = 当日收盘价 × 当日复权因子	hfq
+    :return:
+    """
+    sql = 'select max(trade_date) from adj_factor'
+    result = engine.execute(sql).fetchone()
+    if result is None or result[0] is None:
+        startDate = '20090101'
+    else:
+        startDate = result[0].strftime('%Y%m%d')
+    endDate = dt.datetime.today().strftime('%Y%m%d')
+    dateList = readCal(startDate=startDate, endDate=endDate)
+    for d in dateList:
+        downAdjFactor(d)
 if __name__ == '__main__':
     initlog()
 
@@ -401,6 +425,7 @@ if __name__ == '__main__':
     # updateLirun()
     # updatePf()
 
+
 #     stockList = sqlrw.readts_codesFromSQL()
 #     updateGubenSingleThread()
 #     updateMainTableSingleThread(stockList)
@@ -411,3 +436,5 @@ if __name__ == '__main__':
 
 #     ts_code = '000005'
 #     sqlrw.downMainTable(ts_code)
+
+
