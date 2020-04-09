@@ -55,8 +55,10 @@ def _adfTest(data):
     result = adfuller(data)
     return (mean, result)
 
-def _linear(data, plot=False, title=None, filename=None):
+
+def _linear_trans(data, plot=False, title=None, filename=None):
     """线性回归通用函数，对一组数据进行线性回归
+    数据经转换为监督学习序列后拟合
     :param data:
     :param plot: 是否显示绘图结果
     :param title: 绘图标题，plot为True时，title为必选项
@@ -67,7 +69,7 @@ def _linear(data, plot=False, title=None, filename=None):
     """
     pass
     cnt = len(data)
-    if cnt<10:
+    if cnt < 10:
         return None
     x = np.array(range(1, cnt + 1))
     x = x[:, np.newaxis]
@@ -84,6 +86,38 @@ def _linear(data, plot=False, title=None, filename=None):
     r2 = r2_score(data, Y)
     return dict(intercept=intercept, coef=coef, r2=r2)
 
+
+
+def _linear(data, plot=False, title=None, filename=None):
+    """线性回归通用函数，对一组数据进行线性回归
+    :param data:
+    :param plot: 是否显示绘图结果
+    :param title: 绘图标题，plot为True时，title为必选项
+    :param filename: 不为空时，自动保存图片
+    :return:
+    该组数据均值，均方差，adf检测结果
+    该组数据一阶差分的均值，均方差，adf检测结果
+    """
+    pass
+    cnt = len(data)
+    if cnt < 10:
+        return None
+    x = np.array(range(1, cnt + 1))
+    x = x[:, np.newaxis]
+
+    # 拟合
+    regr = linear_model.LinearRegression()
+    regr.fit(x, data)
+    intercept = regr.intercept_
+    coef = regr.coef_[0]
+    # print(f'截距:{intercept}, 系数:{coef}')
+
+    # 计算r2
+    Y = [intercept + i * coef for i in x]
+    r2 = r2_score(data, Y)
+    return dict(intercept=intercept, coef=coef, r2=r2)
+
+
 def _linearHuber(data, plot=False, title=None, filename=None):
     """线性回归通用函数，对一组数据进行线性回归
     :param data:
@@ -96,7 +130,7 @@ def _linearHuber(data, plot=False, title=None, filename=None):
     """
     pass
     cnt = len(data)
-    if cnt<10:
+    if cnt < 10:
         return None
     x = np.array(range(1, cnt + 1))
     x = x[:, np.newaxis]
@@ -113,6 +147,7 @@ def _linearHuber(data, plot=False, title=None, filename=None):
     Y = [intercept + i * coef for i in x]
     r2 = r2_score(data, Y)
     return dict(intercept=intercept, coef=coef, r2=r2)
+
 
 def linearPlot(data, plot=False, title=None, filename=None):
     """绘图函数，接受_linear产生的数据绘制原始数据和一阶差分的散点图和回归直线"""
@@ -232,7 +267,7 @@ def _linearProfits(ts_code, startQuarter, fig):
            f' where ts_code="{ts_code}" and date>={startQuarter};')
     result = engine.execute(sql).fetchall()
     cnt = len(result)
-    if cnt<10:
+    if cnt < 10:
         return (None, None, None)
     y = [i[0] / 10000 / 10000 for i in result]
     x = np.array(range(cnt))
@@ -566,6 +601,40 @@ def linearProfits():
     stocks.to_excel('../data/profits_linear_regression.xlsx')
 
 
+def series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
+    """
+    将时间序列重构为监督学习数据集.
+    参数:
+        data: 观测值序列，类型为列表或Numpy数组。
+        n_in: 输入的滞后观测值(X)长度。
+        n_out: 输出观测值(y)的长度。
+        dropnan: 是否丢弃含有NaN值的行，类型为布尔值。
+    返回值:
+        经过重组后的Pandas DataFrame序列.
+    """
+    n_vars = 1 if type(data) is list else data.shape[1]
+    df = pd.DataFrame(data)
+    cols, names = list(), list()
+    # 输入序列 (t-n, ... t-1)
+    for i in range(n_in, 0, -1):
+        cols.append(df.shift(i))
+        names += [('var%d(t-%d)' % (j + 1, i)) for j in range(n_vars)]
+    # 预测序列 (t, t+1, ... t+n)
+    for i in range(0, n_out):
+        cols.append(df.shift(-i))
+        if i == 0:
+            names += [('var%d(t)' % (j + 1)) for j in range(n_vars)]
+        else:
+            names += [('var%d(t+%d)' % (j + 1, i)) for j in range(n_vars)]
+    # 将列名和数据拼接在一起
+    agg = pd.concat(cols, axis=1)
+    agg.columns = names
+    # 丢弃含有NaN值的行
+    if dropnan:
+        agg.dropna(inplace=True)
+    return agg
+
+
 if __name__ == '__main__':
     pass
     ts_codea = '601985'
@@ -578,9 +647,17 @@ if __name__ == '__main__':
 
     # linearProfitInc()
 
-    ts_code = '600340.SH'
-    startDate = '20150331'
-    endDate = '20191231'
-    result = _linearProfitIncDouble(ts_code=ts_code,
-                     startDate=startDate, endDate=endDate)
-    print(result)
+    # 比较最小二乘与HuberRegressor的区别
+    # ts_code = '600340.SH'
+    # startDate = '20150331'
+    # endDate = '20191231'
+    # result = _linearProfitIncDouble(ts_code=ts_code,
+    #                                 startDate=startDate, endDate=endDate)
+    # print(result)
+
+    # 将单变量时间序列转换为监督学习数据序列
+    data = list(range(100))
+    df = series_to_supervised(data, n_in=3)
+    print(df)
+    print('-' * 80)
+    print(df.iloc[:, 0:3].values)
