@@ -15,6 +15,7 @@ import pandas as pd
 from statsmodels.tsa.stattools import adfuller
 from sklearn import datasets, linear_model
 from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.model_selection import train_test_split
 import tushare as ts
 
 from sqlconn import engine
@@ -71,21 +72,30 @@ def _linear_trans(data, plot=False, title=None, filename=None):
     cnt = len(data)
     if cnt < 10:
         return None
-    x = np.array(range(1, cnt + 1))
-    x = x[:, np.newaxis]
+    x, y = series_to_supervised(data, n_in=3)
+    # x = np.array(range(1, cnt + 1))
+    # x = x[:, np.newaxis]
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.3)
+    # print('x_train:\n', x_train)
+    # print('x_test:\n', x_test)
+    # print('y_train:\n', y_train)
+    # print('y_test:\n', y_test)
+    # print('-' * 80)
+    # print('x_test len:', len(x_test))
+    # print('y_test len:', len(y_test))
 
     # 拟合
     regr = linear_model.LinearRegression()
-    regr.fit(x, data)
+    regr.fit(x_train, y_train)
     intercept = regr.intercept_
     coef = regr.coef_[0]
     # print(f'截距:{intercept}, 系数:{coef}')
 
     # 计算r2
-    Y = [intercept + i * coef for i in x]
-    r2 = r2_score(data, Y)
+    # y_predict = [intercept + i * coef for i in x]
+    y_predictions = regr.predict(x_test)
+    r2 = r2_score(y_test, y_predictions)
     return dict(intercept=intercept, coef=coef, r2=r2)
-
 
 
 def _linear(data, plot=False, title=None, filename=None):
@@ -308,8 +318,8 @@ def plotPairs(df, intercept, coef):
     ax1 = plt.subplot(gs[0, 0])
     ax2 = plt.subplot(gs[0, 1])
     # 绘制拆线图
-    ax1.plot(df.index, df.ttmpea, color='blue', label=ts_codea)
-    ax1.plot(df.index, df.ttmpeb, color='yellow', label=ts_codeb)
+    ax1.plot(df.index, df.ttmpea, color='blue', label='ts_codea')
+    ax1.plot(df.index, df.ttmpeb, color='yellow', label='ts_codeb')
     ax1.legend()
     # 设置X轴的刻度间隔
     # 可选:YearLocator,年刻度; MonthLocator,月刻度; DayLocator,日刻度
@@ -612,7 +622,9 @@ def series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
     返回值:
         经过重组后的Pandas DataFrame序列.
     """
-    n_vars = 1 if type(data) is list else data.shape[1]
+    n_vars = 1
+    if isinstance(data, np.ndarray) and len(data.shape) >= 2:
+        n_vars = data.shape[1]
     df = pd.DataFrame(data)
     cols, names = list(), list()
     # 输入序列 (t-n, ... t-1)
@@ -632,15 +644,15 @@ def series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
     # 丢弃含有NaN值的行
     if dropnan:
         agg.dropna(inplace=True)
-    return agg
+    return (agg.iloc[:, 0:n_in].values, agg.iloc[:, -1].values)
 
 
 if __name__ == '__main__':
     pass
-    ts_codea = '601985'
-    ts_codeb = '600170'
-    startDate = '20140101'
-    endDate = '20191231'
+    # ts_codea = '601985'
+    # ts_codeb = '600170'
+    # startDate = '20140101'
+    # endDate = '20191231'
     # findPairs(ts_codea, ts_codeb, startDate=startDate)
     # linearAll()
     # diabetesTest()
@@ -656,8 +668,31 @@ if __name__ == '__main__':
     # print(result)
 
     # 将单变量时间序列转换为监督学习数据序列
-    data = list(range(100))
-    df = series_to_supervised(data, n_in=3)
-    print(df)
+    # data = list(range(100))
+    # df = series_to_supervised(data, n_in=3)
+    # x, y= series_to_supervised(data, n_in=3)
+    # print(x)
+    # print('-' * 80)
+    # print(y)
+
+    # 将单自变量时间序列转换为3自变量监督学习序列后线性回归
+    ts_code = '000651.SZ'
+    startDate = '20090101'
+    endDate = '20191231'
+    sql = (f'select dt_netprofit_yoy inc from fina_indicator'
+           f' where ts_code="{ts_code}" and end_date>="{startDate}"'
+           f' and end_date<="{endDate}"')
+    df = pd.read_sql(sql, engine)
+    df.dropna(inplace=True)
+    results = _linear_trans(df.inc.values)
+    print(f'转换序列拟合结果')
+    print(f'intercept:{results["intercept"]}')
+    print(f'coef:{results["coef"]}')
+    print(f'r2:{results["r2"]}')
     print('-' * 80)
-    print(df.iloc[:, 0:3].values)
+
+    results = _linear(df.inc.values)
+    print(f'非转换序列拟合结果')
+    print(f'intercept:{results["intercept"]}')
+    print(f'coef:{results["coef"]}')
+    print(f'r2:{results["r2"]}')
