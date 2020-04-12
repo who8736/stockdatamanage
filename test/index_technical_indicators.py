@@ -7,9 +7,10 @@
 import pandas as pd
 import numpy as np
 from sklearn.linear_model import (LinearRegression, Ridge, Lasso,
-                                    RidgeCV, LassoCV)
-from sklearn.svm import LinearSVC
-from sklearn.model_selection import train_test_split
+                                  RidgeCV, LassoCV)
+from sklearn.svm import LinearSVC, SVC, NuSVC
+from sklearn.model_selection import (train_test_split, cross_val_score,
+                                     cross_val_predict)
 from sklearn.metrics import r2_score
 from sklearn.utils import check_X_y
 import talib as ta
@@ -18,7 +19,7 @@ from talib import MA_Type
 from sqlconn import engine
 
 
-def getdata(ts_code, startDate='20090101', endDate='20191231',
+def getdata(ts_code, startDate='20190101', endDate='20191231',
             type='linear'):
     """取得指数数据和特征值，返回训练集和测试集
     type: linear 线性归回类数据， classifier 分类器数据
@@ -29,8 +30,8 @@ def getdata(ts_code, startDate='20090101', endDate='20191231',
            f' and trade_date>="{startDate}" and trade_date<="{endDate}";')
     df = pd.read_sql(sql, engine, index_col='trade_date')
 
-    dftalib = ta_indicators(df)
-    df = pd.merge(df, dftalib, left_index=True, right_index=True)
+    # dftalib = ta_indicators(df)
+    # df = pd.merge(df, dftalib, left_index=True, right_index=True)
 
     # 均线
     df['ma5'] = ta.SMA(df.close, timeperiod=5)
@@ -51,8 +52,8 @@ def getdata(ts_code, startDate='20090101', endDate='20191231',
     elif type == 'classifier':
         # 次日是否涨跌为目标
         df['y'] = df.pct_chg.shift(-1) > 0
-    print('data shape:', df.shape)
-    print(df)
+    # print('data shape:', df.shape)
+    # print(df)
 
     # 返回训练集与测试集
     df.dropna(inplace=True)
@@ -590,9 +591,9 @@ def ta_indicators(df):
     #                         fastd_period=3, fastd_matype=0)
     dfa["STOCHRSI_fastk"], dfa["STOCHRSI_fastd"] = ta.STOCHRSI(df.close,
                                                                timeperiod=14,
-                                                             fastk_period=5,
-                                                             fastd_period=3,
-                                                             fastd_matype=0)
+                                                               fastk_period=5,
+                                                               fastd_period=3,
+                                                               fastd_matype=0)
 
     # TRIX - 1-day Rate-Of-Change (ROC) of a Triple Smooth EMA
     # real = TRIX(df.close, timeperiod=30)
@@ -748,51 +749,49 @@ def model_main_linear():
     print('r2:', r2_lasso)
 
 
-def model_main_classifier():
+def model_main_classifier(C=0.05):
     ts_code = '399300.SZ'
     x_train, x_test, y_train, y_test = getdata(ts_code, type='classifier')
     # return
-    # print(x_train.shape)
+    print(x_train.shape)
     # print(x_train)
     # print(x_test.shape)
-    # print(y_train.shape)
+    print(y_train.shape)
     # print(y_train)
     # print(y_test.shape)
 
     # 线性回归
     # model = LinearRegression()
     # 线性支持向量机 linearSVC
-    model = LinearSVC(C=0.1)
+    model = LinearSVC(C=C)
 
     model.fit(x_train, y_train)
     y_predictions = model.predict(x_test)
     # r2 = r2_score(y_test, y_predictions)
-    print('intercept:', model.intercept_)
-    print('coef:', model.coef_)
-    print('y_test:\n', y_test)
-    print('y_predictions:\n', y_predictions)
+    # print('intercept:', model.intercept_)
+    # print('coef:', model.coef_)
+    # print('y_test:\n', y_test)
+    # print('y_predictions:\n', y_predictions)
+    print('linearSVC score:', model.score(x_test, y_test))
     # print('r2:', r2)
 
-    # print('ridge regression:')
-    # model_ridge = Ridge()
-    # model_ridge.fit(x_train, y_train)
-    # y_predictions_ridge = model_ridge.predict(x_test)
-    # r2_ridge = r2_score(y_test, y_predictions_ridge)
-    # print('intercept:', model_ridge.intercept_)
-    # print('coef:', model_ridge.coef_)
-    # print('r2:', r2_ridge)
-    #
-    # print('lasso regression:')
-    # model_lasso = Lasso()
-    # model_lasso.fit(x_train, y_train)
-    # y_predictions_lasso = model_lasso.predict(x_test)
-    # r2_lasso = r2_score(y_test, y_predictions_lasso)
-    # print('intercept:', model_lasso.intercept_)
-    # print('coef:', model_lasso.coef_)
-    # print('r2:', r2_lasso)
+    model = NuSVC(kernel='linear', cache_size=1000, max_iter=10)
+    model.fit(x_train, y_train)
+    y_predictions = model.predict(x_test)
+    # print('SVC score:', model.score(y_test, y_predictions))
+    # scores = cross_val_score(model, x_train, y_train, cv=3)
+    # print(f'accuracy: {scores.mean():.2f} (+/- {scores.std() * 2})')
 
 
 if __name__ == '__main__':
     pass
-    model_main_linear()
-    # model_main_classifier()
+    # model_main_linear()
+    for c in np.arange(0.01, 0.1, 0.01):
+        print('c=', c)
+        model_main_classifier(C=c)
+
+    # X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
+    # y = np.array([1, 1, 2, 2])
+    # clf = SVC(gamma='auto')
+    # clf.fit(X, y)
+    # print(clf.predict([[-0.8, -1]]))
