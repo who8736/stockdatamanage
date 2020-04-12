@@ -6,7 +6,9 @@
 
 import pandas as pd
 import numpy as np
-from sklearn.linear_model import LinearRegression, Ridge, Lasso
+from sklearn.linear_model import (LinearRegression, Ridge, Lasso,
+                                    RidgeCV, LassoCV)
+from sklearn.svm import LinearSVC
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score
 from sklearn.utils import check_X_y
@@ -16,8 +18,10 @@ from talib import MA_Type
 from sqlconn import engine
 
 
-def getdata(ts_code, startDate='20090101', endDate='20191231'):
+def getdata(ts_code, startDate='20090101', endDate='20191231',
+            type='linear'):
     """取得指数数据和特征值，返回训练集和测试集
+    type: linear 线性归回类数据， classifier 分类器数据
     """
     # 基础数据
     sql = (f'SELECT trade_date, close, open, high, low, pct_chg, vol volume'
@@ -41,15 +45,21 @@ def getdata(ts_code, startDate='20090101', endDate='20191231'):
     df['maflag10_20down'] = ((df.ma10.shift(1) > df.ma20.shift(1)) &
                              (df.ma10 < df.ma20))
 
-    # 以次日涨跌幅为目标
-    df['y'] = df.pct_chg.shift(-1)
+    if type == 'linear':
+        # 以次日涨跌幅为目标
+        df['y'] = df.pct_chg.shift(-1)
+    elif type == 'classifier':
+        # 次日是否涨跌为目标
+        df['y'] = df.pct_chg.shift(-1) > 0
     print('data shape:', df.shape)
     print(df)
 
     # 返回训练集与测试集
     df.dropna(inplace=True)
     x = df.iloc[:, :-1]
-    y = df.iloc[:, -1:]
+    y = df.iloc[:, -1]
+    # print('y shape:', y.shape)
+    # print(y.values)
     x, y = check_X_y(x, y)
     return train_test_split(x, y, test_size=0.2)
 
@@ -694,25 +704,33 @@ def ta_indicators(df):
     return dfa
 
 
-def model_main():
+def model_main_linear():
     ts_code = '399300.SZ'
-    x_train, x_test, y_train, y_test = getdata(ts_code)
+    x_train, x_test, y_train, y_test = getdata(ts_code, type='linear')
+    # return
     # print(x_train.shape)
     # print(x_train)
     # print(x_test.shape)
     # print(y_train.shape)
     # print(y_train)
     # print(y_test.shape)
+
+    # 线性回归
     model = LinearRegression()
+    # # 线性支持向量机 linearSVC
+    # model = LinearSVC(C=0.01)
+
     model.fit(x_train, y_train)
     y_predictions = model.predict(x_test)
     r2 = r2_score(y_test, y_predictions)
     print('intercept:', model.intercept_)
     print('coef:', model.coef_)
+    # print('y_test:\n', y_test)
+    # print('y_predictions:\n', y_predictions)
     print('r2:', r2)
 
     print('ridge regression:')
-    model_ridge = Ridge()
+    model_ridge = RidgeCV()
     model_ridge.fit(x_train, y_train)
     y_predictions_ridge = model_ridge.predict(x_test)
     r2_ridge = r2_score(y_test, y_predictions_ridge)
@@ -721,7 +739,7 @@ def model_main():
     print('r2:', r2_ridge)
 
     print('lasso regression:')
-    model_lasso = Lasso()
+    model_lasso = LassoCV()
     model_lasso.fit(x_train, y_train)
     y_predictions_lasso = model_lasso.predict(x_test)
     r2_lasso = r2_score(y_test, y_predictions_lasso)
@@ -730,6 +748,51 @@ def model_main():
     print('r2:', r2_lasso)
 
 
+def model_main_classifier():
+    ts_code = '399300.SZ'
+    x_train, x_test, y_train, y_test = getdata(ts_code, type='classifier')
+    # return
+    # print(x_train.shape)
+    # print(x_train)
+    # print(x_test.shape)
+    # print(y_train.shape)
+    # print(y_train)
+    # print(y_test.shape)
+
+    # 线性回归
+    # model = LinearRegression()
+    # 线性支持向量机 linearSVC
+    model = LinearSVC(C=0.1)
+
+    model.fit(x_train, y_train)
+    y_predictions = model.predict(x_test)
+    # r2 = r2_score(y_test, y_predictions)
+    print('intercept:', model.intercept_)
+    print('coef:', model.coef_)
+    print('y_test:\n', y_test)
+    print('y_predictions:\n', y_predictions)
+    # print('r2:', r2)
+
+    # print('ridge regression:')
+    # model_ridge = Ridge()
+    # model_ridge.fit(x_train, y_train)
+    # y_predictions_ridge = model_ridge.predict(x_test)
+    # r2_ridge = r2_score(y_test, y_predictions_ridge)
+    # print('intercept:', model_ridge.intercept_)
+    # print('coef:', model_ridge.coef_)
+    # print('r2:', r2_ridge)
+    #
+    # print('lasso regression:')
+    # model_lasso = Lasso()
+    # model_lasso.fit(x_train, y_train)
+    # y_predictions_lasso = model_lasso.predict(x_test)
+    # r2_lasso = r2_score(y_test, y_predictions_lasso)
+    # print('intercept:', model_lasso.intercept_)
+    # print('coef:', model_lasso.coef_)
+    # print('r2:', r2_lasso)
+
+
 if __name__ == '__main__':
     pass
-    model_main()
+    model_main_linear()
+    # model_main_classifier()
