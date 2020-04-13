@@ -13,13 +13,16 @@ from sklearn.model_selection import (train_test_split, cross_val_score,
                                      cross_val_predict)
 from sklearn.metrics import r2_score
 from sklearn.utils import check_X_y
+from sklearn.datasets.samples_generator import make_classification
+from sklearn.preprocessing import scale
 import talib as ta
 from talib import MA_Type
+import matplotlib.pyplot as plt
 
 from sqlconn import engine
 
 
-def getdata(ts_code, startDate='20190101', endDate='20191231',
+def getdata(ts_code, startDate='20090101', endDate='20191231',
             type='linear'):
     """取得指数数据和特征值，返回训练集和测试集
     type: linear 线性归回类数据， classifier 分类器数据
@@ -30,8 +33,8 @@ def getdata(ts_code, startDate='20190101', endDate='20191231',
            f' and trade_date>="{startDate}" and trade_date<="{endDate}";')
     df = pd.read_sql(sql, engine, index_col='trade_date')
 
-    # dftalib = ta_indicators(df)
-    # df = pd.merge(df, dftalib, left_index=True, right_index=True)
+    dftalib = ta_indicators(df)
+    df = pd.merge(df, dftalib, left_index=True, right_index=True)
 
     # 均线
     df['ma5'] = ta.SMA(df.close, timeperiod=5)
@@ -61,6 +64,7 @@ def getdata(ts_code, startDate='20190101', endDate='20191231',
     y = df.iloc[:, -1]
     # print('y shape:', y.shape)
     # print(y.values)
+    # x = scale(x)
     x, y = check_X_y(x, y)
     return train_test_split(x, y, test_size=0.2)
 
@@ -754,7 +758,7 @@ def model_main_classifier(C=0.05):
     x_train, x_test, y_train, y_test = getdata(ts_code, type='classifier')
     # return
     print(x_train.shape)
-    # print(x_train)
+    print(x_train)
     # print(x_test.shape)
     print(y_train.shape)
     # print(y_train)
@@ -775,20 +779,47 @@ def model_main_classifier(C=0.05):
     print('linearSVC score:', model.score(x_test, y_test))
     # print('r2:', r2)
 
-    model = NuSVC(kernel='linear', cache_size=1000, max_iter=10)
-    model.fit(x_train, y_train)
-    y_predictions = model.predict(x_test)
-    # print('SVC score:', model.score(y_test, y_predictions))
+    # SVC
+    # model = SVC(kernel='linear', cache_size=1000)
+    # model.fit(x_train, y_train)
+    # print('SVC score:', model.score(x_test, y_test))
+
+    # 交叉验证
     # scores = cross_val_score(model, x_train, y_train, cv=3)
     # print(f'accuracy: {scores.mean():.2f} (+/- {scores.std() * 2})')
 
 
+def mofantest():
+    """试验莫烦sklearn网页中数据正规化示例
+    https://morvanzhou.github.io/tutorials/machine-learning/sklearn/3-1-normalization/
+    """
+    X, y = make_classification(n_samples=300, n_features=2,
+                               n_redundant=0, n_informative=2,
+                               random_state=22, n_clusters_per_class=1,
+                               scale=100)
+    # print('X:\n', X)
+    # print('-' * 80)
+    # print('y:\n', y)
+    X = scale(X)
+    x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+    model = SVC(gamma='auto', verbose=True)
+    model.fit(x_train, y_train)
+    score = model.score(x_test, y_test)
+    print('SVC score:', score)
+    # plt.scatter(X[:, 0], X[:, 1], cmap='brg', c=y)
+    # plt.show()
+
+
 if __name__ == '__main__':
     pass
+
+    # mofantest()
+
     # model_main_linear()
-    for c in np.arange(0.01, 0.1, 0.01):
-        print('c=', c)
-        model_main_classifier(C=c)
+    model_main_classifier(C=1)
+    # for c in np.arange(0.01, 0.1, 0.01):
+    #     print('c=', c)
+    #     model_main_classifier(C=c)
 
     # X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     # y = np.array([1, 1, 2, 2])
