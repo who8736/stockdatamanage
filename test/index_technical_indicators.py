@@ -14,7 +14,7 @@ from sklearn.model_selection import (train_test_split, cross_val_score,
 from sklearn.metrics import r2_score
 from sklearn.utils import check_X_y
 from sklearn.datasets.samples_generator import make_classification
-from sklearn.preprocessing import scale
+from sklearn.preprocessing import scale, PowerTransformer
 import talib as ta
 from talib import MA_Type
 import matplotlib.pyplot as plt
@@ -64,7 +64,11 @@ def getdata(ts_code, startDate='20090101', endDate='20191231',
     y = df.iloc[:, -1]
     # print('y shape:', y.shape)
     # print(y.values)
+
+    # 下面这句是个错误的尝试，正确做法为在训练集上拟合标准化或归一化
+    # 再将拟合结果应用到测试集上，这样可以避免将测试集的信息泄露给训练集
     # x = scale(x)
+
     x, y = check_X_y(x, y)
     return train_test_split(x, y, test_size=0.2)
 
@@ -755,12 +759,24 @@ def model_main_linear():
 
 def model_main_classifier(C=0.05):
     ts_code = '399300.SZ'
-    x_train, x_test, y_train, y_test = getdata(ts_code, type='classifier')
+    x_train, x_test, y_train, y_test = getdata(ts_code, type='classifier',
+                                               startDate='20090101')
+    transer = PowerTransformer(method='yeo-johnson')
+    # print(x_train)
+    x_train = transer.fit_transform(x_train)
+    # print('-' * 80)
+    # print(x_train)
+    # print('=' * 80)
+    # print(x_test)
+    x_test = transer.transform(x_test)
+    # print('-' * 80)
+    # print(x_test)
+
     # return
-    print(x_train.shape)
-    print(x_train)
+    # print(x_train.shape)
+    # print(x_train)
     # print(x_test.shape)
-    print(y_train.shape)
+    # print(y_train.shape)
     # print(y_train)
     # print(y_test.shape)
 
@@ -768,9 +784,8 @@ def model_main_classifier(C=0.05):
     # model = LinearRegression()
     # 线性支持向量机 linearSVC
     model = LinearSVC(C=C)
-
     model.fit(x_train, y_train)
-    y_predictions = model.predict(x_test)
+    # y_predictions = model.predict(x_test)
     # r2 = r2_score(y_test, y_predictions)
     # print('intercept:', model.intercept_)
     # print('coef:', model.coef_)
@@ -780,13 +795,13 @@ def model_main_classifier(C=0.05):
     # print('r2:', r2)
 
     # SVC
-    # model = SVC(kernel='linear', cache_size=1000)
-    # model.fit(x_train, y_train)
-    # print('SVC score:', model.score(x_test, y_test))
+    model = SVC(kernel='linear', cache_size=1000)
+    model.fit(x_train, y_train)
+    print('SVC score:', model.score(x_test, y_test))
 
     # 交叉验证
-    # scores = cross_val_score(model, x_train, y_train, cv=3)
-    # print(f'accuracy: {scores.mean():.2f} (+/- {scores.std() * 2})')
+    scores = cross_val_score(model, x_train, y_train, cv=10)
+    print(f'accuracy: {scores.mean():.2f} (+/- {scores.std() * 2})')
 
 
 def mofantest():
@@ -816,10 +831,10 @@ if __name__ == '__main__':
     # mofantest()
 
     # model_main_linear()
-    model_main_classifier(C=1)
-    # for c in np.arange(0.01, 0.1, 0.01):
-    #     print('c=', c)
-    #     model_main_classifier(C=c)
+    # model_main_classifier(C=1)
+    for c in np.arange(0.01, 0.1, 0.01):
+        print('c=', c)
+        model_main_classifier(C=c)
 
     # X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     # y = np.array([1, 1, 2, 2])
