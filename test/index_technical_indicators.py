@@ -11,7 +11,7 @@ from sklearn.linear_model import (LinearRegression, Ridge, Lasso,
 from sklearn.svm import LinearSVC, SVC, NuSVC
 from sklearn.model_selection import (train_test_split, cross_val_score,
                                      cross_val_predict)
-from sklearn.metrics import r2_score
+from sklearn.metrics import r2_score, confusion_matrix
 from sklearn.utils import check_X_y
 from sklearn.datasets.samples_generator import make_classification
 from sklearn.preprocessing import scale, PowerTransformer
@@ -59,7 +59,9 @@ def getdata(ts_code, startDate='20090101', endDate='20191231',
     # print(df)
 
     # 返回训练集与测试集
+    print('before dropna:', df.shape)
     df.dropna(inplace=True)
+    print('after dropna:', df.shape)
     x = df.iloc[:, :-1]
     y = df.iloc[:, -1]
     # print('y shape:', y.shape)
@@ -798,10 +800,17 @@ def model_main_classifier(C=0.05):
     model = SVC(kernel='linear', cache_size=1000)
     model.fit(x_train, y_train)
     print('SVC score:', model.score(x_test, y_test))
+    predictions = model.predict(x_test)
+    print('y_test:', y_test)
+    print('y_predict:', predictions)
+    con = confusion_matrix(y_test, predictions)
+    # con = confusion_matrix(y_test, predictions, labels=['up', 'down'])
+    print(con)
+
 
     # 交叉验证
-    scores = cross_val_score(model, x_train, y_train, cv=10)
-    print(f'accuracy: {scores.mean():.2f} (+/- {scores.std() * 2})')
+    # scores = cross_val_score(model, x_train, y_train, cv=10)
+    # print(f'accuracy: {scores.mean():.2f} (+/- {scores.std() * 2})')
 
 
 def mofantest():
@@ -831,10 +840,10 @@ if __name__ == '__main__':
     # mofantest()
 
     # model_main_linear()
-    # model_main_classifier(C=1)
-    for c in np.arange(0.01, 0.1, 0.01):
-        print('c=', c)
-        model_main_classifier(C=c)
+    model_main_classifier(C=0.01)
+    # for c in np.arange(0.01, 0.1, 0.01):
+    #     print('c=', c)
+    #     model_main_classifier(C=c)
 
     # X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     # y = np.array([1, 1, 2, 2])
