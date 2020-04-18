@@ -10,7 +10,7 @@ from flask import render_template, redirect, url_for
 from flask import send_file
 from bokeh.embed import components
 from bokeh.resources import INLINE
-from bokeh.util.string import encode_utf8
+# from bokeh.util.string import encode_utf8
 
 from plot import plotKline, BokehPlot
 from plot import PlotProfitsInc
@@ -165,7 +165,8 @@ def _klineimg(ID, df):
         js_resources=js_resources,
         css_resources=css_resources,
     )
-    return encode_utf8(html)
+    # return encode_utf8(html)
+    return html
 
 
 @app.route('/profitsinc/<ts_code>')
@@ -185,7 +186,7 @@ def profitsIncImg(ts_code):
         js_resources=js_resources,
         css_resources=css_resources,
     )
-    return encode_utf8(html)
+    return html
 
 
 @app.route('/indexinfo/<ID>')

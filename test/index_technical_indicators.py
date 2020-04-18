@@ -11,7 +11,7 @@ from sklearn.linear_model import (LinearRegression, Ridge, Lasso,
 from sklearn.svm import LinearSVC, SVC, NuSVC
 from sklearn.model_selection import (train_test_split, cross_val_score,
                                      cross_val_predict)
-from sklearn.metrics import r2_score, confusion_matrix
+from sklearn.metrics import r2_score, confusion_matrix, precision_score
 from sklearn.utils import check_X_y
 from sklearn.datasets.samples_generator import make_classification
 from sklearn.preprocessing import scale, PowerTransformer
@@ -800,12 +800,17 @@ def model_main_classifier(C=0.05):
     model = SVC(kernel='linear', cache_size=1000)
     model.fit(x_train, y_train)
     print('SVC score:', model.score(x_test, y_test))
-    predictions = model.predict(x_test)
-    print('y_test:', y_test)
-    print('y_predict:', predictions)
-    con = confusion_matrix(y_test, predictions)
+    # predictions = model.predict(x_test)
+    predictions = model.predict(x_train)
+    # print('y_test:', y_test)
+    # print('y_predict:', predictions)
+    # con = confusion_matrix(y_test, predictions)
+    con = confusion_matrix(y_train, predictions)
     # con = confusion_matrix(y_test, predictions, labels=['up', 'down'])
     print(con)
+    print(f'真实值中为True的次数: {y_train.sum()}')
+    print(f'预测值中为True的次数: {predictions.sum()}')
+    print(f'精度(precision):{precision_score(y_train, predictions)}')
 
 
     # 交叉验证
