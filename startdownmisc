@@ -1,2 +1,2 @@
 #! /bin/bash
-start-stop-daemon --start --background -d /mnt/usbdisk/stockdatamanage/ --exec rundownmisc.py
+start-stop-daemon --start --background -d /mnt/usbdisk/stockdatamanage/ --exec /mnt/usbdisk/stockdatamanage/rundownmisc.sh
