@@ -16,6 +16,9 @@ from statsmodels.tsa.stattools import adfuller
 from sklearn import datasets, linear_model
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
+from sklearn.neighbors import LocalOutlierFactor
+from sklearn.preprocessing import PowerTransformer
+from scipy.stats import zscore
 import tushare as ts
 
 from sqlconn import engine
@@ -647,35 +650,8 @@ def series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
     return (agg.iloc[:, 0:n_in].values, agg.iloc[:, -1].values)
 
 
-if __name__ == '__main__':
-    pass
-    # ts_codea = '601985'
-    # ts_codeb = '600170'
-    # startDate = '20140101'
-    # endDate = '20191231'
-    # findPairs(ts_codea, ts_codeb, startDate=startDate)
-    # linearAll()
-    # diabetesTest()
-
-    # linearProfitInc()
-
-    # 比较最小二乘与HuberRegressor的区别
-    # ts_code = '600340.SH'
-    # startDate = '20150331'
-    # endDate = '20191231'
-    # result = _linearProfitIncDouble(ts_code=ts_code,
-    #                                 startDate=startDate, endDate=endDate)
-    # print(result)
-
-    # 将单变量时间序列转换为监督学习数据序列
-    # data = list(range(100))
-    # df = series_to_supervised(data, n_in=3)
-    # x, y= series_to_supervised(data, n_in=3)
-    # print(x)
-    # print('-' * 80)
-    # print(y)
-
-    # 将单自变量时间序列转换为3自变量监督学习序列后线性回归
+def trans_series():
+    """将单自变量时间序列转换为3自变量监督学习序列后线性回归"""
     ts_code = '000651.SZ'
     startDate = '20090101'
     endDate = '20191231'
@@ -696,3 +672,103 @@ if __name__ == '__main__':
     print(f'intercept:{results["intercept"]}')
     print(f'coef:{results["coef"]}')
     print(f'r2:{results["r2"]}')
+
+
+def profits_inc_lof(ts_code, startDate='20150101', endDate='20191231'):
+    """用非监督学习方法检测利润增长率和历年ttm利润是否有离群值
+    绘图比较，原始数据，离群检测结果，幂转换结果
+    """
+    sql = (f'select dt_netprofit_yoy inc from fina_indicator'
+           f' where ts_code="{ts_code}" and end_date>="{startDate}"'
+           f' and end_date<="{endDate}"')
+    df = pd.read_sql(sql, engine)
+    df.dropna(inplace=True)
+    print(df)
+
+    # a = np.ones(10)
+    # a = np.append(a, 1000)
+    # df = pd.DataFrame({'inc': a})
+
+    param_n = 10
+    model = LocalOutlierFactor(n_neighbors=param_n)
+    data = df.inc.values.reshape(-1, 1)
+    # data = data.reshape(-1, 1)
+    y_predict = model.fit_predict(data)
+    print(data)
+    print('y_predict:\n', y_predict)
+    print('异常性得分:')
+    print(model.negative_outlier_factor_)
+
+    transer = PowerTransformer()
+    data = transer.fit_transform(data)
+    model1 = LocalOutlierFactor(n_neighbors=param_n)
+    y_predict = model1.fit_predict(data)
+    print(data)
+    print('y_predict:\n', y_predict)
+    print('异常性得分:')
+    print(model.negative_outlier_factor_)
+
+    # numpy计算四分位数
+    q1, q2, q3 = np.percentile(a, [25, 50, 75])
+
+    ax = plt.subplot()
+    colors = np.array(['r', 'g'])
+    ax.scatter(df.index, df.inc, color=colors[(y_predict + 1) // 2])
+    plt.show()
+
+
+def zscoretest():
+    b = np.array([[0.3148, 0.0478, 0.6243, 0.4608],
+                  [0.7149, 0.0775, 0.6072, 0.9656],
+                  [0.6341, 0.1403, 0.9759, 0.4064],
+                  [0.5918, 0.6948, 0.904, 0.3721],
+                  [0.0921, 0.2481, 0.1188, 0.1366]])
+
+    resultdefault = zscore(b)
+    result = zscore(b, axis=None)
+    result0 = zscore(b, axis=0)
+    result1 = zscore(b, axis=1)
+    print('resultdefault:\n', resultdefault)
+    print('result:\n', result)
+    print('result0:\n', result0)
+    print('result1:\n', result1)
+    print('=' * 80)
+
+    # for row in b:
+
+
+
+if __name__ == '__main__':
+    pass
+    # ts_codea = '601985'
+    # ts_codeb = '600170'
+    # startDate = '20140101'
+    # endDate = '20191231'
+    # findPairs(ts_codea, ts_codeb, startDate=startDate)
+    # linearAll()
+    # diabetesTest()
+
+    # linearProfitInc()
+
+    # 比较最小二乘与HuberRegressor的区别
+    # ts_code = '600340.SH'
+    # startDate = '20150331'
+    # endDate = '20191231'
+    # result = _linearProfitIncDouble(ts_code=ts_code,
+    #                                 startDate=startDate, endDate=endDate)
+    # print(result)
+
+    # 利润增长率奇异值检验
+    # profits_inc_lof('000651.SZ')
+
+
+    zscoretest()
+
+    # TODO: 好股票的基本判断条件
+    # 1.利润稳步增长，表现近5年或10年增长水平无异常波动，如何界定异常待确定
+    # 2.考虑PE是否具正态分布，该条暂不作为必要条件
+    #   正态分布条件下，低于2倍标准差为买入点，高出2倍标准差为卖出点
+    # 3.试验一：绘制沪深300指数收盘价，上下2倍标准差为通道
+    # 4.试验二：绘制沪深300指数PE，上下2倍标准差为通道
+    # 5.检验正态分布的条件与方法
+    # 6.z-score应用于PE和利润增长分析

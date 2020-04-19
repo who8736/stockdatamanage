@@ -1512,9 +1512,13 @@ def readStockKline(ts_code, startDate=None, endDate=None, days=0):
 def readProfitsIncAdf():
     stocks = pd.read_excel('data/profits_inc_adf_linear.xlsx')
     stocks = stocks.round(2)
-    stocks = stocks[(stocks['mean'] >= 10) &
-                    (stocks.sharp >= 0.8) &
-                    (stocks.pe_ttm <= 30)]
+    # stocks = stocks[(stocks['mean'] >= 10) &
+    #                 (stocks.sharp >= 0.8) &
+    #                 (stocks.pe_ttm <= 30)]
+    stocks = stocks[
+        (stocks['r2'] >= 0.3) &
+        (stocks['coef'] > 0) &
+        (True)]
     stocks.sort_values('sharp', ascending=False, inplace=True)
     return stocks
 
