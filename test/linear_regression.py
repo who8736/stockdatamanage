@@ -5,6 +5,7 @@ import os
 from math import sqrt
 
 from collections import OrderedDict
+# import matplotlib.mlab as mlab
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt  # @IgnorePep8
 import matplotlib.gridspec as gridspec
@@ -18,7 +19,7 @@ from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.preprocessing import PowerTransformer
-from scipy.stats import zscore
+from scipy.stats import zscore, norm
 import tushare as ts
 
 from sqlconn import engine
@@ -737,6 +738,27 @@ def zscoretest():
     # for row in b:
 
 
+def normaltest(ts_code, startDate='20090101', endDate='20191231'):
+    """正态分布检验"""
+    sql = (f'select pe_ttm from daily_basic where ts_code="{ts_code}"'
+           f' and trade_date>="{startDate}" and trade_date<="{endDate}"')
+
+    result = engine.execute(sql).fetchall()
+    data = np.reshape(result, -1, 1)
+    mu = np.mean(data)
+    sigma = np.std(data)
+    print(data)
+    ax = plt.subplot()
+    n, bins, patches = ax.hist(data)
+    # n, bins, patches = ax.hist(data, cumulative=True)
+
+    ax1 = ax.twinx()
+    y = norm.pdf(bins, mu, sigma)
+    ax1.plot(bins, y, 'r--')
+
+    # ax1.plot(data, kind='kde')
+    plt.show()
+
 
 if __name__ == '__main__':
     pass
@@ -761,8 +783,9 @@ if __name__ == '__main__':
     # 利润增长率奇异值检验
     # profits_inc_lof('000651.SZ')
 
+    # zscoretest()
 
-    zscoretest()
+    normaltest('000651.SZ')
 
     # TODO: 好股票的基本判断条件
     # 1.利润稳步增长，表现近5年或10年增长水平无异常波动，如何界定异常待确定
