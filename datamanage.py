@@ -404,6 +404,8 @@ def updateAdjFacotr():
     dateList = readCal(startDate=startDate, endDate=endDate)
     for d in dateList:
         downAdjFactor(d)
+
+
 if __name__ == '__main__':
     initlog()
 
@@ -428,7 +430,6 @@ if __name__ == '__main__':
     # updateLirun()
     # updatePf()
 
-
 #     stockList = sqlrw.readts_codesFromSQL()
 #     updateGubenSingleThread()
 #     updateMainTableSingleThread(stockList)
@@ -439,5 +440,3 @@ if __name__ == '__main__':
 
 #     ts_code = '000005'
 #     sqlrw.downMainTable(ts_code)
-
-
