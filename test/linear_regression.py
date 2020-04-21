@@ -2,7 +2,7 @@
 
 """
 import os
-from math import sqrt
+from math import sqrt, log, exp
 
 from collections import OrderedDict
 # import matplotlib.mlab as mlab
@@ -19,7 +19,7 @@ from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.preprocessing import PowerTransformer
-from scipy.stats import zscore, norm
+from scipy.stats import zscore, norm, normaltest
 import tushare as ts
 
 from sqlconn import engine
@@ -738,26 +738,59 @@ def zscoretest():
     # for row in b:
 
 
-def normaltest(ts_code, startDate='20090101', endDate='20191231'):
-    """正态分布检验"""
+def _normaltest(data):
+    result = normaltest(data)
+    # print('正态检验结果:', result)
+    return round(result[1], 2)
+
+def stocknormaltest(ts_code, startDate='20090101', endDate='20191231'):
+    """正态分布检验
+    ttmpe的分布情况，计算均值及+/-2倍标准差
+    取对数后的分布情况，计算均值及+/-2倍标准差，还原后的数值
+    """
     sql = (f'select pe_ttm from daily_basic where ts_code="{ts_code}"'
            f' and trade_date>="{startDate}" and trade_date<="{endDate}"')
 
     result = engine.execute(sql).fetchall()
-    data = np.reshape(result, -1, 1)
-    mu = np.mean(data)
-    sigma = np.std(data)
-    print(data)
-    ax = plt.subplot()
-    n, bins, patches = ax.hist(data)
+    data = np.reshape(result, -1)
+    if len(data) < 1000:
+        return None, None
+    # mu = np.mean(data)
+    # sigma = np.std(data)
+    p1 = _normaltest(data)
+    # print(data)
+    # print(f'均值:{mu:.2f}, 低值:{mu - 2 * sigma:.2f}, 高值:{mu + 2 * sigma:.2f}')
+
+    # gs = gridspec.GridSpec(1, 2, hspace=0.8, wspace=0.65)
+    # ax1 = plt.subplot(gs[0, 0])
+    # n, bins, patches = ax1.hist(data, bins=20)
+    # ax1twin = ax1.twinx()
+    # y = norm.pdf(bins, mu, sigma)
+    # ax1twin.plot(bins, y, 'r--')
+
+    data1 = [log(i) for i in data]
+    # mu1 = np.mean(data1)
+    # sigma1 = np.std(data1)
+    p2 = _normaltest(data1)
+    # print(f'mu1={mu1:.2f}, sigma1={sigma1:.2f}')
+    # print(f'对数均值:{mu1:.2f}, ',
+    #       f'低值:{mu1 - 2 * sigma1:.2f}, ',
+    #       f'高值:{mu1 + 2 * sigma1:.2f}')
+    # print(f'还原均值:{exp(mu1):.2f}, ',
+    #       f'低值:{exp(mu1) - 2 * exp(sigma1):.2f}, '
+    #       f'高值:{exp(mu1) + 2 * exp(sigma1):.2f}')
+    # print(f'还原均值:{exp(mu1):.2f}, ',
+    #       f'低值:{exp(mu1 - 2 * sigma1):.2f}, '
+    #       f'高值:{exp(mu1 + 2 * sigma1):.2f}')
+    # ax2 = plt.subplot(gs[0, 1])
+    # n, bins, patches = ax2.hist(data1, bins=20)
     # n, bins, patches = ax.hist(data, cumulative=True)
+    # ax2twin = ax2.twinx()
+    # y = norm.pdf(bins, mu1, sigma1)
+    # ax2twin.plot(bins, y, 'r--')
 
-    ax1 = ax.twinx()
-    y = norm.pdf(bins, mu, sigma)
-    ax1.plot(bins, y, 'r--')
-
-    # ax1.plot(data, kind='kde')
-    plt.show()
+    # plt.show()
+    return (p1, p2)
 
 
 if __name__ == '__main__':
@@ -785,9 +818,27 @@ if __name__ == '__main__':
 
     # zscoretest()
 
-    normaltest('000651.SZ')
+    ts_code = '000333.SZ'
+    startDate = '20140101'
+    endDate = '20191231'
+    # stocknormaltest(ts_code, startDate=startDate, endDate=endDate)
 
-    # TODO: 好股票的基本判断条件
+    stocks = readStockList()
+    # stocks = stocks[:20]
+    results = []
+    for stock in stocks.ts_code:
+        try:
+            print(f'ts_code: {stock}')
+            p1, p2 = stocknormaltest(stock)
+            d = dict(ts_code=stock, p1=p1, p2=p2)
+            results.append(d)
+        except Exception as e:
+            print(f'ts_code:{stock} ', e)
+
+    df = pd.DataFrame(results)
+    df.to_excel('../data/normaltest.xlsx')
+
+    # TODO: 选股的基本判断条件
     # 1.利润稳步增长，表现近5年或10年增长水平无异常波动，如何界定异常待确定
     # 2.考虑PE是否具正态分布，该条暂不作为必要条件
     #   正态分布条件下，低于2倍标准差为买入点，高出2倍标准差为卖出点
