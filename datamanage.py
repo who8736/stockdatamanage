@@ -16,10 +16,10 @@ import datetime as dt
 # import ConfigParser
 from multiprocessing.dummy import Pool as ThreadPool
 from functools import wraps
-
-import tushare
 from dateutil.relativedelta import relativedelta
 
+# import tushare
+import numpy as np
 import pandas as pd
 import baostock as bs
 import tushare as ts
@@ -154,23 +154,9 @@ def updateQuarterData():
 
     :return:
     """
-    #
-    # 表格名称及tushare函数调用频次
-    # table, perTimes, limit
-    # today = dt.datetime.today().date().strftime('%Y%m%d')
-    # sql = (f'select a.ts_code, a.end_date'
-    #        f' from disclosure_date a,'
-    #        f' (select ts_code, max(end_date) e_date'
-    #        f' from balancesheet group by ts_code) b'
-    #        f' where a.ts_code=b.ts_code and a.end_date>b.e_date'
-    #        f' and a.pre_date<="{today}";')
-    # result = engine.execute(sql).fetchall()
-    # for ts_code, period in result:
-    #     periodStr = period.strftime('%Y%m%d')
-    #     downloader = DownloaderQuarter(ts_code=ts_code, period=periodStr)
-    #     downloader.run()
-
     stocks = readStockList()
+
+    # 每支股票最后的报告期和公告日期
     sql = (f'select ts_code, max(end_date) end_date, max(f_ann_date) ann_date'
            f' from income group by ts_code')
     df = pd.read_sql(sql, engine)
@@ -178,20 +164,37 @@ def updateQuarterData():
                       left_on='ts_code', right_on='ts_code')
     end_date = lastQarterDate(dt.datetime.today().date())
     stocks = stocks[(stocks.end_date.isnull()) | (stocks.end_date < end_date)]
+
+    # 每支股票最后更新季报日期与每日指标中的最后日期计算的销售收入是否存在差异
+    # 如有差异则说明需更新季报
+    df = checkQuarterData()
+    stocks = pd.merge(stocks, df, how='left',
+                      left_on='ts_code', right_on='ts_code')
+    stocks.set_index('ts_code', inplace=True)
+
     resultList = []
-    for ts_code in stocks.ts_code:
+    for ts_code in stocks.index:
         # print(ts_code)
-        result, div = checkQuarterData(ts_code)
+        # result, div = checkQuarterData(ts_code)
         # resultList.append(dict(ts_code=ts_code, result=result, div=div))
-        if result == 0:
-            continue
-        elif result == 1:
-            # 更新该股票全部财务数据
+        if np.isnan(stocks.loc[ts_code, 'cha']):
             datestr = ''
+        elif stocks.loc[ts_code, 'cha'] < 0.001:
+            continue
         else:
-            ann_date = stocks[stocks.ts_code == ts_code].ann_date.values[0]
+            ann_date = stocks.loc[ts_code, 'ann_date']
             ann_date += relativedelta(days=1)
             datestr = ann_date.strftime('%Y%m%d')
+
+        # if result == 0:
+        #     continue
+        # elif result == 1:
+        #     # 更新该股票全部财务数据
+        #     datestr = ''
+        # else:
+        #     ann_date = stocks[stocks.ts_code == ts_code].ann_date.values[0]
+        #     ann_date += relativedelta(days=1)
+        #     datestr = ann_date.strftime('%Y%m%d')
         downloader = DownloaderQuarter(ts_code=ts_code, startDate=datestr)
         downloader.run()
 

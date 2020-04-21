@@ -485,6 +485,7 @@ def __testUpdate():
     """测试专用函数:数据下载
     """
     pass
+    updateQuarterData()
     # 自动更新全部数据，包括K线历史数据、利润数据、K线表中的TTM市盈率
     # 更新交易日历
     # updateTradeCal()
@@ -522,7 +523,7 @@ def __testUpdate():
     # updatePf()
 
     # 更新指数数据及PE
-    updateIndex()
+    # updateIndex()
 
     # 更新全市PE
     # updateAllMarketPE()
@@ -857,10 +858,10 @@ if __name__ == "__main__":
     initlog()
 
     # __testDownload()
-    __testMisc()
+    # __testMisc()
     # __testPlot()
     # __testRepair()
-    # __testUpdate()
+    __testUpdate()
     # __testValuation()
 
     print('程序正常退出')
