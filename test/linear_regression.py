@@ -793,6 +793,53 @@ def stocknormaltest(ts_code, startDate='20090101', endDate='20191231'):
     return (p1, p2)
 
 
+def _testoutlier(data):
+    """按第一、第三个四分位加减差值过滤奇异值
+    返回:
+    过滤后的数列 data1
+    最低值 low
+    第一个四分位数 q1
+    第三个四分位数 q3
+    最高值 high
+    均值 mean
+    标准差 std
+    减1倍标准差 down
+    加1倍标准差 up"""
+    if not isinstance(data, pd.Series):
+        data = pd.Series(data)
+    q1 = data.quantile(.25)
+    q3 = data.quantile(.75)
+    diff = q3 - q1
+    low = q1 - diff * 1.5
+    high = q3 + diff * 1.5
+    data1 = data[(data >= low) & (data <= high)]
+    cnt = len(data1)
+    mean = np.mean(data1)
+    std = np.std(data1)
+    down = mean - std
+    up = mean + std
+    dic = dict(cnt=cnt, low=low, q1=q1, q3=q3, high=high,
+               mean=mean, std=std, down=down, up=up)
+    return (data1, dic)
+
+
+def testoutlier(end_date=2017):
+    """迭代过滤奇异值"""
+    sql = (f'select dt_netprofit_yoy from fina_indicator '
+           f' where end_date="{end_date}1231"')
+    result = engine.execute(sql).fetchall()
+    data = np.reshape(result, -1)
+    results = []
+    for i in range(10):
+        data, dic = _testoutlier(data)
+        results.append(dic)
+
+    df = pd.DataFrame(results)
+    print(df)
+    df.to_excel('../data/testoutlier.xlsx')
+    plt.hist(data, bins=30)
+    plt.show()
+
 if __name__ == '__main__':
     pass
     # ts_codea = '601985'
@@ -818,25 +865,27 @@ if __name__ == '__main__':
 
     # zscoretest()
 
-    ts_code = '000333.SZ'
-    startDate = '20140101'
-    endDate = '20191231'
+    # ts_code = '000333.SZ'
+    # startDate = '20140101'
+    # endDate = '20191231'
     # stocknormaltest(ts_code, startDate=startDate, endDate=endDate)
 
-    stocks = readStockList()
+    # stocks = readStockList()
     # stocks = stocks[:20]
-    results = []
-    for stock in stocks.ts_code:
-        try:
-            print(f'ts_code: {stock}')
-            p1, p2 = stocknormaltest(stock)
-            d = dict(ts_code=stock, p1=p1, p2=p2)
-            results.append(d)
-        except Exception as e:
-            print(f'ts_code:{stock} ', e)
+    # results = []
+    # for stock in stocks.ts_code:
+    #     try:
+    #         print(f'ts_code: {stock}')
+    #         p1, p2 = stocknormaltest(stock)
+    #         d = dict(ts_code=stock, p1=p1, p2=p2)
+    #         results.append(d)
+    #     except Exception as e:
+    #         print(f'ts_code:{stock} ', e)
+    #
+    # df = pd.DataFrame(results)
+    # df.to_excel('../data/normaltest.xlsx')
 
-    df = pd.DataFrame(results)
-    df.to_excel('../data/normaltest.xlsx')
+    testoutlier(2018)
 
     # TODO: 选股的基本判断条件
     # 1.利润稳步增长，表现近5年或10年增长水平无异常波动，如何界定异常待确定
