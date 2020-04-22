@@ -35,6 +35,17 @@ def checkQuarterData():
                     from daily_basic where trade_date='{endDate}') b
                 where a.ts_code=b.ts_code;"""
     df = pd.read_sql(sql, engine)
+
+    sql = f"""select a.ts_code from income a,
+                (select ts_code, max(end_date) edate from income 
+                    group by ts_code) b,
+                (select ts_code, total_mv/ps*10000 as rev from daily_basic 
+                    where trade_date=
+                        (select max(trade_date) from daily_basic)) c
+                where a.ts_code=b.ts_code and a.end_date=b.edate 
+                    and a.ts_code=c.ts_code and (a.revenue/c.rev-1)>0.0001;"""
+    df1 = pd.read_sql(sql, engine)
+    df.loc[df.ts_code.isin(df1.ts_code), 'cha'] = 1
     return df
     # print(df)
     # df = df[df.cha>0.001]
@@ -44,4 +55,4 @@ def checkQuarterData():
 
 if __name__ == '__main__':
     pass
-    checkQuarterData1()
+    checkQuarterData()
