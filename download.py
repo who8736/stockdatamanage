@@ -29,30 +29,21 @@ import pandas as pd
 # from tushare.stock import cons as ct
 # import baostock as bs
 
-from misc import (urlGuzhi, urlMainTable, filenameMainTable,
-                  filenameGuzhi)
+from misc import (urlGuzhi, filenameGuzhi)
 # import datatrans
-from datatrans import dateStrList, gubenDataToDfSina
+from datatrans import dateStrList
 # import hyanalyse
 # import sqlrw
 from sqlrw import (engine, writeSQL, writeHYToSQL, writeHYNameToSQL,
-                   writeGubenToSQL)
+                   readTableFields)
 from initlog import initlog
 from misc import tsCode
-
-
-def finaFields():
-    sql = ('select column_name from information_schema.columns'
-           ' where table_name="fina_indicator"')
-    result = engine.execute(sql).fetchall()
-    return ','.join([s[0] for s in result])
 
 
 class DownloaderQuarter:
     """限时下载器
     """
 
-    tables = ['balancesheet', 'income', 'cashflow', 'fina_indicator']
     # 调用时间限制，如60秒调用80次
     perTimes = {'balancesheet': 60,
                 'income': 60,
@@ -73,19 +64,26 @@ class DownloaderQuarter:
                'income': 0,
                'cashflow': 0,
                'fina_indicator': 0}
-    fields = finaFields()
+    fields = readTableFields('fina_indicator')
 
-    def __init__(self, ts_code, startDate, retry=3):
+    def __init__(self, ts_code, startDate, tables=None,
+                 replace=False, retry=3):
         pass
         self.ts_code = ts_code
         self.startDate = startDate
+        if tables is None:
+            self.tables = ['balancesheet', 'income', 'cashflow',
+                           'fina_indicator']
+        else:
+            self.tables = tables
+        self.replace = replace
         self.retry = retry
 
     # 每个股票一个下载器，下载第一张无数据时可跳过其他表
     # 下载限制由类静态成员记载与控制
     def run(self):
         pass
-        for table in DownloaderQuarter.tables:
+        for table in self.tables:
             # result = pd.DataFrame()
             perTimes = DownloaderQuarter.perTimes[table]
             limit = DownloaderQuarter.limit[table]
@@ -105,7 +103,8 @@ class DownloaderQuarter:
                 try:
                     kwargs = dict(table=table,
                                   ts_code=self.ts_code,
-                                  start_date=self.startDate)
+                                  start_date=self.startDate,
+                                  replace=self.replace)
                     if table == 'fina_indicator':
                         kwargs['fields'] = DownloaderQuarter.fields
                     result = downStockQuarterData(**kwargs)
@@ -127,7 +126,6 @@ class DownloaderFinaIndicator:
     """限时下载器
     """
 
-    tables = ['balancesheet', 'income', 'cashflow', 'fina_indicator']
     # 调用时间限制，如60秒调用80次
     perTimes = {'balancesheet': 60,
                 'income': 60,
@@ -148,12 +146,18 @@ class DownloaderFinaIndicator:
                'income': 0,
                'cashflow': 0,
                'fina_indicator': 0}
-    fields = finaFields()
+    fields = readTableFields('fina_indicator')
 
-    def __init__(self, ts_code, retry=3):
+    def __init__(self, ts_code, tables=None, replace=False, retry=3):
         pass
         self.ts_code = ts_code
         self.retry = retry
+        self.replace = replace
+        if tables == None:
+            self.tables = ['balancesheet', 'income', 'cashflow',
+                           'fina_indicator']
+        else:
+            self.tables = tables
 
     # 每个股票一个下载器，下载第一张无数据时可跳过其他表
     # 下载限制由类静态成员记载与控制
@@ -181,7 +185,7 @@ class DownloaderFinaIndicator:
                               ts_code=self.ts_code,
                               fields=DownloaderFinaIndicator.fields,
                               start_date='',
-                              replace=True)
+                              replace=self.replace)
                 result = downStockQuarterData(**kwargs)
             except(socket.timeout, ConnectTimeout):
                 logging.warning(f'downloader timeout: {table}-{self.ts_code}')

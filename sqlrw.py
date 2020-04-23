@@ -1140,3 +1140,10 @@ if __name__ == '__main__':
     ts_code = '000651'
     startDate = '2016-01-01'
     # updateKlineEXTData(ts_code, startDate)
+
+
+def readTableFields(table):
+    sql = (f'select column_name from information_schema.columns'
+           f' where table_name="{table}"')
+    result = engine.execute(sql).fetchall()
+    return ','.join([s[0] for s in result])
