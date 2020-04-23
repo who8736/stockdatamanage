@@ -20,10 +20,11 @@ from datamanage import logfun
 from initlog import initlog
 
 tables = [
-    ['pledge_stat', 60, 50],
-    ['forecast', 60, 50],
-    ['express', 60, 50],
-    ['disclosure_date', 60, 50],
+    # ['pledge_stat', 60, 50],
+    # ['forecast', 60, 50],
+    # ['express', 60, 50],
+    # ['disclosure_date', 60, 50],
+    ['dividend', 60, 80],
 ]
 # def pledge_stat():
 #     """下载股权质押信息
