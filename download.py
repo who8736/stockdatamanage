@@ -180,7 +180,8 @@ class DownloaderFinaIndicator:
                 kwargs = dict(table=table,
                               ts_code=self.ts_code,
                               fields=DownloaderFinaIndicator.fields,
-                              period='')
+                              start_date='',
+                              replace=True)
                 result = downStockQuarterData(**kwargs)
             except(socket.timeout, ConnectTimeout):
                 logging.warning(f'downloader timeout: {table}-{self.ts_code}')
@@ -233,7 +234,7 @@ class DownloaderMisc:
                 self.cur += 1
 
 
-def downStockQuarterData(table, ts_code, start_date, fields=''):
+def downStockQuarterData(table, ts_code, start_date, fields='', replace=False):
     print(f'downStockQuarterData table:{table}, ts_code:{ts_code}')
     logging.debug(f'downStockQuarterData table:{table}, ts_code:{ts_code}')
     pro = ts.pro_api()
@@ -243,7 +244,7 @@ def downStockQuarterData(table, ts_code, start_date, fields=''):
     if df.empty:
         return False
     else:
-        writeSQL(df, table)
+        writeSQL(df, table, replace=replace)
         return True
 
 

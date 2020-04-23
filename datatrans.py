@@ -236,7 +236,8 @@ def transDfToList(df):
     outList = []
     for index, row in df.iterrows():
         tmpDict = row.to_dict()
-        tmpDict[df.index.name] = index
+        if df.index.name is not None:
+            tmpDict[df.index.name] = index
         outList.append(tmpDict)
     return outList
 

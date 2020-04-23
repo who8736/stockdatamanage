@@ -611,7 +611,7 @@ def __testRepair():
     """测试专用函数:数据修复
     """
     pass
-    # repairFinaIndicator()
+    repairFinaIndicator()
 
     # 修复股票日K线
     # downDailyRepair()
@@ -860,8 +860,8 @@ if __name__ == "__main__":
     # __testDownload()
     # __testMisc()
     # __testPlot()
-    # __testRepair()
-    __testUpdate()
+    __testRepair()
+    # __testUpdate()
     # __testValuation()
 
     print('程序正常退出')

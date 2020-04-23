@@ -536,12 +536,12 @@ def writeSQL(data: pd.DataFrame, tableName: str, replace=False):
     Dataframe格式数据写入tableName指定的表中
     replace: True，主键重复时更新数据， False, 忽略重复主键, 默认为False
     """
+    if data.empty:
+        return True
     logging.debug('start writeSQL %s' % tableName)
     if not initsql.existTable(tableName):
         logging.error('not exist %s' % tableName)
         return False
-    if data.empty:
-        return True
     data = data.where(pd.notnull(data), None)
     data = datatrans.transDfToList(data)
 
