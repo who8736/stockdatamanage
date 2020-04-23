@@ -88,6 +88,7 @@ def writeHYNameToSQL(filename):
 
 def writeGubenToSQL(gubenDf, replace=False):
     """单个股票股本数据写入数据库
+    :param replace:
     :type gubenDf: DataFrame
     """
     tablename = 'guben'
@@ -105,40 +106,6 @@ def writeGubenToSQL(gubenDf, replace=False):
             engine.execute(sql)
     else:
         return writeSQL(gubenDf, tablename)
-
-
-def del_checkGuben(tradeDate):
-    """
-        以下方法用于从tushare.pro下载日频信息中的股本数据
-        与数据库保存的股本数据比较，某股票的总股本存在差异时说明股本有变动
-        返回需更新的股票列表
-    """
-    pro = ts.pro_api()
-    dfTushare = pro.daily_basic(ts_code='', trade_date=tradeDate,
-                                fields='ts_code,total_share')
-    dfTushare['ts_code'] = dfTushare['ts_code'].str[:6]
-
-    sql = """ select a.ts_code, a.trade_date, a.totalshares from guben as a, 
-            (SELECT ts_code, max(trade_date) as maxdate FROM stockdata.guben 
-            group by ts_code) as b 
-            where a.ts_code=b.ts_code and a.trade_date = b.maxdate;
-            """
-    dfSQL = pd.read_sql(sql, con=engine)
-    df = pd.merge(dfTushare, dfSQL, how='left', on='ts_code')
-    df.loc[0:, 'cha'] = df.apply(
-        lambda x: abs(x['total_share'] * 10000 - x['totalshares']) / (
-                x['total_share'] * 10000), axis=1)
-
-    chaRate = 0.0001
-    dfUpdate = df[df.cha >= chaRate]
-
-    # 对于无需更新股本的股票，将其更新日期修改为上一交易日
-    dfFinished = df[df.cha < chaRate]
-    date = '%s-%s-%s' % (tradeDate[:4], tradeDate[4:6], tradeDate[6:])
-    for ts_code in dfFinished['ts_code']:
-        setGubenLastUpdate(ts_code, date)
-    # 返回需更新股本的股票
-    return dfUpdate
 
 
 def writeGuzhiToSQL(ts_code, data):
@@ -220,79 +187,6 @@ def loadChigu():
     return [i[0] for i in result.fetchall()]
 
 
-def del_createStockList():
-    """code,代码
-    name,名称
-    industry,所属行业
-    area,地区
-    pe,市盈率
-    outstanding,流通股本
-    totals,总股本(万)
-    totalAssets,总资产(万)
-    liquidAssets,流动资产
-    fixedAssets,固定资产
-    reserved,公积金
-    reservedPerShare,每股公积金
-    eps,每股收益
-    bvps,每股净资
-    pb,市净率
-    timeToMarket,上市日期"""
-    metadata = MetaData()
-    _ = Table('stocklist', metadata,
-              Column('code', String(6), primary_key=True),
-              Column('name', String(10)),
-              Column('industry', String(10)),
-              Column('area', String(10)),
-              Column('pe', DECIMAL(precision=10, scale=3)),
-              Column('outstanding', DECIMAL(precision=20, scale=3)),
-              Column('totals', DECIMAL(precision=20, scale=3)),
-              Column('totalAssets', DECIMAL(precision=20, scale=3)),
-              Column('liquidAssets', DECIMAL(precision=20, scale=3)),
-              Column('fixedAssets', DECIMAL(precision=20, scale=3)),
-              Column('reserved', DECIMAL(precision=20, scale=3)),
-              Column(
-                  'reservedPerShare',
-                  DECIMAL(precision=10, scale=3)),
-              Column('esp', DECIMAL(precision=10, scale=3)),
-              Column('bvps', DECIMAL(precision=10, scale=3)),
-              Column('pb', DECIMAL(precision=10, scale=3)),
-              Column('timeToMarket', DATE)
-              )
-    metadata.create_all(engine)
-
-
-def del_getStockBasicsFromCSV():
-    """
-        获取沪深上市公司基本情况
-    Return
-    --------
-    DataFrame
-               code,代码
-               name,名称
-               industry,细分行业
-               area,地区
-               pe,市盈率
-               outstanding,流通股本
-               totals,总股本(万)
-               totalAssets,总资产(万)
-               liquidAssets,流动资产
-               fixedAssets,固定资产
-               reserved,公积金
-               reservedPerShare,每股公积金
-               eps,每股收益
-               bvps,每股净资
-               pb,市净率
-               timeToMarket,上市日期
-    """
-    csvFile = open('all.csv')
-    text = csvFile.read()
-    # text = text.decode('GBK')
-    text = text.replace('--', '')
-    df = pd.read_csv(StringIO(text), dtype={'code': 'object'})
-    df = df.set_index('code')
-    return df
-
-
 def dropTable(tableName):
     engine.execute('DROP TABLE %s' % tableName)
 
@@ -318,40 +212,12 @@ def getLowPEStockList(maxPE=40):
     return df
 
 
-def del_getAllTableName(tableName):
-    result = engine.execute('show tables like %s', tableName)
-    return result.fetchall()
-
-
-def del_clearStockList():
-    if initsql.existTable('stocklist'):
-        engine.execute('TRUNCATE TABLE stocklist')
-
-
 def getAllMarketPEUpdateDate():
     """
     全市场PE更新日期
     :return:
     """
     sql = 'select max(trade_date) from index_pe where ts_code="all";'
-    return _getLastUpdate(sql)
-
-
-def del_getStockKlineUpdateDate():
-    """
-    股票更新日期
-    :return:
-    """
-    sql = 'select max(date) from klinestock;'
-    return _getLastUpdate(sql)
-
-
-def del_getIndexKlineUpdateDate():
-    """
-    指数更新日期
-    :return:
-    """
-    sql = 'select max(date) from klineindex;'
     return _getLastUpdate(sql)
 
 
@@ -364,171 +230,16 @@ def getIndexPEUpdateDate():
     return _getLastUpdate(sql)
 
 
-def del_klineUpdateDate():
-    """
-    待删除函数, kline改为分区表后无需按股票代码查询更新日期
-    :return:
-    """
-    pass
-    # tablename = tablenameKline(ts_code)
-    # if not initsql.existTable(tablename):
-    #     initsql.createKlineTable(ts_code)
-    #     return dt.datetime.strptime('1990-01-01', '%Y-%m-%d')
-    # sql = 'select max(date) from %s' % tablename
-    # return _getLastUpdate(sql)
-
-
-def del_gubenUpdateDate(ts_code):
-    # sql = 'select max(date) from guben where ts_code="%s" limit 1;' % ts_code
-    sql = 'select guben from lastupdate where ts_code="%s";' % ts_code
-    return _getLastUpdate(sql)
-
-
 def getGuzhi(ts_code):
     sql = f'select * from guzhiresult where ts_code="{ts_code}" limit 1'
     result = engine.execute(sql)
     return result.fetchone()
 
 
-def del_readStockListFromSQL(date=None):
-    """
-    查询已上市且上市日期小于等于指定日期的股票列表
-    缺省为查询当前所有已上市股票
-    :param date: int, YYYYmmdd, 8位数字代表的年月日
-    :return:
-    """
-    if isinstance(date, str):
-        date = int(date)
-    sql = ('select ts_code, name from stocklist '
-           'where timetomarket>0')
-    if date is not None:
-        sql += f' and timetomarket<={date}'
-
-    result = engine.execute(sql)
-    return result.fetchall()
-
-
 def readStockList():
     sql = 'select ts_code, name from stock_basic'
     df = pd.read_sql(sql, engine)
     return df
-
-
-def del_readStockListFromFile(filename):
-    """ 从文件读取股票代码列表, 文件格式每行为一个股票代码
-    Parameters
-    --------
-    filename: str 股票代码文件名  e.g: '.\test.txt'
-
-    Return
-    --------
-    ts_codeList: list 股票代码  e.g: ['600519', '000333']
-    """
-
-    stockFile = open(filename, 'rb')
-    ts_codeList = [i[:6] for i in stockFile.readlines()]
-    stockFile.close()
-    return ts_codeList
-
-
-# def del_readStockListDf(date=None):
-#     """查询已上市且上市日期小于等于指定日期的股票列表,返回DataFrame格式数据
-#     缺省为查询当前所有已上市股票
-#     :param date: int, YYYYmmdd, 8位数字代表的年月日
-#     :return:
-#     """
-#     stockList = readStockListFromSQL(date)
-#     ts_codes, names = zip(*stockList)
-#     stockListDf = DataFrame({'ts_code': ts_codes, 'name': names})
-#     return stockListDf
-
-
-def del_updateKlineMarketValue(ts_code, startDate=None, endDate=None):
-    if startDate is None:
-        return
-    gubenDf = readGuben(ts_code, startDate)
-    klineTablename = 'klinestock'
-    gubenCount = gubenDf['date'].count()
-
-    for i in range(gubenCount):
-        gubenStartDate = gubenDf['date'][i]
-        try:
-            gubenEndDate = gubenDf['date'][i + 1]
-        except KeyError as e:
-            gubenEndDate = None
-        #             print e
-        totalShares = gubenDf['totalshares'][i]
-
-        sql = ('update %(klineTablename)s '
-               'set totalmarketvalue = close * %(totalShares)s'
-               ' where ts_code="%(ts_code)s" and date>="%(gubenStartDate)s"'
-               % locals())
-        if endDate:
-            sql += ' and date < "%s"' % gubenEndDate
-        engine.execute(sql)
-
-
-def del_updateKlineTTMLirun(ts_code, startDate=None):
-    """
-    更新Kline表TTM利润
-    """
-    if startDate is None:
-        return
-    TTMLirunDf = readTTMProfits(ts_code, startDate)
-    klineTablename = 'klinestock'
-    TTMLirunCount = TTMLirunDf['date'].count()
-
-    for i in range(TTMLirunCount):
-        startDate = TTMLirunDf['reportdate'][i]
-        try:
-            endDate = TTMLirunDf['reportdate'][i + 1]
-        except KeyError:
-            endDate = None
-        TTMLirun = TTMLirunDf['ttmprofits'][i]
-
-        sql = ('update %(klineTablename)s set ttmprofits = %(TTMLirun)s'
-               ' where ts_code="%(ts_code)s" and date>="%(startDate)s"'
-               % locals())
-        if endDate:
-            sql += ' and date < "%s"' % endDate
-        engine.execute(sql)
-
-
-def del_writeLirun(df):
-    tablename = 'lirun'
-    return writeSQL(df, tablename)
-
-
-def del_writeGuben(ts_code, df):
-    """ 确认无用后删除
-    """
-    logging.debug('start writeGuben %s' % ts_code)
-    timea = dt.datetime.now()
-    gubenList = datatrans.gubenDfToList(df)
-    if not gubenList:
-        return False
-
-    tableName = 'guben'
-    if not initsql.existTable(tableName):
-        # initsql.createGubenTable(ts_code)
-        initsql.createGubenTable()
-
-    session = Session()
-    metadata = MetaData(bind=engine)
-    mytable = Table(tableName, metadata, autoload=True)
-
-    session.execute(mytable.insert().prefix_with('IGNORE'), gubenList)
-    session.commit()
-    session.close()
-    timeb = dt.datetime.now()
-    logging.debug('writeGuben ts_code %s took %s' %
-                  (ts_code, (timeb - timea)))
-    return True
-
-
-def del_writeStockList(stockList):
-    # clearStockList()
-    stockList.to_sql('stocklist', engine, if_exists='append')
 
 
 def writeSQL(data: pd.DataFrame, tableName: str, replace=False):
@@ -584,24 +295,6 @@ def writets_codeListToFile(ts_codeList, filename):
     stockFile = open(filename, 'wb')
     stockFile.write(bytes('\n').join(ts_codeList))
     stockFile.close()
-
-
-def del_read180ts_codesFromSQL():
-    result = engine.execute('select ts_code from chengfen180')
-    return [i[0] for i in result.fetchall()]
-
-
-# def gubenFileToDf(ts_code):
-#     filename = filenameGuben(ts_code)
-#     try:
-#         gubenFile = open(filename, 'r')
-#         guben = gubenFile.read()
-#         gubenFile.close()
-#     except IOError as e:
-#         print(e)
-#         print(('读取总股本文件失败： %s' % ts_code))
-#         return False
-#     return datatrans.gubenDataToDf(ts_code, guben)
 
 
 def readGuzhiFileToDict(ts_code):
@@ -797,44 +490,12 @@ def readLastTTMProfit(ts_code, limit=1, date=None):
     return result
 
 
-def del_readStockKlineDf(ts_code, days):
-    sql = ('select date, open, high, low, close, ttmpe '
-           'from klinestock where ts_code="%(ts_code)s" '
-           'order by date desc limit %(days)s;' % locals())
-    result = engine.execute(sql).fetchall()
-    stockDatas = [i for i in reversed(result)]
-    # klineDatas = []
-    dateList = []
-    openList = []
-    closeList = []
-    highList = []
-    lowList = []
-    peList = []
-    indexes = list(range(len(result)))
-    for i in indexes:
-        date, _open, high, low, close, ttmpe = stockDatas[i]
-        dateList.append(date.strftime("%Y-%m-%d"))
-        # QuarterList.append(date)
-        openList.append(_open)
-        closeList.append(close)
-        highList.append(high)
-        lowList.append(low)
-        peList.append(ttmpe)
-    klineDf = pd.DataFrame({'date': dateList,
-                            'open': openList,
-                            'close': closeList,
-                            'high': highList,
-                            'low': lowList,
-                            'pe': peList})
-    return klineDf
-
-
 def readLastTTMProfits(stockList, limit=1, date=None):
     """取股票列表最近几期TTM利润
     Parameters
     --------
-    stockList: str 股票代码  e.g: ['600519.SH', '002518.SZ']
-    limit: 取最近期数的数据
+    :param stockList: str 股票代码  e.g: ['600519.SH', '002518.SZ']
+    :param limit: 取最近期数的数据
     :param date:
 
     Return
@@ -1086,72 +747,6 @@ def calTTMLirun(stockdf, date):
     return [ts_code, date, lirun, reportdate]
 
 
-# def del_updateKlineEXTData(ts_code, startDate=None):
-#     """
-#     # 更新Kline表MarketValue、TTMPE等附加数据
-#     Parameters
-#     --------
-#     ts_code: str 股票代码  e.g:600519
-#     startDate: str 更新起始日期  e.g: 2016-01-01
-#
-#     Return
-#     --------
-#     # 无返回值
-#     """
-#     if startDate is None:
-#         startDate = getTTMPELastUpdate(ts_code) + dt.timedelta(days=1)
-#         if startDate == dt.datetime.today().date():
-#             return
-#     # startDateStr = startDate.strftime('%Y-%m-%d')
-#     logging.debug(
-#         'updateKlineEXTData: %(ts_code)s, date: %(startDate)s' % locals())
-#     try:
-#         # updateKlineMarketValue(ts_code, startDate)
-#         # updateKlineTTMLirun(ts_code, startDate)
-#         endDate = updateKlineTTMPE(ts_code, startDate)
-#         setKlineTTMPELastUpdate(ts_code, endDate)
-#     except Exception as e:
-#         logging.error('fail to updateKlineEXTData: %s,[%s]', ts_code, e)
-
-
-# def getTTMPELastUpdate(ts_code):
-#     """TTMPE最近更新日期，
-#     Parameters
-#     --------
-#     ts_code:str 股票代码 e.g:600519
-#
-#     Return
-#     --------
-#     datetime：TTMPE最近更新日期
-#     """
-#     sql = ('select ttmpe from lastupdate where ts_code="%(ts_code)s"'
-#            % locals())
-#     return _getLastUpdate(sql)
-
-
-# def getLirunUpdateStartQuarter():
-#     """根据利润表数据判断本次利润表更新的起始日期
-#     选取利润表中每支股票的财报最大日期，且为在stocklist股票基本信息表中存在的股票
-#     再找出财报日期中最小的数值作为本次利润表更新的起始日期
-#     Parameters
-#     --------
-#
-#
-#     Return
-#     --------
-#     startQuarter：YYYYQ 起始更新日期
-#     """
-#     sql = ('select min(maxdate) from (SELECT ts_code, max(date) as maxdate '
-#            'FROM stockdata.lirun group by ts_code '
-#            'having ts_code in (select ts_code from stocklist WHERE '
-#            'LEFT(name, 1) != "*")) as temp;')
-#
-#     result = engine.execute(sql)
-#     lastQuarter = result.first()[0]
-#     startQuarter = datatrans.quarterAdd(lastQuarter, 1)
-#     return startQuarter
-
-
 def getLirunUpdateEndQuarter():
     curQuarter = datatrans.transDateToQuarter(dt.datetime.now())
     return datatrans.quarterSub(curQuarter, 1)
@@ -1243,7 +838,7 @@ def setGubenLastUpdate(ts_code, endDate=None):
     return result
 
 
-def updateKlineTTMPE(ts_code, startDate, endDate=None):
+def del_updateKlineTTMPE(ts_code, startDate, endDate=None):
     """
     # 更新Kline表TTMPE
     """
@@ -1262,7 +857,7 @@ def updateKlineTTMPE(ts_code, startDate, endDate=None):
     sql += ' and totalmarketvalue is not null'
     sql += ' and ttmprofits is not null'
     unusedResult = engine.execute(sql)
-    sql = 'select max(date) from klinestock where ts_code="%(ts_code)s"' % locals()
+    sql = f'select max(date) from klinestock where ts_code="{ts_code}"'
     result = engine.execute(sql)
     endDate = result.fetchone()[0]
     if endDate is not None:
@@ -1271,59 +866,6 @@ def updateKlineTTMPE(ts_code, startDate, endDate=None):
         endDate = (dt.datetime.today() - dt.timedelta(days=1))
         endDate = endDate.strftime('%Y-%m-%d')
     return endDate
-
-
-# def updateLirun():
-#     startQuarter = getLirunUpdateStartQuarter()
-#     endQuarter = getLirunUpdateEndQuarter()
-#
-#     dates = datatrans.QuarterList(startQuarter, endQuarter)
-#     for date in dates:
-#         #         print date
-#         logging.debug('updateLirun: %s', date)
-#         try:
-#             df = downloadLirun(date)
-#         except ValueError:
-#             continue
-#         if df is None:
-#             continue
-# #         print len(df)
-#         # 读取已存储的利润数据，从下载数据中删除该部分，对未存储的利润写入数据库
-#         lirunCur = readLirunForDate(date)
-#         df = df[~df.ts_code.isin(lirunCur.ts_code)]
-#         df = df[df.profits.notnull()]
-# #         print df
-#
-#         # 对未存储的利润写入数据库，并重新计算TTM利润
-#         if not df.empty:
-#             writeLirun(df)
-#             calAllTTMLirun(date)
-
-
-# 疑似无用函数，待删除
-# def readGubenFromDf(df, date):
-#     """从股本列表中读取指定日期的股本数值
-#     # 指定日期无股本数据时，选取之前最近的股本数据
-#     """
-#     d = df[df.date <= date]
-#     if d.empty:
-#         return None
-#     guben = d[d.date == d['date'].max(), 'totalshares']
-# #     guben = d.iat[0, 3]
-#     return guben
-
-
-def del_readTTMLirunFromDf(df, date):
-    """从TTM利润列表中读取指定日期的TTM利润数值
-    # 指定日期无TTM利润数据时，选取之前最近的TTM利润数据
-    """
-    d = df[df.reportdate <= date]
-    if d.empty:
-        return None
-    d = d[d.reportdate == d['reportdate'].max()]
-    ttmLirun = d[d.date == d['date'].max(), 'ttmprofits']
-    #     ttmLirun = d.iat[0, 3]
-    return ttmLirun
 
 
 def readGuben(ts_code, startDate=None, endDate=None):
@@ -1487,6 +1029,8 @@ def getStockName(ts_code):
 def readStockKline(ts_code, startDate=None, endDate=None, days=0):
     """
     读取股票K线数据
+    :param endDate:
+    :param startDate:
     :param ts_code: str, 6位股票代码
     :param days: int, 读取的天数
     :return: Dataframe
@@ -1515,10 +1059,7 @@ def readProfitsIncAdf():
     # stocks = stocks[(stocks['mean'] >= 10) &
     #                 (stocks.sharp >= 0.8) &
     #                 (stocks.pe_ttm <= 30)]
-    stocks = stocks[
-        (stocks['r2'] >= 0.3) &
-        (stocks['coef'] > 0) &
-        (True)]
+    stocks = stocks[(stocks['r2'] >= 0.3) & (stocks['coef'] > 0)]
     stocks.sort_values('sharp', ascending=False, inplace=True)
     return stocks
 
