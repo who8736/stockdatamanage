@@ -278,7 +278,7 @@ def writeSQL(data: pd.DataFrame, tableName: str, replace=False):
                 # table = MyTable(**tmpDict)
                 table = MyTable(**d)
                 session.merge(table)
-            session.commit()
+                session.commit()
         else:
             mytable = Table(tableName, metadata, autoload=True)
             session.execute(mytable.insert().prefix_with('IGNORE'), data)

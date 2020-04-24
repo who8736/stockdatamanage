@@ -13,7 +13,7 @@ from multiprocessing.dummy import Pool as ThreadPool
 import pandas as pd
 import tushare as ts
 
-from sqlrw import readStockList, writeSQL
+from sqlrw import readStockList, writeSQL, readTableFields
 from sqlconn import engine
 from download import DownloaderMisc
 from datamanage import logfun
@@ -49,14 +49,17 @@ tables = [
 def _download(args):
     """下载非定期更新数据"""
     table, pertimes, limit = args
+    fields = ''
+    if table == 'dividend':
+        fields = readTableFields(table)
     stocks = readStockList()
     total = len(stocks)
     cnt = 1
     downloader = DownloaderMisc(pertimes, limit)
     for ts_code in stocks.ts_code:
         print(f'下载{table} {cnt}/{total}: {ts_code}')
-        df = downloader.run(table, ts_code=ts_code)
-        writeSQL(df, table)
+        df = downloader.run(table, ts_code=ts_code, fields=fields)
+        writeSQL(df, table, replace=True)
         cnt += 1
 
 
