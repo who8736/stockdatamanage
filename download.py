@@ -122,84 +122,84 @@ class DownloaderQuarter:
                     DownloaderQuarter.curcall[table] += 1
 
 
-class DownloaderFinaIndicator:
-    """限时下载器
-    """
-
-    # 调用时间限制，如60秒调用80次
-    perTimes = {'balancesheet': 60,
-                'income': 60,
-                'cashflow': 60,
-                'fina_indicator': 60}
-    # 一定时间内调用次数限制
-    limit = {'balancesheet': 80,
-             'income': 80,
-             'cashflow': 80,
-             'fina_indicator': 60}
-    # 下载开始时间，按表格保存不同的时间
-    times = {'balancesheet': [],
-             'income': [],
-             'cashflow': [],
-             'fina_indicator': []}
-    # 记录当前调用某个表的累计次数
-    curcall = {'balancesheet': 0,
-               'income': 0,
-               'cashflow': 0,
-               'fina_indicator': 0}
-    fields = readTableFields('fina_indicator')
-
-    def __init__(self, ts_code, tables=None, replace=False, retry=3):
-        pass
-        self.ts_code = ts_code
-        self.retry = retry
-        self.replace = replace
-        if tables == None:
-            self.tables = ['balancesheet', 'income', 'cashflow',
-                           'fina_indicator']
-        else:
-            self.tables = tables
-
-    # 每个股票一个下载器，下载第一张无数据时可跳过其他表
-    # 下载限制由类静态成员记载与控制
-    def run(self):
-        pass
-        table = 'fina_indicator'
-        # result = pd.DataFrame()
-        perTimes = DownloaderQuarter.perTimes[table]
-        limit = DownloaderQuarter.limit[table]
-        cur = DownloaderQuarter.curcall[table]
-        for _ in range(self.retry):
-            nowtime = dt.datetime.now()
-            delta = dt.timedelta(seconds=perTimes)
-            if (perTimes > 0 and limit <= cur
-                    and (nowtime < delta +
-                         DownloaderQuarter.times[table][cur - limit])):
-                _timedelta = nowtime - DownloaderQuarter.times[table][
-                    cur - limit]
-                sleeptime = DownloaderQuarter.perTimes[
-                                table] - _timedelta.seconds
-                print(f'******暂停{sleeptime}秒******')
-                time.sleep(sleeptime)
-            try:
-                kwargs = dict(table=table,
-                              ts_code=self.ts_code,
-                              fields=DownloaderFinaIndicator.fields,
-                              start_date='',
-                              replace=self.replace)
-                result = downStockQuarterData(**kwargs)
-            except(socket.timeout, ConnectTimeout):
-                logging.warning(f'downloader timeout: {table}-{self.ts_code}')
-            else:
-                if result:
-                    break
-                else:
-                    return
-            finally:
-                nowtime = dt.datetime.now()
-                DownloaderQuarter.times[table].append(nowtime)
-                DownloaderQuarter.curcall[table] += 1
-
-
+# class DownloaderFinaIndicator:
+#     """限时下载器
+#     """
+#
+#     # 调用时间限制，如60秒调用80次
+#     perTimes = {'balancesheet': 60,
+#                 'income': 60,
+#                 'cashflow': 60,
+#                 'fina_indicator': 60}
+#     # 一定时间内调用次数限制
+#     limit = {'balancesheet': 80,
+#              'income': 80,
+#              'cashflow': 80,
+#              'fina_indicator': 60}
+#     # 下载开始时间，按表格保存不同的时间
+#     times = {'balancesheet': [],
+#              'income': [],
+#              'cashflow': [],
+#              'fina_indicator': []}
+#     # 记录当前调用某个表的累计次数
+#     curcall = {'balancesheet': 0,
+#                'income': 0,
+#                'cashflow': 0,
+#                'fina_indicator': 0}
+#     fields = readTableFields('fina_indicator')
+#
+#     def __init__(self, ts_code, tables=None, replace=False, retry=3):
+#         pass
+#         self.ts_code = ts_code
+#         self.retry = retry
+#         self.replace = replace
+#         if tables == None:
+#             self.tables = ['balancesheet', 'income', 'cashflow',
+#                            'fina_indicator']
+#         else:
+#             self.tables = tables
+#
+#     # 每个股票一个下载器，下载第一张无数据时可跳过其他表
+#     # 下载限制由类静态成员记载与控制
+#     def run(self):
+#         pass
+#         table = 'fina_indicator'
+#         # result = pd.DataFrame()
+#         perTimes = DownloaderQuarter.perTimes[table]
+#         limit = DownloaderQuarter.limit[table]
+#         cur = DownloaderQuarter.curcall[table]
+#         for _ in range(self.retry):
+#             nowtime = dt.datetime.now()
+#             delta = dt.timedelta(seconds=perTimes)
+#             if (perTimes > 0 and limit <= cur
+#                     and (nowtime < delta +
+#                          DownloaderQuarter.times[table][cur - limit])):
+#                 _timedelta = nowtime - DownloaderQuarter.times[table][
+#                     cur - limit]
+#                 sleeptime = DownloaderQuarter.perTimes[
+#                                 table] - _timedelta.seconds
+#                 print(f'******暂停{sleeptime}秒******')
+#                 time.sleep(sleeptime)
+#             try:
+#                 kwargs = dict(table=table,
+#                               ts_code=self.ts_code,
+#                               fields=DownloaderFinaIndicator.fields,
+#                               start_date='',
+#                               replace=self.replace)
+#                 result = downStockQuarterData(**kwargs)
+#             except(socket.timeout, ConnectTimeout):
+#                 logging.warning(f'downloader timeout: {table}-{self.ts_code}')
+#             else:
+#                 if result:
+#                     break
+#                 else:
+#                     return
+#             finally:
+#                 nowtime = dt.datetime.now()
+#                 DownloaderQuarter.times[table].append(nowtime)
+#                 DownloaderQuarter.curcall[table] += 1
+#
+#
 class DownloaderMisc:
     """限时下载器, 不定期更新
     """
