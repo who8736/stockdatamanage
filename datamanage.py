@@ -102,6 +102,9 @@ def startUpdate():
     # 更新行业列表
     updateHYList()
 
+    # 更新行业利润
+    updateClassifyProfits()
+
     # 更新股票估值
     # updateGuzhiData()
 
@@ -123,6 +126,22 @@ def updateAllMarketPE():
     """
     startDate = getAllMarketPEUpdateDate()
     analyse.report.calAllPEHistory(startDate)
+
+
+@logfun
+def updateClassifyProfits():
+    """
+    更新行业利润
+    :return:
+    """
+    sql = 'select date from update_date where dataname="classifyprofits"'
+    result = engine.execute(sql).fetchone()
+    startDate = '20200101'
+    if result is not None:
+        startDate = result[0]
+
+    sql = 'select distinct end_date'
+    classifyanalyse.calAllHYTTMProfits(date)
 
 
 @logfun
@@ -327,11 +346,6 @@ def del_updateKline():
 #     for ts_code in stockList:
 #         downMainTable(ts_code)
 #         time.sleep(1)
-
-
-@logfun
-def updateHYData(date):
-    classifyanalyse.calAllHYTTMProfits(date)
 
 
 @logfun
