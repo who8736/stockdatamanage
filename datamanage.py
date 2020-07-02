@@ -141,7 +141,7 @@ def updateClassifyProfits():
         startDate = result[0]
 
     sql = 'select distinct end_date'
-    classifyanalyse.calAllHYTTMProfits(date)
+    # classifyanalyse.calAllHYTTMProfits(date)
 
 
 @logfun

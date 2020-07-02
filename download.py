@@ -50,7 +50,7 @@ class DownloaderQuarter:
                 'cashflow': 60,
                 'fina_indicator': 60}
     # 一定时间内调用次数限制
-    limit = {'balancesheet': 80,
+    limit = {'balancesheet': 50,
              'income': 80,
              'cashflow': 80,
              'fina_indicator': 60}
