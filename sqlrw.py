@@ -36,10 +36,11 @@ import xlrd
 import tushare as ts
 
 import datatrans
+from datatrans import lastYearDate, lastYearEndDate
 import initsql
 from sqlconn import SQLConn
 # from misc import filenameGuben, filenameLirun, filenameGuzhi
-from misc import filenameLirun, filenameGuzhi
+# from misc import filenameLirun, filenameGuzhi
 from initlog import initlog
 
 # from download import downHYFile
@@ -52,38 +53,48 @@ engine = sqlconn.engine
 Session = sqlconn.Session
 
 
-def writeHYToSQL(filename):
+def writeClassifyMemberToSQL(_date, filename):
     """ 从文件中读取行业与股票对应关系并写入数据库
     """
-    filename = os.path.join('./data', filename)
-    xlsFile = xlrd.open_workbook(filename, encoding_override="cp1252")
-    table = xlsFile.sheets()[4]
-    ts_codeList = table.col_values(0)[1:]
-    ts_codeList = [i + ('.SH' if i[0] == '6' else '.SZ') for i in ts_codeList]
-    hyIDList = table.col_values(8)[1:]
-    hyDf = pd.DataFrame({'ts_code': ts_codeList, 'classify_code': hyIDList})
-    engine.execute('TRUNCATE TABLE classify_member')
-    writeSQL(hyDf, 'classify_member')
+    try:
+        xlsFile = xlrd.open_workbook(filename, encoding_override="cp1252")
+        table = xlsFile.sheets()[4]
+        tsCodes = table.col_values(0)[1:]
+        tsCodes = [i + ('.SH' if i[0] == '6' else '.SZ') for i in tsCodes]
+        classifyCodes = table.col_values(8)[1:]
+        classifyDf = pd.DataFrame({'ts_code': tsCodes,
+                             'classify_code': classifyCodes,
+                             'date': _date})
+        # engine.execute('TRUNCATE TABLE classify_member')
+        writeSQL(classifyDf, 'classify_member')
+    except (AssertionError, xlrd.biffh.XLRDError) as e:
+        pass
+        logging.warning(f'writeClassifyMemberToSQL {_date}, file:{filename}, error:{e}')
 
 
-def writeHYNameToSQL(filename):
-    filename = os.path.join('./data', filename)
-    xlsFile = xlrd.open_workbook(filename, encoding_override="cp1252")
-    table = xlsFile.sheets()[0]
-    hyIDList = table.col_values(0)[1:]
-    hyNameList = table.col_values(1)[1:]
-    hyLevelList = [len(hyID) / 2 for hyID in hyIDList]
-    hyLevel1IDList = [hyID[:2] for hyID in hyIDList]
-    hyLevel2IDList = [hyID[:4] for hyID in hyIDList]
-    hyLevel3IDList = [hyID[:6] for hyID in hyIDList]
-    hyNameDf = pd.DataFrame({'code': hyIDList,
-                             'name': hyNameList,
-                             'level': hyLevelList,
-                             'level1id': hyLevel1IDList,
-                             'level2id': hyLevel2IDList,
-                             'level3id': hyLevel3IDList})
-    engine.execute('TRUNCATE TABLE classify')
-    writeSQL(hyNameDf, 'classify')
+
+def writeClassifyNameToSQL(filename):
+    try:
+        xlsFile = xlrd.open_workbook(filename, encoding_override="cp1252")
+        table = xlsFile.sheets()[0]
+        classifyCodes = table.col_values(0)[1:]
+        classifyNames = table.col_values(1)[1:]
+    except (AssertionError, xlrd.biffh.XLRDError) as e:
+        pass
+        logging.warning(f'writeClassifyNameToSQL file:{filename}, error:{e}')
+    else:
+        classifyLevel = [len(hyID) / 2 for hyID in classifyCodes]
+        classifylv1 = [hyID[:2] for hyID in classifyCodes]
+        classifylv2 = [hyID[:4] for hyID in classifyCodes]
+        classifylv3 = [hyID[:6] for hyID in classifyCodes]
+        classifyDf = pd.DataFrame({'code': classifyCodes,
+                                 'name': classifyNames,
+                                 'level': classifyLevel,
+                                 'level1id': classifylv1,
+                                 'level2id': classifylv2,
+                                 'level3id': classifylv3})
+        engine.execute('TRUNCATE TABLE classify')
+        writeSQL(classifyDf, 'classify')
 
 
 def writeGubenToSQL(gubenDf, replace=False):
@@ -482,8 +493,8 @@ def readLastTTMProfit(ts_code, limit=1, date=None):
     """
     sql = f'select incrate from ttmprofits where ts_code="{ts_code}" '
     if date is not None:
-        sql += f' and reportdate<="{date}"'
-    sql += f' order by date desc limit {limit}'
+        sql += f' and ann_date<="{date}"'
+    sql += f' order by end_date desc limit {limit}'
     #     print sql
     result = engine.execute(sql).fetchall()
     result = [i[0] for i in reversed(result)]
@@ -515,24 +526,24 @@ def readLastTTMProfits(stockList, limit=1, date=None):
     return TTMLirunDf
 
 
-def readTTMProfitsForDate(date):
+def readTTMProfitsForDate(end_date):
     """从TTMLirun表读取某季度股票TTM利润
     date: 格式YYYYQ, 4位年+1位季度，利润所属日期
     return: 返回DataFrame格式TTM利润
     """
-    sql = ('select * from ttmlirun where '
-           '`date` = "%(date)s"' % locals())
+    sql = (f'select ts_code, ttmprofits, incrate from ttmprofits '
+           f'where `end_date`="{end_date}"')
     df = pd.read_sql(sql, engine)
     return df
 
 
-def readLirunForDate(date):
-    """从Lirun表读取一期股票利润
-    date: 格式YYYYQ, 4位年+1位季度，利润所属日期
+def readProfitsForDate(end_date):
+    """从income表读取一期股票利润
+    date: 格式YYYYMMDD
     return: 返回DataFrame格式利润
     """
-    sql = ('select * from lirun where '
-           '`date` = "%(date)s"' % locals())
+    sql = ('select ts_code, end_date, ann_date, n_income_attr_p as profits '
+           f'from income where `end_date`="{end_date}"')
     df = pd.read_sql(sql, engine)
     return df
 
@@ -626,10 +637,10 @@ def readLastTTMPEs(stockList, trade_date=None):
 #     return
 
 
-def calAllTTMLirun(date, incrementUpdate=True):
+def calAllTTMLirun(end_date, replace=False):
     """计算全部股票本期TTM利润并写入TTMLirun表
-    date: 格式YYYYQ， 4位年+1位季度
-    incrementUpdate: True, 增量更新， False, 覆盖已有数据的更新方式
+    date: 格式YYYYMMDD
+    replace: True, 覆盖已有数据， False, 增量更新
     # 计算公式： TTM利润 = 本期利润 + 上年第四季度利润 - 上年同期利润
     # 计算原理：TTM利润为之前连续四个季度利润之和
     # 本期利润包含今年以来产生所有利润，上年第四季度利润 减上年同期利润为上年同期后一个季度至年末利润
@@ -641,92 +652,95 @@ def calAllTTMLirun(date, incrementUpdate=True):
     # 2016年4季度TTM利润 = 2016年4季度利润 + 2015年4季度利润  - 2015年4季度利润
     #　但为提高效率，当本期为第4季度时，TTM利润=本期利润， 直接返回利润数据
     """
-    lirunCur = readLirunForDate(date)
-    if (date % 10) == 4:
-        TTMLirun = lirunCur.copy()
-        TTMLirun.columns = ['ts_code', 'date', 'ttmprofits', 'reportdate']
-    #         return writeSQL(TTMLirun, 'ttmlirun')
+    TTMProfits = readProfitsForDate(end_date)
+    if not replace:
+        existProfits = readTTMProfitsForDate(end_date)
+        TTMProfits = TTMProfits[~TTMProfits.ts_code.isin(existProfits.ts_code)]
+    if end_date[4:] == '1231':
+        TTMProfits.rename(columns={'profits':'ttmprofits'}, inplace=True)
+        print(TTMProfits)
+        print('-' * 80)
     else:
-        if incrementUpdate:
-            TTMLirunCur = readTTMProfitsForDate(date)
-            lirunCur = lirunCur[~lirunCur.ts_code.isin(TTMLirunCur.ts_code)]
-
         # 上年第四季度利润, 仅取利润字段并更名为profits1
-        lastYearEnd = (date // 10 - 1) * 10 + 4
-        lirunLastYearEnd = readLirunForDate(lastYearEnd)
-        print(('lirunLastYearEnd.head():', lirunLastYearEnd.head()))
-        lirunLastYearEnd = lirunLastYearEnd[['ts_code', 'profits']]
-        lirunLastYearEnd.columns = ['ts_code', 'profits1']
+        lastYearEnd = lastYearEndDate(end_date)
+        profitsLastYearEnd = readProfitsForDate(lastYearEnd)
+        # print(('profitsLastYearEnd.head():', profitsLastYearEnd.head()))
+        profitsLastYearEnd = profitsLastYearEnd[['ts_code', 'profits']]
+        profitsLastYearEnd.columns = ['ts_code', 'profits1']
 
         # 上年同期利润, 仅取利润字段并更名为profits2
-        lastYearQuarter = date - 10
-        lirunLastQarter = readLirunForDate(lastYearQuarter)
-        lirunLastQarter = lirunLastQarter[['ts_code', 'profits']]
-        lirunLastQarter.columns = ['ts_code', 'profits2']
+        lastYear = lastYearDate(end_date)
+        profitsSamePeriodLastYear = readProfitsForDate(lastYear)
+        profitsSamePeriodLastYear = profitsSamePeriodLastYear[['ts_code', 'profits']]
+        profitsSamePeriodLastYear.columns = ['ts_code', 'profits2']
 
         # 整合以上三个季度利润，ts_code为整合键
-        TTMLirun = pd.merge(lirunCur, lirunLastYearEnd, on='ts_code')
-        TTMLirun = pd.merge(TTMLirun, lirunLastQarter, on='ts_code')
+        TTMProfits = pd.merge(TTMProfits, profitsLastYearEnd, on='ts_code')
+        TTMProfits = pd.merge(TTMProfits, profitsSamePeriodLastYear, on='ts_code')
 
-        TTMLirun['ttmprofits'] = (TTMLirun.profits +
-                                  TTMLirun.profits1 - TTMLirun.profits2)
-        TTMLirun = TTMLirun[['ts_code', 'date', 'ttmprofits', 'reportdate']]
-    print('TTMLirun.head():\n', TTMLirun.head())
+        TTMProfits['ttmprofits'] = (TTMProfits.profits +
+                                  TTMProfits.profits1 - TTMProfits.profits2)
+        TTMProfits = TTMProfits[['ts_code', 'end_date', 'ttmprofits', 'ann_date']]
+    TTMProfits.dropna(inplace=True)
+    # print('TTMLirun.head():\n', TTMProfits.head())
 
     # 写入ttmlirun表后，重算TTM利润增长率
-    if incrementUpdate:
-        writeSQL(TTMLirun, 'ttmlirun')
+    # writeSQL(TTMProfits, 'ttmprofits', replace)
+    if replace:
+        replaceTTMProfits(TTMProfits)
     else:
-        replaceTTMLinrun(TTMLirun)
+        writeSQL(TTMProfits, 'ttmprofits')
 
-    return calTTMLirunIncRate(date)
+    return calTTMProfitsIncRate(end_date)
 
 
-def replaceTTMLinrun(df):
+def replaceTTMProfits(df):
     """
     以替换方式更新TTM利润，用于批量修正TTM利润表错误
     :param df:
     :return:
     """
+    print(df)
     for index, row in df.iterrows():
         # print(row['ts_code'])
         ts_code = row['ts_code']
-        _date = row['date']
+        end_date = row['end_date']
         ttmprofits = row['ttmprofits']
-        reportdate = row['reportdate']
-        sql = ('replace into ttmlirun(ts_code, date, ttmprofits, reportdate) '
-               'values("%(ts_code)s", %(_date)s, '
-               '%(ttmprofits)s, "%(reportdate)s");' % locals())
+        ann_date = row['ann_date']
+        sql = ('replace into ttmprofits'
+               '(ts_code, end_date, ttmprofits, ann_date) '
+               f'values("{ts_code}", "{end_date}", '
+               f'{ttmprofits}, "{ann_date}");')
         print(sql)
         engine.execute(sql)
 
 
-def calTTMLirunIncRate(date, incrementUpdate=True):
+def calTTMProfitsIncRate(end_date, replace=True):
     """计算全部股票本期TTM利润增长率并写入TTMLirun表
-    date: 格式YYYYQ， 4位年+1位季度
+    date: 格式YYYYMMDD
     # 计算公式： TTM利润增长率= (本期TTM利润  - 上年同期TTM利润) / TTM利润 * 100
     """
-    TTMLirunCur = readTTMProfitsForDate(date)
-    if incrementUpdate:
-        TTMLirunCur = TTMLirunCur[TTMLirunCur.incrate.isnull()]
-    TTMLirunLastYear = readTTMProfitsForDate(date - 10)
-    TTMLirunLastYear = TTMLirunLastYear[['ts_code', 'ttmprofits']]
-    TTMLirunLastYear.columns = ['ts_code', 'ttmprofits1']
-    TTMLirunLastYear = TTMLirunLastYear[TTMLirunLastYear.ttmprofits1 != 0]
+    TTMProfits = readTTMProfitsForDate(end_date)
+    if not replace:
+        TTMProfits = TTMProfits[TTMProfits.incrate.isnull()]
+    samePeriodlastYear = lastYearDate(end_date)
+    TTMProfitsLastYear = readTTMProfitsForDate(samePeriodlastYear)
+    TTMProfitsLastYear = TTMProfitsLastYear[['ts_code', 'ttmprofits']]
+    TTMProfitsLastYear.columns = ['ts_code', 'ttmprofits1']
+    TTMProfitsLastYear = TTMProfitsLastYear[TTMProfitsLastYear.ttmprofits1 != 0]
 
     # 整合以上2个表，ts_code为整合键
-    TTMLirunCur = pd.merge(TTMLirunCur, TTMLirunLastYear, on='ts_code')
+    TTMProfits = pd.merge(TTMProfits, TTMProfitsLastYear, on='ts_code')
 
-    TTMLirunCur['incrate'] = ((TTMLirunCur.ttmprofits -
-                               TTMLirunCur.ttmprofits1) /
-                              abs(TTMLirunCur.ttmprofits1) * 100)
-    for i in TTMLirunCur.values:
-        ts_code = i[0]
-        incRate = round(i[4], 2)
-        sql = ('update ttmlirun '
-               'set incrate = %(incRate)s'
-               ' where ts_code = "%(ts_code)s"'
-               'and `date` = %(date)s' % locals())
+    TTMProfits['incrate'] = ((TTMProfits.ttmprofits -
+                               TTMProfits.ttmprofits1) /
+                              abs(TTMProfits.ttmprofits1) * 100)
+    for _, row in TTMProfits.iterrows():
+        # print(row)
+        ts_code = row['ts_code']
+        incRate = round(row['incrate'], 2)
+        sql = (f'update ttmprofits set incrate = {incRate}'
+               f' where ts_code="{ts_code}" and `end_date`="{end_date}"')
         engine.execute(sql)
     return
 
