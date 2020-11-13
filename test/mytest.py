@@ -26,6 +26,7 @@ from datamanage import *
 # from sqlconn import Session
 # from misc import urlGubenEastmoney
 from misc import *
+from check import *
 # from initlog import initlog
 from datatrans import *
 from classifyanalyse import *
@@ -112,6 +113,7 @@ def analyIndex(code1='000001.SH', code2='000016.SH', startDate='20070101',
             label.set_rotation(45)
         font1 = {'family': 'simsun', 'weight': 'normal', 'size': 12, }
         plt.legend(prop=font1)
+        # noinspection PyTypeChecker
         cursor = Cursor(ax, useblit=True, color='black', linewidth=1)
         # plt.savefig(f'data/incate-{code1}-{code2}.png')
         plt.grid()
@@ -209,8 +211,6 @@ def del_downLiutongGubenFromBaostock():
     return result
 
 
-
-
 def resetTTMLirun():
     """
     重算TTM利润
@@ -219,10 +219,11 @@ def resetTTMLirun():
     startQuarter = 20174
     endQuarter = 20191
     dates = datatrans.QuarterList(startQuarter, endQuarter)
-    for date in dates:
-        logging.debug('updateLirun: %s', date)
-        calAllTTMLirun(date, incrementUpdate=False)
-        calAllHYTTMProfits(date)
+    for year in range(2010, 2020):
+        for md in ['0331', '0630', '0930', '1231']:
+            date = f'{year}{md}'
+            logging.debug('updateLirun: %s', date)
+            calAllTTMLirun(date, replace=True)
 
 
 def del_resetLirun():
@@ -485,7 +486,7 @@ def __testUpdate():
     """测试专用函数:数据下载
     """
     pass
-    updateQuarterData()
+    # updateQuarterData()
     # 自动更新全部数据，包括K线历史数据、利润数据、K线表中的TTM市盈率
     # 更新交易日历
     # updateTradeCal()
@@ -513,8 +514,12 @@ def __testUpdate():
     # 财务指标表
     # updateQuarterData()
 
+    # 更新股票ttm利润
+    updateTTMProfits()
+
     # 更新行业列表
-    # downHYList()
+    # downClassify()
+    # updateClassifyProfits()
 
     # 更新股票估值
     # updateGuzhiData()
@@ -527,6 +532,7 @@ def __testUpdate():
 
     # 更新全市PE
     # updateAllMarketPE()
+
 
 
 # 更新股票市值与PE
@@ -611,7 +617,7 @@ def __testRepair():
     """测试专用函数:数据修复
     """
     pass
-    repairFinaIndicator()
+    # repairFinaIndicator()
 
     # 修复股票日K线
     # downDailyRepair()
@@ -624,7 +630,7 @@ def __testRepair():
     #     print('cal ttmlirun: %d' % date)
     #     # calAllTTMLirun(date)
     #     calAllHYTTMLirun(date)
-    # calAllTTMLirun(20102)
+    # calAllTTMLirun('20200331', replace=True)
 
     # 重新下载lirun数据
     # resetLirun()
@@ -638,6 +644,17 @@ def __testRepair():
     # 重建表
     # createHangyePE()
     # createValuation()
+
+    # 修改ttmprofits/classify_profits表格式
+    # sql = 'select distinct date from classify_profits'
+    # datelist = engine.execute(sql).fetchall()
+    # # print(datelist)
+    # for d in datelist:
+    #     # print(d)
+    #     end_date = transQuarterToDate(d[0])
+    #     sql = f'update classify_profits set end_date="{end_date}" where `date`={d[0]}'
+    #     print(sql)
+    #     engine.execute(sql)
 
 
 def __testValuation():
@@ -696,9 +713,19 @@ def __testMisc():
     """测试专用函数:杂项测试
     """
     pass
+    # 更新股票评分
+    updatePf()
 
-    updateAdjFacotr()
+    # 更新指数数据及PE
+    updateIndex()
 
+    # 更新全市PE
+    updateAllMarketPE()
+
+    # checkIncome()
+    # updateAdjFacotr()
+
+    # checkQuarterData()
     # checkQuarterData()
 
     # stocks = readStockList()
@@ -791,6 +818,13 @@ def __testMisc():
     # push(f'评分{datestr}', f'valuations{datestr}.xlsx')
 
 
+def checkIncome():
+    # 检测某个季度的财报数据是否齐全
+    # TODO：待完成函数
+    end_date = '20191231'
+    sql = f'select ts_code from income where end_date="{end_date}"'
+
+
 def repairFinaIndicator():
     stocks = readStockList()
     for ts_code in stocks.ts_code:
@@ -860,8 +894,8 @@ if __name__ == "__main__":
     # __testDownload()
     # __testMisc()
     # __testPlot()
-    __testRepair()
-    # __testUpdate()
+    # __testRepair()
+    __testUpdate()
     # __testValuation()
 
     print('程序正常退出')

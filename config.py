@@ -12,22 +12,23 @@ SECRET_KEY = 'Sm9obiBTY2hyb20ga2lja3MgYXNz'
 
 # options格式：类成员变量名，配置文件中的段，配置文件中的选项，
 #              缺省值, 值类型
-options = [['secretkey', 'main', 'secretkey',
-            'Sm9obiBTY2hyb20ga2lja3MgYXNz', 'str'],
-           ['sqlUser', 'sql', 'sqluser', '', 'str'],
-           ['sqlPassword', 'sql', 'sqlpassword', '', 'str'],
-           ['sqlIp', 'sql', 'sqlip', '127.0.0.1', 'str'],
-           ['tushareToken', 'sql', 'tusharetoken', '', 'str'],
-           ['pushData', 'mail', 'pushdata', 'False', 'bool'],
-           ['mailServer', 'mail', 'mailserver', 'smtp.163.com', 'str'],
-           ['mailPort', 'mail', 'mailport', '25', 'str'], # 设为空表示不需指定端口
-           ['mailUser', 'mail', 'mailuser', 'test@163.com', 'str'],
-           ['mailPassword', 'mail', 'mailpassword', 'testpassword', 'str'],
-           ['sendTo', 'mail', 'sendto', 'test@qq.com|test1@qq.com', 'str'],
-           ]
+options = [
+    ['secretkey', 'main', 'secretkey', 'Sm9obiBTY2hyb20ga2lja3MgYXNz', 'str'],
+    ['rootpath', 'main', 'rootpath', '', 'str'],
+    ['sqlUser', 'sql', 'sqluser', '', 'str'],
+    ['sqlPassword', 'sql', 'sqlpassword', '', 'str'],
+    ['sqlIp', 'sql', 'sqlip', '127.0.0.1', 'str'],
+    ['tushareToken', 'sql', 'tusharetoken', '', 'str'],
+    ['pushData', 'mail', 'pushdata', 'False', 'bool'],
+    ['mailServer', 'mail', 'mailserver', 'smtp.163.com', 'str'],
+    ['mailPort', 'mail', 'mailport', '25', 'str'],  # 设为空表示不需指定端口
+    ['mailUser', 'mail', 'mailuser', 'test@163.com', 'str'],
+    ['mailPassword', 'mail', 'mailpassword', 'testpassword', 'str'],
+    ['sendTo', 'mail', 'sendto', 'test@qq.com|test1@qq.com', 'str'],
+]
 
-CPATH = os.path.split(os.path.abspath(__file__))[0]
-CFILE = os.path.join(CPATH, 'stockdata.conf')
+ROOTPATH = os.path.split(os.path.abspath(__file__))[0]
+CFILE = os.path.join(ROOTPATH, 'stockdata.conf')
 
 
 class Config:

@@ -9,35 +9,23 @@ Created on Thu Oct 26 21:12:40 2017
 
 import logging
 import zipfile
-import socket
-from urllib import request
-from requests.exceptions import ConnectTimeout, ReadTimeout
 import time
-# import re
-
-# import tushare
-from lxml import etree
-# import lxml
+import os
 import datetime as dt
-# from datetime import datetime, timedelta
+
+from lxml import etree
 
 import tushare as ts
 import pandas as pd
-# from pandas.core.frame import DataFrame
-# from pandas.compat import StringIO
-# from io import StringIO
-# from tushare.stock import cons as ct
-# import baostock as bs
 
-from misc import (urlGuzhi, filenameGuzhi)
-# import datatrans
+# from misc import (urlGuzhi, filenameGuzhi)
 from datatrans import dateStrList
-# import hyanalyse
-# import sqlrw
-from sqlrw import (engine, writeSQL, writeHYToSQL, writeHYNameToSQL,
+from sqlrw import (engine, writeSQL, writeClassifyMemberToSQL, writeClassifyNameToSQL,
                    readTableFields)
 from initlog import initlog
 from misc import tsCode
+from config import ROOTPATH
+from webRequest import WebRequest
 
 
 class DownloaderQuarter:
@@ -51,9 +39,9 @@ class DownloaderQuarter:
                 'fina_indicator': 60}
     # 一定时间内调用次数限制
     limit = {'balancesheet': 50,
-             'income': 80,
-             'cashflow': 80,
-             'fina_indicator': 60}
+             'income': 50,
+             'cashflow': 50,
+             'fina_indicator': 50}
     # 下载开始时间，按表格保存不同的时间
     times = {'balancesheet': [],
              'income': [],
@@ -292,66 +280,57 @@ def downStockList():
     """ 更新股票列表与行业列表
     """
     pro = ts.pro_api()
-    df = pro.stock_basic()
-    writeSQL(df, 'stock_basic')
+    df = pro.stock_basic(
+        fields='ts_code, symbol, name, area, industry, fullname, enname, market, exchange, curr_type, list_status, list_date, delist_date, is_hs')
+    writeSQL(df, 'stock_basic', replace=True)
 
 
-def downHYList():
+def downClassify():
     """
     更新行业列表数据
-    读取行业表中的股票代码，与当前获取的股票列表比较，
-    如果存在部分股票未列入行业表，则更新行业列表数据
+    取已有行业数据的最后一天， 到更新数据前一日，
+    调用下载行业文件函数，并更新到库
     """
-    sql = ('select ts_code from stock_basic'
-           ' where ts_code not in (select ts_code from classify_member)'
-           ' and list_status="L" or list_status="P"')
-    result = engine.execute(sql).fetchall()
-    # 股票列表中上市日期不为0，即为已上市
-    # 且不在行业列表中，表示需更新行业数据
-    if result:
-        HYDataFilename = downHYFile()
-        writeHYToSQL(HYDataFilename)
-        writeHYNameToSQL(HYDataFilename)
+    sql = 'select max(date) from classify_member'
+    result = engine.execute(sql).fetchone()[0]
+    if result is None:
+        startDate = '20121203'
+    else:
+        startDate = result.strftime('%Y%m%d')
+    endDate = dt.datetime.today().strftime('%Y%m%d')
+    sql = f'''select cal_date from trade_cal 
+                where is_open=1 
+                and cal_date>"{startDate}" and cal_date<"{endDate}"'''
+    dates = engine.execute(sql).fetchall()
+    if dates:
+        dates = [d[0].strftime('%Y%m%d') for d in dates]
+        for _date in dates:
+            logging.debug(f'下载行业数据：{_date}')
+            filename = downClassifyFile(_date)
+            writeClassifyMemberToSQL(_date, filename)
+            writeClassifyNameToSQL(filename)
 
 
-def downHYFile(timeout=10):
+def downClassifyFile(_date):
     """ 从中证指数网下载行业数据文件
-
     下载按钮的xpath
     /html/body/div[3]/div/div/div[1]/div[1]/form/a[1]
+    :param timeout: int
+    :type _date: str 'YYYYmmdd'
     """
-    logging.debug('downHYFile')
-    socket.setdefaulttimeout(timeout)
-
-    # 获取当前可用下载日期
-    gubenURL = ('http://www.csindex.com.cn/zh-CN/downloads/'
-                'industry-price-earnings-ratio')
-    req = getreq(gubenURL)
-    htmlresult = request.urlopen(req).read()
-    myTree = etree.HTML(htmlresult)
-    dateStr = myTree.xpath('''//html//body//div//div//div//div
-                                //div//form//label//input//@value''')
-    # dateStr = myTree.xpath('//a[@id="link1"]/@href')
-    dateStr = dateStr[0]
-    #     print dateStr
-    #     print dateStr.split('-')
-    dateStr = ''.join(dateStr.split('-'))
-    #     print dateStr
-
-    # 下载并解压行业数据文件
-    HYFileUrl = 'http://47.97.204.47/syl/csi%s.zip' % dateStr
-    print(HYFileUrl)
-    HYZipFilename = './data/csi%s.zip' % dateStr
-    HYDataFilename = 'csi%s.xls' % dateStr
-    HYDataPath = './data/csi%s.xls' % dateStr
-    dataToFile(HYFileUrl, HYZipFilename)
-
-    zfile = zipfile.ZipFile(HYZipFilename, 'r')
-    open(HYDataPath, 'wb').write(zfile.read(HYDataFilename))
-    return HYDataFilename
+    logging.debug(f'downClassifyFile: {_date}')
+    url = f'http://47.97.204.47/syl/csi{_date}.zip'
+    zipfilename= os.path.join(ROOTPATH, 'data', f'csi{_date}.zip')
+    datafilename= os.path.join(ROOTPATH, 'data', f'csi{_date}.xls')
+    req = WebRequest()
+    req.get(url)
+    req.save(zipfilename)
+    zfile = zipfile.ZipFile(zipfilename, 'r')
+    zfile.extract(os.path.basename(datafilename), os.path.dirname(datafilename))
+    return datafilename
 
 
-def getreq(url, includeHeader=False):
+def getreq_del(url, includeHeader=False):
     if includeHeader:
         # headers = {'User-Agent': ('Mozilla/5.0 (Windows; U; Windows NT 6.1; '
         #                           'en-US;rv:1.9.1.6) Gecko/20091201 '
@@ -371,74 +350,69 @@ def getreq(url, includeHeader=False):
         return request.Request(url)
 
 
-def downloadData(url, timeout=10, retry_count=3):
-    """ 通用下载函数
-    """
-    for _ in range(retry_count):
-        try:
-            socket.setdefaulttimeout(timeout)
-            headers = {'User-Agent': ('Mozilla/5.0 (Windows; U; '
-                                      'Windows NT 6.1;'
-                                      'en-US;rv:1.9.1.6) Gecko/20091201 '
-                                      'Firefox/3.5.6')}
-            req = request.Request(url, headers=headers)
-            content = request.urlopen(req).read()
-        except IOError as e:
-            logging.warning('[%s]fail to download data, retry url:%s',
-                            e, url)
-            time.sleep(1)
-        else:
-            return content
-    logging.error('download data fail!!! url:%s', url)
-    return None
+# def downloadData(url, timeout=10, retry_count=3):
+#     """ 通用下载函数
+#     """
+#     # TODO: 改用webRequest下载文件
+#     for _ in range(retry_count):
+#         try:
+#             socket.setdefaulttimeout(timeout)
+#             headers = {'User-Agent': ('Mozilla/5.0 (Windows; U; '
+#                                       'Windows NT 6.1;'
+#                                       'en-US;rv:1.9.1.6) Gecko/20091201 '
+#                                       'Firefox/3.5.6')}
+#             req = request.Request(url, headers=headers)
+#             content = request.urlopen(req).read()
+#         except IOError as e:
+#             logging.warning('[%s]fail to download data, retry url:%s',
+#                             e, url)
+#             time.sleep(1)
+#         else:
+#             return content
+#     logging.error('download data fail!!! url:%s', url)
+#     return None
+#
+#
+# def dataToFile(url, filename, timeout=10, retry_count=3):
+#     # TODO: 改用webRequest下载文件
+#     data = downloadData(url, timeout, retry_count)
+#     if not data:
+#         return False
+#     with open(filename, 'wb') as f:
+#         f.write(data)
 
 
-def dataToFile(url, filename, timeout=10, retry_count=3):
-    data = downloadData(url, timeout, retry_count)
-    if not data:
-        return False
-    try:
-        mainFile = open(filename, 'wb')
-        mainFile.write(data)
-    except IOError as e:
-        logging.error('[%s]写文件失败： %s', e, filename)
-        return False
-    else:
-        mainFile.close()
-    return True
+# def downGuzhi_del(ts_code):
+#     """ 确认无用后可删除
+#     # 下载单个股票估值数据， 保存并返回估值数据
+#     """
+#     logging.debug('downGuzhiToSQL: %s', ts_code)
+#     url = urlGuzhi(ts_code)
+#     data = downloadData(url)
+#     if data is None:
+#         logging.error('down %s guzhi data fail.', ts_code)
+#         return None
+#
+#     # 保存至文件
+#     filename = filenameGuzhi(ts_code)
+#     mainFile = open(filename, 'wb')
+#     try:
+#         mainFile.write(data)
+#     except IOError as e:
+#         logging.error('[%s]写文件失败： %s', e, filename)
+#     #         return False
+#     finally:
+#         mainFile.close()
+#     return data
 
 
-def downGuzhi_del(ts_code):
-    """ 确认无用后可删除
-    # 下载单个股票估值数据， 保存并返回估值数据
-    """
-    logging.debug('downGuzhiToSQL: %s', ts_code)
-    url = urlGuzhi(ts_code)
-    data = downloadData(url)
-    if data is None:
-        logging.error('down %s guzhi data fail.', ts_code)
-        return None
-
-    # 保存至文件
-    filename = filenameGuzhi(ts_code)
-    mainFile = open(filename, 'wb')
-    try:
-        mainFile.write(data)
-    except IOError as e:
-        logging.error('[%s]写文件失败： %s', e, filename)
-    #         return False
-    finally:
-        mainFile.close()
-    return data
-
-
-def downGuzhi(ts_code):
-    """ 下载单个股票估值数据， 保存并返回估值数据
-    """
-    url = urlGuzhi(ts_code)
-    filename = filenameGuzhi(ts_code)
-    logging.debug('write guzhi file: %s', filename)
-    return dataToFile(url, filename)
+# def downGuzhi(ts_code):
+#     """ 下载单个股票估值数据， 保存并返回估值数据
+#     """
+#     url = urlGuzhi(ts_code)
+#     filename = filenameGuzhi(ts_code)
+#     logging.debug('write guzhi file: %s', filename)
+#     return dataToFile(url, filename)
 
 
 def downIndexBasic():

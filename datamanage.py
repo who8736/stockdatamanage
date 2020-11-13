@@ -35,18 +35,19 @@ from sqlconn import engine
 # from sqlrw import checkGuben, setGubenLastUpdate
 # from sqlrw import getStockKlineUpdateDate
 from sqlrw import (getIndexPEUpdateDate, getAllMarketPEUpdateDate,
-                   readStockList, engine, readCal)
+                   readStockList, engine, readCal, getLastUpdate,
+                   calAllTTMProfits)
 # import download
-from download import (downGuzhi, downStockList,
+from download import (downStockList,
                       downDaily, downDailyBasic, downTradeCal,
                       downIndexDaily, downIndexDailyBasic,
                       downIndexBasic, downIndexWeight,
-                      DownloaderQuarter, downHYList, downAdjFactor)
+                      DownloaderQuarter, downClassify, downAdjFactor)
 # from download import downHYList
 from initlog import initlog
 from datatrans import dateList
 import config
-from check import checkQuarterData
+from check import checkQuarterData_del, checkQuarterData
 
 
 def logfun(func):
@@ -99,11 +100,14 @@ def startUpdate():
     # 财务指标表
     updateQuarterData()
 
+    # 更新股票TTM利润
+    updateTTMProfits()
+
     # 更新行业列表
     updateHYList()
 
     # 更新行业利润
-    updateClassifyProfits()
+    # updateClassifyProfits()
 
     # 更新股票估值
     # updateGuzhiData()
@@ -134,14 +138,16 @@ def updateClassifyProfits():
     更新行业利润
     :return:
     """
-    sql = 'select date from update_date where dataname="classifyprofits"'
-    result = engine.execute(sql).fetchone()
-    startDate = '20200101'
-    if result is not None:
-        startDate = result[0]
-
-    sql = 'select distinct end_date'
-    # classifyanalyse.calAllHYTTMProfits(date)
+    # sql = 'select date from update_date where dataname="classifyprofits"'
+    # result = engine.execute(sql).fetchone()
+    # startDate = '20200101'
+    # if result is not None:
+    #     startDate = result[0]
+    #
+    # sql = 'select distinct end_date'
+    date = '20191231'
+    # date = 20201
+    classifyanalyse.calAllHYTTMProfits(date)
 
 
 @logfun
@@ -164,7 +170,61 @@ def updateIndex():
 
 @logfun
 def updateHYList():
-    downHYList()
+    downClassify()
+
+
+# @logfun
+# def updateQuarterData_del():
+#     """更新股票季报数据
+#
+#     :return:
+#     """
+#     stocks = readStockList()
+#
+#     # 每支股票最后的报告期和公告日期
+#     sql = (f'select ts_code, max(end_date) end_date, max(f_ann_date) ann_date'
+#            f' from income group by ts_code')
+#     df = pd.read_sql(sql, engine)
+#     stocks = pd.merge(stocks, df, how='left',
+#                       left_on='ts_code', right_on='ts_code')
+#     end_date = lastQarterDate(dt.datetime.today().date())
+#     stocks = stocks[(stocks.end_date.isnull()) | (stocks.end_date < end_date)]
+#
+#     # 每支股票最后更新季报日期与每日指标中的最后日期计算的销售收入是否存在差异
+#     # 如有差异则说明需更新季报
+#     df = checkQuarterData_del()
+#     stocks = pd.merge(stocks, df, how='left',
+#                       left_on='ts_code', right_on='ts_code')
+#     stocks.set_index('ts_code', inplace=True)
+#
+#     resultList = []
+#     for ts_code in stocks.index:
+#         # print(ts_code)
+#         # result, div = checkQuarterData(ts_code)
+#         # resultList.append(dict(ts_code=ts_code, result=result, div=div))
+#         if np.isnan(stocks.loc[ts_code, 'cha']):
+#             datestr = ''
+#         elif stocks.loc[ts_code, 'cha'] < 0.001:
+#             continue
+#         else:
+#             ann_date = stocks.loc[ts_code, 'ann_date']
+#             ann_date += relativedelta(days=1)
+#             datestr = ann_date.strftime('%Y%m%d')
+#
+#         # if result == 0:
+#         #     continue
+#         # elif result == 1:
+#         #     # 更新该股票全部财务数据
+#         #     datestr = ''
+#         # else:
+#         #     ann_date = stocks[stocks.ts_code == ts_code].ann_date.values[0]
+#         #     ann_date += relativedelta(days=1)
+#         #     datestr = ann_date.strftime('%Y%m%d')
+#         downloader = DownloaderQuarter(ts_code=ts_code, startDate=datestr)
+#         downloader.run()
+#
+#     # df = pd.DataFrame(resultList)
+#     # df.to_excel('data/mvpettm.xlsx')
 
 
 @logfun
@@ -173,52 +233,19 @@ def updateQuarterData():
 
     :return:
     """
-    stocks = readStockList()
-
-    # 每支股票最后的报告期和公告日期
-    sql = (f'select ts_code, max(end_date) end_date, max(f_ann_date) ann_date'
-           f' from income group by ts_code')
-    df = pd.read_sql(sql, engine)
-    stocks = pd.merge(stocks, df, how='left',
-                      left_on='ts_code', right_on='ts_code')
-    end_date = lastQarterDate(dt.datetime.today().date())
-    stocks = stocks[(stocks.end_date.isnull()) | (stocks.end_date < end_date)]
-
     # 每支股票最后更新季报日期与每日指标中的最后日期计算的销售收入是否存在差异
     # 如有差异则说明需更新季报
-    df = checkQuarterData()
-    stocks = pd.merge(stocks, df, how='left',
-                      left_on='ts_code', right_on='ts_code')
+    stocks = checkQuarterData()
     stocks.set_index('ts_code', inplace=True)
 
-    resultList = []
     for ts_code in stocks.index:
-        # print(ts_code)
-        # result, div = checkQuarterData(ts_code)
-        # resultList.append(dict(ts_code=ts_code, result=result, div=div))
-        if np.isnan(stocks.loc[ts_code, 'cha']):
-            datestr = ''
-        elif stocks.loc[ts_code, 'cha'] < 0.001:
-            continue
-        else:
-            ann_date = stocks.loc[ts_code, 'ann_date']
-            ann_date += relativedelta(days=1)
-            datestr = ann_date.strftime('%Y%m%d')
-
-        # if result == 0:
-        #     continue
-        # elif result == 1:
-        #     # 更新该股票全部财务数据
-        #     datestr = ''
-        # else:
-        #     ann_date = stocks[stocks.ts_code == ts_code].ann_date.values[0]
-        #     ann_date += relativedelta(days=1)
-        #     datestr = ann_date.strftime('%Y%m%d')
+        e_date = stocks.loc[ts_code, 'e_date']
+        datestr = None
+        if e_date is not None:
+            e_date += relativedelta(days=1)
+            datestr = e_date.strftime('%Y%m%d')
         downloader = DownloaderQuarter(ts_code=ts_code, startDate=datestr)
         downloader.run()
-
-    # df = pd.DataFrame(resultList)
-    # df.to_excel('data/mvpettm.xlsx')
 
 
 # @logfun
@@ -288,7 +315,7 @@ def updatePf():
     # print(type(dateList))
     # print(dateList)
     for date in dateList:
-        print('计算评分：', date)
+        # print('计算评分：', date)
         valuation.calpfnew(date)
 
 
@@ -393,6 +420,28 @@ def updateTradeCal():
         downTradeCal('1990')
     elif lastYear < dt.datetime.today().year:
         downTradeCal(str(int(lastYear) + 1))
+
+
+@logfun
+def updateTTMProfits():
+    """更新股票TTM利润
+    上次更新日至当前日期间有新财务报表的，更新这几期财报的ttmprofits
+    """
+    pass
+    lastDate = getLastUpdate('ttmprofits')
+    today = dt.datetime.today().strftime('%Y%m%d')
+    sql = (f'select distinct end_date from income '
+            f'where ann_date>="{lastDate}" and ann_date<="{today}"')
+
+    result = engine.execute(sql).fetchall()
+    if result:
+        for row in result:
+            calAllTTMProfits(row[0].strftime('%Y%m%d'))
+
+    # 更新最后更新日期
+    sql = f'update update_date set `date`="{today}" where dataname="ttmprofits"'
+    engine.execute(sql)
+
 
 
 @logfun

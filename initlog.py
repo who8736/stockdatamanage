@@ -2,14 +2,14 @@ import logging
 import os
 # from datetime import datetime
 import datetime as dt
-
+from config import ROOTPATH
 
 def initlog():
     # 取得当前年份，按年记录日志
     nowTime = dt.datetime.now()
     logDate = nowTime.strftime('%Y')
-    logfilename = 'datamanage%s.log' % logDate
-    logfilename = os.path.join(os.path.abspath(os.curdir), logfilename)
+    logfilename = f'log/datamanage{logDate}.log'
+    logfilename = os.path.join(ROOTPATH, logfilename)
     print(os.path.abspath(os.curdir))
     print(logfilename)
 

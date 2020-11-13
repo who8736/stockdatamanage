@@ -196,16 +196,18 @@ def calpf():
     return stocks
 
 
-def calpfnew(date, replace=False):
+# noinspection PyTypeChecker
+def calpfnew(_date, replace=False):
     """ 根据各指标计算评分，分别写入文件和数据库
         新版，支持按指定日期计算评分，评分结果写入带日期的新表
-    :param date: str
+    :param _date: str
+    :param replace:  bool
         'YYYYmmdd'格式的日期
     :return:
     """
     #    stocks = readStockListDf()[:10]
     if not replace:
-        sql = f'select count(1) from valuation where date="{date}"'
+        sql = f'select count(1) from valuation where date="{_date}"'
         result = engine.execute(sql).fetchone()[0]
         if result > 0:
             return
@@ -213,26 +215,26 @@ def calpfnew(date, replace=False):
     stocks = readStockList()
     # print(stocks)
     # 低市盈率
-    peDf = readLastTTMPEs(stocks.ts_code.tolist(), date)
+    peDf = readLastTTMPEs(stocks.ts_code.tolist(), _date)
     if peDf is None:
         return
     stocks = pd.merge(stocks, peDf, on='ts_code', how='inner')
     stocks['lowpe'] = stocks.apply(lowpe, axis=1)
 
     # 市盈率低于行业平均
-    sql = 'select ts_code, classify_code from classify_member;'
+    sql = f'select ts_code, classify_code from classify_member where date="{_date}";'
     classifyDf = pd.read_sql(sql, engine)
     stocks = pd.merge(stocks, classifyDf, on='ts_code', how='left')
-    classifyPEDf = classifyanalyse.getClassifyPE(date)
+    classifyPEDf = classifyanalyse.getClassifyPE(_date)
     if classifyPEDf is None or classifyPEDf.empty:
-        classifyanalyse.calClassifyPE(date)
-        classifyPEDf = classifyanalyse.getClassifyPE(date)
+        classifyanalyse.calClassifyPE(_date)
+        classifyPEDf = classifyanalyse.getClassifyPE(_date)
     stocks = pd.merge(stocks, classifyPEDf, on='classify_code', how='left')
     stocks['lowhype'] = stocks.apply(lowhype, axis=1)
 
     # 过去6个季度利润稳定增长
     sectionNum = 6  # 取6个季度
-    incDf = sqlrw.readLastTTMProfits(stocks.ts_code.tolist(), sectionNum, date)
+    incDf = sqlrw.readLastTTMProfits(stocks.ts_code.tolist(), sectionNum, _date)
     stocks = pd.merge(stocks, incDf, on='ts_code', how='left')
     stocks['avg'] = incDf.mean(axis=1).round(2)
     stocks['std'] = incDf.std(axis=1).round(2)
@@ -247,22 +249,20 @@ def calpfnew(date, replace=False):
     stocks['lowpeg'] = stocks.apply(lowPEG, axis=1)
 
     # 200天Z值小于-1
-    stocks['pez200'] = stocks.apply(peZ, axis=1, args=(200, date))
+    stocks['pez200'] = stocks.apply(peZ, axis=1, args=(200, _date))
     stocks['pez200'] = stocks['pez200'].round(2)
     stocks['lowpez200'] = stocks.apply(lowPEZ200, axis=1)
 
     # 1000天Z值小于-1
-    stocks['pez1000'] = stocks.apply(peZ, axis=1, args=(1000, date))
+    stocks['pez1000'] = stocks.apply(peZ, axis=1, args=(1000, _date))
     stocks['pez1000'] = stocks['pez1000'].round(2)
     stocks['lowpez1000'] = stocks.apply(lowPEZ1000, axis=1)
     # return stocks
 
     # 计算pe200与pe1000
-    # stocks['pe200'] = analyse.peHistRate(stocks.ts_code.tolist(), 200)
-    # stocks['pe1000'] = analyse.peHistRate(stocks.ts_code.tolist(), 1000)
-    df = analyse.report.peHistRate(stocks.ts_code.tolist(), 200, date)
+    df = analyse.report.peHistRate(stocks.ts_code.tolist(), 200, _date)
     stocks = pd.merge(stocks, df, on='ts_code', how='left')
-    df = analyse.report.peHistRate(stocks.ts_code.tolist(), 1000, date)
+    df = analyse.report.peHistRate(stocks.ts_code.tolist(), 1000, _date)
     stocks = pd.merge(stocks, df, on='ts_code', how='left')
 
     # 计算总评分
@@ -274,54 +274,29 @@ def calpfnew(date, replace=False):
     stocks['pf'] += stocks.lowpez1000
     stocks = stocks.sort_values(by='pf', ascending=False)
 
-    # 设置输出列与列顺序
-    #     guzhiDf = guzhiDf[['ts_code', 'name', 'pe',
-    #                        'incrate0', 'incrate1', 'incrate2',
-    #                        'incrate3', 'incrate4', 'incrate5',
-    #                        'avgrate', 'madrate', 'stdrate', 'pe200', 'pe1000'
-    #                        ]]
-
-    #     mystocks = ['002508', '600261', '002285', '000488',
-    #                 '002573', '300072', '000910']
-    #     mystockspf = stocks[stocks['ts_code'].isin(mystocks)]
-    #     mystockspf.set_index(['ts_code'], inplace=True)
-    #     mystockspf.to_csv('./data/valuationmystocks.csv')
-
     # 保存评价结果
     stocks.set_index(['ts_code'], inplace=True)
     # stocks.to_csv('./data/valuation.csv')
-    pfFilename = f'valuations{date}.xlsx'
+    pfFilename = f'valuations{_date}.xlsx'
     stocks.to_excel(os.path.join('data', pfFilename))
 
     # 将评分发送到邮箱
     cf = Config()
     pushflag = cf.pushData
     if pushflag:
-        mailTitle = f'评分{date}'
+        mailTitle = f'评分{_date}'
         pushdata.push(mailTitle, pfFilename)
     #    print stocks
     # if initsql.existTable('valuation'):
     #     engine.execute('TRUNCATE TABLE valuation')
     stocks = stocks.dropna()
-    stocks['date'] = date
+    stocks['date'] = _date
 
     # 当计算peg时，如果平均增长率为0，则结果为inf
     # 将inf替换为-9999
     stocks.replace([np.inf, -np.inf], -9999, inplace=True)
 
-    # print(stocks)
-    # return
-    # if replace:
-    #     for index, row in stocks.iterrows():
-    #         sql = (('replace into valuation'
-    #                 '(ts_code, date, totalshares) '
-    #                 'values("%s", "%s", %s)')
-    #                % (row['ts_code'], row['date'], row['totalshares']))
-    #         engine.execute(sql)
-    # else:
-    #     sqlrw.writeSQL(stocks, 'valuation')
     sqlrw.writeSQL(stocks, 'valuation', replace)
-    # stocks.to_sql('valuation', engine, if_exists='append')
     return stocks
 
 

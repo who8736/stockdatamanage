@@ -63,14 +63,14 @@ def writeClassifyMemberToSQL(_date, filename):
         tsCodes = [i + ('.SH' if i[0] == '6' else '.SZ') for i in tsCodes]
         classifyCodes = table.col_values(8)[1:]
         classifyDf = pd.DataFrame({'ts_code': tsCodes,
-                             'classify_code': classifyCodes,
-                             'date': _date})
+                                   'classify_code': classifyCodes,
+                                   'date': _date})
         # engine.execute('TRUNCATE TABLE classify_member')
         writeSQL(classifyDf, 'classify_member')
     except (AssertionError, xlrd.biffh.XLRDError) as e:
         pass
-        logging.warning(f'writeClassifyMemberToSQL {_date}, file:{filename}, error:{e}')
-
+        logging.warning(
+            f'writeClassifyMemberToSQL {_date}, file:{filename}, error:{e}')
 
 
 def writeClassifyNameToSQL(filename):
@@ -88,11 +88,11 @@ def writeClassifyNameToSQL(filename):
         classifylv2 = [hyID[:4] for hyID in classifyCodes]
         classifylv3 = [hyID[:6] for hyID in classifyCodes]
         classifyDf = pd.DataFrame({'code': classifyCodes,
-                                 'name': classifyNames,
-                                 'level': classifyLevel,
-                                 'level1id': classifylv1,
-                                 'level2id': classifylv2,
-                                 'level3id': classifylv3})
+                                   'name': classifyNames,
+                                   'level': classifyLevel,
+                                   'level1id': classifylv1,
+                                   'level2id': classifylv2,
+                                   'level3id': classifylv3})
         engine.execute('TRUNCATE TABLE classify')
         writeSQL(classifyDf, 'classify')
 
@@ -229,7 +229,7 @@ def getAllMarketPEUpdateDate():
     :return:
     """
     sql = 'select max(trade_date) from index_pe where ts_code="all";'
-    return _getLastUpdate(sql)
+    return _getIndexLastUpdate(sql)
 
 
 def getIndexPEUpdateDate():
@@ -238,7 +238,7 @@ def getIndexPEUpdateDate():
     :return:
     """
     sql = f'select max(trade_date) from index_pe where ts_code="000010.SH";'
-    return _getLastUpdate(sql)
+    return _getIndexLastUpdate(sql)
 
 
 def getGuzhi(ts_code):
@@ -637,7 +637,7 @@ def readLastTTMPEs(stockList, trade_date=None):
 #     return
 
 
-def calAllTTMLirun(end_date, replace=False):
+def calAllTTMProfits(end_date, replace=False):
     """计算全部股票本期TTM利润并写入TTMLirun表
     date: 格式YYYYMMDD
     replace: True, 覆盖已有数据， False, 增量更新
@@ -650,102 +650,47 @@ def calAllTTMLirun(end_date, replace=False):
     # 2015年2季度利润 + 2015年3季度利润 + 2015年4季度利润 + 2016年1季度利润
     # 当本期为第4季度时，计算公式仍有效， 如：
     # 2016年4季度TTM利润 = 2016年4季度利润 + 2015年4季度利润  - 2015年4季度利润
-    #　但为提高效率，当本期为第4季度时，TTM利润=本期利润， 直接返回利润数据
     """
-    TTMProfits = readProfitsForDate(end_date)
-    if not replace:
-        existProfits = readTTMProfitsForDate(end_date)
-        TTMProfits = TTMProfits[~TTMProfits.ts_code.isin(existProfits.ts_code)]
-    if end_date[4:] == '1231':
-        TTMProfits.rename(columns={'profits':'ttmprofits'}, inplace=True)
-        print(TTMProfits)
-        print('-' * 80)
-    else:
-        # 上年第四季度利润, 仅取利润字段并更名为profits1
-        lastYearEnd = lastYearEndDate(end_date)
-        profitsLastYearEnd = readProfitsForDate(lastYearEnd)
-        # print(('profitsLastYearEnd.head():', profitsLastYearEnd.head()))
-        profitsLastYearEnd = profitsLastYearEnd[['ts_code', 'profits']]
-        profitsLastYearEnd.columns = ['ts_code', 'profits1']
-
-        # 上年同期利润, 仅取利润字段并更名为profits2
-        lastYear = lastYearDate(end_date)
-        profitsSamePeriodLastYear = readProfitsForDate(lastYear)
-        profitsSamePeriodLastYear = profitsSamePeriodLastYear[['ts_code', 'profits']]
-        profitsSamePeriodLastYear.columns = ['ts_code', 'profits2']
-
-        # 整合以上三个季度利润，ts_code为整合键
-        TTMProfits = pd.merge(TTMProfits, profitsLastYearEnd, on='ts_code')
-        TTMProfits = pd.merge(TTMProfits, profitsSamePeriodLastYear, on='ts_code')
-
-        TTMProfits['ttmprofits'] = (TTMProfits.profits +
-                                  TTMProfits.profits1 - TTMProfits.profits2)
-        TTMProfits = TTMProfits[['ts_code', 'end_date', 'ttmprofits', 'ann_date']]
-    TTMProfits.dropna(inplace=True)
-    # print('TTMLirun.head():\n', TTMProfits.head())
-
-    # 写入ttmlirun表后，重算TTM利润增长率
-    # writeSQL(TTMProfits, 'ttmprofits', replace)
+    logging.debug(f'更新ttmprofits: {end_date}')
+    end_date1 = f'{int(end_date[:4]) - 1}1231'
+    end_date2 = f'{int(end_date[:4]) - 1}{end_date[4:]}'
     if replace:
-        replaceTTMProfits(TTMProfits)
-    else:
-        writeSQL(TTMProfits, 'ttmprofits')
-
-    return calTTMProfitsIncRate(end_date)
-
-
-def replaceTTMProfits(df):
-    """
-    以替换方式更新TTM利润，用于批量修正TTM利润表错误
-    :param df:
-    :return:
-    """
-    print(df)
-    for index, row in df.iterrows():
-        # print(row['ts_code'])
-        ts_code = row['ts_code']
-        end_date = row['end_date']
-        ttmprofits = row['ttmprofits']
-        ann_date = row['ann_date']
-        sql = ('replace into ttmprofits'
-               '(ts_code, end_date, ttmprofits, ann_date) '
-               f'values("{ts_code}", "{end_date}", '
-               f'{ttmprofits}, "{ann_date}");')
-        print(sql)
+        sql = f'delete from ttmprofits where end_date="{end_date}"'
         engine.execute(sql)
+    sql = f'''
+            insert into ttmprofits (ts_code, end_date, ttmprofits, ann_date)
+            select a.ts_code, '{end_date}' as end_date, (a.p + b.p - c.p) ttmprofits, a.ann_date from 
+            (select ts_code, n_income_attr_p p, ann_date from stockdata.income where end_date='{end_date}' and n_income_attr_p is not null) a,
+            (select ts_code, n_income_attr_p p from stockdata.income where end_date='{end_date1}' and n_income_attr_p is not null) b,
+            (select ts_code, n_income_attr_p p from stockdata.income where end_date='{end_date2}' and n_income_attr_p is not null) c,
+            (select ts_code from stock_basic where ts_code not in
+            (select ts_code from ttmprofits where end_date='{end_date}')) d
+            where a.ts_code=d.ts_code and a.ts_code=b.ts_code and a.ts_code=c.ts_code and a.ann_date is not null
+            '''
+    engine.execute(sql)
+    calTTMProfitsIncRate(end_date)
 
 
-def calTTMProfitsIncRate(end_date, replace=True):
+def calTTMProfitsIncRate(end_date, replace=False):
     """计算全部股票本期TTM利润增长率并写入TTMLirun表
     date: 格式YYYYMMDD
     # 计算公式： TTM利润增长率= (本期TTM利润  - 上年同期TTM利润) / TTM利润 * 100
     """
-    TTMProfits = readTTMProfitsForDate(end_date)
+    sql = f'''
+            update ttmprofits t1,
+            (select ts_code, ttmprofits from ttmprofits 
+                where end_date='{int(end_date[:4]) - 1}{end_date[4:]}') t2
+            set t1.incrate = round((t1.ttmprofits / t2.ttmprofits - 1) * 100, 2)
+            where t1.end_date='{end_date}' 
+                and t1.ts_code=t2.ts_code and t1.ttmprofits is not null 
+                and t2.ttmprofits is not null
+    '''
     if not replace:
-        TTMProfits = TTMProfits[TTMProfits.incrate.isnull()]
-    samePeriodlastYear = lastYearDate(end_date)
-    TTMProfitsLastYear = readTTMProfitsForDate(samePeriodlastYear)
-    TTMProfitsLastYear = TTMProfitsLastYear[['ts_code', 'ttmprofits']]
-    TTMProfitsLastYear.columns = ['ts_code', 'ttmprofits1']
-    TTMProfitsLastYear = TTMProfitsLastYear[TTMProfitsLastYear.ttmprofits1 != 0]
-
-    # 整合以上2个表，ts_code为整合键
-    TTMProfits = pd.merge(TTMProfits, TTMProfitsLastYear, on='ts_code')
-
-    TTMProfits['incrate'] = ((TTMProfits.ttmprofits -
-                               TTMProfits.ttmprofits1) /
-                              abs(TTMProfits.ttmprofits1) * 100)
-    for _, row in TTMProfits.iterrows():
-        # print(row)
-        ts_code = row['ts_code']
-        incRate = round(row['incrate'], 2)
-        sql = (f'update ttmprofits set incrate = {incRate}'
-               f' where ts_code="{ts_code}" and `end_date`="{end_date}"')
-        engine.execute(sql)
-    return
+        sql += ' and t1.incrate is null '
+    engine.execute(sql)
 
 
-def calTTMLirun(stockdf, date):
+def del_calTTMLirun(stockdf, date):
     lirun1 = stockdf[stockdf.date == date - 10]  # 上年同期利润
     lirun2 = stockdf[stockdf.date == (date / 10 - 1) * 10 + 4]  # 上年末利润
     lirun3 = stockdf[stockdf.date == date]  # 本期利润
@@ -766,33 +711,47 @@ def getLirunUpdateEndQuarter():
     return datatrans.quarterSub(curQuarter, 1)
 
 
-def _getLastUpdate(sql):
+def _getIndexLastUpdate(sql):
     """
     Parameters
     --------
-    sql: str  指定查询更新日期的SQL语句
+    sql: str  指定查询指数更新日期的SQL语句
     e.g: 'select ttmpe from lastupdate where ts_code="002796"'
 
     Return
     --------
     datetime：datetime
     """
+    # TODO: 下次将本函数功能并入getLastUpdate, 指数更新时在update_date表中记录更新日期
     result = engine.execute(sql).first()
-    if result is None:
-        return dt.datetime.strptime('1990-01-01', '%Y-%m-%d').date()
-
-    lastUpdateDate = result[0]
-    if lastUpdateDate is None:
-        return dt.datetime.strptime('1990-01-01', '%Y-%m-%d').date()
-
-    # lastUpdateDate = lastUpdateDate[0]
-    if isinstance(lastUpdateDate, dt.date):
-        return lastUpdateDate
-        # return lastUpdateDate + dt.timedelta(days=1)
+    if result is None or result[0] is None:
+        lastUpdateDate = '1990-01-01'
     else:
-        logging.debug('lastUpdateDate type is: %s', type(lastUpdateDate))
+        lastUpdateDate = result[0]
+    if isinstance(lastUpdateDate, dt.date):
+         return lastUpdateDate
+    else:
         return dt.datetime.strptime(lastUpdateDate, '%Y-%m-%d').date()
 
+
+def getLastUpdate(dataName):
+    """
+    Parameters
+    --------
+    :param dataName: str 更新的数据的类型
+
+    :return
+    --------
+    str: YYYYMMDD, 数据更新日期
+    """
+    sql = f'select date from update_date where dataname="{dataName}"'
+    result = engine.execute(sql).fetchone()
+    if result:
+        _date = result[0]
+        if isinstance(_date, dt.date):
+            return _date.strftime('%Y%m%d')
+        else:
+            return _date
 
 def writeChigu(stockList):
     engine.execute('TRUNCATE TABLE chigu')
@@ -1021,14 +980,6 @@ def getYouzhiList():
     sql = 'select ts_code from youzhiguzhi'
     result = engine.execute(sql)
     return [ts_code[0] for ts_code in result.fetchall()]
-
-
-def getClassifiedForStocksID(ts_code):
-    sql = ('select cname from classified '
-           'where ts_code = "%(ts_code)s"' % ts_code)
-    result = engine.execute(sql)
-    classified = result.first()[0]
-    return classified
 
 
 def getStockName(ts_code):

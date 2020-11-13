@@ -243,11 +243,12 @@ def transDfToList(df):
 
 
 def transQuarterToDate(_date):
-    year = _date / 10
+    year = _date // 10
     month = (_date % 10) * 3
     days = {3: 31, 6: 30, 9: 30, 12: 31}
     day = days[month]
-    return '%(year)d-%(month)02d-%(day)d' % locals()
+    # print(year, month, day)
+    return f'{year}{month:02}{day:02}'
 
 
 def lastQarterDate(_date):
@@ -255,6 +256,15 @@ def lastQarterDate(_date):
         _date = dt.datetime.strptime(_date, '%Y%m%d')
     quarterFirstDay = dt.date(_date.year, (_date.month - 1) // 3 * 3 + 1, 1)
     return quarterFirstDay - dt.timedelta(days=1)
+
+
+def lastYearDate(_date):
+    return str(int(_date[:4]) - 1) + _date[4:]
+
+
+def lastYearEndDate(_date):
+    return str(int(_date[:4]) - 1) + '1231'
+
 
 def transTushareDateToQuarter(date):
     year = int(date[:4])

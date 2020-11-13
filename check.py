@@ -12,7 +12,7 @@ def checkGuben():
     # for ts_code in ids:
 
 
-def checkQuarterData():
+def checkQuarterData_del():
     """
     每支股票最后更新季报日期与每日指标中的最后日期计算的销售收入是否存在差异
     如有差异则说明需更新季报
@@ -43,7 +43,7 @@ def checkQuarterData():
                     where trade_date=
                         (select max(trade_date) from daily_basic)) c
                 where a.ts_code=b.ts_code and a.end_date=b.edate 
-                    and a.ts_code=c.ts_code and (a.revenue/c.rev-1)>0.0001;"""
+                    and a.ts_code=c.ts_code and abs(a.revenue/c.rev-1)>0.0001;"""
     df1 = pd.read_sql(sql, engine)
     df.loc[df.ts_code.isin(df1.ts_code), 'cha'] = 1
     return df
@@ -53,6 +53,32 @@ def checkQuarterData():
     # return df.ts_code.values
 
 
+def checkQuarterData():
+    """
+    每支股票最后更新季报日期与每日指标中的最后日期计算的净资产是否存在差异
+    如有差异则说明需更新季报
+    如每日指标中无市净率的也应更新季报，因可能为新上市股票
+    """
+    end_date = '20200331'
+    sql = f'call checkquarterdata("{end_date}");'
+    df = pd.read_sql(sql, engine)
+    # print(df)
+    sql = f"""select ts_code from stock_basic where ts_code not in
+                (select distinct ts_code from daily_basic 
+                where trade_date=(select max(trade_date) from daily_basic) 
+                    and pb is not null);
+            """
+    df1 = pd.read_sql(sql, engine)
+    # print(df1)
+    df1['e_date'] = None
+    df1['networth_diff'] = 1
+    df = pd.concat([df, df1])
+    # df.reset_index(inplace=True)
+    # df = pd.merge(df, df1, how='left', on='ts_code')
+    # print(df)
+    return df
+
+
 if __name__ == '__main__':
     pass
-    checkQuarterData()
+    checkQuarterData_del()
