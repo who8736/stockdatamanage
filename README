@@ -4,3 +4,5 @@ apt install python-mysqldb
 pip --trusted-host pypi.python.org install sqlalchemy
 pip --trusted-host pypi.python.org install pandas
 pip --trusted-host pypi.python.org install tushare
+
+作者：who8376, 邮箱：who8736@hotmail.com
