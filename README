@@ -1,3 +1,7 @@
+# 股票分析工具
+用于对沪深股票的估值分析，生成估值评估报告
+
+基于pandas,tushare,mysql开发
 
 需安装的包
 apt install python-mysqldb
