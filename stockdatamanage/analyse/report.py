@@ -4,10 +4,10 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
-import datatrans
-import sqlrw
-from datatrans import dateStrList
-from sqlrw import Session, engine
+from .. import datatrans
+from .. import sqlrw
+from ..datatrans import dateStrList
+from ..sqlconn import engine
 
 
 def calGuzhi(stockList=None):
@@ -286,27 +286,24 @@ def testShaixuan():
 def calAllPEHistory(startDate, endDate=None):
     """
     计算全市场TTMPE
-    :param startDate:
-    :param endDate:
+    :param startDate: str, YYYYmmdd
+    :param endDate: str, YYYYmmdd
     :return:
     """
     # startDate = datetime.strptime('2010-01-01', '%Y-%m-%d').date()
-    endDate = dt.datetime.today().date()
-    session = Session()
-    for tradeDate in dateStrList(startDate, endDate):
+    if endDate is None:
+        endDate = dt.datetime.today().strftime('%Y%m%d')
+    for tradeDate in readCal(startDate, endDate):
         sql = 'call calallpe("%(tradeDate)s");' % locals()
         print(sql)
-        session.execute(sql)
-        session.commit()
-    session.close()
-
+        engine.execute(sql)
 
 def calPEHistory(ID, startDate, endDate=None):
     """
     计算某一指数的TTMPE
     :param ID: 长格式的指数代码，如: 000010.SH
-    :param startDate:
-    :param endDate:
+    :param startDate: str, YYYYMMDD
+    :param endDate: str, YYYYMMDD
     :return:
     """
     if startDate is None:
@@ -315,11 +312,11 @@ def calPEHistory(ID, startDate, endDate=None):
     # assert len(ID) == 6, '指数代码错误， 正确格式：000010'
     ID = ID.upper()
     if endDate is None:
-        endDate = dt.datetime.today().date()
+        endDate = dt.datetime.today().strftime('%Y%m%d')
     session = Session()
-    for tradeDate in dateStrList(startDate, endDate):
+    for tradeDate in readCal(startDate, endDate):
         sql = f'call calchengfenpe("{ID}", "{tradeDate}");'
-        print(sql)
+        logging.debug(f'calIndexPE: {tradeDate}')
         # result = engine.execute(sql)
         result = session.execute(sql)
         session.commit()

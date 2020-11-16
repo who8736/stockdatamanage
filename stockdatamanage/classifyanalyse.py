@@ -13,10 +13,10 @@ import logging
 import pandas as pd
 from pandas.core.frame import DataFrame
 
-import sqlrw
-import datatrans
-from datatrans import lastYearDate, lastYearEndDate
-from sqlconn import engine
+from . import sqlrw
+from . import datatrans
+from .datatrans import lastYearDate, lastYearEndDate
+from .sqlconn import engine
 
 
 # import logging
@@ -405,7 +405,7 @@ def test2():
 
 
 if __name__ == '__main__':
-    #    test()
+    #    tests()
     #     hylist = getHYList()
     #     hyCount = {}
     #    hyquarters = getHYQuarters()

@@ -6,10 +6,6 @@ Created on 2016年12月14日
 '''
 from web import app
 import sys
-# import sys
-#
-# reload(sys)
-# sys.setdefaultencoding('utf-8')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', threaded=True, debug=True)

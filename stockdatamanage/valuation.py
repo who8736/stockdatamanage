@@ -16,15 +16,15 @@ import os
 import pandas as pd
 import numpy as np
 
-import analyse.report
-import initsql
-import classifyanalyse
-import analyse
-import sqlrw
-from sqlconn import engine
-from sqlrw import readLastTTMPEs, readStockList
-import pushdata
-from config import Config
+from .analyse import report
+from . import initsql
+from . import classifyanalyse
+from . import analyse
+from . import sqlrw
+from .sqlconn import engine
+from .sqlrw import readLastTTMPEs, readStockList
+from . import pushdata
+from .config import Config
 
 # 定义指标常数
 LOWPE = 20
@@ -153,9 +153,9 @@ def calpf():
     # 计算pe200与pe1000
     # stocks['pe200'] = analyse.peHistRate(stocks.ts_code.tolist(), 200)
     # stocks['pe1000'] = analyse.peHistRate(stocks.ts_code.tolist(), 1000)
-    df = analyse.report.peHistRate(stocks.ts_code.tolist(), 200)
+    df = report.peHistRate(stocks.ts_code.tolist(), 200)
     stocks = pd.merge(stocks, df, on='ts_code', how='left')
-    df = analyse.report.peHistRate(stocks.ts_code.tolist(), 1000)
+    df = report.peHistRate(stocks.ts_code.tolist(), 1000)
     stocks = pd.merge(stocks, df, on='ts_code', how='left')
 
     # 计算总评分
@@ -260,9 +260,9 @@ def calpfnew(_date, replace=False):
     # return stocks
 
     # 计算pe200与pe1000
-    df = analyse.report.peHistRate(stocks.ts_code.tolist(), 200, _date)
+    df = report.peHistRate(stocks.ts_code.tolist(), 200, _date)
     stocks = pd.merge(stocks, df, on='ts_code', how='left')
-    df = analyse.report.peHistRate(stocks.ts_code.tolist(), 1000, _date)
+    df = report.peHistRate(stocks.ts_code.tolist(), 1000, _date)
     stocks = pd.merge(stocks, df, on='ts_code', how='left')
 
     # 计算总评分

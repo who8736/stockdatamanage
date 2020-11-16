@@ -6,9 +6,7 @@ from email.header import Header
 from email.mime.multipart import MIMEMultipart
 import datetime as dt
 
-import config
-from initlog import initlog
-
+from . import config
 
 def push(title, filename):
     """发送邮件

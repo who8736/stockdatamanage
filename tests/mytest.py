@@ -6,7 +6,6 @@ Created on Mon Apr 15 15:27:38 2019
 """
 
 # import pandas as pd
-# from pandas import DataFrame
 from urllib.request import urlopen
 # from lxml import etree
 # from datetime import datetime
@@ -15,23 +14,23 @@ from urllib.request import urlopen
 # from bokeh.plotting import figure
 from matplotlib.widgets import Cursor
 
-# from download import getreq
 from xml import etree
 
-from download import *
-from sqlrw import *
+
+# from .context import stockdatamanage
+from stockdatamanage.download import *
+from stockdatamanage.sqlrw import *
 # from sqlalchemy.ext.declarative import declarative_base
 
-from datamanage import *
+from stockdatamanage.datamanage import *
 # from sqlconn import Session
 # from misc import urlGubenEastmoney
-from misc import *
-from check import *
+from stockdatamanage.misc import *
+from stockdatamanage.check import *
 # from initlog import initlog
-from datatrans import *
-from classifyanalyse import *
-from test import bokehtest
-from plot import *
+from stockdatamanage.datatrans import *
+from stockdatamanage.classifyanalyse import *
+from stockdatamanage.plot import *
 
 matplotlib.use('Qt5Agg')  # @UndefinedVariable
 
@@ -259,7 +258,7 @@ def testBokeh():
     """bokeh测试用"""
     # b = BokehPlot('000651')
     # p = b.plot()
-    # output_file("kline.html", title="kline plot test")
+    # output_file("kline.html", title="kline plot tests")
     output_file('../vbar.html')
     p = figure(plot_width=400, plot_height=400)
     p.vbar(x=[1, 2, 3], width=0.5, bottom=[1, 2, 3],
@@ -292,7 +291,7 @@ def testBokehtest():
     """
     mybokeh = bokehtest.BokehPlotStock('000651', 1000)
     myplot = mybokeh.plot()
-    output_file("../kline.html", title="kline plot test")
+    output_file("../kline.html", title="kline plot tests")
     show(myplot)  # open a browser
 
 
@@ -414,7 +413,7 @@ def __testDownload():
     #     # df = downDailyBasic(tradeDate=tradeDate)
     #     df = downDailyBasic(tradeDate=d)
     #     print(df)
-    #     # df.to_excel('test.xlsx')
+    #     # df.to_excel('tests.xlsx')
     #     writeSQL(df, 'dailybasic')
 
     # 下载股权质押统计数据
@@ -700,7 +699,7 @@ def __testPlot():
     # 指数PE绘图
     # plotIndexPE()
     # testPlotKline('600519')
-    # bokehtest.test()
+    # bokehtest.tests()
     # plotImg = BokehPlotPE()
     # fig = plotImg.plot()
     # plotKlineStock('600519', days=1000)
@@ -895,7 +894,7 @@ if __name__ == "__main__":
     # __testMisc()
     # __testPlot()
     # __testRepair()
-    __testUpdate()
+    # __testUpdate()
     # __testValuation()
 
     print('程序正常退出')

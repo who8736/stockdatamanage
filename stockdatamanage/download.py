@@ -19,13 +19,14 @@ import tushare as ts
 import pandas as pd
 
 # from misc import (urlGuzhi, filenameGuzhi)
-from datatrans import dateStrList
-from sqlrw import (engine, writeSQL, writeClassifyMemberToSQL, writeClassifyNameToSQL,
-                   readTableFields)
-from initlog import initlog
-from misc import tsCode
-from config import ROOTPATH
-from webRequest import WebRequest
+from .datatrans import dateStrList
+from .sqlrw import (writeSQL, writeClassifyMemberToSQL, writeClassifyNameToSQL,
+                   readTableFields, readCal)
+from .sqlconn import engine
+from .initlog import initlog
+from .misc import tsCode
+from .config import ROOTPATH, Config
+from .webRequest import WebRequest
 
 
 class DownloaderQuarter:
@@ -320,8 +321,8 @@ def downClassifyFile(_date):
     """
     logging.debug(f'downClassifyFile: {_date}')
     url = f'http://47.97.204.47/syl/csi{_date}.zip'
-    zipfilename= os.path.join(ROOTPATH, 'data', f'csi{_date}.zip')
-    datafilename= os.path.join(ROOTPATH, 'data', f'csi{_date}.xls')
+    zipfilename= os.path.join(datapath, f'csi{_date}.zip')
+    datafilename= os.path.join(datapath, 'data', f'csi{_date}.xls')
     req = WebRequest()
     req.get(url)
     req.save(zipfilename)
@@ -348,38 +349,6 @@ def getreq_del(url, includeHeader=False):
         return request.Request(url, headers=headers)
     else:
         return request.Request(url)
-
-
-# def downloadData(url, timeout=10, retry_count=3):
-#     """ 通用下载函数
-#     """
-#     # TODO: 改用webRequest下载文件
-#     for _ in range(retry_count):
-#         try:
-#             socket.setdefaulttimeout(timeout)
-#             headers = {'User-Agent': ('Mozilla/5.0 (Windows; U; '
-#                                       'Windows NT 6.1;'
-#                                       'en-US;rv:1.9.1.6) Gecko/20091201 '
-#                                       'Firefox/3.5.6')}
-#             req = request.Request(url, headers=headers)
-#             content = request.urlopen(req).read()
-#         except IOError as e:
-#             logging.warning('[%s]fail to download data, retry url:%s',
-#                             e, url)
-#             time.sleep(1)
-#         else:
-#             return content
-#     logging.error('download data fail!!! url:%s', url)
-#     return None
-#
-#
-# def dataToFile(url, filename, timeout=10, retry_count=3):
-#     # TODO: 改用webRequest下载文件
-#     data = downloadData(url, timeout, retry_count)
-#     if not data:
-#         return False
-#     with open(filename, 'wb') as f:
-#         f.write(data)
 
 
 # def downGuzhi_del(ts_code):
@@ -448,9 +417,9 @@ def downDaily(trade_date=None):
         startDate = engine.execute(sql).fetchone()[0]
         assert isinstance(startDate, dt.date), 'startDate应为date类型'
         startDate += dt.timedelta(days=1)
-        endDate = dt.datetime.now().date()
-        dates = dateStrList(startDate.strftime('%Y%m%d'),
-                            endDate.strftime('%Y%m%d'))
+        startDate = startDate.strftime('%Y%m%d')
+        endDate = dt.datetime.now().strftime('%Y%m%d')
+        dates = readCal(startDate, endDate)
     else:
         dates.append(trade_date)
     for d in dates:

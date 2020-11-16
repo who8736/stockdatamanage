@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 from dateutil.relativedelta import relativedelta
 
-from sqlconn import engine
-from sqlrw import readStockList
+from .sqlconn import engine
+from .sqlrw import readStockList
 
 
 def checkGuben():
@@ -77,8 +77,3 @@ def checkQuarterData():
     # df = pd.merge(df, df1, how='left', on='ts_code')
     # print(df)
     return df
-
-
-if __name__ == '__main__':
-    pass
-    checkQuarterData_del()

@@ -161,7 +161,7 @@ def testPlotKline(ts_code, days=1000):
     select.toolbar.active_multi = range_tool
 
     column_layout = column([pkline, ppe, select])
-    output_file("../kline.html", title="kline plot test")
+    output_file("../kline.html", title="kline plot tests")
     show(column_layout)  # open a browser
     # show(pkline)  # open a browser
 
@@ -220,7 +220,7 @@ def plotIndexPE():
     select.toolbar.active_multi = range_tool
 
     column_layout = column([ppe, select])
-    output_file("pe.html", title="index pe plot test")
+    output_file("pe.html", title="index pe plot tests")
     show(column_layout)  # open a browser
 
 
@@ -344,7 +344,7 @@ class BokehPlot:
 
         # self.pkline.x_range.on_change('end',
         #                               callback=CustomJS.from_py_func(self.update))
-        # output_file("kline.html", title="kline plot test")
+        # output_file("kline.html", title="kline plot tests")
         # show(self.column_layout)  # open a browser
         # return self.column_layout
 
@@ -503,7 +503,7 @@ class BokehPlotPE:
         self.ppe.x_range.js_on_change('end', callback)
 
         self.column_layout = column([self.ppe, self.select])
-        # output_file("kline.html", title="kline plot test")
+        # output_file("kline.html", title="kline plot tests")
         # show(self.column_layout)  # open a browser
         # return self.column_layout
 
@@ -526,7 +526,7 @@ class BokehPlotPE:
 
 if __name__ == '__main__':
     pass
-    # test()
+    # tests()
     # testPlotKline('600519')
     # df = testPlotKline('600519')
     # plotDf(df)

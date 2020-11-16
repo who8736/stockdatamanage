@@ -7,50 +7,20 @@ Created on Thu Mar 10 21:11:51 2016
 
 import os
 import logging
-# import urllib2
-# import socket
 import datetime as dt
 from datetime import datetime
-# import ConfigParser
-# import re
-# import time
-
-# import sys
-
-
-# from lxml import etree
-# import lxml
-# import tushare as ts  # @UnresolvedImport
 import pandas as pd
-# from pandas.compat import StringIO
 from io import StringIO
-# from sqlalchemy import create_engine
+
 from sqlalchemy import MetaData, Table, Column
 from sqlalchemy import DATE, DECIMAL, String
 from sqlalchemy.ext.declarative import declarative_base
-# from sqlalchemy.orm import sessionmaker, scoped_session
-# import sqlalchemy
 from pandas.core.frame import DataFrame
-# from tushare.stock import cons as ct
 import xlrd
 import tushare as ts
 
-import datatrans
-from datatrans import lastYearDate, lastYearEndDate
-import initsql
-from sqlconn import SQLConn
-# from misc import filenameGuben, filenameLirun, filenameGuzhi
-# from misc import filenameLirun, filenameGuzhi
-from initlog import initlog
-
-# from download import downHYFile
-
-# from bokeh.sampledata import stocks
-
-
-sqlconn = SQLConn()
-engine = sqlconn.engine
-Session = sqlconn.Session
+from .datatrans import lastYearDate, lastYearEndDate
+from .sqlconn import SQLConn, engine
 
 
 def writeClassifyMemberToSQL(_date, filename):
@@ -221,24 +191,6 @@ def getLowPEStockList(maxPE=40):
     sql = 'select ts_code, pe from stocklist where pe > 0 and pe <= %s' % maxPE
     df = pd.read_sql(sql, engine)
     return df
-
-
-def getAllMarketPEUpdateDate():
-    """
-    全市场PE更新日期
-    :return:
-    """
-    sql = 'select max(trade_date) from index_pe where ts_code="all";'
-    return _getIndexLastUpdate(sql)
-
-
-def getIndexPEUpdateDate():
-    """
-    指数PE更新日期,当前仅有上证180指数的PE值需手动计算
-    :return:
-    """
-    sql = f'select max(trade_date) from index_pe where ts_code="000010.SH";'
-    return _getIndexLastUpdate(sql)
 
 
 def getGuzhi(ts_code):
@@ -590,7 +542,25 @@ def readCal(startDate=None, endDate=None, exchange='SSE', is_open=1):
         sql += f' and cal_date<="{endDate}"'
     sql += f' and is_open={is_open}'
     result = engine.execute(sql).fetchall()
-    return [d[0].strftime('%Y%m%d') for d in result]
+    if result:
+        return [d[0].strftime('%Y%m%d') for d in result]
+
+
+# def alterKline():
+#     sql = 'show tables like %s'
+#     result = engine.execute(sql, 'kline%')
+#     result = result.fetchall()
+#
+#     for i in result:
+#         tablename = i[0]
+#         sql = 'call stockdata.alterkline(%s)'
+#         try:
+#             engine.execute(sql, tablename)
+#             #             result = result.fetchall()
+#             print(tablename)
+#         except sqlalchemy.exc.OperationalError as e:
+#             print(e)
+#     return
 
 
 def readLastTTMPEs(stockList, trade_date=None):
@@ -618,23 +588,6 @@ def readLastTTMPEs(stockList, trade_date=None):
     df = df.loc[df['ts_code'].isin(stockList)]
     df = df.dropna()
     return df
-
-
-# def alterKline():
-#     sql = 'show tables like %s'
-#     result = engine.execute(sql, 'kline%')
-#     result = result.fetchall()
-#
-#     for i in result:
-#         tablename = i[0]
-#         sql = 'call stockdata.alterkline(%s)'
-#         try:
-#             engine.execute(sql, tablename)
-#             #             result = result.fetchall()
-#             print(tablename)
-#         except sqlalchemy.exc.OperationalError as e:
-#             print(e)
-#     return
 
 
 def calAllTTMProfits(end_date, replace=False):
@@ -709,29 +662,6 @@ def del_calTTMLirun(stockdf, date):
 def getLirunUpdateEndQuarter():
     curQuarter = datatrans.transDateToQuarter(dt.datetime.now())
     return datatrans.quarterSub(curQuarter, 1)
-
-
-def _getIndexLastUpdate(sql):
-    """
-    Parameters
-    --------
-    sql: str  指定查询指数更新日期的SQL语句
-    e.g: 'select ttmpe from lastupdate where ts_code="002796"'
-
-    Return
-    --------
-    datetime：datetime
-    """
-    # TODO: 下次将本函数功能并入getLastUpdate, 指数更新时在update_date表中记录更新日期
-    result = engine.execute(sql).first()
-    if result is None or result[0] is None:
-        lastUpdateDate = '1990-01-01'
-    else:
-        lastUpdateDate = result[0]
-    if isinstance(lastUpdateDate, dt.date):
-         return lastUpdateDate
-    else:
-        return dt.datetime.strptime(lastUpdateDate, '%Y-%m-%d').date()
 
 
 def getLastUpdate(dataName):
@@ -1095,6 +1025,21 @@ def _readKline(sql):
     # return klineDf
 
 
+def setLastUpdate(dataName, _date=None):
+    # 更新最后更新日期
+    if _date is None:
+        _date = dt.datetime.today().strftime('%Y%m%d')
+    sql = f'update update_date set `date`="{_date}" where dataname="{dataName}"'
+    engine.execute(sql)
+
+
+def readTableFields(table):
+    sql = (f'select column_name from information_schema.columns'
+           f' where table_name="{table}"')
+    result = engine.execute(sql).fetchall()
+    return ','.join([s[0] for s in result])
+
+
 if __name__ == '__main__':
     initlog()
     pass
@@ -1105,10 +1050,3 @@ if __name__ == '__main__':
     ts_code = '000651'
     startDate = '2016-01-01'
     # updateKlineEXTData(ts_code, startDate)
-
-
-def readTableFields(table):
-    sql = (f'select column_name from information_schema.columns'
-           f' where table_name="{table}"')
-    result = engine.execute(sql).fetchall()
-    return ','.join([s[0] for s in result])

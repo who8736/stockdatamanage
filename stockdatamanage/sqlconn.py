@@ -10,8 +10,9 @@ import logging
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
-from initlog import initlog
-import config
+# from initlog import initlog
+
+from . import config
 
 
 class SQLConn():

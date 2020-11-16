@@ -11,7 +11,7 @@ import logging
 import pandas as pd
 from pandas.core.frame import DataFrame
 from lxml import etree
-from initlog import initlog
+# from initlog import initlog
 
 
 def quarterSub(_quarterDate, subNum):
@@ -60,13 +60,10 @@ def dateStrList(startDate, endDate, formatStr='%Y%m%d'):
         startDate = startDate.strftime(formatStr)
     if isinstance(endDate, dt.date):
         endDate = endDate.strftime(formatStr)
-    dateList = []
-    start = dt.datetime.strptime(startDate, formatStr)
-    end = dt.datetime.strptime(endDate, formatStr)
-    while start <= end:
-        dateList.append(start.strftime(formatStr))
-        start = start + dt.timedelta(days=1)
-    return dateList
+    sql = 'select cal_date from trade_cal where is_open=1 and exchange="SSE"'
+    result = engine.execute(sql).fetchall()
+    if result:
+        return [row[0] for row in result]
 
 
 def dateList(startDate, endDate):
@@ -273,12 +270,3 @@ def transTushareDateToQuarter(date):
     return year * 10 + quarter
 
 
-if __name__ == '__main__':
-    initlog()
-    quarterDate = 20161
-    subNum = 6
-
-    q = quarterSub(quarterDate, subNum - 1)
-    print(q)
-    print(QuarterList(q, quarterDate))
-    print(len(QuarterList(q, quarterDate)))

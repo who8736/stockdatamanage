@@ -447,7 +447,7 @@ def runstrat():
     cerebro = bt.Cerebro()
 
     # modpath = path.dirname(path.abspath(sys.argv[0]))
-    # datapath = path.join(modpath, '../data/test.csv')
+    # datapath = path.join(modpath, '../data/tests.csv')
     df = getData(ts_code, startDate, endDate)
     # df['volume'] = 1
     print(df.head())

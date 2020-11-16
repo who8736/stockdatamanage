@@ -19,7 +19,6 @@ import tushare as ts
 from sqlconn import engine
 from sqlrw import readStockList
 from sqlrw import getStockName
-from test.linear_regression import linearPlot
 
 
 def adfTestPE(ts_code, startDate, endDate, plotFlag=False):

@@ -26,8 +26,8 @@ from bokeh.layouts import column
 from bokeh.models import ColumnDataSource, RangeTool
 from bokeh.models import Slider, CustomJS
 
-from sqlrw import engine, readStockKline  # @IgnorePep8
-from datatrans import dateStrList  # @IgnorePep8
+from . sqlrw import engine, readStockKline, readCal  # @IgnorePep8
+from . datatrans import dateStrList  # @IgnorePep8
 
 matplotlib.use('Agg')  # @UndefinedVariable
 
@@ -36,7 +36,12 @@ matplotlib.use('Agg')  # @UndefinedVariable
 
 
 def scatter(startDate, endDate):
-    dateList = dateStrList(startDate, endDate)
+    """
+
+    :param startDate: str, YYYYmmdd
+    :param endDate: str, YYYYmmdd
+    """
+    dateList = readCal(startDate, endDate)
     for date in dateList:
         print(date)
         sql = ('select pe, lirunincrease from pelirunincrease '
@@ -349,7 +354,7 @@ def test():
 #     sliderMin.js_link('value', pkline.y_range, 'start')
 #     column_layout = column([pkline, ppe, select, sliderMin, sliderMax])
 #     return column_layout
-#     # output_file("kline.html", title="kline plot test")
+#     # output_file("kline.html", title="kline plot tests")
 #     # show(column_layout)  # open a browser
 
 
@@ -474,7 +479,7 @@ class BokehPlot:
 
         # self.pkline.x_range.on_change('end',
         #                               callback=CustomJS.from_py_func(self.update))
-        # output_file("kline.html", title="kline plot test")
+        # output_file("kline.html", title="kline plot tests")
         # show(self.column_layout)  # open a browser
         # return self.column_layout
 
@@ -591,4 +596,4 @@ if __name__ == '__main__':
     #     scatter(startDate, endDate)
     # plotKline('600801')
     BokehPlot('600519')
-#     test()
+#     tests()

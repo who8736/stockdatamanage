@@ -5,15 +5,14 @@ Created on 2016年12月14日
 @author: who8736
 '''
 
-import numpy as np
 from flask import render_template, redirect, url_for
 from flask import send_file
 from bokeh.embed import components
 from bokeh.resources import INLINE
 # from bokeh.util.string import encode_utf8
 
-from plot import plotKline, BokehPlot
-from plot import PlotProfitsInc
+from stockdatamanage.plot import plotKline, BokehPlot
+from stockdatamanage.plot import PlotProfitsInc
 # from report import report1 as guzhiReport
 from report import reportValuation
 from report import reportIndex
@@ -85,7 +84,7 @@ def reportnav(typeid):
 # def reportView(ts_code):
 #     stockItem = guzhiReport(ts_code)
 #     #     reportstr = reportstr[:20]
-#     #     reportstr = 'test'
+#     #     reportstr = 'tests'
 #     return render_template('report.html',
 #                            stock=stockItem)
 
@@ -105,17 +104,17 @@ def valuationNav(typeid):
 def valuationView(ts_code):
     stockItem = reportValuation(ts_code)
     #     reportstr = reportstr[:20]
-    #     reportstr = 'test'
+    #     reportstr = 'tests'
     return render_template('valuation.html',
                            stock=stockItem)
 
 
-@app.route('/test')
+@app.route('/tests')
 def test():
     stocks = readProfitsIncAdf()
     print('profits_inc_adf')
     print(stocks.head())
-    return render_template('test.html', stocks=stocks)
+    return render_template('tests.html', stocks=stocks)
 
 
 @app.route('/test1')

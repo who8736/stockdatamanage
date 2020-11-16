@@ -5,49 +5,31 @@ Created on 2016年1月10日
 @author: who8736
 """
 
+import datetime as dt
 # import sys  # python的系统调用模块
 # import os
-import datetime
 import logging
-import time
-import configparser
-import datetime as dt
-# from datetime import datetime, timedelta
-# import ConfigParser
-from multiprocessing.dummy import Pool as ThreadPool
 from functools import wraps
-from dateutil.relativedelta import relativedelta
+from multiprocessing.dummy import Pool as ThreadPool
 
-# import tushare
-import numpy as np
-import pandas as pd
 import baostock as bs
 import tushare as ts
+from dateutil.relativedelta import relativedelta
 
-# import datatrans
-import analyse.report
-from datatrans import lastQarterDate, dateStrList
-import classifyanalyse
-import analyse
-import sqlrw
-import valuation
-from sqlconn import engine
-# from sqlrw import checkGuben, setGubenLastUpdate
-# from sqlrw import getStockKlineUpdateDate
-from sqlrw import (getIndexPEUpdateDate, getAllMarketPEUpdateDate,
-                   readStockList, engine, readCal, getLastUpdate,
-                   calAllTTMProfits)
-# import download
-from download import (downStockList,
-                      downDaily, downDailyBasic, downTradeCal,
-                      downIndexDaily, downIndexDailyBasic,
-                      downIndexBasic, downIndexWeight,
-                      DownloaderQuarter, downClassify, downAdjFactor)
-# from download import downHYList
-from initlog import initlog
-from datatrans import dateList
-import config
-from check import checkQuarterData_del, checkQuarterData
+from . import analyse
+from . import classifyanalyse
+from . import config
+from . import valuation
+# from check import checkQuarterData
+from .download import (downStockList,
+                       downDaily, downDailyBasic, downTradeCal,
+                       downIndexDaily, downIndexDailyBasic,
+                       downIndexBasic, downIndexWeight,
+                       DownloaderQuarter, downClassify, downAdjFactor)
+from .initlog import initlog
+from .sqlconn import engine
+from .sqlrw import (readCal, getLastUpdate,
+                    calAllTTMProfits, setLastUpdate)
 
 
 def logfun(func):
@@ -107,7 +89,7 @@ def startUpdate():
     updateHYList()
 
     # 更新行业利润
-    # updateClassifyProfits()
+    updateClassifyProfits()
 
     # 更新股票估值
     # updateGuzhiData()
@@ -128,8 +110,10 @@ def updateAllMarketPE():
     更新全市场PE
     :return:
     """
-    startDate = getAllMarketPEUpdateDate()
+    dataName = 'index_all'
+    startDate = getLastUpdate(dataName)
     analyse.report.calAllPEHistory(startDate)
+    setLastUpdate(dataName)
 
 
 @logfun
@@ -164,7 +148,8 @@ def updateIndex():
     ID = '000010.SH'
     # startDate = getIndexKlineUpdateDate() + dt.timedelta(days=1)
     # startDate = getIndexPEUpdateDate()
-    startDate = getIndexPEUpdateDate() + dt.timedelta(days=1)
+    startDate = getLastUpdate('index_000010.SH')
+    # startDate = getIndexPEUpdateDate() + dt.timedelta(days=1)
     analyse.report.calPEHistory(ID, startDate)
 
 
@@ -324,15 +309,15 @@ def updatePf():
 #     stockList = stockList[:10]
 
 
-@logfun
-def updateGuzhi(stockList, threadNum):
-    """ 因东方财富修改估值文件下载功能， 暂不能用
-    """
-    pool = ThreadPool(processes=threadNum)
-    #     pool.map(sqlrw.downGuzhiToFile, stockList)
-    pool.map(downGuzhi, stockList)
-    pool.close()
-    pool.join()
+# @logfun
+# def updateGuzhi(stockList, threadNum):
+#     """ 因东方财富修改估值文件下载功能， 暂不能用
+#     """
+#     pool = ThreadPool(processes=threadNum)
+#     #     pool.map(sqlrw.downGuzhiToFile, stockList)
+#     pool.map(downGuzhi, stockList)
+#     pool.close()
+#     pool.join()
 
 
 @logfun
@@ -405,7 +390,7 @@ def updateDailybasic():
     startDate = lastdate.strftime('%Y%m%d')
     endDate = dt.datetime.today().date() - dt.timedelta(days=1)
     endDate = endDate.strftime('%Y%m%d')
-    dates = dateStrList(startDate, endDate)
+    dates = readCal(startDate, endDate)
     for d in dates:
         downDailyBasic(tradeDate=d)
 
@@ -431,17 +416,14 @@ def updateTTMProfits():
     lastDate = getLastUpdate('ttmprofits')
     today = dt.datetime.today().strftime('%Y%m%d')
     sql = (f'select distinct end_date from income '
-            f'where ann_date>="{lastDate}" and ann_date<="{today}"')
+           f'where ann_date>="{lastDate}" and ann_date<="{today}"')
 
     result = engine.execute(sql).fetchall()
     if result:
         for row in result:
             calAllTTMProfits(row[0].strftime('%Y%m%d'))
 
-    # 更新最后更新日期
-    sql = f'update update_date set `date`="{today}" where dataname="ttmprofits"'
-    engine.execute(sql)
-
+    setLastUpdate(today, 'ttmprofits')
 
 
 @logfun

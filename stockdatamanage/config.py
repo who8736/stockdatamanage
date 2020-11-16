@@ -8,13 +8,15 @@ import os
 import sys
 import configparser
 
-SECRET_KEY = 'Sm9obiBTY2hyb20ga2lja3MgYXNz'
+ROOTPATH = os.path.split(os.path.abspath(__file__))[0]
+CFILE = os.path.join(ROOTPATH, 'stockdata.conf')
 
 # options格式：类成员变量名，配置文件中的段，配置文件中的选项，
 #              缺省值, 值类型
 options = [
-    ['secretkey', 'main', 'secretkey', 'Sm9obiBTY2hyb20ga2lja3MgYXNz', 'str'],
-    ['rootpath', 'main', 'rootpath', '', 'str'],
+    ['secretkey', 'main', 'secretkey', '', 'str'],
+    ['rootpath', 'main', 'rootpath', ROOTPATH, 'str'],
+    ['logpath', 'main', 'logpath', '', 'str'],
     ['sqlUser', 'sql', 'sqluser', '', 'str'],
     ['sqlPassword', 'sql', 'sqlpassword', '', 'str'],
     ['sqlIp', 'sql', 'sqlip', '127.0.0.1', 'str'],
@@ -22,13 +24,11 @@ options = [
     ['pushData', 'mail', 'pushdata', 'False', 'bool'],
     ['mailServer', 'mail', 'mailserver', 'smtp.163.com', 'str'],
     ['mailPort', 'mail', 'mailport', '25', 'str'],  # 设为空表示不需指定端口
-    ['mailUser', 'mail', 'mailuser', 'test@163.com', 'str'],
+    ['mailUser', 'mail', 'mailuser', 'tests@163.com', 'str'],
     ['mailPassword', 'mail', 'mailpassword', 'testpassword', 'str'],
-    ['sendTo', 'mail', 'sendto', 'test@qq.com|test1@qq.com', 'str'],
+    ['sendTo', 'mail', 'sendto', 'tests@qq.com|test1@qq.com', 'str'],
 ]
 
-ROOTPATH = os.path.split(os.path.abspath(__file__))[0]
-CFILE = os.path.join(ROOTPATH, 'stockdata.conf')
 
 
 class Config:
