@@ -19,8 +19,9 @@ from pandas.core.frame import DataFrame
 import xlrd
 import tushare as ts
 
-from .datatrans import lastYearDate, lastYearEndDate
-from .sqlconn import SQLConn, engine
+from .datatrans import lastYearDate, lastYearEndDate, transDfToList
+from .sqlconn import SQLConn, engine, Session
+from . import initsql
 
 
 def writeClassifyMemberToSQL(_date, filename):
@@ -199,8 +200,10 @@ def getGuzhi(ts_code):
     return result.fetchone()
 
 
-def readStockList():
+def readStockList(list_date=None):
     sql = 'select ts_code, name from stock_basic'
+    if list_date:
+        sql += f' where list_date>="{list_date}"'
     df = pd.read_sql(sql, engine)
     return df
 
@@ -217,7 +220,7 @@ def writeSQL(data: pd.DataFrame, tableName: str, replace=False):
         logging.error('not exist %s' % tableName)
         return False
     data = data.where(pd.notnull(data), None)
-    data = datatrans.transDfToList(data)
+    data = transDfToList(data)
 
     Base = declarative_base()
 
@@ -389,7 +392,7 @@ def readPERate(ts_code):
         return result
 
 
-def readTTMProfits(ts_code: str, startDate=None, endDate=None):
+def readTTMProfitsForStock(ts_code: str, startDate=None, endDate=None):
     """取指定股票一段日间的TTM利润，startDate当日无数据时，取之前最近一次数据
     Parameters
     --------
@@ -480,7 +483,7 @@ def readLastTTMProfits(stockList, limit=1, date=None):
 
 def readTTMProfitsForDate(end_date):
     """从TTMLirun表读取某季度股票TTM利润
-    date: 格式YYYYQ, 4位年+1位季度，利润所属日期
+    end_date: str, YYYYMMDD, 报告期
     return: 返回DataFrame格式TTM利润
     """
     sql = (f'select ts_code, ttmprofits, incrate from ttmprofits '
@@ -683,54 +686,13 @@ def getLastUpdate(dataName):
         else:
             return _date
 
+
 def writeChigu(stockList):
     engine.execute('TRUNCATE TABLE chigu')
     for ts_code in stockList:
         sql = ('insert into chigu (`ts_code`) '
                'values ("%s");') % ts_code
         engine.execute(sql)
-
-
-# def savePELirunIncrease(startDate='2007-01-01', endDate=None):
-#     stockList = readStockListFromSQL()
-#     for ts_code, stockName_ in stockList:
-#         #     sql = (u'insert ignore into pelirunincrease(ts_code, date, pe) '
-#         #            u'select "%(ts_code)s", date, ttmpe '
-#         #            u'from klinestock%(ts_code)s '
-#         #            u'where `date`>="%(startDate)s";') % locals()
-#         #
-#         #     engine.execute(sql)
-#
-#         TTMLirunDf = readTTMProfits(ts_code, startDate)
-#         TTMLirunDf = TTMLirunDf.dropna().reset_index(drop=True)
-#         klineTablename = 'klinestock'
-#         TTMLirunCount = len(TTMLirunDf)
-#         for i in range(TTMLirunCount):
-#             incrate = TTMLirunDf['incrate'].iloc[i]
-#             startDate_ = TTMLirunDf['reportdate'].iloc[i]
-#             try:
-#                 endDate_ = TTMLirunDf['reportdate'].iloc[i + 1]
-#             except IndexError:
-#                 endDate_ = None
-#
-#             sql = ('update pelirunincrease '
-#                    'set lirunincrease = %(incrate)s'
-#                    ' where ts_code="%(ts_code)s"'
-#                    ' and date>="%(startDate_)s"') % locals()
-#             if endDate_ is not None:
-#                 sql += (' and date<"%(endDate_)s"' % locals())
-#             engine.execute(sql)
-#
-#
-# #         break
-
-
-# def setKlineTTMPELastUpdate(ts_code, endDate):
-#     sql = ('insert into lastupdate (`ts_code`, `ttmpe`) '
-#            'values ("%(ts_code)s", "%(endDate)s") '
-#            'on duplicate key update `ttmpe`="%(endDate)s";' % locals())
-#     result = engine.execute(sql)
-#     return result
 
 
 def setGubenLastUpdate(ts_code, endDate=None):
@@ -867,22 +829,8 @@ def readCurrentPEG(ts_code):
         return result
 
 
-def getts_codesForClassified(classified):
-    sql = ('select ts_code from classified '
-           'where cname = "%(classified)s"' % locals())
-    result = engine.execute(sql)
-    ts_codeList = [classifiedID[0] for classifiedID in result.fetchall()]
-    return ts_codeList
 
-
-def classifiedToSQL(classifiedDf):
-    """ 旧版写行业分类到数据库， 计划删除本函数
-    """
-    tablename = 'classified'
-    return writeSQL(classifiedDf, tablename)
-
-
-def getChiguList():
+def readChigu():
     #     sql = ('select chigu.ts_code, stocklist.name from chigu, stocklist '
     #            'where chigu.ts_code=stocklist.ts_code')
     sql = 'select ts_code from chigu'

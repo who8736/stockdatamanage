@@ -17,6 +17,7 @@ options = [
     ['secretkey', 'main', 'secretkey', '', 'str'],
     ['rootpath', 'main', 'rootpath', ROOTPATH, 'str'],
     ['logpath', 'main', 'logpath', '', 'str'],
+    ['datapath', 'main', 'datapath', '', 'str'],
     ['sqlUser', 'sql', 'sqluser', '', 'str'],
     ['sqlPassword', 'sql', 'sqlpassword', '', 'str'],
     ['sqlIp', 'sql', 'sqlip', '127.0.0.1', 'str'],

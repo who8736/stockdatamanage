@@ -39,7 +39,7 @@ def report(ts_code):
     reportStr += '当前TTMPE参考最近200个工作日水平： %+6.2f\n' % guzhiData[16]
     reportStr += '当前TTMPE参考最近1000个工作日水平： %+6.2f\n' % guzhiData[17]
 
-    hyIDlv4 = classifyanalyse.getClassify(ts_code)
+    hyIDlv4 = classifyanalyse.readClassify(ts_code)
     hyIDlv3 = hyIDlv4[:6]
     hyIDlv2 = hyIDlv4[:4]
     hyIDlv1 = hyIDlv4[:2]
@@ -48,20 +48,20 @@ def report(ts_code):
     reportStr += ('最近三年TTM利润增长率水平：%+10.2f%+10.2f%+10.2f\n\n' %
                   classifyanalyse.getStockProfitsIncRates(ts_code))
 
-    reportStr += '所属一级行业：%s\n' % classifyanalyse.getHYName(hyIDlv1)
+    reportStr += '所属一级行业：%s\n' % classifyanalyse.getClassifyName(hyIDlv1)
     reportStr += ('最近三年TTM利润增长率水平：%+10.2f%+10.2f%+10.2f\n\n' %
                   classifyanalyse.getHYProfitsIncRates(hyIDlv1))
-    reportStr += '所属二级行业：%s\n' % classifyanalyse.getHYName(hyIDlv2)
+    reportStr += '所属二级行业：%s\n' % classifyanalyse.getClassifyName(hyIDlv2)
     reportStr += ('最近三年TTM利润增长率水平：%+10.2f%+10.2f%+10.2f\n\n' %
                   classifyanalyse.getHYProfitsIncRates(hyIDlv2))
-    reportStr += '所属三级行业：%s\n' % classifyanalyse.getHYName(hyIDlv3)
+    reportStr += '所属三级行业：%s\n' % classifyanalyse.getClassifyName(hyIDlv3)
     reportStr += ('最近三年TTM利润增长率水平：%+10.2f%+10.2f%+10.2f\n\n' %
                   classifyanalyse.getHYProfitsIncRates(hyIDlv3))
-    reportStr += '所属四级行业：%s\n' % classifyanalyse.getHYName(hyIDlv4)
+    reportStr += '所属四级行业：%s\n' % classifyanalyse.getClassifyName(hyIDlv4)
     reportStr += ('最近三年TTM利润增长率水平：%+10.2f%+10.2f%+10.2f\n\n' %
                   classifyanalyse.getHYProfitsIncRates(hyIDlv4))
 
-    stockList = classifyanalyse.getStockListForHY(hyIDlv4)
+    stockList = classifyanalyse.getStockForClassify(hyIDlv4)
     print(stockList)
     for sameHYts_code in stockList:
         if sameHYts_code[0] not in ['0', '3', '6']:
@@ -102,7 +102,7 @@ def report1(ts_code):
     # 当前TTMPE参考最近1000个工作日水平
     myItem.PERate1000 = guzhiData[17]
 
-    hyIDlv4 = classifyanalyse.getClassify(ts_code)
+    hyIDlv4 = classifyanalyse.readClassify(ts_code)
     hyIDlv3 = hyIDlv4[:6]
     hyIDlv2 = hyIDlv4[:4]
     hyIDlv1 = hyIDlv4[:2]
@@ -111,26 +111,26 @@ def report1(ts_code):
     myItem.profitsInc3Years = classifyanalyse.getStockProfitsIncRates(ts_code)
     # 所属1级行业
     myItem.hyIDlv1 = hyIDlv1
-    myItem.hyLv1 = classifyanalyse.getHYName(hyIDlv1)
+    myItem.hyLv1 = classifyanalyse.getClassifyName(hyIDlv1)
     # 最近三年TTM利润增长率水平
     myItem.hyIncLv1 = classifyanalyse.getHYProfitsIncRates(hyIDlv1)
     # 所属2级行业
     myItem.hyIDlv2 = hyIDlv2
-    myItem.hyLv2 = classifyanalyse.getHYName(hyIDlv2)
+    myItem.hyLv2 = classifyanalyse.getClassifyName(hyIDlv2)
     # 最近三年TTM利润增长率水平
     myItem.hyIncLv2 = classifyanalyse.getHYProfitsIncRates(hyIDlv2)
     # 所属3级行业
     myItem.hyIDlv3 = hyIDlv3
-    myItem.hyLv3 = classifyanalyse.getHYName(hyIDlv3)
+    myItem.hyLv3 = classifyanalyse.getClassifyName(hyIDlv3)
     # 最近三年TTM利润增长率水平
     myItem.hyIncLv3 = classifyanalyse.getHYProfitsIncRates(hyIDlv3)
     # 所属4级行业
     myItem.hyIDlv4 = hyIDlv4
-    myItem.hyLv4 = classifyanalyse.getHYName(hyIDlv4)
+    myItem.hyLv4 = classifyanalyse.getClassifyName(hyIDlv4)
     # 最近三年TTM利润增长率水平
     myItem.hyIncLv4 = classifyanalyse.getHYProfitsIncRates(hyIDlv4)
 #
-    stockList = classifyanalyse.getStockListForHY(hyIDlv4)
+    stockList = classifyanalyse.getStockForClassify(hyIDlv4)
 #     print stockList
     sameHYList = []
     for sameHYts_code in stockList:
@@ -191,7 +191,7 @@ def reportValuation(ts_code):
     myItem.PERate1000 = myStockValuation[26]
     myItem.PEZ1000 = myStockValuation[23]
 
-    hyIDlv4 = classifyanalyse.getClassify(ts_code)
+    hyIDlv4 = classifyanalyse.readClassify(ts_code)
     hyIDlv3 = hyIDlv4[:6]
     hyIDlv2 = hyIDlv4[:4]
     hyIDlv1 = hyIDlv4[:2]
@@ -200,26 +200,26 @@ def reportValuation(ts_code):
     myItem.profitsInc3Years = classifyanalyse.getStockProfitsIncRates(ts_code)
     # 所属1级行业
     myItem.hyIDlv1 = hyIDlv1
-    myItem.hyLv1 = classifyanalyse.getHYName(hyIDlv1)
+    myItem.hyLv1 = classifyanalyse.getClassifyName(hyIDlv1)
     # 最近三年TTM利润增长率水平
     myItem.hyIncLv1 = classifyanalyse.getHYProfitsIncRates(hyIDlv1)
     # 所属2级行业
     myItem.hyIDlv2 = hyIDlv2
-    myItem.hyLv2 = classifyanalyse.getHYName(hyIDlv2)
+    myItem.hyLv2 = classifyanalyse.getClassifyName(hyIDlv2)
     # 最近三年TTM利润增长率水平
     myItem.hyIncLv2 = classifyanalyse.getHYProfitsIncRates(hyIDlv2)
     # 所属3级行业
     myItem.hyIDlv3 = hyIDlv3
-    myItem.hyLv3 = classifyanalyse.getHYName(hyIDlv3)
+    myItem.hyLv3 = classifyanalyse.getClassifyName(hyIDlv3)
     # 最近三年TTM利润增长率水平
     myItem.hyIncLv3 = classifyanalyse.getHYProfitsIncRates(hyIDlv3)
     # 所属4级行业
     myItem.hyIDlv4 = hyIDlv4
-    myItem.hyLv4 = classifyanalyse.getHYName(hyIDlv4)
+    myItem.hyLv4 = classifyanalyse.getClassifyName(hyIDlv4)
     # 最近三年TTM利润增长率水平
     myItem.hyIncLv4 = classifyanalyse.getHYProfitsIncRates(hyIDlv4)
 #
-    stockList = classifyanalyse.getStockListForHY(hyIDlv4)
+    stockList = classifyanalyse.getStockForClassify(hyIDlv4)
 #     print stockList
     sameHYList = []
     for sameHYts_code in stockList:

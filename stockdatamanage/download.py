@@ -19,7 +19,7 @@ import tushare as ts
 import pandas as pd
 
 # from misc import (urlGuzhi, filenameGuzhi)
-from .datatrans import dateStrList
+# from .datatrans import dateStrList
 from .sqlrw import (writeSQL, writeClassifyMemberToSQL, writeClassifyNameToSQL,
                    readTableFields, readCal)
 from .sqlconn import engine
@@ -321,8 +321,9 @@ def downClassifyFile(_date):
     """
     logging.debug(f'downClassifyFile: {_date}')
     url = f'http://47.97.204.47/syl/csi{_date}.zip'
-    zipfilename= os.path.join(datapath, f'csi{_date}.zip')
-    datafilename= os.path.join(datapath, 'data', f'csi{_date}.xls')
+    cf = Config()
+    zipfilename= os.path.join(cf.datapath, f'csi{_date}.zip')
+    datafilename= os.path.join(cf.datapath, 'data', f'csi{_date}.xls')
     req = WebRequest()
     req.get(url)
     req.save(zipfilename)
@@ -422,10 +423,11 @@ def downDaily(trade_date=None):
         dates = readCal(startDate, endDate)
     else:
         dates.append(trade_date)
-    for d in dates:
-        logging.debug(f'下载日线:{d}')
-        df = pro.daily(trade_date=d)
-        writeSQL(df, 'daily')
+    if dates:
+        for d in dates:
+            logging.debug(f'下载日线:{d}')
+            df = pro.daily(trade_date=d)
+            writeSQL(df, 'daily')
 
 
 def downDailyRepair():

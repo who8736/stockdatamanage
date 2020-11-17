@@ -1,9 +1,14 @@
+import os
+import logging
+import datetime as dt
+
 import numpy as np
 import pandas as pd
 from dateutil.relativedelta import relativedelta
 
 from .sqlconn import engine
-from .sqlrw import readStockList
+from .sqlrw import readStockList, readCal
+from .config import Config
 
 
 def checkGuben():
@@ -77,3 +82,37 @@ def checkQuarterData():
     # df = pd.merge(df, df1, how='left', on='ts_code')
     # print(df)
     return df
+
+
+def checkClassifyMemberListdate():
+    """校验行业分类清单中的股票是否存在未上市就已列入行业清单"""
+    cf = Config()
+    datapath = cf.datapath
+    # for root, path, files in os.walk(datapath):
+    #     print(root, path, files)
+
+    sql = 'select ts_code, list_date from stock_basic'
+    stocks = pd.read_sql(sql, engine)
+    # print(stocks)
+
+    dates = readCal('20200101', '20201101')
+    # print(dates)
+    for _date in dates:
+        logging.debug(f'check classify_member list_date: {_date}')
+        pass
+        __date = dt.datetime.strptime(_date, '%Y%m%d').date()
+
+        sql = f'''select ts_code from classify_member 
+                    where date=(select max(date) from classify_member 
+                        where date<="{_date}")
+                '''
+        members = pd.read_sql(sql, engine)
+        # result = engine.execute(sql).fetchall()
+        if members.empty:
+            logging.warning(f'查询不到行业清单：{_date}')
+            continue
+
+        result = stocks[stocks.ts_code.isin(members.ts_code)
+                        & (stocks.list_date > __date)]
+        if not result.empty:
+            logging.error(f'股票未上市时已列入行业清单：[code:{result}], [date:{_date}]')

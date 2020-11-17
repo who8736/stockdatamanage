@@ -30,6 +30,8 @@ from .initlog import initlog
 from .sqlconn import engine
 from .sqlrw import (readCal, getLastUpdate,
                     calAllTTMProfits, setLastUpdate)
+from .check import checkQuarterData
+from .datatrans import classifyEndDate, quarterList
 
 
 def logfun(func):
@@ -92,7 +94,7 @@ def startUpdate():
     updateClassifyProfits()
 
     # 更新股票估值
-    # updateGuzhiData()
+    updateGuzhiData()
 
     # 更新股票评分
     updatePf()
@@ -122,16 +124,17 @@ def updateClassifyProfits():
     更新行业利润
     :return:
     """
-    # sql = 'select date from update_date where dataname="classifyprofits"'
-    # result = engine.execute(sql).fetchone()
-    # startDate = '20200101'
-    # if result is not None:
-    #     startDate = result[0]
-    #
-    # sql = 'select distinct end_date'
-    date = '20191231'
-    # date = 20201
-    classifyanalyse.calAllHYTTMProfits(date)
+    sql = 'select max(end_date) from classify_profits'
+    result = engine.execute(sql).fetchone()
+    if result is None:
+        startDate = '20121231'
+    else:
+        startDate = result[0].strftime('%Y%m%d')
+    endDate = dt.datetime.today().strftime('%Y%m%d')
+    _endDate = classifyEndDate(endDate)
+    dates = quarterList(startDate, _endDate)
+    for date in dates:
+        classifyanalyse.calClassifyStaticTTMProfit(date)
 
 
 @logfun
@@ -391,8 +394,9 @@ def updateDailybasic():
     endDate = dt.datetime.today().date() - dt.timedelta(days=1)
     endDate = endDate.strftime('%Y%m%d')
     dates = readCal(startDate, endDate)
-    for d in dates:
-        downDailyBasic(tradeDate=d)
+    if dates:
+        for d in dates:
+            downDailyBasic(tradeDate=d)
 
 
 @logfun

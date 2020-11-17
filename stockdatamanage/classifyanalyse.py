@@ -11,33 +11,36 @@ import datetime as dt
 import logging
 
 import pandas as pd
-from pandas.core.frame import DataFrame
 
 from . import sqlrw
 from . import datatrans
-from .datatrans import lastYearDate, lastYearEndDate
+from .datatrans import lastYearDate, calDate
 from .sqlconn import engine
+from .sqlrw import readStockList, readTTMProfitsForDate, writeSQL
 
 
 # import logging
 # from wtforms.ext import dateutil
 
 
-def getStockListForHY(hyID):
-    """ 返回指定行业的所有股票代码列表
+def getStockForClassify(code=None, date=None):
+    """ 返回行业的股票清单
+    date: 查询日期， 当日无行业清单时取最近一日的行业清单
     """
-    # levelNum = len(hyID) / 2
-    #     levels = ['level1', 'level2', 'level3', 'level4']
-    #     level = levels[levelNum - 1]
-    sql = f'select ts_code from classify_member where classify_code="{hyID}";'
-    result = engine.execute(sql)
-    #     stockList = result.fetchall()
-    stockList = [i[0] for i in result.fetchall()]
-    #     print len(stockList), stockList
-    return stockList
+    if date is None:
+        date = dt.datetime.today().strftime('%Y%m%d')
+    sql = f'select ts_code, classify_code from classify_member where true '
+    if code:
+        sql += f' and classify_code="{code}" '
+    sql += (f' and date=(select max(date) from classify_member where '
+            f'date<="{date}")')
+    return pd.read_sql(sql, engine)
+    # result = engine.execute(sql).fetchall()
+    # if result:
+    #     return [row[0] for row in result]
 
 
-def getClassify(ts_code):
+def readClassify(ts_code):
     """ 当查询指定股票的4级行业的代码
     """
     sql = f'select classify_code from classify_member where ts_code="{ts_code}";'
@@ -72,8 +75,8 @@ def getHYList(level=4):
     """
     sql = 'select hyid from hangyename where hylevel=%(level)s;' % locals()
     #     print sql
-    result = engine.execute(sql)
-    return [i[0] for i in result.fetchall()]
+    result = engine.execute(sql).fetchall()
+    return [i[0] for i in result]
 
 
 def getSubHY(hyID, subLevel):
@@ -87,30 +90,23 @@ def getSubHY(hyID, subLevel):
     result = engine.execute(sql)
     result = result.fetchall()
     #     print 'getSubHY:', result
-    if result is None:
-        return None
-    else:
+    if result:
         return [i[0] for i in result]
 
 
-def getHYName(hyID):
-    print('getHYName(hyID):hyID: ', hyID)
-    sql = (f'select name from classify where code="{hyID}";')
+def getClassifyName(code):
+    sql = f'select name from classify where code="{code}";'
     result = engine.execute(sql).fetchone()
-    if result is None:
-        return None
-    else:
-        hyName = result[0]
-        return hyName
+    if result:
+        return result[0]
 
 
-def getHYStockCount(hyID):
+def getHYStockCount(code):
     """ 返回4级行业下的股票数量
     """
-    sql = ('select count(1) from classify_member where classify_code="%(hyID)s";'
-           % locals())
+    sql = f'select count(1) from classify_member where classify_code="{code}";'
     result = engine.execute(sql).fetchone()
-    if result is not None:
+    if result:
         return result[0]
 
 
@@ -158,116 +154,88 @@ def getStockProfitsIncRates(ts_code):
     return incRate1, incRate2, incRate3
 
 
-def calHYTTMProfits(classifyID, end_date):
-    """ 计算指定行业的TTMLirun
+def calClassifyStaticTTMProfit(end_date, replace=False):
+    """ 计算指定行业的静态TTM利润
+    公司净利润为归属于母公司股东的净利润，在整年度内分 3 个时点进行统一更新，以得
+    到过去 4 个季度的净利润，具体规则为：
+    在 5 月 1 日之前采用第 N-1 年前 3 季度财务数据与第 N-2 年第 4 季度财务数据之和；
+    5 月 1 日(含)至 9 月 1 日之前采用当年第 1 季度财务数据与第 N-1 年第 2、3、4 季度财务数据之和；
+    9 月 1 日(含)至 11 月 1 日之前采用当年中期报告财务数据与第 N-1 年第 3、4 季度财务数据之和；
+    11 月 1 日(含)至次年 5 月 1 日之前采用本年度前 3 季度财务数据与上年度第 4季度财务数据之和。
+
     date: 格式YYYYQ, 4位年+1位季度，利润所属日期
     """
-    print(f'calHYTTMProfits hyID: {classifyID}, date: {end_date}')
-    if len(classifyID) == 8:
-        return calHYTTMProfitsLowLevel(classifyID, end_date)
-    else:
-        return calHYTTMProfitsHighLevel(classifyID, end_date)
+    logging.debug(
+        f'calClassifyStaticTTMProfit date: {end_date}')
+    df = calClassifyStaticTTMProfitLow(end_date, replace=replace)
+    calClassifyStaticTTMProfitHigh(df, end_date, replace=replace)
 
 
-def calHYTTMProfitsHighLevel(code, date):
+def calClassifyStaticTTMProfitHigh(classify, end_date, replace=False):
     """ 计算第1、2、3级行业的TTM利润
     """
-    level = len(code) // 2
-    subHyIDList = getSubHY(code, level + 1)
-    if subHyIDList is None:
-        return None
-    profitsCur = 0
-    profitsLast = 0
-    for subHyID in subHyIDList:
-        sql = ('select profits, profitsLast from classify_profits '
-               f'where code="{subHyID}" and end_date={date};')
-        #         print sql
-        result = engine.execute(sql).fetchone()
-        #         print 'result:', result
-        if result is None or result[0] is None:
-            continue
-        profitsCur += result[0]
-        if result[1] is not None:
-            profitsLast += result[1]
-
-    #     LastDate = date - 10
-    #     sql = ('select profits from classify_profits '
-    #            'where hyid="%(subHyID)s" and date="%(LastDate)s";') % locals()
-    # #     print sql
-    #     result = engine.execute(sql).fetchone()
-    # #     print 'result 145:', result
-    #     if result is None:
-    #         profitsLast = None
-    # #         profitsIncRate = None
-    #     else:
-    #         profitsLast = result[0]
-
-    if profitsLast == 0:
-        sql = ('replace into classify_profits(code, date, profits) '
-                f'values("{code}", "{date}", {profitsCur});')
-    else:
-        profitsInc = profitsCur - profitsLast
-        profitsIncRate = round(profitsInc / abs(profitsLast) * 100, 2)
-        sql = ('replace into classify_profits'
-                '(code, date, profits, profitsLast, '
-                'profitsInc, profitsIncRate) '
-                f'values("{code}", "{date}", '
-                f'{profitsCur}, {profitsLast}, '
-                f'{profitsInc}, {profitsIncRate});')
-    #     print sql
-    result = engine.execute(sql)
+    for level in range(1, 4):
+        df = classify[
+            ['code', 'profits', 'profits_com', 'lastprofits', ]].copy()
+        df.loc[:, 'code'] = df.code.str[:level * 2]
+        result = df.groupby('code').sum()
+        result['inc'] = result.profits_com / result.lastprofits
+        result.loc[result.lastprofits > 0, 'inc'] = (
+                result.inc * 100 - 100).round(2)
+        result.loc[result.lastprofits < 0, 'inc'] = (
+                100 - result.inc * 100).round(2)
+        result.loc[result.lastprofits == 0, 'inc'] = 100
+        result['end_date'] = dt.datetime.strptime(end_date, '%Y%m%d')
+        # print(result)
+        writeSQL(result, 'classify_profits', replace=replace)
 
 
-#     print 'result 158:', result
-#     if result is None:
-#         return False
-#     else:
-#         return result[0]
-
-
-def calHYTTMProfitsLowLevel(code, end_date):
+def calClassifyStaticTTMProfitLow(end_date, replace=False):
     """ 计算第4级行业的TTM利润
+    报告期后上市的股票才将该报告期利润计入行业利润
     """
-    stockList = getStockListForHY(code)
-    curProfits = sqlrw.readTTMProfitsForDate(end_date)
-    lastYear = lastYearDate(end_date)
-    lastProfits = sqlrw.readTTMProfitsForDate(lastYear)
-    lastProfits = lastProfits[lastProfits['ts_code'].isin(stockList)]
-    if lastProfits.empty or curProfits.empty:
-        return False
-    curProfits = curProfits[curProfits['ts_code'].isin(lastProfits['ts_code'])]
-    profitsCur = sum(curProfits['ttmprofits'])
-    profitsLast = sum(lastProfits['ttmprofits'])
+    _caldate, _lastcaldate = calDate(end_date)
+    # 当期行业清单
+    stocks = getStockForClassify(date=_caldate)
+    assert isinstance(stocks, pd.DataFrame)
 
-    profitsInc = profitsCur - profitsLast
-    #     print 'allTTMLirunCur', allTTMLirunCur
-    #     print 'allTTMLirunLast', allTTMLirunLast
-    #     print 'profitsCur', profitsCur
-    #     print 'profitsLast', profitsLast
-    profitsIncRate = round(profitsInc / abs(profitsLast) * 100, 2)
-    #     print profitsInc, profitsIncRate
-    #     return [profitsInc, profitsIncRate]
-    sql = ('replace into classify_profits'
-           '(code, date, profits, profitsLast, profitsInc, profitsIncRate) '
-           f'values("{code}", "{end_date}", '
-           f'"{profitsCur}", "{profitsLast}", '
-           f'"{profitsInc}", "{profitsIncRate}");')
-    engine.execute(sql)
-    return True
+    # 股票TTM利润, 本年与上年
+    curProfits = readTTMProfitsForDate(end_date)
+    stocks = stocks.merge(curProfits[['ts_code', 'ttmprofits']],
+                          how='left', on='ts_code')
+    stocks.rename(columns={'classify_code': 'code', 'ttmprofits': 'profits'},
+                  inplace=True)
+    stocks.dropna(inplace=True)
 
+    lastEndDate = f'{int(end_date[:4]) - 1}{end_date[4:]}'
+    lastProfits = readTTMProfitsForDate(lastEndDate)
+    lastProfits.rename(columns={'ttmprofits': 'lastprofits'}, inplace=True)
+    stocks = stocks.merge(lastProfits[['ts_code', 'lastprofits']],
+                          how='left', on='ts_code')
+    # print(lastProfits.head())
 
-def calAllHYTTMProfits(date):
-    """ 计算各级行业TTM利润，依次计算第4、3、2、1级
-    """
-    for level in range(4, 0, -1):
-        sql = f'select code from classify where level={level};'
-        result = engine.execute(sql)
-        hyIDList = result.fetchall()
-        hyIDList = [i[0] for i in hyIDList]
-        # print(hyIDList)
-        for hyID in hyIDList:
-            # print(hyID)
-            calHYTTMProfits(hyID, date)
+    # 计算本期行业利润
+    classify = stocks[['code', 'profits']].groupby('code').sum()
+
+    # 计算上年可比的行业利润与增长率
+    stocksCom = stocks[['code', 'profits', 'lastprofits']].copy()
+    stocksCom.dropna(inplace=True)
+    stocksCom.rename(columns={'profits': 'profits_com'}, inplace=True)
+    classifyCom = stocksCom.groupby('code').sum()
+    classifyCom['inc'] = classifyCom.profits_com / classifyCom.lastprofits
+    classifyCom.loc[classifyCom.lastprofits > 0, 'inc'] = (
+            classifyCom.inc * 100 - 100).round(2)
+    classifyCom.loc[classifyCom.lastprofits < 0, 'inc'] = (
+            100 - classifyCom.inc * 100).round(2)
+    classifyCom.loc[classifyCom.lastprofits == 0, 'inc'] = 100
+    # print(classifyCom)
+
+    classify = classify.merge(classifyCom, how='left', on='code')
+    classify.reset_index(inplace=True)
+    classify['end_date'] = dt.datetime.strptime(end_date, '%Y%m%d')
+    # print(classify)
+    writeSQL(classify, 'classify_profits', replace)
+    return classify
 
 
 def getHYQuarters():
@@ -305,7 +273,7 @@ def getHYPE(hyID, date, reset=False):
     if not reset and result is not None:
         return result[0]
 
-    ts_codes = getStockListForHY(hyID)
+    ts_codes = getStockForClassify(hyID)
     valueSum = 0
     profitSum = 0
     for ts_code in ts_codes:
@@ -371,7 +339,7 @@ def resetHYTTMLirun(startQuarter=20191, endQuarter=20191):
     重算指定日期所有行业TTM利润
     :return:
     """
-    dates = datatrans.QuarterList(startQuarter, endQuarter)
+    dates = datatrans.quarterList(startQuarter, endQuarter)
     for date in dates:
         calAllHYTTMProfits(date)
 
@@ -383,8 +351,8 @@ def test1():
                 '002573', '300072', '000910']
     for ts_code in ts_codes:
         stockName = sqlrw.getStockName(ts_code)
-        hyID = getClassify(ts_code)
-        hyName = getHYName(hyID)
+        hyID = readClassify(ts_code)
+        hyName = getClassifyName(hyID)
         hyCount = getHYStockCount(hyID)
         print(ts_code, stockName, hyID, hyName, hyCount)
 
@@ -416,6 +384,6 @@ if __name__ == '__main__':
 
     #     calAllHYTTMLirun(20154)
     hyID = '000101'
-    calHYTTMProfits(hyID, 20184)
+    calClassifyStaticTTMProfit(hyID, 20184)
     #     calHYTTMLirun(hyID, 20162)
     #     stockList = ['000732', '', '', '', '', '', '', ]

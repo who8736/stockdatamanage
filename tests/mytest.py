@@ -16,7 +16,6 @@ from matplotlib.widgets import Cursor
 
 from xml import etree
 
-
 # from .context import stockdatamanage
 from stockdatamanage.download import *
 from stockdatamanage.sqlrw import *
@@ -217,7 +216,7 @@ def resetTTMLirun():
     """
     startQuarter = 20174
     endQuarter = 20191
-    dates = datatrans.QuarterList(startQuarter, endQuarter)
+    dates = datatrans.quarterList(startQuarter, endQuarter)
     for year in range(2010, 2020):
         for md in ['0331', '0630', '0930', '1231']:
             date = f'{year}{md}'
@@ -531,7 +530,6 @@ def __testUpdate():
 
     # 更新全市PE
     # updateAllMarketPE()
-
 
 
 # 更新股票市值与PE

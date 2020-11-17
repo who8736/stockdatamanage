@@ -8,13 +8,16 @@ import datetime as dt
 # from datetime import datetime, timedelta, date
 import logging
 
+from dateutil.relativedelta import relativedelta
 import pandas as pd
 from pandas.core.frame import DataFrame
 from lxml import etree
+
+
 # from initlog import initlog
 
 
-def quarterSub(_quarterDate, subNum):
+def del_quarterSub(_quarterDate, subNum):
     """
     # 从quarterDate中减去subNum个季度
     quarterDate: YYYYQ格式， 4位表示年，1表示季度
@@ -23,7 +26,7 @@ def quarterSub(_quarterDate, subNum):
     return quarterAdd(_quarterDate, -subNum)
 
 
-def quarterAdd(_quarterDate, addNum):
+def del_quarterAdd(_quarterDate, addNum):
     """
     # 从quarterDate中加上subNum个季度
     quarterDate: YYYYQ格式， 4位表示年，1表示季度
@@ -32,64 +35,38 @@ def quarterAdd(_quarterDate, addNum):
     quarters = int(_quarterDate / 10) * 4 + (_quarterDate % 10)
     quarters = quarters + addNum
     year = (quarters - 1) // 4
-#     print year
+    #     print year
     _quarterDate = year * 10 + (quarters - year * 4)
     return _quarterDate
 
 
-def QuarterList(startDate, endDate):
+def quarterList(startDate, endDate):
     """ 生成从startDate到endDate的季度列表
+    @type startDate: str
+    @type endDate: str
+
     """
+    _start = dt.date(int(startDate[:4]),
+                     (int(startDate[4:6]) + 2) // 3 * 3,
+                     1) + relativedelta(months=1, days=-1)
+    # _start = dt.datetime.strptime(startDate, '%Y%m%d').date()
+    _end = dt.datetime.strptime(endDate, '%Y%m%d').date()
     _dateList = []
-    while startDate <= endDate:
-        _dateList.append(startDate)
-        startDate += 1
-        if startDate % 10 > 4:
-            startDate = (int(startDate / 10) + 1) * 10 + 1
+    while _start <= _end:
+        _dateList.append(_start.strftime('%Y%m%d'))
+        _start = dt.date(_start.year, _start.month, 1) + relativedelta(
+            months=4, days=-1)
     return _dateList
 
 
-def dateStrList(startDate, endDate, formatStr='%Y%m%d'):
-    """生成从startDate到endDate的日期列表，日期样式为"20160101"
-    :param startDate: str, 'YYYYmmdd'
-    :param endDate: str, 'YYYYmmdd'
-    :param formatStr:
-    :return:
-    """
-    if isinstance(startDate, dt.date):
-        startDate = startDate.strftime(formatStr)
-    if isinstance(endDate, dt.date):
-        endDate = endDate.strftime(formatStr)
-    sql = 'select cal_date from trade_cal where is_open=1 and exchange="SSE"'
-    result = engine.execute(sql).fetchall()
-    if result:
-        return [row[0] for row in result]
-
-
-def dateList(startDate, endDate):
-    dateList = []
-    curDate = startDate
-    while curDate <= endDate:
-        dateList.append(curDate)
-        curDate = curDate + dt.timedelta(days=1)
-    return dateList
-
-
-# def parse_ymd(s):
-#     """ 日期字符串转换为datetime
-#     """
-#     year_s, mon_s, day_s = s.split('-')
-#     return datetime(int(year_s), int(mon_s), int(day_s))
-
-
-def transDateToQuarter(_date):
+def del_transDateToQuarter(_date):
     """ 将datetime.datetime类型的日期转换为季度格式
     # 2015年4月7日，返回20152
     """
     return _date.year * 10 + int((_date.month + 2) / 3)
 
 
-def getLastQuarter():
+def del_getLastQuarter():
     """ 返回当前日期的上一个季度
     # 如今天是2015年4月7日，返回20151
     """
@@ -114,18 +91,18 @@ def gubenDataToDfSina(ts_code, guben):
                                 //table//tr//td//table//tr//td''')
     date = [gubenData[i][0].text for i in range(0, len(gubenData), 2)]
     date = [datetime.strptime(d, '%Y-%m-%d') for d in date]
-#     print date
+    #     print date
     totalshares = [
         gubenData[i + 1][0].text for i in range(0, len(gubenData), 2)]
-#     print totalshares
-#     t = [i[:-2] for i in totalshares]
-#     print t
-    danwei = {'万股':10000, '亿股':100000000}
+    #     print totalshares
+    #     t = [i[:-2] for i in totalshares]
+    #     print t
+    danwei = {'万股': 10000, '亿股': 100000000}
     try:
         totalshares = [float(i[:-2]) * danwei[i[-2:]] for i in totalshares]
     except ValueError as e:
         logging.error('ts_code:%s, %s', ts_code, e)
-#     print totalshares
+    #     print totalshares
     gubenDf = DataFrame({'ts_code': ts_code,
                          'date': date,
                          'totalshares': totalshares})
@@ -198,7 +175,7 @@ def transLirunDf(df, year, quarter):
             'profits': profits * 10000,
             'reportdate': rd}
     df = pd.DataFrame(data)
-#     print 'transLirunDf, len(df):%s' % len(df)
+    #     print 'transLirunDf, len(df):%s' % len(df)
     df = df.drop_duplicates()
     return df
 
@@ -270,3 +247,40 @@ def transTushareDateToQuarter(date):
     return year * 10 + quarter
 
 
+def calDate(_date):
+    """根据报告期返回本年计算日期与上年计算日期
+    用于计算行业静态TTM利润"""
+    dateDict = {
+        '0331': '0501',
+        '0630': '0901',
+        '0930': '1101',
+        '1231': '0501',
+    }
+    _year = int(_date[:4])
+    _quarter = _date[4:]
+    # 本年度计算日期
+    if _quarter == '1231':
+        year = f'{_year + 1}{dateDict[_quarter]}'
+        lastyear = f'{_year}{dateDict[_quarter]}'
+    else:
+        year = f'{_year}{dateDict[_quarter]}'
+        lastyear = f'{_year - 1}{dateDict[_quarter]}'
+    return year, lastyear
+
+
+def classifyEndDate(date=None):
+    """行业静态利润计算中，当前应计算的最后一个报告期的日期"""
+    if date is None:
+        _date = dt.date.today()
+    else:
+        _date = dt.datetime.strptime(date, '%Y%m%d')
+    month = _date.month
+    if month >= 11:
+        end_date = f'{_date.year}0930'
+    elif month >= 9:
+        end_date = f'{_date.year}0630'
+    elif month >= 5:
+        end_date = f'{_date.year}0331'
+    else:
+        end_date = f'{_date.year - 1}0930'
+    return end_date

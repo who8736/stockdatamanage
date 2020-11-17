@@ -1,13 +1,16 @@
 import datetime as dt
 from datetime import datetime
+import logging
 
 import numpy as np
 import pandas as pd
 
 from .. import datatrans
-from .. import sqlrw
-from ..datatrans import dateStrList
+# from .. import sqlrw
 from ..sqlconn import engine
+from ..sqlrw import (readCal, loadChigu, readLastTTMPEs, readLastTTMProfits,
+                     getLowPEStockList, readStockList, readTTMProfitsForStock,
+                     writeSQL)
 
 
 def calGuzhi(stockList=None):
@@ -43,21 +46,21 @@ def calGuzhi(stockList=None):
     """
 
     if stockList is None:
-        stockList = sqlrw.getLowPEStockList().ts_code.values
+        stockList = getLowPEStockList().ts_code.values
 
     #     print stockList.head()
     #     print type(stockList)
     # pe数据
-    peDf = sqlrw.readLastTTMPEs(stockList)
+    peDf = readLastTTMPEs(stockList)
     # 估值数据
-    #     pegDf = sqlrw.readGuzhiFilesToDf(stockList)
-    #     pegDf = sqlrw.readGuzhiSQLToDf(stockList)
+    #     pegDf = readGuzhiFilesToDf(stockList)
+    #     pegDf = readGuzhiSQLToDf(stockList)
     #     pegDf = pd.merge(peDf, pegDf, on='ts_code', how='left')
     #     print pegDf.head()
 
     sectionNum = 6  # 取6个季度
     # 新取TTM利润方法，取每支股票最后N季度数据
-    incDf = sqlrw.readLastTTMProfits(stockList, sectionNum)
+    incDf = readLastTTMProfits(stockList, sectionNum)
     #     print 'incDf:'
     #     print incDf
     guzhiDf = pd.merge(peDf, incDf, on='ts_code', how='left')
@@ -71,7 +74,7 @@ def calGuzhi(stockList=None):
 
     # 过去N个季度TTM利润增长率
     #     for i in range(sectionNum):
-    #         incDf = sqlrw.readTTMLirunForDate(QuarterList[i])
+    #         incDf = readTTMLirunForDate(QuarterList[i])
     #         incDf = incDf[['ts_code', 'incrate']]
     #         incDf.columns = ['ts_code', 'incrate%d' % i]
     #         print incDf.head()
@@ -81,8 +84,8 @@ def calGuzhi(stockList=None):
     #     print pegDf.head()
     # 平均利润增长率
     endfield = 'incrate%s' % (sectionNum - 1)
-    guzhiDf['avgrate'] = guzhiDf.loc[:,
-                         'incrate0':endfield].mean(axis=1).round(2)
+    guzhiDf['avgrate'] = guzhiDf.loc[:, 'incrate0':endfield].mean(axis=1).round(
+        2)
     #     pegDf = pegDf.round(2)
     #     f = partial(Series.round, decimals=2)
     #     df.apply(f)
@@ -111,7 +114,7 @@ def calGuzhi(stockList=None):
     guzhiDf.replace([np.inf, -np.inf], -9999, inplace=True)
 
     # 增加股票名称
-    nameDf = sqlrw.readStockList()
+    nameDf = readStockList()
     guzhiDf = pd.merge(guzhiDf, nameDf, on='ts_code', how='left')
     #     print pegDf
 
@@ -138,11 +141,11 @@ def calGuzhi(stockList=None):
 
 
 def calHistoryStatus(ts_code):
-    TTMLirunDf = sqlrw.readTTMProfits(ts_code)
+    TTMLirunDf = readTTMProfitsForStock(ts_code)
     dates = TTMLirunDf['date']
     for _date in dates:
         #         print i
-        result = _calHistoryStatus(ts_code, TTMLirunDf, _date)
+        result = _calHistoryStatus(TTMLirunDf, _date)
         integrity, seculargrowth, growthmadrate, averageincrement = result
         sql = ('insert ignore into guzhihistorystatus (`ts_code`, `date`, '
                '`integrity`, `seculargrowth`, `growthmadrate`, '
@@ -151,7 +154,7 @@ def calHistoryStatus(ts_code):
                '%(seculargrowth)r, "%(growthmadrate)s", '
                '"%(averageincrement)s");') % locals()
         print(sql)
-        sqlrw.engine.execute(sql)
+        engine.execute(sql)
 
 
 def _calHistoryStatus(TTMLirunDf, date):
@@ -198,7 +201,7 @@ def peHistRate(stockList, dayCount, trade_date=None):
             sql += f' and trade_date<="{trade_date}"'
         # sql += ' and pe_ttm is not null'
         sql += f' order by `trade_date` desc limit {dayCount};'
-        result = sqlrw.engine.execute(sql).fetchall()
+        result = engine.execute(sql).fetchall()
         peList = [i[0] for i in result if i[0] is not None]
         # 如果历史交易天数不足，则历史PE水平为-1
         if len(peList) != dayCount:
@@ -250,27 +253,27 @@ def testChigu():
     #     inFilename = './data/chiguts_code.txt'
     # outFilename = './data/chiguguzhi.csv'
     #     testStockList = ['600519', '600999', '000651', '000333']
-    #     testStockList = sqlrw.readStockListFromFile(inFilename)
-    stockList = sqlrw.loadChigu()
+    #     testStockList = readStockListFromFile(inFilename)
+    stockList = loadChigu()
     #     print testStockList
     df = calGuzhi(stockList)
     #     df = calGuzhi()
     #    dfToCsvFile(df, outFilename)
     #     df.to_csv(outFilename)
-    sqlrw.engine.execute('TRUNCATE TABLE chiguguzhi')
+    engine.execute('TRUNCATE TABLE chiguguzhi')
     #     df.index.name = 'ts_code'
     #     clearStockList()
     #     df.set_index('ts_code', inplace=True)
     #     print df.head()
-    sqlrw.writeSQL(df, 'chiguguzhi')
+    writeSQL(df, 'chiguguzhi')
 
 
 def testShaixuan():
-    stockList = sqlrw.readStockList().ts_code.values
+    stockList = readStockList().ts_code.values
     df = calGuzhi(stockList)
     df = df.dropna()
-    sqlrw.engine.execute('TRUNCATE TABLE guzhiresult')
-    sqlrw.writeSQL(df, 'guzhiresult')
+    engine.execute('TRUNCATE TABLE guzhiresult')
+    writeSQL(df, 'guzhiresult')
     # df = youzhiSelect(df)
     # print('youzhiSelect result:')
     # print(df.head())
@@ -278,9 +281,9 @@ def testShaixuan():
     #    dfToCsvFile(df, outFilename)
     # df.to_csv(outFilename)
     #     outFilename = './data/youzhiid.txt'
-    #     sqlrw.writets_codeListToFile(df['ts_code'], outFilename)
-    # sqlrw.engine.execute('TRUNCATE TABLE youzhiguzhi')
-    # sqlrw.writeSQL(df, 'youzhiguzhi')
+    #     writets_codeListToFile(df['ts_code'], outFilename)
+    # engine.execute('TRUNCATE TABLE youzhiguzhi')
+    # writeSQL(df, 'youzhiguzhi')
 
 
 def calAllPEHistory(startDate, endDate=None):
@@ -298,6 +301,7 @@ def calAllPEHistory(startDate, endDate=None):
         print(sql)
         engine.execute(sql)
 
+
 def calPEHistory(ID, startDate, endDate=None):
     """
     计算某一指数的TTMPE
@@ -313,17 +317,17 @@ def calPEHistory(ID, startDate, endDate=None):
     ID = ID.upper()
     if endDate is None:
         endDate = dt.datetime.today().strftime('%Y%m%d')
-    session = Session()
+    # session = Session()
     for tradeDate in readCal(startDate, endDate):
         sql = f'call calchengfenpe("{ID}", "{tradeDate}");'
         logging.debug(f'calIndexPE: {tradeDate}')
         # result = engine.execute(sql)
-        result = session.execute(sql)
-        session.commit()
+        engine.execute(sql)
+        # session.commit()
         # result = result.fetchall()
         # print(result)
         # session.execute(sql)
-    session.close()
+    # session.close()
 
 
 def analysePEHist(ts_code, startDate, endDate, dayCount=200,
@@ -333,6 +337,7 @@ def analysePEHist(ts_code, startDate, endDate, dayCount=200,
     :param ts_code:
     :param startDate:
     :param endDate:
+    :param dayCount:
     :param lowRate:
     :param highRate:
     :return:
@@ -366,7 +371,6 @@ def analysePEHist(ts_code, startDate, endDate, dayCount=200,
                        'lowpe': lowPEs, 'highpe': highPEs})
     print(df)
     return df
-
 
 # timec = dt.datetime.now()
 # ts_code = '000651'
