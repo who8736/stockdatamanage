@@ -40,14 +40,16 @@ def getStockForClassify(code=None, date=None):
     #     return [row[0] for row in result]
 
 
-def readClassify(ts_code):
+def readClassify(ts_code, date=None):
     """ 当查询指定股票的4级行业的代码
     """
-    sql = f'select classify_code from classify_member where ts_code="{ts_code}";'
-    result = engine.execute(sql).fetchone()
-    if result is None:
-        return None
+    sql = f'select classify_code from classify_member where ts_code="{ts_code}" '
+    if date is None:
+        sql += ' and date=(select max(date) from classify_member)'
     else:
+        sql += f' and date="{date}"'
+    result = engine.execute(sql).fetchone()
+    if result:
         return result[0]
 
 
@@ -97,6 +99,7 @@ def getSubHY(hyID, subLevel):
 def getClassifyName(code):
     sql = f'select name from classify where code="{code}";'
     result = engine.execute(sql).fetchone()
+    # print(f'getClassifyName:{result}')
     if result:
         return result[0]
 
@@ -111,9 +114,9 @@ def getHYStockCount(code):
 
 
 def getHYProfitsIncRate(hyID, _date):
-    sql = (f'select profitsIncRate from classify_profits '
+    sql = (f'select inc from classify_profits '
            f'where code="{hyID}" and end_date="{_date}";')
-    print(sql)
+    # print(sql)
     result = engine.execute(sql).fetchone()
     if result is None:
         return None
@@ -136,10 +139,8 @@ def getStockProfitsIncRate(ts_code, _date):
     sql = ('select incrate from ttmprofits '
            f'where ts_code="{ts_code}" and end_date="{_date}";')
     result = engine.execute(sql).fetchone()
-    if result is not None:
+    if result:
         return result[0]
-    else:
-        return None
 
 
 def getStockProfitsIncRates(ts_code):
@@ -151,7 +152,7 @@ def getStockProfitsIncRates(ts_code):
     incRate2 = getStockProfitsIncRate(ts_code, lastYearQuarter2)
     incRate3 = getStockProfitsIncRate(ts_code, lastYearQuarter3)
     # print(incRate1, incRate2, incRate3)
-    return incRate1, incRate2, incRate3
+    return (incRate1, incRate2, incRate3)
 
 
 def calClassifyStaticTTMProfit(end_date, replace=False):

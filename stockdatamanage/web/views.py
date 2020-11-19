@@ -16,7 +16,7 @@ from stockdatamanage.plot import PlotProfitsInc
 # from report import report1 as guzhiReport
 from stockdatamanage.report import reportValuation
 from stockdatamanage.report import reportIndex
-from stockdatamanage.sqlrw import (getChiguList, getGuzhiList, getYouzhiList,
+from stockdatamanage.sqlrw import (readChigu, getGuzhiList, getYouzhiList,
                    getStockName, readLastTTMPE, readCurrentClose,
                    readCurrentPEG, readPERate, readStockKline, readIndexKline,
                    readStockList, writeChigu, readValuationSammary,
@@ -34,7 +34,7 @@ def index():
 
 @app.route('/stocklist', methods=["GET", "POST"])
 def setStockList():
-    chigu = getChiguList()
+    chigu = readChigu()
     chiguStr = "|".join([i for i in chigu])
     form = StockListForm()
     #     form.stockList = stockListStr
@@ -93,7 +93,7 @@ def reportnav(typeid):
 def valuationNav(typeid):
     df = readValuationSammary()
     if typeid == 'chigu':
-        df = df[df['ts_code'].isin(getChiguList())]
+        df = df[df['ts_code'].isin(readChigu())]
     elif typeid == 'youzhi':
         df = df[(df.pf >= 5) & (df.pe < 30)]
     # stockReportList = np.array(df).tolist()
@@ -173,9 +173,10 @@ def profitsIncImg(ts_code):
     js_resources = INLINE.render_js()
     css_resources = INLINE.render_css()
 
-    plotImg = PlotProfitsInc(ts_code,
-                             startDate='20150331',
-                             endDate='20191231')
+    # plotImg = PlotProfitsInc(ts_code,
+    #                          startDate='20150331',
+    #                          endDate='20191231')
+    plotImg = PlotProfitsInc(ts_code)
     scripts, div = components(plotImg.plot())
     # return render_template("plotkline.html", the_div=div, the_script=scripts)
     html = render_template(

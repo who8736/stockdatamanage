@@ -6,8 +6,10 @@ Created on 2017年2月10日
 """
 
 # import datetime
+import os
 import time
 from io import BytesIO
+import datetime as dt
 
 import matplotlib
 import pandas as pd
@@ -27,6 +29,7 @@ from bokeh.models import ColumnDataSource, RangeTool
 from bokeh.models import Slider, CustomJS
 
 from .sqlrw import engine, readStockKline, readCal  # @IgnorePep8
+from .config import Config
 
 matplotlib.use('Agg')  # @UndefinedVariable
 
@@ -531,15 +534,19 @@ class PlotProfitsInc:
     """
 
     def __init__(self, ts_code, startDate=None, endDate=None):
+        if endDate is None:
+            endDate = f'{dt.date.today().strftime("%Y%m%d")}'
+        if startDate is None:
+            startDate = f'{int(endDate[:4]) - 5}0331'
         sql = (f'select end_date date, dt_netprofit_yoy inc from fina_indicator'
                f' where ts_code="{ts_code}"')
         sql += f' and end_date>="{startDate}"' if startDate else ''
         sql += f' and end_date<="{endDate}"' if endDate else ''
-        print(sql)
+        # print(sql)
         df = pd.read_sql(sql, engine)
         df.dropna(inplace=True)
         df['date'] = [i.strftime('%Y%m%d') for i in df.date]
-        print(df)
+        # print(df)
         # days = df.shape[0]
         self.source = ColumnDataSource(df)
 
@@ -573,13 +580,14 @@ class PlotProfitsInc:
 
         xmin = min(df.index)
         xmax = max(df.index)
-        print(xmin, xmax)
-        filename = 'data/profits_inc_adf_linear.xlsx'
+        # print(xmin, xmax)
+        cf = Config()
+        filename = os.path.join(cf.datapath, 'profits_inc_adf_linear.xlsx')
         linearDf = pd.read_excel(filename)
         intercept = linearDf[linearDf.ts_code == ts_code].intercept.values[0]
         coef = linearDf[linearDf.ts_code == ts_code].coef.values[0]
         r2 = linearDf[linearDf.ts_code == ts_code].r2.values[0]
-        print(intercept, coef, r2)
+        # print(intercept, coef, r2)
         y = [intercept + x * coef for x in df.index]
         self.pinc.line(df.index, y, color='blue')
 

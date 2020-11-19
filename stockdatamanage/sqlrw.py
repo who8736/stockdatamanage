@@ -296,7 +296,7 @@ def readGuzhiSQLToDf(stockList):
     return df
 
 
-def readValuationSammary():
+def readValuationSammary(date=None):
     """读取股票评分信息"""
     # 基本信息
     sql = ('select ts_code, name, date, pf, pe, peg, pe200, pe1000 '
@@ -307,7 +307,12 @@ def readValuationSammary():
     # 行业名称
     sql = ('select a.ts_code, a.name, c.name as classify_name'
            ' from stock_basic a, classify_member b, classify c'
-           ' where a.ts_code=b.ts_code and b.classify_code=c.code'
+           ' where a.ts_code=b.ts_code ')
+    if date is None:
+        sql += f' and b.date=(select max(date) from classify_member) '
+    else:
+        sql += f' and b.date="{date}" '
+    sql += (' and b.classify_code=c.code'
            ' order by ts_code;')
     hyname = pd.read_sql(sql, engine)
     stocks = pd.merge(stocks, hyname, how='left')
