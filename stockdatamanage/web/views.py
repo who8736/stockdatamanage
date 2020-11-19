@@ -14,14 +14,14 @@ from bokeh.resources import INLINE
 from stockdatamanage.plot import plotKline, BokehPlot
 from stockdatamanage.plot import PlotProfitsInc
 # from report import report1 as guzhiReport
-from report import reportValuation
-from report import reportIndex
-from sqlrw import (getChiguList, getGuzhiList, getYouzhiList,
+from stockdatamanage.report import reportValuation
+from stockdatamanage.report import reportIndex
+from stockdatamanage.sqlrw import (getChiguList, getGuzhiList, getYouzhiList,
                    getStockName, readLastTTMPE, readCurrentClose,
                    readCurrentPEG, readPERate, readStockKline, readIndexKline,
                    readStockList, writeChigu, readValuationSammary,
                    readProfitsIncAdf)
-from misc import tsCode
+from stockdatamanage.misc import tsCode
 from . import app
 from .forms import StockListForm
 

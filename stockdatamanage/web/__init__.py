@@ -13,7 +13,7 @@ importlib.reload(sys)
 # sys.setdefaultencoding('utf-8')  # @UndefinedVariable
 
 app = Flask(__name__)
-app.config.from_object('config')
+# app.config.from_object('config')
 # app.config.from_object('stockdata')
 app.debug = True
 Bootstrap(app)

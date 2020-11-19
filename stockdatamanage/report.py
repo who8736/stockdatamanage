@@ -6,9 +6,9 @@ Created on 2016年12月5日
 '''
 import codecs
 
-import sqlrw
-import classifyanalyse
-import datatrans
+import .sqlrw
+import .classifyanalyse
+import .datatrans
 
 
 class ReportItem():
