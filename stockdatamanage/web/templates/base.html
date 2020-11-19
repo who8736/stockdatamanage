@@ -1,74 +1,44 @@
-{# ``base.html`` is the template all our other templates derive from. While
-Flask-Bootstrap ships with its own base, it is good form to create a custom
-one for our app, as it allows customizing some aspects.
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        {% block head %}
+        <!-- Required meta tags -->
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
 
-Deriving from bootstap/base.html gives us a basic page scaffoling.
+        {% block styles %}
+            <!-- Bootstrap CSS -->
+        <link rel="stylesheet" type="text/css"
+              href="{{url_for('static', filename='bootstrap.min.4.5.3.css')}}">
+        {% endblock %}
 
-You can find additional information about template inheritance at
+        {% block title %}{% endblock %}
+        {% endblock %}
+    </head>
+    <body>
+        <!-- Your page content -->
+        {# Finally, round things out with navigation #}
+        {% block navbar %}
+        {#nav.frontend_top.render()#}
+        <div class="container-fluid">
+            <div class="row">
+                <a class="col btn-primary" href="/">首页</a>
+                <a class="col btn-primary" href="/valuationtype/chigu">持股股票评分</a>
+                <a class="col btn-primary" href="/valuationtype/youzhi">优质股票评分</a>
+                <a class="col btn-primary" href="/valuationtype/all">全部股票评分</a>
+                <a class="col btn-primary"
+                   href="/indexklineimgnew/000010.SH">上证180历史PE</a>
+            </div>
+        </div>
+        {% endblock %}
+        {% block body %}{% endblock %}
 
-http://jinja.pocoo.org/docs/templates/#template-inheritance
-#}
-{%- extends "bootstrap/base.html" %}
-
-{% block html_attribs %}
-{{ super() }}
-lang="zh-cn"
-{% endblock html_attribs %}
-
-
-{# We also set a default title, usually because we might forget to set one.
-In our sample app, we will most likely just opt not to change it #}
-{% block title %}Sample App for Flask-Bootstrap{% endblock %}
-
-{# While we are at it, we also enable fixes for legacy browsers. First we
-import the necessary macros: #}
-{% import "bootstrap/fixes.html" as fixes %}
-
-{# Then, inside the head block, we apply these. To not replace the header,
-``super()`` is used: #}
-{% block head %}
-{{super()}}
-{#- Docs: http://pythonhosted.org/Flask-Bootstrap/macros.html#fixes
-The sample application already contains the required static files. #}
-{{fixes.ie8()}}
-{%- endblock %}
-
-{# Adding our own CSS files is also done here. Check the documentation at
-http://pythonhosted.org/Flask-Bootstrap/basic-usage.html#available-blocks
-for an overview. #}
-{% block styles -%}
-<link rel="stylesheet" type="text/css"
-      href="{{url_for('static', filename='bootstrap.min.4.5.3.css')}}">
-<link rel="stylesheet" type="text/css"
-      href="{{url_for('static', filename='sample-app.css')}}">
-{% endblock %}
-
-{% block scripts %}
-<script src="{{url_for('static', filename='jquery-3.5.1.min.js')}}"></script>
-<script src="{{url_for('static', filename='bootstrap.bundle.min.4.5.3.js')}}"></script>
-{%- endblock scripts %}
-
-{# Finally, round things out with navigation #}
-{% block navbar %}
-{#nav.frontend_top.render()#}
-<div class="container-fluid">
-    <div class="row">
-<!--        <a class="col-1 btn btn-primary" href="/">首页</a>-->
-<!--        <a class="col-1 btn btn-large btn-primary" href="/valuationtype/chigu">持股股票评分</a>-->
-<!--        <a class="col-1 btn btn-large btn-primary" href="/valuationtype/youzhi">优质股票评分</a>-->
-<!--        <a class="col-1 btn btn-large btn-primary" href="/valuationtype/all">全部股票评分</a>-->
-<!--        <a class="col-2 btn btn-large btn-primary" href="/reporttype/chigu">持股股票估值数据</a>-->
-<!--        <a class="col-2 btn btn-large btn-primary" href="/reporttype/youzhi">优质股票估值数据</a>-->
-<!--        <a class="col-2 btn btn-large btn-primary" href="/reporttype/all">全部股票估值数据</a>-->
-<!--        <a class="col-2 btn btn-large btn-primary"-->
-<!--           href="/indexklineimgnew/000010.SH">上证180历史PE</a>-->
-        <a class="col btn-primary" href="/">首页</a>
-        <a class="col btn-primary" href="/valuationtype/chigu">持股股票评分</a>
-        <a class="col btn-primary" href="/valuationtype/youzhi">优质股票评分</a>
-        <a class="col btn-primary" href="/valuationtype/all">全部股票评分</a>
-        <a class="col btn-primary"
-           href="/indexklineimgnew/000010.SH">上证180历史PE</a>
-    </div>
-</div>
-{% endblock %}
-
+        {% block scripts %}
+            <!-- Optional JavaScript -->
+        <script src="{{url_for('static', filename='jquery-3.5.1.min.js')}}"></script>
+        <script src="{{url_for('static', filename='popper.min.1.16.1.js')}}"></script>
+        <script src="{{url_for('static', filename='bootstrap.min.4.5.3.js')}}"></script>
+        {% endblock %}
+    </body>
+</html>

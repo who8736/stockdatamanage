@@ -195,8 +195,8 @@ def reportValuation(ts_code):
     myItem.PEZ1000 = myStockValuation[23]
 
     lv4Code = readClassify(ts_code)
-    lv2Code = lv4Code[:6]
-    lv3Code = lv4Code[:4]
+    lv3Code = lv4Code[:6]
+    lv2Code = lv4Code[:4]
     lv1Code = lv4Code[:2]
 
     # 最近三年TTM利润增长率水平

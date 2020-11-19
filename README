@@ -9,4 +9,9 @@ pip --trusted-host pypi.python.org install sqlalchemy
 pip --trusted-host pypi.python.org install pandas
 pip --trusted-host pypi.python.org install tushare
 
-作者：who8736, 邮箱： who8736@hotmail.com
+
+特别鸣谢：
+
+JetBrains对开源项目的支持
+<a href="https://www.jetbrains.com/?from=stockdatamanage" rel="nofollow"><img src="/who8736/stockdatamanage/raw/master/images/jetbrains-variant-3.svg" alt="JetBrains" style="max-width:100%;"></a>
+
