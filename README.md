@@ -13,5 +13,5 @@ pip --trusted-host pypi.python.org install tushare
 特别鸣谢：
 
 JetBrains对开源项目的支持
-[![JetBrains](/who8736/stockdatamanage/raw/devPy3/docs/jetbrains-variant-3.svg)](https://www.jetbrains.com/?from=stockdatamanage)
+[![JetBrains](docs/jetbrains-variant-3.svg)](https://www.jetbrains.com/?from=stockdatamanage)
 
