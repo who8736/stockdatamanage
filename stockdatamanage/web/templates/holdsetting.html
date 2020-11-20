@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}测试select2{% endblock %}
+
+
+{% block body %}
+{{ super() }}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-2">
+            <h1>设置持有股票</h1>
+            <hr>
+            <form action="{{ url_for('holdsetting') }}" method="post">
+
+                {{ form.hidden_tag() }}
+
+                <div class="form-group">
+                    {{ form.selected.label }}
+                    <small class="text-muted">{{ form.selected.description
+                        }}</small>
+                    {{ form.selected(class_="form-control") }}
+
+                    {% for error in form.selected.errors %}
+                    <span class="label label-danger">{{ error }}</span>
+                    {% endfor %}
+                </div>
+
+                {{ form.submit(class_="btn btn-primary") }}
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script type="text/javascript">
+    $(document).ready(function () {
+        // https://select2.github.io/examples.html
+        $("select").select2({});
+
+        var data = $.ajax({
+            url: "/holdjson",
+            dataType: 'json'
+        }).then(function (data) {
+            console.log(data);
+            $("#selected").select2({data: data});
+        });
+
+    });
+</script>
+{% endblock %}
+

@@ -1,44 +1,72 @@
 <!doctype html>
 <html lang="zh-CN">
-    <head>
-        {% block head %}
-        <!-- Required meta tags -->
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <meta name="csrf-token" content="{{ csrf_token() }}">
+<head>
+    {% block head %}
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        {% block styles %}
-            <!-- Bootstrap CSS -->
-        <link rel="stylesheet" type="text/css"
-              href="{{url_for('static', filename='bootstrap.min.4.5.3.css')}}">
-        {% endblock %}
+    {% block styles %}
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" type="text/css"
+          href="{{url_for('static', filename='bootstrap.min.4.5.3.css')}}">
+    <link rel="stylesheet" type="text/css"
+          href="{{url_for('static', filename='select2.min.4.1.0.css')}}">
+    {% endblock %}
 
+    <title>
         {% block title %}{% endblock %}
-        {% endblock %}
-    </head>
-    <body>
-        <!-- Your page content -->
-        {# Finally, round things out with navigation #}
-        {% block navbar %}
-        {#nav.frontend_top.render()#}
-        <div class="container-fluid">
-            <div class="row">
-                <a class="col btn-primary" href="/">首页</a>
-                <a class="col btn-primary" href="/valuationtype/chigu">持股股票评分</a>
-                <a class="col btn-primary" href="/valuationtype/youzhi">优质股票评分</a>
-                <a class="col btn-primary" href="/valuationtype/all">全部股票评分</a>
-                <a class="col btn-primary"
+    </title>
+    {% endblock %}
+</head>
+<body>
+<!-- Your page content -->
+{# Finally, round things out with navigation #}
+{% block navbar %}
+<div class="container-fluid">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-secondary"> <a class="navbar-brand" href="#">Navbar</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarColor02" aria-controls="navbarColor02" aria-expanded="false" aria-label="Toggle navigation"> <span class="navbar-toggler-icon"></span> </button>
+      <div class="collapse navbar-collapse" id="navbarColor02">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item">
+              <a class="nav-link" href="/">首页</a>
+          </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/valuationtype/chigu">持股股票评分</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/valuationtype/youzhi">优质股票评分</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/valuationtype/all">全部股票评分</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link"
                    href="/indexklineimgnew/000010.SH">上证180历史PE</a>
-            </div>
-        </div>
-        {% endblock %}
-        {% block body %}{% endblock %}
+            </li>
+            <li class="nav-item">
+                <a class="nav-link"
+                   href="/holdsetting">设置持股</a>
+            </li>
+        </ul>
+        <form class="form-inline">
+          <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+          <button class="btn btn-outline-light my-2 my-sm-0" type="submit">Search</button>
+        </form>
+      </div>
+    </nav>
+</div>
+{% endblock %}
+{% block body %}{% endblock %}
 
-        {% block scripts %}
-            <!-- Optional JavaScript -->
-        <script src="{{url_for('static', filename='jquery-3.5.1.min.js')}}"></script>
-        <script src="{{url_for('static', filename='popper.min.1.16.1.js')}}"></script>
-        <script src="{{url_for('static', filename='bootstrap.min.4.5.3.js')}}"></script>
-        {% endblock %}
-    </body>
+{% block scripts %}
+<!-- Optional JavaScript -->
+<script src="{{url_for('static', filename='jquery-3.5.1.min.js')}}"></script>
+<script src="{{url_for('static', filename='popper.min.1.16.1.js')}}"></script>
+<script src="{{url_for('static', filename='bootstrap.min.4.5.3.js')}}"></script>
+<script src="{{url_for('static', filename='select2.min.4.1.0.js')}}"></script>
+{% endblock %}
+</body>
 </html>

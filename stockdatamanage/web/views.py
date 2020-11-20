@@ -5,8 +5,8 @@ Created on 2016年12月14日
 @author: who8736
 '''
 
-from flask import render_template, redirect, url_for
-from flask import send_file
+from flask import (render_template, redirect, url_for, request,
+                   send_file, current_app)
 from bokeh.embed import components
 from bokeh.resources import INLINE
 # from bokeh.util.string import encode_utf8
@@ -17,13 +17,16 @@ from stockdatamanage.plot import PlotProfitsInc
 from stockdatamanage.report import reportValuation
 from stockdatamanage.report import reportIndex
 from stockdatamanage.sqlrw import (readChigu, getGuzhiList, getYouzhiList,
-                   getStockName, readLastTTMPE, readCurrentClose,
-                   readCurrentPEG, readPERate, readStockKline, readIndexKline,
-                   readStockList, writeChigu, readValuationSammary,
-                   readProfitsIncAdf)
+                                   getStockName, readLastTTMPE,
+                                   readCurrentClose,
+                                   readCurrentPEG, readPERate, readStockKline,
+                                   readIndexKline,
+                                   readStockList, writeChigu,
+                                   readValuationSammary,
+                                   readProfitsIncAdf)
 from stockdatamanage.misc import tsCode
 from . import app
-from .forms import StockListForm
+from .forms import StockListForm, HoldForm
 
 
 @app.route('/')
@@ -109,14 +112,6 @@ def valuationView(ts_code):
                            stock=stockItem)
 
 
-@app.route('/tests')
-def test():
-    stocks = readProfitsIncAdf()
-    print('profits_inc_adf')
-    print(stocks.head())
-    return render_template('tests.html', stocks=stocks)
-
-
 @app.route('/test1')
 def test1():
     return render_template('test1.html')
@@ -194,3 +189,31 @@ def indexInfo(ID):
     stockItem = reportIndex(ID)
     return render_template('indexinfo.html',
                            stock=stockItem)
+
+
+@app.route('/holdsetting', methods=["GET", "POST"])
+def holdsetting():
+    form = HoldForm(request.form)
+    hold = form.data["selected"]
+    if hold:
+        holdList = hold.split('|')
+        current_app.logger.debug(f'保存股票清单：{holdList}')
+        writeChigu(holdList)
+
+    return render_template("holdsetting.html", form=form)
+
+@app.route('/holdjson', methods=["GET", "POST"])
+def holdjson():
+    stocks = readStockList()
+    # stocks = stocks[:10]
+    stocks.rename(columns={'ts_code': 'id', 'name': 'text'}, inplace=True)
+    stocks.text = stocks.id + ' ' + stocks.text
+    stocks['selected'] = False
+    chigu = readChigu()
+    stocks.loc[stocks.id.isin(chigu), 'selected'] = True
+    # print(chigu)
+    current_app.logger.debug(f'持有的股票: {chigu}')
+
+    stocksList = stocks.to_json(orient='records', force_ascii=False)
+    return stocksList
+
