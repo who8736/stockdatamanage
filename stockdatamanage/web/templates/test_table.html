@@ -4,108 +4,40 @@
 
 {% block body %}
 {{ super() }}
-<div id="con" class="container">
-    <div id="2">
-        <table class="table table-bordered scrolltable">
-            <thead style="display:block;overflow-y: scroll;border-bottom:1px solid #eee;">
-            <tr>
-                <th>栏目一</th>
-                <th>栏目二</th>
-                <th>栏目三</th>
-                <th>栏目一</th>
-                <th>栏目二</th>
-                <th>栏目三</th>
-            </tr>
-            </thead>
-            <tbody style="display:block; max-height:600px;overflow-y: scroll;">
-            <tr>
-                <td>星期一</td>
-                <td>星期二</td>
-                <td>星期三</td>
-                <td>星期一</td>
-                <td>星期二</td>
-                <td>星期三</td>
-            </tr>
-            <tr>
-                <td>星期一</td>
-                <td>星期二</td>
-                <td>星期三</td>
-                <td>星期一</td>
-                <td>星期二</td>
-                <td>星期三</td>
-            </tr>
-            <tr>
-                <td>星期一</td>
-                <td>星期二</td>
-                <td>星期三</td>
-                <td>星期一</td>
-                <td>星期二</td>
-                <td>星期三</td>
-            </tr>
-            <tr>
-                <td>星期一</td>
-                <td>星期二</td>
-                <td>星期三</td>
-                <td>星期一</td>
-                <td>星期二</td>
-                <td>星期三</td>
-            </tr>
-            <tr>
-                <td>星期一</td>
-                <td>星期二</td>
-                <td>星期三</td>
-                <td>星期一</td>
-                <td>星期二</td>
-                <td>星期三</td>
-            </tr>
-            <tr>
-                <td>星期一</td>
-                <td>星期二</td>
-                <td>星期三</td>
-                <td>星期一</td>
-                <td>星期二</td>
-                <td>星期三</td>
-            </tr>
-            <tr>
-                <td>星期一</td>
-                <td>星期二</td>
-                <td>星期三</td>
-                <td>星期一</td>
-                <td>星期二</td>
-                <td>星期三</td>
-            </tr>
-            <tr>
-                <td>星期一</td>
-                <td>星期二</td>
-                <td>星期三</td>
-                <td>星期一</td>
-                <td>星期二</td>
-                <td>星期三</td>
-            </tr>
-            </tbody>
-        </table>
-    </div>
+<div class="container">
+    <table
+            id="table"
+            data-toggle="table"
+            data-url="holdjson">
+        <thead>
+        <tr>
+            <th data-field="id">ID</th>
+            <th data-field="text">Item Name</th>
+        </tr>
+        </thead>
+    </table>
+
 </div>
 {% endblock %}
 
 {% block scipt %}
 {{ super() }}
 <script type="text/javascript">
-	$(document).ready(function(){
-		var _width=$('#2').width();
-		$('#2 th:first-child').width(_width*0.1);
-		$('#2 td:first-child').width(_width*0.1);
-		$('#2 th:nth-child(2)').width(_width*0.2);
-		$('#2 td:nth-child(2)').width(_width*0.2);
-		$('#2 th:nth-child(3)').width(_width*0.3);
-		$('#2 td:nth-child(3)').width(_width*0.3);
-		$('#2 th:nth-child(4)').width(_width*0.1);
-		$('#2 td:nth-child(4)').width(_width*0.1);
-		$('#2 th:nth-child(5)').width(_width*0.1);
-		$('#2 td:nth-child(5)').width(_width*0.1);
-		$('#2 th:nth-child(6)').width(_width*0.2);
-		$('#2 td:nth-child(6)').width(_width*0.2);
-	})
+    $(document).ready(function () {
+        var _width = $('#2').width();
+        $('#2 th:first-child').width(_width * 0.1);
+        $('#2 td:first-child').width(_width * 0.1);
+        $('#2 th:nth-child(2)').width(_width * 0.2);
+        $('#2 td:nth-child(2)').width(_width * 0.2);
+        $('#2 th:nth-child(3)').width(_width * 0.3);
+        $('#2 td:nth-child(3)').width(_width * 0.3);
+        $('#2 th:nth-child(4)').width(_width * 0.1);
+        $('#2 td:nth-child(4)').width(_width * 0.1);
+        $('#2 th:nth-child(5)').width(_width * 0.1);
+        $('#2 td:nth-child(5)').width(_width * 0.1);
+        $('#2 th:nth-child(6)').width(_width * 0.2);
+        $('#2 td:nth-child(6)').width(_width * 0.2);
+    })
 
 </script>
 {% endblock %}
