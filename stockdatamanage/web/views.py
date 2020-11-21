@@ -5,25 +5,23 @@ Created on 2016年12月14日
 @author: who8736
 '''
 
-from flask import (render_template, redirect, url_for, request,
-                   send_file, current_app)
+from flask import (
+    render_template, redirect, url_for, request, send_file, current_app,
+)
 from bokeh.embed import components
 from bokeh.resources import INLINE
 # from bokeh.util.string import encode_utf8
 
 from stockdatamanage.plot import plotKline, BokehPlot
 from stockdatamanage.plot import PlotProfitsInc
-# from report import report1 as guzhiReport
 from stockdatamanage.report import reportValuation
 from stockdatamanage.report import reportIndex
-from stockdatamanage.sqlrw import (readChigu, getGuzhiList, getYouzhiList,
-                                   getStockName, readLastTTMPE,
-                                   readCurrentClose,
-                                   readCurrentPEG, readPERate, readStockKline,
-                                   readIndexKline,
-                                   readStockList, writeChigu,
-                                   readValuationSammary,
-                                   readProfitsIncAdf)
+from stockdatamanage.sqlrw import (
+    readChigu, getGuzhiList, getYouzhiList, getStockName, readLastTTMPE,
+    readCurrentClose, readCurrentPEG, readPERate, readStockKline,
+    readIndexKline, readStockList, writeChigu, readValuationSammary,
+    readProfitsIncAdf,
+)
 from stockdatamanage.misc import tsCode
 from . import app
 from .forms import StockListForm, HoldForm
@@ -202,6 +200,7 @@ def holdsetting():
 
     return render_template("holdsetting.html", form=form)
 
+
 @app.route('/holdjson', methods=["GET", "POST"])
 def holdjson():
     stocks = readStockList()
@@ -216,4 +215,3 @@ def holdjson():
 
     stocksList = stocks.to_json(orient='records', force_ascii=False)
     return stocksList
-

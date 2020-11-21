@@ -68,28 +68,6 @@ def writeClassifyNameToSQL(filename):
         writeSQL(classifyDf, 'classify')
 
 
-def writeGubenToSQL(gubenDf, replace=False):
-    """单个股票股本数据写入数据库
-    :param replace:
-    :type gubenDf: DataFrame
-    """
-    tablename = 'guben'
-    # lastUpdate = gubenUpdateDate(ts_code)
-    # gubenDf = gubenDf[pd.Timestamp(gubenDf.date) > lastUpdate]
-    # gubenDf = gubenDf[gubenDf.date > lastUpdate]
-    if gubenDf.empty:
-        return None
-    if replace:
-        for index, row in gubenDf.iterrows():
-            sql = (('replace into guben'
-                    '(ts_code, date, totalshares) '
-                    'values("%s", "%s", %s)')
-                   % (row['ts_code'], row['date'], row['totalshares']))
-            engine.execute(sql)
-    else:
-        return writeSQL(gubenDf, tablename)
-
-
 def writeGuzhiToSQL(ts_code, data):
     """下载单个股票估值数据写入数据库"""
     guzhiDict = datatrans.transGuzhiDataToDict(data)
@@ -116,11 +94,12 @@ def writeGuzhiToSQL(ts_code, data):
         next3YearPE = guzhiDict['next3YearPE']
     else:
         next3YearPE = 'null'
-    sql = (('replace into %(tablename)s'
+    # noinspection SqlResolve
+    sql = (f'replace into {tablename}'
             '(ts_code, peg, next1YearPE, next2YearPE, next3YearPE) '
             'values("%(ts_code)s", %(peg)s, '
             '%(next1YearPE)s, %(next2YearPE)s, '
-            '%(next3YearPE)s);') % locals())
+            '%(next3YearPE)s);')
     return engine.execute(sql)
 
 
@@ -173,29 +152,30 @@ def dropTable(tableName):
     engine.execute('DROP TABLE %s' % tableName)
 
 
-def dropNAData():
-    """ 清除K线图数据中交易量为0的数据
-    """
-    # stockList = readts_codesFromSQL()
-    #     stockList = ['002100']
-    # for ts_code in stockList:
-    # tablename = tablenameKline(ts_code)
-    # sql = 'delete from %(tablename)s where volume=0;' % locals()
-    sql = 'delete from klinestock where volume=0;'
-    engine.execute(sql)
+# def dropNAData():
+#     """ 清除K线图数据中交易量为0的数据
+#     """
+#     # stockList = readts_codesFromSQL()
+#     #     stockList = ['002100']
+#     # for ts_code in stockList:
+#     # tablename = tablenameKline(ts_code)
+#     # sql = 'delete from %(tablename)s where volume=0;' % locals()
+#     sql = 'delete from klinestock where volume=0;'
+#     engine.execute(sql)
 
 
-def getLowPEStockList(maxPE=40):
-    """选取指定范围PE的股票
-    maxPE: 最大PE
-    """
-    sql = 'select ts_code, pe from stocklist where pe > 0 and pe <= %s' % maxPE
-    df = pd.read_sql(sql, engine)
-    return df
+# def getLowPEStockList(maxPE=40):
+#     """选取指定范围PE的股票
+#     maxPE: 最大PE
+#     """
+#     sql = f'select ts_code, pe from stocklist where pe>0 and pe<={maxPE}'
+#     df = pd.read_sql(sql, engine)
+#     return df
 
 
 def getGuzhi(ts_code):
-    sql = f'select * from guzhiresult where ts_code="{ts_code}" limit 1'
+    # noinspection SqlResolve
+    sql = f'select * from guzhiresult where "{ts_code}"=ts_code limit 1'
     result = engine.execute(sql)
     return result.fetchone()
 
@@ -313,7 +293,7 @@ def readValuationSammary(date=None):
     else:
         sql += f' and b.date="{date}" '
     sql += (' and b.classify_code=c.code'
-           ' order by ts_code;')
+            ' order by ts_code;')
     hyname = pd.read_sql(sql, engine)
     stocks = pd.merge(stocks, hyname, how='left')
 
@@ -374,11 +354,11 @@ def readValuation(ts_code):
 #     return histDf
 
 
-def readLirunList(date):
-    sql = 'select * from lirun where `date` >= %s and `date` <= %s' % (
-        str(date - 10), str(date))
-    df = pd.read_sql(sql, engine)
-    return df
+# def readLirunList(date):
+#     sql = 'select * from lirun where `date` >= %s and `date` <= %s' % (
+#         str(date - 10), str(date))
+#     df = pd.read_sql(sql, engine)
+#     return df
 
 
 def readPERate(ts_code):
@@ -832,7 +812,6 @@ def readCurrentPEG(ts_code):
         return None
     else:
         return result
-
 
 
 def readChigu():

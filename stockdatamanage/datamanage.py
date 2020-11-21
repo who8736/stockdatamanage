@@ -16,20 +16,18 @@ import baostock as bs
 import tushare as ts
 from dateutil.relativedelta import relativedelta
 
-from . import analyse
-from . import classifyanalyse
-from . import config
-from . import valuation
+from . import (analyse, classifyanalyse, config, valuation)
 # from check import checkQuarterData
-from .download import (downStockList,
-                       downDaily, downDailyBasic, downTradeCal,
-                       downIndexDaily, downIndexDailyBasic,
-                       downIndexBasic, downIndexWeight,
-                       DownloaderQuarter, downClassify, downAdjFactor)
+from .download import (
+    downStockList, downDaily, downDailyBasic, downTradeCal, downIndexDaily,
+    downIndexDailyBasic, downIndexBasic, downIndexWeight, DownloaderQuarter,
+    downClassify, downAdjFactor,
+)
 from .initlog import initlog
 from .sqlconn import engine
-from .sqlrw import (readCal, getLastUpdate,
-                    calAllTTMProfits, setLastUpdate)
+from .sqlrw import (
+    readCal, getLastUpdate, calAllTTMProfits, setLastUpdate,
+)
 from .check import checkQuarterData
 from .datatrans import classifyEndDate, quarterList
 
