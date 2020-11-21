@@ -112,9 +112,9 @@ def valuationView(ts_code):
                            stock=stockItem)
 
 
-@app.route('/test1')
-def test1():
-    return render_template('test1.html')
+@app.route('/test_table')
+def test_table():
+    return render_template('test_table.html')
 
 
 @app.route('/test2')
