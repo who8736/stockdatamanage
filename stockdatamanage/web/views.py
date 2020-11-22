@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 2016年12月14日
 
 @author: who8736
-'''
+"""
 
 from flask import (
     render_template, redirect, url_for, request, send_file, current_app,
 )
+from flask_pagination import Pagination
 from bokeh.embed import components
 from bokeh.resources import INLINE
 # from bokeh.util.string import encode_utf8
@@ -17,10 +18,8 @@ from stockdatamanage.plot import PlotProfitsInc
 from stockdatamanage.report import reportValuation
 from stockdatamanage.report import reportIndex
 from stockdatamanage.sqlrw import (
-    readChigu, getGuzhiList, getYouzhiList, getStockName, readLastTTMPE,
-    readCurrentClose, readCurrentPEG, readPERate, readStockKline,
-    readIndexKline, readStockList, writeChigu, readValuationSammary,
-    readProfitsIncAdf,
+    readChigu, readStockKline, readIndexKline, readStockList, writeChigu,
+    readValuationSammary, readProfitsIncAdf,
 )
 from stockdatamanage.misc import tsCode
 from . import app
@@ -60,26 +59,26 @@ def setStockList():
                            stockListStr=chiguStr)
 
 
-@app.route('/reporttype/<typeid>')
-def reportnav(typeid):
-    if typeid == 'chigu':
-        stockList = getChiguList()
-    elif typeid == 'youzhi':
-        stockList = getYouzhiList()
-    else:
-        stockList = getGuzhiList()
-
-    stockReportList = []
-    for ts_code in stockList:
-        stockName = getStockName(ts_code)
-        stockClose = readCurrentClose(ts_code)
-        pe = readLastTTMPE(ts_code)
-        peg = readCurrentPEG(ts_code)
-        pe200, pe1000 = readPERate(ts_code)
-        stockReportList.append([ts_code, stockName,
-                                stockClose, pe, peg, pe200, pe1000])
-    return render_template('reportnav.html', stockList=stockReportList)
-
+# @app.route('/reporttype/<typeid>')
+# def reportnav(typeid):
+#     if typeid == 'chigu':
+#         stockList = readChigu()
+#     elif typeid == 'youzhi':
+#         stockList = getYouzhiList()
+#     else:
+#         stockList = getGuzhiList()
+#
+#     stockReportList = []
+#     for ts_code in stockList:
+#         stockName = getStockName(ts_code)
+#         stockClose = readCurrentClose(ts_code)
+#         pe = readLastTTMPE(ts_code)
+#         peg = readCurrentPEG(ts_code)
+#         pe200, pe1000 = readPERate(ts_code)
+#         stockReportList.append([ts_code, stockName,
+#                                 stockClose, pe, peg, pe200, pe1000])
+#     return render_template('reportnav.html', stockList=stockReportList)
+#
 
 # @app.route('/report/<ts_code>')
 # def reportView(ts_code):
@@ -205,8 +204,8 @@ def holdsetting():
 def holdjson():
     stocks = readStockList()
     # stocks = stocks[:10]
-    stocks.rename(columns={'ts_code': 'id', 'name': 'text'}, inplace=True)
-    stocks.text = stocks.id + ' ' + stocks.text
+    stocks.rename(columns={'ts_code': 'id'}, inplace=True)
+    stocks['text'] = stocks.id + ' ' + stocks.name
     stocks['selected'] = False
     chigu = readChigu()
     stocks.loc[stocks.id.isin(chigu), 'selected'] = True

@@ -17,6 +17,10 @@ import tushare as ts
 from dateutil.relativedelta import relativedelta
 
 from . import (analyse, classifyanalyse, config, valuation)
+# from . import analyse
+# from . import (analyse, classifyanalyse, config, valuation)
+# from . import (analyse, classifyanalyse, config, valuation)
+# from . import (analyse, classifyanalyse, config, valuation)
 # from check import checkQuarterData
 from .download import (
     downStockList, downDaily, downDailyBasic, downTradeCal, downIndexDaily,

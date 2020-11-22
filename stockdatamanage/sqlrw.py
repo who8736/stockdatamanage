@@ -5,22 +5,22 @@ Created on Thu Mar 10 21:11:51 2016
 @author: who8736
 """
 
-import os
+# import os
 import logging
 import datetime as dt
 from datetime import datetime
 import pandas as pd
-from io import StringIO
+# from io import StringIO
 
-from sqlalchemy import MetaData, Table, Column
-from sqlalchemy import DATE, DECIMAL, String
+from sqlalchemy import MetaData, Table
+# from sqlalchemy import DATE, DECIMAL, String
 from sqlalchemy.ext.declarative import declarative_base
 from pandas.core.frame import DataFrame
 import xlrd
-import tushare as ts
+# import tushare as ts
 
-from .datatrans import lastYearDate, lastYearEndDate, transDfToList
-from .sqlconn import SQLConn, engine, Session
+from .datatrans import transDfToList
+from .sqlconn import engine, Session
 from . import initsql
 
 
@@ -68,39 +68,39 @@ def writeClassifyNameToSQL(filename):
         writeSQL(classifyDf, 'classify')
 
 
-def writeGuzhiToSQL(ts_code, data):
-    """下载单个股票估值数据写入数据库"""
-    guzhiDict = datatrans.transGuzhiDataToDict(data)
-    if guzhiDict is None:
-        return True
-    # print guzhiDict
-    #     guzhiDf = DataFrame(guzhiDict, index=[0])
-    #     writeSQLUpdate(guzhiDict, 'guzhi')
-    #     print guzhiDict
-    tablename = 'guzhi'
-    if 'peg' in list(guzhiDict.keys()):
-        peg = guzhiDict['peg']
-    else:
-        peg = 'null'
-    if 'next1YearPE' in list(guzhiDict.keys()):
-        next1YearPE = guzhiDict['next1YearPE']
-    else:
-        next1YearPE = 'null'
-    if 'next2YearPE' in list(guzhiDict.keys()):
-        next2YearPE = guzhiDict['next2YearPE']
-    else:
-        next2YearPE = 'null'
-    if 'next3YearPE' in list(guzhiDict.keys()):
-        next3YearPE = guzhiDict['next3YearPE']
-    else:
-        next3YearPE = 'null'
-    # noinspection SqlResolve
-    sql = (f'replace into {tablename}'
-            '(ts_code, peg, next1YearPE, next2YearPE, next3YearPE) '
-            'values("%(ts_code)s", %(peg)s, '
-            '%(next1YearPE)s, %(next2YearPE)s, '
-            '%(next3YearPE)s);')
-    return engine.execute(sql)
+# def writeGuzhiToSQL(ts_code, data):
+#     """下载单个股票估值数据写入数据库"""
+#     guzhiDict = transGuzhiDataToDict(data)
+#     if guzhiDict is None:
+#         return True
+#     # print guzhiDict
+#     #     guzhiDf = DataFrame(guzhiDict, index=[0])
+#     #     writeSQLUpdate(guzhiDict, 'guzhi')
+#     #     print guzhiDict
+#     tablename = 'guzhi'
+#     if 'peg' in list(guzhiDict.keys()):
+#         peg = guzhiDict['peg']
+#     else:
+#         peg = 'null'
+#     if 'next1YearPE' in list(guzhiDict.keys()):
+#         next1YearPE = guzhiDict['next1YearPE']
+#     else:
+#         next1YearPE = 'null'
+#     if 'next2YearPE' in list(guzhiDict.keys()):
+#         next2YearPE = guzhiDict['next2YearPE']
+#     else:
+#         next2YearPE = 'null'
+#     if 'next3YearPE' in list(guzhiDict.keys()):
+#         next3YearPE = guzhiDict['next3YearPE']
+#     else:
+#         next3YearPE = 'null'
+#     # noinspection SqlResolve
+#     sql = (f'replace into {tablename}'
+#            '(ts_code, peg, next1YearPE, next2YearPE, next3YearPE) '
+#            'values("%(ts_code)s", %(peg)s, '
+#            '%(next1YearPE)s, %(next2YearPE)s, '
+#            '%(next3YearPE)s);')
+#     return engine.execute(sql)
 
 
 # def writeKline(ts_code, df, insertType='IGNORE'):
@@ -111,31 +111,31 @@ def writeGuzhiToSQL(ts_code, data):
 #     return writeSQL(df, tableName, insertType)
 
 
-def lirunFileToList(ts_code, date):
-    fileName = filenameLirun(ts_code)
-    lirunFile = open(fileName, 'r')
-    lirunData = lirunFile.readlines()
-
-    dateList = lirunData[0].split()
-    logging.debug(repr(dateList))
-
-    try:
-        index = dateList.index(date)
-        logging.debug(repr(index))
-    except ValueError:
-        return []
-
-    profitsList = lirunData[42].split()
-    # if profitsList[0].decode('gbk') != '归属于母公司所有者的净利润':
-    if profitsList[0] != '归属于母公司所有者的净利润':
-        logging.error('lirunFileToList read %s error', ts_code)
-        return []
-
-    return {'ts_code': ts_code,
-            'date': date,
-            'profits': profitsList[index],
-            'reportdate': dateList[index]
-            }
+# def lirunFileToList(ts_code, date):
+#     fileName = filenameLirun(ts_code)
+#     lirunFile = open(fileName, 'r')
+#     lirunData = lirunFile.readlines()
+#
+#     dateList = lirunData[0].split()
+#     logging.debug(repr(dateList))
+#
+#     try:
+#         index = dateList.index(date)
+#         logging.debug(repr(index))
+#     except ValueError:
+#         return []
+#
+#     profitsList = lirunData[42].split()
+#     # if profitsList[0].decode('gbk') != '归属于母公司所有者的净利润':
+#     if profitsList[0] != '归属于母公司所有者的净利润':
+#         logging.error('lirunFileToList read %s error', ts_code)
+#         return []
+#
+#     return {'ts_code': ts_code,
+#             'date': date,
+#             'profits': profitsList[index],
+#             'reportdate': dateList[index]
+#             }
 
 
 # def tablenameKline(ts_code):
@@ -213,15 +213,7 @@ def writeSQL(data: pd.DataFrame, tableName: str, replace=False):
         metadata = MetaData(bind=engine)
         if replace:
             for d in data:
-                # for index, row in data.iterrows():
-                #     tmpDict = row.to_dict()
-                #     tmpDict[data.index.name] = index
-                # d = {key: getattr(row, key) for key in row.keys()}
-                # for key in row.keys():
-                #     print('key type:', type(key))
-                #     print('value type:', type(getattr(row, key)))
-                #     print('value:', getattr(row, key))
-                # table = MyTable(**tmpDict)
+                # noinspection PyArgumentList
                 table = MyTable(**d)
                 session.merge(table)
                 session.commit()
@@ -243,28 +235,28 @@ def writets_codeListToFile(ts_codeList, filename):
     stockFile.close()
 
 
-def readGuzhiFileToDict(ts_code):
-    """
-    读取估值文件
-    :rtype: dict
-    :type ts_code: string
-    :return dict
-    """
-    guzhiFilename = filenameGuzhi(ts_code)
-    guzhiFile = open(guzhiFilename)
-    guzhiData = guzhiFile.read()
-    guzhiFile.close()
-    return datatrans.transGuzhiDataToDict(guzhiData)
+# def readGuzhiFileToDict(ts_code):
+#     """
+#     读取估值文件
+#     :rtype: dict
+#     :type ts_code: string
+#     :return dict
+#     """
+#     guzhiFilename = filenameGuzhi(ts_code)
+#     guzhiFile = open(guzhiFilename)
+#     guzhiData = guzhiFile.read()
+#     guzhiFile.close()
+#     return datatrans.transGuzhiDataToDict(guzhiData)
 
 
-def readGuzhiFilesToDf(stockList):
-    guzhiList = []
-    for ts_code in stockList:
-        logging.debug('readGuzhiFilesToDf: %s', ts_code)
-        guzhidata = readGuzhiFileToDict(ts_code)
-        if guzhidata is not None:
-            guzhiList.append(guzhidata)
-    return DataFrame(guzhiList)
+# def readGuzhiFilesToDf(stockList):
+#     guzhiList = []
+#     for ts_code in stockList:
+#         logging.debug('readGuzhiFilesToDf: %s', ts_code)
+#         guzhidata = readGuzhiFileToDict(ts_code)
+#         if guzhidata is not None:
+#             guzhiList.append(guzhidata)
+#     return DataFrame(guzhiList)
 
 
 def readGuzhiSQLToDf(stockList):
@@ -560,11 +552,12 @@ def readLastTTMPEs(stockList, trade_date=None):
         'YYYYmmdd'格式的日期
     :return:
     """
-    sql = 'select ts_code, pe_ttm pe from daily_basic where trade_date='
     if trade_date is None:
-        sql += '(select max(trade_date) from daily_basic)'
+        condition = '(select max(trade_date) from daily_basic)'
     else:
-        sql += f'"{trade_date}"'
+        condition = f'"{trade_date}"'
+    sql = (f'select ts_code, pe_ttm pe from daily_basic '
+           f'where trade_date={condition}')
 
     result = engine.execute(sql).fetchall()
     if not result:
@@ -647,9 +640,9 @@ def del_calTTMLirun(stockdf, date):
     return [ts_code, date, lirun, reportdate]
 
 
-def getLirunUpdateEndQuarter():
-    curQuarter = datatrans.transDateToQuarter(dt.datetime.now())
-    return datatrans.quarterSub(curQuarter, 1)
+# def getLirunUpdateEndQuarter():
+#     curQuarter = datatrans.transDateToQuarter(dt.datetime.now())
+#     return datatrans.quarterSub(curQuarter, 1)
 
 
 def getLastUpdate(dataName):
@@ -680,12 +673,12 @@ def writeChigu(stockList):
         engine.execute(sql)
 
 
-def setGubenLastUpdate(ts_code, endDate=None):
-    sql = ('insert into lastupdate (`ts_code`, `guben`) '
-           'values ("%(ts_code)s", "%(endDate)s") '
-           'on duplicate key update `guben`="%(endDate)s";' % locals())
-    result = engine.execute(sql)
-    return result
+# def setGubenLastUpdate(ts_code, endDate=None):
+#     sql = ('insert into lastupdate (`ts_code`, `guben`) '
+#            'values ("%(ts_code)s", "%(endDate)s") '
+#            'on duplicate key update `guben`="%(endDate)s";' % locals())
+#     result = engine.execute(sql)
+#     return result
 
 
 def del_updateKlineTTMPE(ts_code, startDate, endDate=None):
@@ -971,14 +964,13 @@ def readTableFields(table):
     result = engine.execute(sql).fetchall()
     return ','.join([s[0] for s in result])
 
-
-if __name__ == '__main__':
-    initlog()
-    pass
-    #    hylist = getHYList()
-    #     print(readCurrentTTMPE('002508'))
-
-    # 测试updateKlineEXTData
-    ts_code = '000651'
-    startDate = '2016-01-01'
-    # updateKlineEXTData(ts_code, startDate)
+# if __name__ == '__main__':
+#     initlog()
+#     pass
+#     #    hylist = getHYList()
+#     #     print(readCurrentTTMPE('002508'))
+#
+#     # 测试updateKlineEXTData
+#     ts_code = '000651'
+#     startDate = '2016-01-01'
+#     # updateKlineEXTData(ts_code, startDate)

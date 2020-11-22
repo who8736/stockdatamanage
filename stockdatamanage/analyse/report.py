@@ -9,8 +9,7 @@ from .. import datatrans
 # from .. import sqlrw
 from ..sqlconn import engine
 from ..sqlrw import (readCal, loadChigu, readLastTTMPEs, readLastTTMProfits,
-                     getLowPEStockList, readStockList, readTTMProfitsForStock,
-                     writeSQL)
+                     readStockList, readTTMProfitsForStock, writeSQL)
 
 
 def calGuzhi(stockList=None):

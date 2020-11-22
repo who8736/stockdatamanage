@@ -5,15 +5,6 @@
 {% block body %}
 {{ super() }}
 <div class="container">
-    <table id="tableold" data-toggle="table" data-url="">
-        <thead>
-        <tr>
-            <th data-field="id">ID</th>
-            <th data-field="text">Item Name</th>
-        </tr>
-        </thead>
-    </table>
-
     <div id="toolbar">
         <button id="button" class="btn btn-secondary">getSelections</button>
     </div>
@@ -21,15 +12,16 @@
             id="table"
             data-toggle="table"
             data-toolbar="#toolbar"
-            data-height="460"
+            data-height="560"
             data-search="true"
+            data-pagination="true"
             data-click-to-select="true"
             data-url="holdjson">
         <thead>
         <tr>
             <th data-field="selected" data-checkbox="true"></th>
-            <th data-field="id">ID</th>
-            <th data-field="text">Item Name</th>
+            <th data-field="id" data-sortable="true">ID</th>
+            <th data-field="text" data-sortable="true">Item Name</th>
         </tr>
         </thead>
     </table>
