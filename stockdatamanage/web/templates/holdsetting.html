@@ -10,6 +10,7 @@
         <div class="col-2">
             <h1>设置持有股票</h1>
             <hr>
+            <!--suppress HtmlUnknownTarget -->
             <form action="{{ url_for('holdsetting') }}" method="post">
 
                 {{ form.hidden_tag() }}
@@ -39,7 +40,7 @@
         // https://select2.github.io/examples.html
         $("select").select2({});
 
-        var data = $.ajax({
+        $.ajax({
             url: "/holdjson",
             dataType: 'json'
         }).then(function (data) {
