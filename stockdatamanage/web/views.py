@@ -8,10 +8,10 @@ Created on 2016年12月14日
 from flask import (
     render_template, redirect, url_for, request, send_file, current_app,
 )
-from flask_pagination import Pagination
 from bokeh.embed import components
 from bokeh.resources import INLINE
 # from bokeh.util.string import encode_utf8
+from flask_paginate import Pagination, get_page_parameter
 
 from stockdatamanage.plot import plotKline, BokehPlot
 from stockdatamanage.plot import PlotProfitsInc
@@ -111,7 +111,26 @@ def valuationView(ts_code):
 
 @app.route('/test_table')
 def test_table():
-    return render_template('test_table.html')
+    data = list(range(5))
+    q = request.args.get('q')
+    if q:
+        search = True
+
+    page = request.args.get(get_page_parameter(), type=int, default=1)
+    pagination = Pagination(page=page, per_page=10, total=100,
+                            # search=True,
+                            bs_version=4,
+                            prev_label='上一页',
+                            next_label='下一页',
+                            display_msg='当前 <b>{start} - {end}</b> 条/共 <b>{total}</b> 条',
+                            record_name='记录',
+                            show_single_page=True)
+    print('pagination.bs_version: ', pagination.bs_version)
+    print('pagination.links: ', pagination.links)
+    print('pagination.display_msg: ', pagination.display_msg)
+    print('pagination.search_msg: ', pagination.search_msg)
+    print('data: ', data)
+    return render_template('test_table.html', data=data, pagination=pagination)
 
 
 @app.route('/test2')

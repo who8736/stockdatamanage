@@ -25,6 +25,33 @@
         </tr>
         </thead>
     </table>
+    <br>
+    <br>
+    <br>
+    <table>
+        <thead>
+        <tr>
+            <th>id</th>
+
+        </tr>
+        </thead>
+        <tbody>
+        {% for d in data %}
+        <tr>
+            <td>d</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <div class="navbar">
+        <div><h2>分页</h2></div>
+        <div>
+            {{ pagination.links }}
+            {{ pagination.info }}
+        </div>
+
+    </div>
+
 
 
 </div>
