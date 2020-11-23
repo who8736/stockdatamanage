@@ -12,11 +12,10 @@ import logging
 
 import pandas as pd
 
-from . import sqlrw
 from . import datatrans
-from .datatrans import lastYearDate, calDate, quarterList
+from .datatrans import calDate
 from .sqlconn import engine
-from .sqlrw import readStockList, readTTMProfitsForDate, writeSQL
+from .sqlrw import readTTMProfitsForDate, writeSQL
 
 
 # import logging
@@ -140,44 +139,6 @@ def getHYProfitsIncRates(hyID):
     hyIncRate2 = getHYProfitsIncRate(hyID, lastYearQuarter2)
     hyIncRate3 = getHYProfitsIncRate(hyID, lastYearQuarter3)
     return hyIncRate1, hyIncRate2, hyIncRate3
-
-
-def readProfitInc(startDate, endDate=None, ptype='stock',
-                  code=None, reportType='quarter'):
-    """ 股票TTM利润增长率,按季或按年返回数个报告期增长率
-    :param ptype: str, stock股票, classify行业
-    :param reportType: str, quarter季报， year年报
-    :param code:
-    :param startDate:
-    :param endDate:
-    :return:
-    """
-    if ptype == 'stock':
-        table = 'ttmprofits'
-        field = 'ts_code'
-    else:
-        table = 'classify_profits'
-        field = 'code'
-    if endDate is None:
-        endDate = startDate
-    df = None
-    dates = quarterList(startDate, endDate, reportType=reportType)
-    import copy
-    for index, date in enumerate(dates):
-        sql = (f'select {field}, inc from {table} '
-               f'where end_date="{date}";')
-        _df = pd.read_sql(sql, engine)
-        if isinstance(code, str):
-            _df = _df[_df[f'{field}'] == code]
-        elif isinstance(code, list):
-            _df = _df[_df[f'{field}'].isin(code)]
-
-        _df.rename(columns={'inc': f'inc_{index}'}, inplace=True)
-        if df is None:
-            df = copy.deepcopy(_df)
-        else:
-            df = df.merge(_df, on=f'{field}', how='left')
-    return df
 
 
 def calClassifyStaticTTMProfit(end_date, replace=False):

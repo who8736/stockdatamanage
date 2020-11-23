@@ -7,9 +7,9 @@ from stockdatamanage.classifyanalyse import (
     calClassifyStaticTTMProfitLow,
     calClassifyStaticTTMProfit,
     readClassifyPE,
-    readProfitInc,
     # readClassifyProfitInc,
 )
+from stockdatamanage.sqlrw import readProfitInc
 
 
 def test_calDate():

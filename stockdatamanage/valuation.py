@@ -237,7 +237,9 @@ def calpfnew(_date, replace=False):
 
     # 过去6个季度利润稳定增长
     sectionNum = 6  # 取6个季度
-    incDf = sqlrw.readLastTTMProfits(stocks.ts_code.tolist(), sectionNum, _date)
+    # TODO: 根据当前日期确定分析的开始日期
+    startDate = ''
+    incDf = sqlrw.readProfitInc(startDate=startDate)
     stocks = pd.merge(stocks, incDf, on='ts_code', how='left')
     stocks['avg'] = incDf.mean(axis=1).round(2)
     stocks['std'] = incDf.std(axis=1).round(2)

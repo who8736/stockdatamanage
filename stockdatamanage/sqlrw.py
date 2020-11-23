@@ -19,7 +19,7 @@ from pandas.core.frame import DataFrame
 import xlrd
 # import tushare as ts
 
-from .datatrans import transDfToList
+from .datatrans import quarterList, transDfToList
 from .sqlconn import engine, Session
 from . import initsql
 
@@ -411,6 +411,7 @@ def readTTMProfitsForStock(ts_code: str, startDate=None, endDate=None):
     return df
 
 
+# TODO: 废弃本函数， 用readProfitInc代替
 def readLastTTMProfit(ts_code, limit=1, date=None):
     """取指定股票最近几期TTM利润
     Parameters
@@ -433,6 +434,7 @@ def readLastTTMProfit(ts_code, limit=1, date=None):
     return result
 
 
+# TODO: 废弃本函数， 用readProfitInc代替
 def readLastTTMProfits(stockList, limit=1, date=None):
     """取股票列表最近几期TTM利润
     Parameters
@@ -452,7 +454,7 @@ def readLastTTMProfits(stockList, limit=1, date=None):
         TTMLirunList.append(TTMLirun)
 
     #     print TTMLirunList
-    columns = ['incrate%s' % i for i in range(limit)]
+    columns = [f'incrate{i}' for i in range(limit)]
     columns.insert(0, 'ts_code')
     TTMLirunDf = DataFrame(TTMLirunList, columns=columns)
     return TTMLirunDf
@@ -469,15 +471,15 @@ def readTTMProfitsForDate(end_date):
     return df
 
 
-def readProfitsForDate(end_date):
-    """从income表读取一期股票利润
-    date: 格式YYYYMMDD
-    return: 返回DataFrame格式利润
-    """
-    sql = ('select ts_code, end_date, ann_date, n_income_attr_p as profits '
-           f'from income where `end_date`="{end_date}"')
-    df = pd.read_sql(sql, engine)
-    return df
+# def readProfitsForDate(end_date):
+#     """从income表读取一期股票利润
+#     date: 格式YYYYMMDD
+#     return: 返回DataFrame格式利润
+#     """
+#     sql = ('select ts_code, end_date, ann_date, n_income_attr_p as profits '
+#            f'from income where `end_date`="{end_date}"')
+#     df = pd.read_sql(sql, engine)
+#     return df
 
 
 def readTTMPE(ts_code):
@@ -489,28 +491,28 @@ def readTTMPE(ts_code):
     return df
 
 
-def readLastTTMPE(ts_code, date=None):
-    """读取指定股票指定日期的TTMPE，默认为最后一天的TTMPE
-
-    :param ts_code: str
-        股票代码， 如'600013'
-    :param date: str
-        指定日期， 格式'YYYYmmdd'
-    :return:
-    """
-    sql = (f'select pe_ttm from daily_basic where ts_code="{ts_code}" '
-           f'and trade_date=(select max(`trade_date`) from daily_basic where '
-           f'ts_code="{ts_code}"')
-    if date is None:
-        sql += ')'
-    else:
-        sql += f' and trade_date<={date})'
-
-    result = engine.execute(sql).fetchone()
-    if result is None:
-        return None
-    else:
-        return result[0]
+# def readLastTTMPE(ts_code, date=None):
+#     """读取指定股票指定日期的TTMPE，默认为最后一天的TTMPE
+#
+#     :param ts_code: str
+#         股票代码， 如'600013'
+#     :param date: str
+#         指定日期， 格式'YYYYmmdd'
+#     :return:
+#     """
+#     sql = (f'select pe_ttm from daily_basic where ts_code="{ts_code}" '
+#            f'and trade_date=(select max(`trade_date`) from daily_basic where '
+#            f'ts_code="{ts_code}"')
+#     if date is None:
+#         sql += ')'
+#     else:
+#         sql += f' and trade_date<={date})'
+#
+#     result = engine.execute(sql).fetchone()
+#     if result is None:
+#         return None
+#     else:
+#         return result[0]
 
 
 def readCal(startDate=None, endDate=None, exchange='SSE', is_open=1):
@@ -963,13 +965,40 @@ def readTableFields(table):
     result = engine.execute(sql).fetchall()
     return ','.join([s[0] for s in result])
 
-# if __name__ == '__main__':
-#     initlog()
-#     pass
-#     #    hylist = getHYList()
-#     #     print(readCurrentTTMPE('002508'))
-#
-#     # 测试updateKlineEXTData
-#     ts_code = '000651'
-#     startDate = '2016-01-01'
-#     # updateKlineEXTData(ts_code, startDate)
+
+def readProfitInc(startDate, endDate=None, ptype='stock',
+                  code=None, reportType='quarter'):
+    """ 股票TTM利润增长率,按季或按年返回数个报告期增长率
+    :param ptype: str, stock股票, classify行业
+    :param reportType: str, quarter季报， year年报
+    :param code:
+    :param startDate:
+    :param endDate:
+    :return:
+    """
+    if ptype == 'stock':
+        table = 'ttmprofits'
+        field = 'ts_code'
+    else:
+        table = 'classify_profits'
+        field = 'code'
+    if endDate is None:
+        endDate = startDate
+    df = None
+    dates = quarterList(startDate, endDate, reportType=reportType)
+    import copy
+    for index, date in enumerate(dates):
+        sql = (f'select {field}, inc from {table} '
+               f'where end_date="{date}";')
+        _df = pd.read_sql(sql, engine)
+        if isinstance(code, str):
+            _df = _df[_df[f'{field}'] == code]
+        elif isinstance(code, list):
+            _df = _df[_df[f'{field}'].isin(code)]
+
+        _df.rename(columns={'inc': f'inc_{index}'}, inplace=True)
+        if df is None:
+            df = copy.deepcopy(_df)
+        else:
+            df = df.merge(_df, on=f'{field}', how='left')
+    return df
