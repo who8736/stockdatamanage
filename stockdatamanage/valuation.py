@@ -120,8 +120,8 @@ def calpf():
     sql = 'select ts_code, hyid from hangyestock;'
     hyDf = pd.read_sql(sql, engine)
     stocks = pd.merge(stocks, hyDf, on='ts_code', how='left')
-    hyPEDf = classifyanalyse.getClassifyPE()
-    stocks = pd.merge(stocks, hyPEDf, on='hyid', how='left')
+    classifyPE = classifyanalyse.readClassifyPE()
+    stocks = pd.merge(stocks, classifyPE, on='hyid', how='left')
     stocks['lowhype'] = stocks.apply(lowhype, axis=1)
 
     # 过去6个季度利润稳定增长
@@ -225,11 +225,14 @@ def calpfnew(_date, replace=False):
     sql = f'select ts_code, classify_code from classify_member where date="{_date}";'
     classifyDf = pd.read_sql(sql, engine)
     stocks = pd.merge(stocks, classifyDf, on='ts_code', how='left')
-    classifyPEDf = classifyanalyse.getClassifyPE(_date)
+    classifyPEDf = classifyanalyse.readClassifyPE(_date)
     if classifyPEDf is None or classifyPEDf.empty:
         classifyanalyse.calClassifyPE(_date)
-        classifyPEDf = classifyanalyse.getClassifyPE(_date)
-    stocks = pd.merge(stocks, classifyPEDf, on='classify_code', how='left')
+        classifyPEDf = classifyanalyse.readClassifyPE(_date)
+    stocks = pd.merge(stocks, classifyPEDf,
+                      left_on='classify_code',
+                      rigth_on='code',
+                      how='left')
     stocks['lowhype'] = stocks.apply(lowhype, axis=1)
 
     # 过去6个季度利润稳定增长

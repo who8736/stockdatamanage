@@ -7,9 +7,9 @@ Created on 2016年12月5日
 import codecs
 
 from . import sqlrw
-from .classifyanalyse import (getClassifyName, getHYProfitsIncRates,
-                              getStockForClassify, getStockProfitsIncRates,
-                              readClassify)
+from .classifyanalyse import (readClassifyName, getHYProfitsIncRates,
+                              getStockForClassify, readStockProfitInc,
+                              readClassifyForStock)
 from . import datatrans
 
 
@@ -41,25 +41,25 @@ def report(ts_code):
     reportStr += '当前TTMPE参考最近200个工作日水平： %+6.2f\n' % guzhiData[16]
     reportStr += '当前TTMPE参考最近1000个工作日水平： %+6.2f\n' % guzhiData[17]
 
-    hyIDlv4 = classifyanalyse.readClassify(ts_code)
+    hyIDlv4 = classifyanalyse.readClassifyForStock(ts_code)
     hyIDlv3 = hyIDlv4[:6]
     hyIDlv2 = hyIDlv4[:4]
     hyIDlv1 = hyIDlv4[:2]
     reportStr += '=' * 20 + '\n\n'
     reportStr += '行业比较：\n' + '-' * 20 + '\n'
     reportStr += ('最近三年TTM利润增长率水平：%+10.2f%+10.2f%+10.2f\n\n' %
-                  classifyanalyse.getStockProfitsIncRates(ts_code))
+                  classifyanalyse.readStockProfitInc(ts_code))
 
-    reportStr += '所属一级行业：%s\n' % classifyanalyse.getClassifyName(hyIDlv1)
+    reportStr += '所属一级行业：%s\n' % classifyanalyse.readClassifyName(hyIDlv1)
     reportStr += ('最近三年TTM利润增长率水平：%+10.2f%+10.2f%+10.2f\n\n' %
                   classifyanalyse.getHYProfitsIncRates(hyIDlv1))
-    reportStr += '所属二级行业：%s\n' % classifyanalyse.getClassifyName(hyIDlv2)
+    reportStr += '所属二级行业：%s\n' % classifyanalyse.readClassifyName(hyIDlv2)
     reportStr += ('最近三年TTM利润增长率水平：%+10.2f%+10.2f%+10.2f\n\n' %
                   classifyanalyse.getHYProfitsIncRates(hyIDlv2))
-    reportStr += '所属三级行业：%s\n' % classifyanalyse.getClassifyName(hyIDlv3)
+    reportStr += '所属三级行业：%s\n' % classifyanalyse.readClassifyName(hyIDlv3)
     reportStr += ('最近三年TTM利润增长率水平：%+10.2f%+10.2f%+10.2f\n\n' %
                   classifyanalyse.getHYProfitsIncRates(hyIDlv3))
-    reportStr += '所属四级行业：%s\n' % classifyanalyse.getClassifyName(hyIDlv4)
+    reportStr += '所属四级行业：%s\n' % classifyanalyse.readClassifyName(hyIDlv4)
     reportStr += ('最近三年TTM利润增长率水平：%+10.2f%+10.2f%+10.2f\n\n' %
                   classifyanalyse.getHYProfitsIncRates(hyIDlv4))
 
@@ -72,7 +72,7 @@ def report(ts_code):
         reportStr += '同行业股票代码: %s\t' % sameHYts_code
         reportStr += '股票名称: %s\n\n' % sqlrw.getStockName(sameHYts_code)
         reportStr += ('最近三年TTM利润增长率水平：%+10.2s%+10.2s%+10.2s\n\n' %
-                      classifyanalyse.getStockProfitsIncRates(sameHYts_code))
+                      classifyanalyse.readStockProfitInc(sameHYts_code))
 
     outFilename = './data/report%s.txt' % ts_code
     outfile = codecs.open(outFilename, 'wb', 'utf-8')
@@ -104,31 +104,31 @@ def report1(ts_code):
     # 当前TTMPE参考最近1000个工作日水平
     myItem.PERate1000 = guzhiData[17]
 
-    hyIDlv4 = classifyanalyse.readClassify(ts_code)
+    hyIDlv4 = classifyanalyse.readClassifyForStock(ts_code)
     hyIDlv3 = hyIDlv4[:6]
     hyIDlv2 = hyIDlv4[:4]
     hyIDlv1 = hyIDlv4[:2]
 
     # 最近三年TTM利润增长率水平
-    myItem.profitsInc3Years = classifyanalyse.getStockProfitsIncRates(ts_code)
+    myItem.profitsInc3Years = classifyanalyse.readStockProfitInc(ts_code)
     # 所属1级行业
     myItem.hyIDlv1 = hyIDlv1
-    myItem.hyLv1 = classifyanalyse.getClassifyName(hyIDlv1)
+    myItem.hyLv1 = classifyanalyse.readClassifyName(hyIDlv1)
     # 最近三年TTM利润增长率水平
     myItem.hyIncLv1 = classifyanalyse.getHYProfitsIncRates(hyIDlv1)
     # 所属2级行业
     myItem.hyIDlv2 = hyIDlv2
-    myItem.hyLv2 = classifyanalyse.getClassifyName(hyIDlv2)
+    myItem.hyLv2 = classifyanalyse.readClassifyName(hyIDlv2)
     # 最近三年TTM利润增长率水平
     myItem.hyIncLv2 = classifyanalyse.getHYProfitsIncRates(hyIDlv2)
     # 所属3级行业
     myItem.hyIDlv3 = hyIDlv3
-    myItem.hyLv3 = classifyanalyse.getClassifyName(hyIDlv3)
+    myItem.hyLv3 = classifyanalyse.readClassifyName(hyIDlv3)
     # 最近三年TTM利润增长率水平
     myItem.hyIncLv3 = classifyanalyse.getHYProfitsIncRates(hyIDlv3)
     # 所属4级行业
     myItem.hyIDlv4 = hyIDlv4
-    myItem.hyLv4 = classifyanalyse.getClassifyName(hyIDlv4)
+    myItem.hyLv4 = classifyanalyse.readClassifyName(hyIDlv4)
     # 最近三年TTM利润增长率水平
     myItem.hyIncLv4 = classifyanalyse.getHYProfitsIncRates(hyIDlv4)
     #
@@ -141,7 +141,7 @@ def report1(ts_code):
         #         print u'sameHYts_code:', sameHYts_code
         sameHYList.append([sameHYts_code,
                            sqlrw.getStockName(sameHYts_code),
-                           classifyanalyse.getStockProfitsIncRates(
+                           classifyanalyse.readStockProfitInc(
                                sameHYts_code)])
     myItem.sameHYList = sameHYList
     #     outFilename = u'./data/report%s.txt' % ts_code
@@ -194,28 +194,28 @@ def reportValuation(ts_code):
     myItem.PERate1000 = myStockValuation[26]
     myItem.PEZ1000 = myStockValuation[23]
 
-    lv4Code = readClassify(ts_code)
+    lv4Code = readClassifyForStock(ts_code)
     lv3Code = lv4Code[:6]
     lv2Code = lv4Code[:4]
     lv1Code = lv4Code[:2]
 
     # 最近三年TTM利润增长率水平
-    myItem.profitsInc3Years = getStockProfitsIncRates(ts_code)
+    myItem.profitsInc3Years = readStockProfitInc(ts_code)
     # 所属1级行业
     myItem.lv1Code = lv1Code
-    myItem.lv1Name = getClassifyName(lv1Code)
+    myItem.lv1Name = readClassifyName(lv1Code)
     myItem.lv1Inc = getHYProfitsIncRates(lv1Code)
     # 所属2级行业
     myItem.lv2Code = lv2Code
-    myItem.lv2Name = getClassifyName(lv2Code)
+    myItem.lv2Name = readClassifyName(lv2Code)
     myItem.lv2Inc = getHYProfitsIncRates(lv2Code)
     # 所属3级行业
     myItem.lv3Code = lv3Code
-    myItem.lv3Name = getClassifyName(lv3Code)
+    myItem.lv3Name = readClassifyName(lv3Code)
     myItem.lv3Inc = getHYProfitsIncRates(lv3Code)
     # 所属4级行业
     myItem.lv4Code = lv4Code
-    myItem.lv4Name = getClassifyName(lv4Code)
+    myItem.lv4Name = readClassifyName(lv4Code)
     myItem.lv4Inc = getHYProfitsIncRates(lv4Code)
 
     # 同行业股票
@@ -223,7 +223,7 @@ def reportValuation(ts_code):
     # print(f'223 line: {stockList}')
     for code in stocks.ts_code:
         stocks.loc[stocks.ts_code == code, 'sname'] = sqlrw.getStockName(code)
-        incs = getStockProfitsIncRates(code)
+        incs = readStockProfitInc(code)
         stocks.loc[stocks.ts_code == code, 'inc1'] = incs[0]
         stocks.loc[stocks.ts_code == code, 'inc2'] = incs[1]
         stocks.loc[stocks.ts_code == code, 'inc3'] = incs[2]

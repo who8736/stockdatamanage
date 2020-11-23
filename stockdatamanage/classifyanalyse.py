@@ -14,7 +14,7 @@ import pandas as pd
 
 from . import sqlrw
 from . import datatrans
-from .datatrans import lastYearDate, calDate
+from .datatrans import lastYearDate, calDate, quarterList
 from .sqlconn import engine
 from .sqlrw import readStockList, readTTMProfitsForDate, writeSQL
 
@@ -40,7 +40,7 @@ def getStockForClassify(code=None, date=None):
     #     return [row[0] for row in result]
 
 
-def readClassify(ts_code, date=None):
+def readClassifyForStock(ts_code, date=None):
     """ 当查询指定股票的4级行业的代码
     """
     sql = f'select classify_code from classify_member where ts_code="{ts_code}" '
@@ -63,11 +63,11 @@ def readClassify(ts_code, date=None):
 #     return hystock
 
 
-def getHYLirunCount(hyID, quarter):
+def getClassifyProfitCnt(code, quarter):
     """ 查询行业在指定季度中已发布财报的股票数量
     """
-    sql = ('select count(1) from classify_profits where hyid="%(hyID)s" and '
-           'date="%(quarter)s"') % locals()
+    sql = (f'select count(1) from classify_profits where code="{code}" and '
+           f'date="{quarter}"')
     result = engine.execute(sql)
     return result.fetchone()[0]
 
@@ -96,12 +96,19 @@ def getSubHY(hyID, subLevel):
         return [i[0] for i in result]
 
 
-def getClassifyName(code):
-    sql = f'select name from classify where code="{code}";'
-    result = engine.execute(sql).fetchone()
-    # print(f'getClassifyName:{result}')
-    if result:
-        return result[0]
+def readClassifyName(code=None):
+    """取行业代码和名称
+    """
+    sql = f'select code, name from classify;'
+    df = pd.read_sql(sql, engine)
+    if df.empty:
+        return None
+    if isinstance(code, str):
+        df = df[df.code == code]
+        return df.name[0]
+    elif isinstance(code, list):
+        df = df[df.code.isin(code)]
+    return df
 
 
 def getHYStockCount(code):
@@ -135,24 +142,40 @@ def getHYProfitsIncRates(hyID):
     return hyIncRate1, hyIncRate2, hyIncRate3
 
 
-def getStockProfitsIncRate(ts_code, _date):
-    sql = ('select incrate from ttmprofits '
-           f'where ts_code="{ts_code}" and end_date="{_date}";')
-    result = engine.execute(sql).fetchone()
-    if result:
-        return result[0]
+def readProfitInc(startDate, endDate=None, ptype='stock',
+                       ts_code=None, reportType='quarter'):
+    """ 股票TTM利润增长率,按季或按年返回数个报告期增长率
+    :param ptype: str, stock股票, classify行业
+    :param reportType: str, quarter季报， year年报
+    :param ts_code:
+    :param startDate:
+    :param endDate:
+    :return:
+    """
+    if ptype == 'stock':
+        table = 'ttmprofits'
+    else:
+        table = classify_profits
+    if endDate is None:
+        endDate = startDate
+    df = None
+    dates = quarterList(startDate, endDate, reportType=reportType)
+    import copy
+    for index, date in enumerate(dates):
+        sql = ('select ts_code, inc from {table} '
+               f'where end_date="{date}";')
+        _df = pd.read_sql(sql, engine)
+        if isinstance(ts_code, str):
+            _df = _df[_df.ts_code == ts_code]
+        elif isinstance(ts_code, list):
+            _df = _df[_df.ts_code.isin(ts_code)]
 
-
-def getStockProfitsIncRates(ts_code):
-    curYear = datatrans.getCurYear()
-    lastYearQuarter1 = f'{curYear - 3}1231'
-    lastYearQuarter2 = f'{curYear - 2}1231'
-    lastYearQuarter3 = f'{curYear - 1}1231'
-    incRate1 = getStockProfitsIncRate(ts_code, lastYearQuarter1)
-    incRate2 = getStockProfitsIncRate(ts_code, lastYearQuarter2)
-    incRate3 = getStockProfitsIncRate(ts_code, lastYearQuarter3)
-    # print(incRate1, incRate2, incRate3)
-    return (incRate1, incRate2, incRate3)
+        _df.rename(columns={'inc': f'inc_{index}'}, inplace=True)
+        if df is None:
+            df = copy.deepcopy(_df)
+        else:
+            df = df.merge(_df, on='ts_code', how='left')
+    return df
 
 
 def calClassifyStaticTTMProfit(end_date, replace=False):
@@ -172,6 +195,7 @@ def calClassifyStaticTTMProfit(end_date, replace=False):
     calClassifyStaticTTMProfitHigh(df, end_date, replace=replace)
 
 
+# noinspection DuplicatedCode
 def calClassifyStaticTTMProfitHigh(classify, end_date, replace=False):
     """ 计算第1、2、3级行业的TTM利润
     """
@@ -248,56 +272,36 @@ def getHYQuarters():
     last2Quarter = datatrans.quarterSub(lastQuarter, 1)
     hylist = getHYList()
     hyQuarters = {}
-    for hyID in hylist:
-        hyStockCount = getHYStockCount(hyID)
-        hyLirunCount = getHYLirunCount(hyID, lastQuarter)
+    for code in hylist:
+        hyStockCount = getHYStockCount(code)
+        hyLirunCount = getClassifyProfitCnt(code, lastQuarter)
         if hyStockCount == 0:
             continue
         # print(hyID, float(hyLirunCount) / hyStockCount)
-        if float(hyLirunCount) / hyStockCount > 0.8:
-            hyQuarters[hyID] = lastQuarter
+        if hyLirunCount / hyStockCount > 0.8:
+            hyQuarters[code] = lastQuarter
         else:
-            hyQuarters[hyID] = last2Quarter
+            hyQuarters[code] = last2Quarter
     return hyQuarters
 
 
-def getHYPE(hyID, date, reset=False):
+def readClassifyPE(date=None, code=None):
     """ 计算行业在指定日期的市盈率
-    :param hyID:
     :param date:
-    :param reset: 为True时用于重算某行业的PE
+    :param code: None or list
 
     :return:
     """
-    sql = f'select hype from hangyepe where hyid="{hyID}" and date="{date}"'
-    result = engine.execute(sql).fetchone()
-    if not reset and result is not None:
-        return result[0]
-
-    ts_codes = getStockForClassify(hyID)
-    valueSum = 0
-    profitSum = 0
-    for ts_code in ts_codes:
-        sql = (f'select date, totalmarketvalue, ttmprofits '
-               f'from klinestock where ts_code="{ts_code}" and date<="{date}"'
-               f'order by `date` desc limit 1;')
-        result = engine.execute(sql).fetchone()
-        if result is not None:
-            #            value, profit = result.fetchone()
-            # result = result.first()
-            value = result[1]
-            profit = result[2]
-            # ttmpe = result[3]
-            if profit is None or profit < 0 or value is None:
-                continue
-
-            #            print ts_code, result[0], result[1], result[2], result[3]
-            valueSum += value
-            profitSum += profit
-    if profitSum != 0:
-        pe = round(valueSum / profitSum, 2)
-        #        print 'htHYPE', date, valueSum, profitSum, pe
-        return pe
+    if date is None:
+        condition = f'(select max(date) from classify_pe)'
+    else:
+        condition = f'"{date}"'
+    sql = f'select code, pe from classify_pe where date="{condition}"'
+    df = pd.read_sql(sql, engine)
+    if code is not None:
+        df = df[df.code.isin(code)]
+    if not df.empty:
+        return df
 
 
 def calClassifyPE(date):
@@ -322,20 +326,7 @@ def calClassifyPE(date):
         logging.error(f'failed to read hangyepe for date:{date}:', e)
 
 
-def getClassifyPE(date=None, replace=False):
-    """ 读取所有行业在指定日期的市盈率
-    """
-    sql = (f'select code as classify_code, pe classify_pe'
-           ' from classify_pe where date=')
-    if date is None:
-        sql += '(select max(date) from classify_pe)'
-    else:
-        sql += f'"{date}"'
-    df = pd.read_sql(sql, engine)
-    return df
-
-
-def resetHYTTMLirun(startQuarter=20191, endQuarter=20191):
+def resetClassifyProfits(startQuarter='20200331', endQuarter='20201231'):
     """
     重算指定日期所有行业TTM利润
     :return:
@@ -344,47 +335,29 @@ def resetHYTTMLirun(startQuarter=20191, endQuarter=20191):
     for date in dates:
         calAllHYTTMProfits(date)
 
+# def test1():
+#     """ 查询一组股票所处的行业分别有多少公司
+#     """
+#     ts_codes = ['002508', '600261', '002285', '000488',
+#                 '002573', '300072', '000910']
+#     for ts_code in ts_codes:
+#         stockName = sqlrw.getStockName(ts_code)
+#         hyID = readClassify(ts_code)
+#         hyName = getClassifyName(hyID)
+#         hyCount = getHYStockCount(hyID)
+#         print(ts_code, stockName, hyID, hyName, hyCount)
 
-def test1():
-    """ 查询一组股票所处的行业分别有多少公司
-    """
-    ts_codes = ['002508', '600261', '002285', '000488',
-                '002573', '300072', '000910']
-    for ts_code in ts_codes:
-        stockName = sqlrw.getStockName(ts_code)
-        hyID = readClassify(ts_code)
-        hyName = getClassifyName(hyID)
-        hyCount = getHYStockCount(hyID)
-        print(ts_code, stockName, hyID, hyName, hyCount)
 
-
-def test2():
-    hyList = getHYList()
-    hyPEs = {}
-    for hyID in hyList:
-        pe = getHYPE(hyID, '20171027')
-        hyPEs[hyID] = pe
-        print(hyID, pe)
+# def test2():
+#     hyList = getHYList()
+#     hyPEs = {}
+#     for hyID in hyPE(hyID, '20171027')
+#         hyPEs[hyIDList:
+# #         pe = getHY] = pe
+#         print(hyID, pe)
 
 
 # def getHYIDName(ts_code):
 #     hyID = getHYIDForStock(ts_code)
 #     hyName = getHYName(hyID)
 #     print ts_code, hyID, hyName
-
-
-if __name__ == '__main__':
-    #    tests()
-    #     hylist = getHYList()
-    #     hyCount = {}
-    #    hyquarters = getHYQuarters()
-    #    test1()
-    #    test2()
-    #    hypedf = getHYsPE()
-    #    getHYPE('01010801', '20171027')
-
-    #     calAllHYTTMLirun(20154)
-    hyID = '000101'
-    calClassifyStaticTTMProfit(hyID, 20184)
-    #     calHYTTMLirun(hyID, 20162)
-    #     stockList = ['000732', '', '', '', '', '', '', ]

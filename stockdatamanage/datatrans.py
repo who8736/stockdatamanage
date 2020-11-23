@@ -40,22 +40,29 @@ def del_quarterAdd(_quarterDate, addNum):
     return _quarterDate
 
 
-def quarterList(startDate, endDate):
+def quarterList(startDate, endDate, reportType='quarter'):
     """ 生成从startDate到endDate的季度列表
-    @type startDate: str
-    @type endDate: str
-
+    :param startDate:
+    :param endDate:
+    :param reportType: str, quarter季报, year年报
     """
-    _start = dt.date(int(startDate[:4]),
-                     (int(startDate[4:6]) + 2) // 3 * 3,
-                     1) + relativedelta(months=1, days=-1)
+    assert reportType in ('quarter', 'year'), '报告期类型错，应为quarter或year'
+    if reportType == 'quarter':
+        _start = dt.date(int(startDate[:4]),
+                         (int(startDate[4:6]) + 2) // 3 * 3,
+                         1) + relativedelta(months=1, days=-1)
+        delta = 4
+    else:
+        _start = dt.date(int(startDate[:4]), 12, 31)
+        delta = 13
+
     # _start = dt.datetime.strptime(startDate, '%Y%m%d').date()
     _end = dt.datetime.strptime(endDate, '%Y%m%d').date()
     _dateList = []
     while _start <= _end:
         _dateList.append(_start.strftime('%Y%m%d'))
         _start = dt.date(_start.year, _start.month, 1) + relativedelta(
-            months=4, days=-1)
+            months=delta, days=-1)
     return _dateList
 
 
