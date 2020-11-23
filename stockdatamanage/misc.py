@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 2017年10月26日
 
 @author: who8736
-'''
+"""
 
 
 # from download import DownloaderQuarter
@@ -73,7 +73,7 @@ def longts_code(ts_code):
         600000->sh.600000
         000651->sz.000651
     """
-    if (ts_code[0] == '6'):
+    if ts_code[0] == '6':
         return 'sh.%s' % ts_code
     else:
         return 'sz.%s' % ts_code
@@ -84,7 +84,7 @@ def tsCode(ts_code):
         600000->600000.SH
         000651->000651.SZ
     """
-    if (len(ts_code) == 6):
+    if len(ts_code) == 6:
         return ts_code + ('.SH' if ts_code[0] == '6' else '.SZ')
     else:
         return ts_code

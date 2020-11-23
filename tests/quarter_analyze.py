@@ -6,6 +6,7 @@
 from sqlrw import *
 
 
+# noinspection PyUnusedLocal
 def profit_dedt(ts_code='600705.SH', startDate='20131231', endDate='20181231'):
     """扣非净利润增长水平"""
     sql = f"""select a.ts_code, c.name, 

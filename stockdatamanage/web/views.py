@@ -112,9 +112,9 @@ def valuationView(ts_code):
 @app.route('/test_table')
 def test_table():
     data = list(range(5))
-    q = request.args.get('q')
-    if q:
-        search = True
+    # q = request.args.get('q')
+    # if q:
+    #     search = True
 
     page = request.args.get(get_page_parameter(), type=int, default=1)
     pagination = Pagination(page=page, per_page=10, total=100,
@@ -151,21 +151,21 @@ def klineimg(ts_code):
 @app.route('/stockklineimgnew/<ts_code>')
 def stockklineimgnew(ts_code):
     df = readStockKline(ts_code, days=1000)
-    return _klineimg(ts_code, df)
+    return _klineimg(df)
 
 
 @app.route('/indexklineimgnew/<ID>')
 def indexklineimgnew(ID):
     df = readIndexKline(ID, days=3000)
-    return _klineimg(ID, df)
+    return _klineimg(df)
 
 
-def _klineimg(ID, df):
+def _klineimg(df):
     # grab the static resources
     js_resources = INLINE.render_js()
     css_resources = INLINE.render_css()
 
-    plotImg = BokehPlot(ID, df)
+    plotImg = BokehPlot(df)
     scripts, div = components(plotImg.plot())
     # return render_template("plotkline.html", the_div=div, the_script=scripts)
     html = render_template(

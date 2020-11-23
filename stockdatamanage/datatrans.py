@@ -85,106 +85,106 @@ def getCurYear():
     return dt.datetime.today().year
 
 
-def gubenDataToDfSina(ts_code, guben):
-    """
-    新浪的股本数据转换为DataFrame格式
-    :param ts_code: 股本代码， 600000
-    :param guben: 下载股本数据, html格式
-    :return: 股本数据， DataFrame格式
-    """
-    gubenTree = etree.HTML(guben)
-    gubenData = gubenTree.xpath('''//html//body//div//div
-                                //div//div//table//tr//td
-                                //table//tr//td//table//tr//td''')
-    date = [gubenData[i][0].text for i in range(0, len(gubenData), 2)]
-    date = [datetime.strptime(d, '%Y-%m-%d') for d in date]
-    #     print date
-    totalshares = [
-        gubenData[i + 1][0].text for i in range(0, len(gubenData), 2)]
-    #     print totalshares
-    #     t = [i[:-2] for i in totalshares]
-    #     print t
-    danwei = {'万股': 10000, '亿股': 100000000}
-    try:
-        totalshares = [float(i[:-2]) * danwei[i[-2:]] for i in totalshares]
-    except ValueError as e:
-        logging.error('ts_code:%s, %s', ts_code, e)
-    #     print totalshares
-    gubenDf = DataFrame({'ts_code': ts_code,
-                         'date': date,
-                         'totalshares': totalshares})
-    return gubenDf
+# def gubenDataToDfSina(ts_code, guben):
+#     """
+#     新浪的股本数据转换为DataFrame格式
+#     :param ts_code: 股本代码， 600000
+#     :param guben: 下载股本数据, html格式
+#     :return: 股本数据， DataFrame格式
+#     """
+#     gubenTree = etree.HTML(guben)
+#     gubenData = gubenTree.xpath('''//html//body//div//div
+#                                 //div//div//table//tr//td
+#                                 //table//tr//td//table//tr//td''')
+#     date = [gubenData[i][0].text for i in range(0, len(gubenData), 2)]
+#     date = [datetime.strptime(d, '%Y-%m-%d') for d in date]
+#     #     print date
+#     totalshares = [
+#         gubenData[i + 1][0].text for i in range(0, len(gubenData), 2)]
+#     #     print totalshares
+#     #     t = [i[:-2] for i in totalshares]
+#     #     print t
+#     danwei = {'万股': 10000, '亿股': 100000000}
+#     try:
+#         totalshares = [float(i[:-2]) * danwei[i[-2:]] for i in totalshares]
+#     except ValueError as e:
+#         logging.error('ts_code:%s, %s', ts_code, e)
+#     #     print totalshares
+#     gubenDf = DataFrame({'ts_code': ts_code,
+#                          'date': date,
+#                          'totalshares': totalshares})
+#     return gubenDf
 
 
-def gubenDataToDfEastymoney(ts_code, guben):
-    """
-    东方财富的股本数据转换为DataFrame格式
-    :param ts_code: 股本代码， 600000
-    :param guben: 下载股本数据, html格式
-    :return: 股本数据， DataFrame格式
-    """
-    gubenTree = etree.HTML(guben)
-    gubenData = gubenTree.xpath('''//html//body//div//div
-                                //div//div//table//tr//td
-                                //table//tr//td//table//tr//td''')
-    date = [gubenData[i][0].text for i in range(0, len(gubenData), 2)]
-    date = [datetime.strptime(d, '%Y-%m-%d') for d in date]
-    #     print date
-    totalshares = [
-        gubenData[i + 1][0].text for i in range(0, len(gubenData), 2)]
-    #     print totalshares
-    #     t = [i[:-2] for i in totalshares]
-    #     print t
-    try:
-        totalshares = [float(i[:-2]) * 10000 for i in totalshares]
-    except ValueError as e:
-        logging.error('ts_code:%s, %s', ts_code, e)
-    #     print totalshares
-    gubenDf = DataFrame({'ts_code': ts_code,
-                         'date': date,
-                         'totalshares': totalshares})
-    return gubenDf
+# def gubenDataToDfEastymoney(ts_code, guben):
+#     """
+#     东方财富的股本数据转换为DataFrame格式
+#     :param ts_code: 股本代码， 600000
+#     :param guben: 下载股本数据, html格式
+#     :return: 股本数据， DataFrame格式
+#     """
+#     gubenTree = etree.HTML(guben)
+#     gubenData = gubenTree.xpath('''//html//body//div//div
+#                                 //div//div//table//tr//td
+#                                 //table//tr//td//table//tr//td''')
+#     date = [gubenData[i][0].text for i in range(0, len(gubenData), 2)]
+#     date = [datetime.strptime(d, '%Y-%m-%d') for d in date]
+#     #     print date
+#     totalshares = [
+#         gubenData[i + 1][0].text for i in range(0, len(gubenData), 2)]
+#     #     print totalshares
+#     #     t = [i[:-2] for i in totalshares]
+#     #     print t
+#     try:
+#         totalshares = [float(i[:-2]) * 10000 for i in totalshares]
+#     except ValueError as e:
+#         logging.error('ts_code:%s, %s', ts_code, e)
+#     #     print totalshares
+#     gubenDf = DataFrame({'ts_code': ts_code,
+#                          'date': date,
+#                          'totalshares': totalshares})
+#     return gubenDf
 
 
-def gubenDfToList(df):
-    timea = dt.datetime.now()
-    gubenList = []
-    for date, row in df.iterrows():
-        ts_code = row['ts_code']
-        date = row['date']
-        totalshares = row['totalshares']
+# def gubenDfToList(df):
+#     timea = dt.datetime.now()
+#     gubenList = []
+#     for date, row in df.iterrows():
+#         ts_code = row['ts_code']
+#         date = row['date']
+#         totalshares = row['totalshares']
+#
+#         guben = {'ts_code': ts_code,
+#                  'date': date,
+#                  'totalshares': totalshares
+#                  }
+#         gubenList.append(guben)
+#     timeb = dt.datetime.now()
+#     logging.debug('klineDfToList took %s' % (timeb - timea))
+#     return gubenList
 
-        guben = {'ts_code': ts_code,
-                 'date': date,
-                 'totalshares': totalshares
-                 }
-        gubenList.append(guben)
-    timeb = dt.datetime.now()
-    logging.debug('klineDfToList took %s' % (timeb - timea))
-    return gubenList
 
-
-def transLirunDf(df, year, quarter):
-    date = [year * 10 + quarter for _ in range(df['code'].count())]
-    ts_code = df['code']
-    profits = df['net_profits']
-    if quarter == 4:
-        year += 1
-    reportdate = df['report_date'].apply(lambda x: str(year) + '-' + x)
-    rd = []
-    for d in reportdate:
-        if d[-5:] == '02-29':
-            d = d[:-5] + '02-28'
-        dd = datetime.strptime(d, '%Y-%m-%d')
-        rd.append(dd)
-    data = {'ts_code': ts_code,
-            'date': date,
-            'profits': profits * 10000,
-            'reportdate': rd}
-    df = pd.DataFrame(data)
-    #     print 'transLirunDf, len(df):%s' % len(df)
-    df = df.drop_duplicates()
-    return df
+# def transLirunDf(df, year, quarter):
+#     date = [year * 10 + quarter for _ in range(df['code'].count())]
+#     ts_code = df['code']
+#     profits = df['net_profits']
+#     if quarter == 4:
+#         year += 1
+#     reportdate = df['report_date'].apply(lambda x: str(year) + '-' + x)
+#     rd = []
+#     for d in reportdate:
+#         if d[-5:] == '02-29':
+#             d = d[:-5] + '02-28'
+#         dd = datetime.strptime(d, '%Y-%m-%d')
+#         rd.append(dd)
+#     data = {'ts_code': ts_code,
+#             'date': date,
+#             'profits': profits * 10000,
+#             'reportdate': rd}
+#     df = pd.DataFrame(data)
+#     #     print 'transLirunDf, len(df):%s' % len(df)
+#     df = df.drop_duplicates()
+#     return df
 
 
 def transGuzhiDataToDict(guzhi):

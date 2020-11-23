@@ -9,7 +9,6 @@ import datetime as dt
 # import sys  # python的系统调用模块
 # import os
 import logging
-from functools import wraps
 from multiprocessing.dummy import Pool as ThreadPool
 
 import baostock as bs
@@ -27,30 +26,13 @@ from .download import (
     downIndexDailyBasic, downIndexBasic, downIndexWeight, DownloaderQuarter,
     downClassify, downAdjFactor,
 )
-from .initlog import initlog
+from .initlog import initlog, logfun
 from .sqlconn import engine
 from .sqlrw import (
     readCal, getLastUpdate, calAllTTMProfits, setLastUpdate,
 )
 from .check import checkQuarterData
 from .datatrans import classifyEndDate, quarterList
-
-
-def logfun(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        #         def _func(*args):
-        #         print "hello, %s" % func.__name__
-        logging.info('===========start %s===========', func.__name__)
-        startTime = dt.datetime.now()
-        func(*args, **kwargs)
-        endTime = dt.datetime.now()
-        logging.info('===========end %s===========', func.__name__)
-        logging.info('%s cost time: %s ',
-                     func.__name__, endTime - startTime)
-
-    #         return _func
-    return wrapper
 
 
 @logfun
@@ -256,33 +238,33 @@ def updateQuarterData():
 #     pool.join()
 
 
-@logfun
-def del_updateGubenSingleThread():
-    """ 更新股本单线程版
-    """
-    # stockList = sqlrw.readGubenUpdateList()
-    # for ts_code in stockList:
-    #     downGuben(ts_code)
-    #     time.sleep(5)
-    # 以上代码为原股本下载代码
-
-    endTime = dt.datetime.now()
-    endTime = endTime + dt.timedelta(days=-1)
-    # 选择要提前的天数
-    startTime = endTime + dt.timedelta(days=-10)
-    # 格式化处理
-    startDate = startTime.strftime('%Y%m%d')
-    endDate = endTime.strftime('%Y%m%d')
-
-    pro = ts.pro_api()
-    df = pro.trade_cal(exchange='SSE', start_date=startDate,
-                       end_date=endDate)
-    date = df[df.is_open == 1].cal_date.max()
-    # gubenUpdateDf = checkGuben(date)
-    # for ts_code in gubenUpdateDf['ts_code']:
-    #     downGuben(ts_code)
-    #     setGubenLastUpdate(ts_code, date)
-    #     time.sleep(2)
+# @logfun
+# def del_updateGubenSingleThread():
+#     """ 更新股本单线程版
+#     """
+#     # stockList = sqlrw.readGubenUpdateList()
+#     # for ts_code in stockList:
+#     #     downGuben(ts_code)
+#     #     time.sleep(5)
+#     # 以上代码为原股本下载代码
+#
+#     endTime = dt.datetime.now()
+#     endTime = endTime + dt.timedelta(days=-1)
+#     # 选择要提前的天数
+#     startTime = endTime + dt.timedelta(days=-10)
+#     # 格式化处理
+#     startDate = startTime.strftime('%Y%m%d')
+#     endDate = endTime.strftime('%Y%m%d')
+#
+#     pro = ts.pro_api()
+#     df = pro.trade_cal(exchange='SSE', start_date=startDate,
+#                        end_date=endDate)
+#     date = df[df.is_open == 1].cal_date.max()
+#     # gubenUpdateDf = checkGuben(date)
+#     # for ts_code in gubenUpdateDf['ts_code']:
+#     #     downGuben(ts_code)
+#     #     setGubenLastUpdate(ts_code, date)
+#     #     time.sleep(2)
 
 
 @logfun
@@ -325,14 +307,14 @@ def updatePf():
 #     pool.join()
 
 
-@logfun
-def del_updateKlineBaseData(stockList, threadNum):
-    """ 启动多线程更新K线历史数据主函数
-    """
-    pool = ThreadPool(processes=threadNum)
-    # pool.map(downKline, stockList)
-    pool.close()
-    pool.join()
+# @logfun
+# def del_updateKlineBaseData(stockList, threadNum):
+#     """ 启动多线程更新K线历史数据主函数
+#     """
+#     pool = ThreadPool(processes=threadNum)
+#     # pool.map(downKline, stockList)
+#     pool.close()
+#     pool.join()
 
 
 @logfun

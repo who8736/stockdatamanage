@@ -27,7 +27,7 @@ requests.packages.urllib3.disable_warnings()
 class WebRequest(object):
     name = "web_request"
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         self.response = Response()
 
     @property

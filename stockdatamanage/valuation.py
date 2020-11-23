@@ -105,95 +105,95 @@ def lowPEZ1000(stock):
     return 1 if stock.pez1000 < -1 else 0
 
 
-def calpf():
-    """ 根据各指标计算评分，分别写入文件和数据库
-    """
-    #    stocks = readStockListDf()[:10]
-    stocks = readStockList()
-    # print(stocks)
-    # 低市盈率
-    peDf = readLastTTMPEs(stocks.ts_code.tolist())
-    stocks = pd.merge(stocks, peDf, on='ts_code', how='left')
-    stocks['lowpe'] = stocks.apply(lowpe, axis=1)
-
-    # 市盈率低于行业平均
-    sql = 'select ts_code, hyid from hangyestock;'
-    hyDf = pd.read_sql(sql, engine)
-    stocks = pd.merge(stocks, hyDf, on='ts_code', how='left')
-    classifyPE = classifyanalyse.readClassifyPE()
-    stocks = pd.merge(stocks, classifyPE, on='hyid', how='left')
-    stocks['lowhype'] = stocks.apply(lowhype, axis=1)
-
-    # 过去6个季度利润稳定增长
-    sectionNum = 6  # 取6个季度
-    incDf = sqlrw.readLastTTMProfits(stocks.ts_code.tolist(), sectionNum)
-    stocks = pd.merge(stocks, incDf, on='ts_code', how='left')
-    stocks['avg'] = incDf.mean(axis=1).round(2)
-    stocks['std'] = incDf.std(axis=1).round(2)
-    stocks['wdzz'] = incDf.apply(wdzz, axis=1)
-
-    # 利润增长的平均标准差与平均增长率的比值， 小于1时判断为增长稳定
-    stocks['wdzz1'] = incDf.apply(wdzz1, axis=1)
-
-    # 根据过去6季度TTM利润平均增长率与TTMPE计算PEG
-    stocks['peg'] = stocks['pe'] / stocks['avg']
-    stocks['peg'] = stocks['peg'].round(2)
-    stocks['lowpeg'] = stocks.apply(lowPEG, axis=1)
-
-    # 200天Z值小于-1
-    stocks['pez200'] = stocks.apply(peZ, axis=1, args=(200,))
-    stocks['pez200'] = stocks['pez200'].round(2)
-    stocks['lowpez200'] = stocks.apply(lowPEZ200, axis=1)
-
-    # 1000天Z值小于-1
-    stocks['pez1000'] = stocks.apply(peZ, axis=1, args=(1000,))
-    stocks['pez1000'] = stocks['pez1000'].round(2)
-    stocks['lowpez1000'] = stocks.apply(lowPEZ1000, axis=1)
-
-    # 计算pe200与pe1000
-    # stocks['pe200'] = analyse.peHistRate(stocks.ts_code.tolist(), 200)
-    # stocks['pe1000'] = analyse.peHistRate(stocks.ts_code.tolist(), 1000)
-    df = report.peHistRate(stocks.ts_code.tolist(), 200)
-    stocks = pd.merge(stocks, df, on='ts_code', how='left')
-    df = report.peHistRate(stocks.ts_code.tolist(), 1000)
-    stocks = pd.merge(stocks, df, on='ts_code', how='left')
-
-    # 计算总评分
-    stocks['pf'] = stocks.lowpe
-    stocks['pf'] += stocks.lowhype
-    stocks['pf'] += stocks.wdzz1
-    stocks['pf'] += stocks.lowpeg
-    stocks['pf'] += stocks.lowpez200
-    stocks['pf'] += stocks.lowpez1000
-    stocks = stocks.sort_values(by='pf', ascending=False)
-
-    # 设置输出列与列顺序
-    #     guzhiDf = guzhiDf[['ts_code', 'name', 'pe',
-    #                        'incrate0', 'incrate1', 'incrate2',
-    #                        'incrate3', 'incrate4', 'incrate5',
-    #                        'avgrate', 'madrate', 'stdrate', 'pe200', 'pe1000'
-    #                        ]]
-
-    #     mystocks = ['002508', '600261', '002285', '000488',
-    #                 '002573', '300072', '000910']
-    #     mystockspf = stocks[stocks['ts_code'].isin(mystocks)]
-    #     mystockspf.set_index(['ts_code'], inplace=True)
-    #     mystockspf.to_csv('./data/valuationmystocks.csv')
-
-    # 保存评价结果
-    stocks.set_index(['ts_code'], inplace=True)
-    stocks.to_csv('./data/valuation.csv')
-    #    print stocks
-    if initsql.existTable('valuation'):
-        engine.execute('TRUNCATE TABLE valuation')
-    stocks = stocks.dropna()
-
-    # 当计算peg时，如果平均增长率为0，则结果为inf
-    # 将inf替换为-9999
-    stocks.replace([np.inf, -np.inf], -9999, inplace=True)
-
-    stocks.to_sql('valuation', engine, if_exists='append')
-    return stocks
+# def calpf():
+#     """ 根据各指标计算评分，分别写入文件和数据库
+#     """
+#     #    stocks = readStockListDf()[:10]
+#     stocks = readStockList()
+#     # print(stocks)
+#     # 低市盈率
+#     peDf = readLastTTMPEs(stocks.ts_code.tolist())
+#     stocks = pd.merge(stocks, peDf, on='ts_code', how='left')
+#     stocks['lowpe'] = stocks.apply(lowpe, axis=1)
+#
+#     # 市盈率低于行业平均
+#     sql = 'select ts_code, hyid from hangyestock;'
+#     hyDf = pd.read_sql(sql, engine)
+#     stocks = pd.merge(stocks, hyDf, on='ts_code', how='left')
+#     classifyPE = classifyanalyse.readClassifyPE()
+#     stocks = pd.merge(stocks, classifyPE, on='hyid', how='left')
+#     stocks['lowhype'] = stocks.apply(lowhype, axis=1)
+#
+#     # 过去6个季度利润稳定增长
+#     sectionNum = 6  # 取6个季度
+#     incDf = sqlrw.readLastTTMProfits(stocks.ts_code.tolist(), sectionNum)
+#     stocks = pd.merge(stocks, incDf, on='ts_code', how='left')
+#     stocks['avg'] = incDf.mean(axis=1).round(2)
+#     stocks['std'] = incDf.std(axis=1).round(2)
+#     stocks['wdzz'] = incDf.apply(wdzz, axis=1)
+#
+#     # 利润增长的平均标准差与平均增长率的比值， 小于1时判断为增长稳定
+#     stocks['wdzz1'] = incDf.apply(wdzz1, axis=1)
+#
+#     # 根据过去6季度TTM利润平均增长率与TTMPE计算PEG
+#     stocks['peg'] = stocks['pe'] / stocks['avg']
+#     stocks['peg'] = stocks['peg'].round(2)
+#     stocks['lowpeg'] = stocks.apply(lowPEG, axis=1)
+#
+#     # 200天Z值小于-1
+#     stocks['pez200'] = stocks.apply(peZ, axis=1, args=(200,))
+#     stocks['pez200'] = stocks['pez200'].round(2)
+#     stocks['lowpez200'] = stocks.apply(lowPEZ200, axis=1)
+#
+#     # 1000天Z值小于-1
+#     stocks['pez1000'] = stocks.apply(peZ, axis=1, args=(1000,))
+#     stocks['pez1000'] = stocks['pez1000'].round(2)
+#     stocks['lowpez1000'] = stocks.apply(lowPEZ1000, axis=1)
+#
+#     # 计算pe200与pe1000
+#     # stocks['pe200'] = analyse.peHistRate(stocks.ts_code.tolist(), 200)
+#     # stocks['pe1000'] = analyse.peHistRate(stocks.ts_code.tolist(), 1000)
+#     df = report.peHistRate(stocks.ts_code.tolist(), 200)
+#     stocks = pd.merge(stocks, df, on='ts_code', how='left')
+#     df = report.peHistRate(stocks.ts_code.tolist(), 1000)
+#     stocks = pd.merge(stocks, df, on='ts_code', how='left')
+#
+#     # 计算总评分
+#     stocks['pf'] = stocks.lowpe
+#     stocks['pf'] += stocks.lowhype
+#     stocks['pf'] += stocks.wdzz1
+#     stocks['pf'] += stocks.lowpeg
+#     stocks['pf'] += stocks.lowpez200
+#     stocks['pf'] += stocks.lowpez1000
+#     stocks = stocks.sort_values(by='pf', ascending=False)
+#
+#     # 设置输出列与列顺序
+#     #     guzhiDf = guzhiDf[['ts_code', 'name', 'pe',
+#     #                        'incrate0', 'incrate1', 'incrate2',
+#     #                        'incrate3', 'incrate4', 'incrate5',
+#     #                        'avgrate', 'madrate', 'stdrate', 'pe200', 'pe1000'
+#     #                        ]]
+#
+#     #     mystocks = ['002508', '600261', '002285', '000488',
+#     #                 '002573', '300072', '000910']
+#     #     mystockspf = stocks[stocks['ts_code'].isin(mystocks)]
+#     #     mystockspf.set_index(['ts_code'], inplace=True)
+#     #     mystockspf.to_csv('./data/valuationmystocks.csv')
+#
+#     # 保存评价结果
+#     stocks.set_index(['ts_code'], inplace=True)
+#     stocks.to_csv('./data/valuation.csv')
+#     #    print stocks
+#     if initsql.existTable('valuation'):
+#         engine.execute('TRUNCATE TABLE valuation')
+#     stocks = stocks.dropna()
+#
+#     # 当计算peg时，如果平均增长率为0，则结果为inf
+#     # 将inf替换为-9999
+#     stocks.replace([np.inf, -np.inf], -9999, inplace=True)
+#
+#     stocks.to_sql('valuation', engine, if_exists='append')
+#     return stocks
 
 
 # noinspection PyTypeChecker
@@ -215,7 +215,7 @@ def calpfnew(_date, replace=False):
     stocks = readStockList()
     # print(stocks)
     # 低市盈率
-    peDf = readLastTTMPEs(stocks.ts_code.tolist(), _date)
+    peDf = readLastTTMPEs(stocks, _date)
     if peDf is None:
         return
     stocks = pd.merge(stocks, peDf, on='ts_code', how='inner')

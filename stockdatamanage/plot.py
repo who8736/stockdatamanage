@@ -115,12 +115,12 @@ def scatter(startDate, endDate):
 #     datetime.
 
 
-def plotKline(ID, type='stock', days=1000):
+def plotKline(ID, ptype='stock', days=1000):
     """ 绘制K线与TTMPE图
     """
-    if type == 'stock':
+    if ptype == 'stock':
         return plotKlineStock(ID, days)
-    elif type == 'index':
+    elif ptype == 'index':
         return plotKlineIndex(ID, days)
     else:
         return None
@@ -139,7 +139,7 @@ def plotKlineIndex(ID, days):
            f'order by a.trade_date desc limit {days};')
     df = pd.read_sql(sql, engine)
     print(df.head())
-    bokehplot = BokehPlot(ID, df)
+    bokehplot = BokehPlot(df)
     return bokehplot.plot()
 
 
@@ -158,7 +158,7 @@ def plotKlineStock(ID, days):
     # df = pd.read_sql(sql, engine)
     df = readStockKline(ts_code=ID, days=days)
     # print(df.head())
-    bokehplot = BokehPlot(ID, df)
+    bokehplot = BokehPlot(df)
     return bokehplot.plot()
 
 
@@ -244,18 +244,18 @@ def plotPE(df):
     # return imgData
 
 
-def getMonthIndex(dates, type='year'):
+def getMonthIndex(dates, ptype='year'):
     """
     按日期生成主刻度标签
-    type为year时，刻度单位为年
-    type为month时，刻度单位为月
+    ptype为year时，刻度单位为年
+    ptype为month时，刻度单位为月
     :param dates: str, '20200320'
     :return:
     """
     strcut = 4
-    if type=='year':
+    if ptype == 'year':
         strcut = 4
-    elif type=='month':
+    elif ptype == 'month':
         strcut = 6
 
     month = ''
@@ -368,7 +368,7 @@ class BokehPlot:
     :return:
     """
 
-    def __init__(self, ID, df):
+    def __init__(self, df):
         df['date'] = [i.strftime('%Y%m%d') for i in df.date]
         self.df = df
         days = df.shape[0]
@@ -557,7 +557,7 @@ class PlotProfitsInc:
         # selectHeight = int(width / 16 * 1)
 
         # 绘制散点图
-        dataLen = df.shape[0]
+        # dataLen = df.shape[0]
         tooltips = [('date', '@date'), ('inc', '@inc')]
         # ymin = df.low[-200:].min()
         # ymax = df.high[-200:].max()
@@ -578,15 +578,15 @@ class PlotProfitsInc:
         # self.pinc.scatter(x=a, y=b)
         # self.plotCandlestick()
 
-        xmin = min(df.index)
-        xmax = max(df.index)
+        # xmin = min(df.index)
+        # xmax = max(df.index)
         # print(xmin, xmax)
         cf = Config()
         filename = os.path.join(cf.datapath, 'profits_inc_adf_linear.xlsx')
         linearDf = pd.read_excel(filename)
         intercept = linearDf[linearDf.ts_code == ts_code].intercept.values[0]
         coef = linearDf[linearDf.ts_code == ts_code].coef.values[0]
-        r2 = linearDf[linearDf.ts_code == ts_code].r2.values[0]
+        # r2 = linearDf[linearDf.ts_code == ts_code].r2.values[0]
         # print(intercept, coef, r2)
         y = [intercept + x * coef for x in df.index]
         self.pinc.line(df.index, y, color='blue')
@@ -595,12 +595,12 @@ class PlotProfitsInc:
         return self.pinc
 
 
-if __name__ == '__main__':
-    startDate = '2017-01-01'
-    endDate = '2017-03-31'
-    #     k = dateStrList(startDate, endDate)
-    #     print k
-    #     scatter(startDate, endDate)
-    # plotKline('600801')
-    BokehPlot('600519')
-#     tests()
+# if __name__ == '__main__':
+#     startDate = '2017-01-01'
+#     endDate = '2017-03-31'
+#     #     k = dateStrList(startDate, endDate)
+#     #     print k
+#     #     scatter(startDate, endDate)
+#     # plotKline('600801')
+#     BokehPlot('600519')
+# #     tests()

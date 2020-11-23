@@ -3,13 +3,15 @@
 {% block title %}股票估值分析 -- 估值报告{% endblock %}
 
 {% block body %}
-	<div class="container">
+<div class="container">
     {{ super() }}
 
-    <p><iframe src="/indexklineimgnew/{{ stock.ts_code }}" id="bokehplot"
-        frameborder="0"  name="kline bokeh plot" scrolling="no"
-		onload="this.height=100">
-    </iframe></p>
+    <p>
+        <iframe src="/indexklineimgnew/{{ stock.ts_code }}" id="bokehplot"
+                name="kline bokeh plot"
+                onload="this.height=100">
+        </iframe>
+    </p>
 
-    </div>
+</div>
 {% endblock %}

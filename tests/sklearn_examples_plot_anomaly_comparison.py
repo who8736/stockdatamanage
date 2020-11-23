@@ -1,4 +1,4 @@
-#-*- coding:utf-8 -*-
+# -*- coding:utf-8 -*-
 # author:who8736
 # datetime:2020/4/19 11:55
 
@@ -65,7 +65,7 @@ rng = np.random.RandomState(42)
 for i_dataset, X in enumerate(datasets):
     # Add outliers
     X = np.concatenate([X, rng.uniform(low=-6, high=6,
-                       size=(n_outliers, 2))], axis=0)
+                                       size=(n_outliers, 2))], axis=0)
 
     for name, algorithm in anomaly_algorithms:
         t0 = time.time()

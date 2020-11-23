@@ -7,7 +7,7 @@ from stockdatamanage.classifyanalyse import (
     calClassifyStaticTTMProfitLow,
     calClassifyStaticTTMProfit,
     readClassifyPE,
-    readStockProfitInc,
+    readProfitInc,
     # readClassifyProfitInc,
 )
 
@@ -41,13 +41,9 @@ def test_readClassifyPE():
     print(df)
 
 
-def test_readStockProfitInc():
-    df = readStockProfitInc('20150331', '20200930', reportType='year')
-    print(df)
-
-
-def test_readClassifyProfitInc():
-    df = readClassifyProfitInc('01010101', period=3)
+def test_readProfitInc():
+    df = readProfitInc('20150331', '20200930', ptype='classify',
+                            reportType='year')
     print(df)
 
 
@@ -59,6 +55,5 @@ if __name__ == '__main__':
 
     # test_readClassifyPE()
 
-    test_readStockProfitInc()
+    test_readProfitInc()
 
-    # test_readClassifyProfitInc()

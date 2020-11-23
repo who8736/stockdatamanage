@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 2016年12月14日
 
 @author: who8736
-'''
+"""
 from flask import Flask
 import sys
 from flask_bootstrap import Bootstrap
 import importlib
 from flask_wtf.csrf import CSRFProtect
 
+# noinspection PyTypeChecker
 importlib.reload(sys)
 # sys.setdefaultencoding('utf-8')  # @UndefinedVariable
 

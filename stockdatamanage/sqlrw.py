@@ -543,11 +543,10 @@ def readCal(startDate=None, endDate=None, exchange='SSE', is_open=1):
 #     return
 
 
-def readLastTTMPEs(stockList, trade_date=None):
+def readLastTTMPEs(stocks, trade_date=None):
     """
     读取stockList中股票指定日期的TTMPE, 默认取最后一天的TTMPE
-    :param stockList: list
-        股票列表
+    :param stocks: Dataframe 股票清单
     :param trade_date: str
         'YYYYmmdd'格式的日期
     :return:
@@ -559,14 +558,14 @@ def readLastTTMPEs(stockList, trade_date=None):
     sql = (f'select ts_code, pe_ttm pe from daily_basic '
            f'where trade_date={condition}')
 
-    result = engine.execute(sql).fetchall()
-    if not result:
+    df = pd.read_sql(sql, engine)
+    if df.empty:
         logging.warning(f'缺少{trade_date}每日指标')
         return None
-    df = pd.read_sql(sql, engine)
+
     # ts_codes, ttmpes = zip(*result)
     # df = pd.DataFrame({'ts_code': ts_codes, 'pe': ttmpes})
-    df = df.loc[df['ts_code'].isin(stockList)]
+    df = df.loc[df.ts_code.isin(stocks.ts_code)]
     df = df.dropna()
     return df
 

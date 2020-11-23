@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 2016年11月26日
 
 @author: who8736
-'''
+"""
 
 import os
 
@@ -11,6 +11,7 @@ import os
 def createPath(filePath):
     if not os.path.exists(filePath):
         os.makedirs(filePath)
+
 
 if __name__ == '__main__':
     filePaths = ['./data/BalanceSheet',

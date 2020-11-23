@@ -77,6 +77,7 @@ def analyIndex(code1='000001.SH', code2='000016.SH', startDate='20070101',
     # print(df1)
     max1 = df1[df1.close_sh == df1.close_sh.max()]
     df1right = df1[df1.trade_date > max1.trade_date.values[0]]
+    # noinspection PyUnusedLocal
     min1 = df1right[df1right.close_sh == df1right.close_sh.min()]
 
     sql = (f'select trade_date, close close_sz from index_daily'
@@ -84,6 +85,7 @@ def analyIndex(code1='000001.SH', code2='000016.SH', startDate='20070101',
     df2 = pd.read_sql(sql, engine)
     if df2.empty:
         return None
+    # noinspection PyUnusedLocal
     max2 = df2[df2.close_sz == df2.close_sz.max()]
 
     df1['line1'] = df1.close_sh / df1.close_sh[0]
@@ -95,14 +97,17 @@ def analyIndex(code1='000001.SH', code2='000016.SH', startDate='20070101',
     # plt.show()
 
     if plot:
+        # noinspection PyUnusedLocal
         fig = plt.figure()
         ax = plt.subplot()
         label1 = INDEXNAME[code1]
         label2 = INDEXNAME[code2]
+        # noinspection PyUnusedLocal
         line1 = ax.plot(df.index, df.line1, label=label1, color='blue')
+        # noinspection PyUnusedLocal
         line2 = ax.plot(df.index, df.line2, label=label2, color='red')
         dates = [date.strftime('%Y%m%d') for date in df.trade_date]
-        tickerIndex, tickerLabels = getMonthIndex(dates, type='year')
+        tickerIndex, tickerLabels = getMonthIndex(dates, ptype='year')
         locator = FixedLocator(tickerIndex)
         ax.xaxis.set_major_locator(locator)
         ax.set_xticklabels(tickerLabels)
@@ -111,7 +116,7 @@ def analyIndex(code1='000001.SH', code2='000016.SH', startDate='20070101',
             label.set_rotation(45)
         font1 = {'family': 'simsun', 'weight': 'normal', 'size': 12, }
         plt.legend(prop=font1)
-        # noinspection PyTypeChecker
+        # noinspection PyTypeChecker,PyUnusedLocal
         cursor = Cursor(ax, useblit=True, color='black', linewidth=1)
         # plt.savefig(f'data/incate-{code1}-{code2}.png')
         plt.grid()
@@ -216,6 +221,7 @@ def resetTTMLirun():
     """
     startQuarter = 20174
     endQuarter = 20191
+    # noinspection PyUnusedLocal
     dates = datatrans.quarterList(startQuarter, endQuarter)
     for year in range(2010, 2020):
         for md in ['0331', '0630', '0930', '1231']:
@@ -689,6 +695,7 @@ def __testPlot():
     """
     pass
 
+    # noinspection PyUnusedLocal
     p = PlotProfitsInc(ts_code='000651.SZ', startDate='20150331',
                        endDate='20191231')
     # bokeh绘图
@@ -819,6 +826,7 @@ def checkIncome():
     # 检测某个季度的财报数据是否齐全
     # TODO：待完成函数
     end_date = '20191231'
+    # noinspection PyUnusedLocal
     sql = f'select ts_code from income where end_date="{end_date}"'
 
 
@@ -879,7 +887,7 @@ def testPEProfitsTTM1(ts_code):
         div = None
     else:
         div = abs(mvpettm / profitsttm - 1)
-    return (mvpettm, profitsttm, div)
+    return mvpettm, profitsttm, div
 
 
 if __name__ == "__main__":

@@ -39,6 +39,7 @@ def adfTestPE(ts_code, startDate, endDate, plotFlag=False):
     return resulta
 
 
+# noinspection PyUnusedLocal
 def plotDf(ts_code, dfa, dfb):
     """
     暂时用于绘制用于PE的ADF检测的两个图，其中dfa为TTMPE，dfb为TTMPE的一阶差分

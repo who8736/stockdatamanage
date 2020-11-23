@@ -1,4 +1,4 @@
-#-*- coding:utf-8 -*-
+# -*- coding:utf-8 -*-
 # author:who8736
 # datetime:2020/4/13 18:55
 
@@ -38,25 +38,25 @@ X = X_full[:, [0, 5]]
 distributions = [
     ('Unscaled data', X),
     ('Data after standard scaling',
-        StandardScaler().fit_transform(X)),
+     StandardScaler().fit_transform(X)),
     ('Data after min-max scaling',
-        MinMaxScaler().fit_transform(X)),
+     MinMaxScaler().fit_transform(X)),
     ('Data after max-abs scaling',
-        MaxAbsScaler().fit_transform(X)),
+     MaxAbsScaler().fit_transform(X)),
     ('Data after robust scaling',
-        RobustScaler(quantile_range=(25, 75)).fit_transform(X)),
+     RobustScaler(quantile_range=(25, 75)).fit_transform(X)),
     ('Data after power transformation (Yeo-Johnson)',
      PowerTransformer(method='yeo-johnson').fit_transform(X)),
     ('Data after power transformation (Box-Cox)',
      PowerTransformer(method='box-cox').fit_transform(X)),
     ('Data after quantile transformation (gaussian pdf)',
-        QuantileTransformer(output_distribution='normal')
-        .fit_transform(X)),
+     QuantileTransformer(output_distribution='normal')
+     .fit_transform(X)),
     ('Data after quantile transformation (uniform pdf)',
-        QuantileTransformer(output_distribution='uniform')
-        .fit_transform(X)),
+     QuantileTransformer(output_distribution='uniform')
+     .fit_transform(X)),
     ('Data after sample-wise L2 normalizing',
-        Normalizer().fit_transform(X)),
+     Normalizer().fit_transform(X)),
 ]
 
 # scale the output between 0 and 1 for the colorbar
@@ -64,6 +64,7 @@ y = minmax_scale(y_full)
 
 # plasma does not exist in matplotlib < 1.5
 cmap = getattr(cm, 'plasma_r', cm.hot_r)
+
 
 def create_axes(title, figsize=(16, 6)):
     fig = plt.figure(figsize=figsize)
@@ -138,6 +139,7 @@ def plot_distribution(axes, X, y, hist_nbins=50, title="",
     hist_X0.hist(X[:, 0], bins=hist_nbins, orientation='vertical',
                  color='grey', ec='grey')
     hist_X0.axis('off')
+
 
 def make_plot(item_idx):
     title, X = distributions[item_idx]

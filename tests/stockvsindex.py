@@ -49,8 +49,10 @@ def stockinc(ts_code):
     dfstock['s_inc'] = dfstock.s_close / dfstock.s_close.shift(1) * 100 - 100
     dic = {'ts_code': ts_code}
     for i in range(len(dates)):
-        dic[f'close{dates[i]}'] = dfstock[dfstock.trade_date == dates[i]].s_close.values[0]
-        dic[f'inc{dates[i]}'] = dfstock[dfstock.trade_date == dates[i]].s_inc.values[0]
+        dic[f'close{dates[i]}'] = \
+            dfstock[dfstock.trade_date == dates[i]].s_close.values[0]
+        dic[f'inc{dates[i]}'] = \
+            dfstock[dfstock.trade_date == dates[i]].s_inc.values[0]
     # print(dfstock)
     # print(dfstock.s_close)
     return dic
@@ -89,14 +91,16 @@ def indexinc(ts_code):
     dfstock['i_inc'] = dfstock.i_close / dfstock.i_close.shift(1) * 100 - 100
     dic = {'ts_code': ts_code}
     for i in range(len(dates)):
-        dic[f'close{dates[i]}'] = dfstock[dfstock.trade_date == dates[i]].i_close.values[0]
-        dic[f'inc{dates[i]}'] = dfstock[dfstock.trade_date == dates[i]].i_inc.values[0]
+        dic[f'close{dates[i]}'] = \
+            dfstock[dfstock.trade_date == dates[i]].i_close.values[0]
+        dic[f'inc{dates[i]}'] = \
+            dfstock[dfstock.trade_date == dates[i]].i_inc.values[0]
     print(dfstock)
     print(dfstock.i_close)
     return dic
 
 
-def stockvsindex(ts_code, index_code, start_date=None, end_date=None):
+def stockvsindex(ts_code, index_code):
     """比较一段时期内股票与指数的涨跌幅度
     20090804  起点，高位
     20140619  低位
@@ -232,7 +236,7 @@ if __name__ == '__main__':
     # stocks = stocks[:6]
     for ts_code in stocks.ts_code:
         dic = stockinc(ts_code=ts_code)
-        dic['name'] = stocks[stocks.ts_code==ts_code].name.values[0]
+        dic['name'] = stocks[stocks.ts_code == ts_code].name.values[0]
         print(dic)
         results.append(dic)
 

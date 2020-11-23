@@ -6,11 +6,15 @@
 
 import pandas as pd
 import numpy as np
-from sklearn.linear_model import (LinearRegression, Ridge, Lasso,
-                                  RidgeCV, LassoCV)
+from sklearn.linear_model import (
+    LinearRegression, Ridge, Lasso,
+    RidgeCV, LassoCV,
+)
 from sklearn.svm import LinearSVC, SVC, NuSVC
-from sklearn.model_selection import (train_test_split, cross_val_score,
-                                     cross_val_predict)
+from sklearn.model_selection import (
+    train_test_split, cross_val_score,
+    cross_val_predict,
+)
 from sklearn.metrics import r2_score, confusion_matrix, precision_score
 from sklearn.utils import check_X_y
 from sklearn.datasets.samples_generator import make_classification
@@ -811,7 +815,6 @@ def model_main_classifier(C=0.05):
     print(f'真实值中为True的次数: {y_train.sum()}')
     print(f'预测值中为True的次数: {predictions.sum()}')
     print(f'精度(precision):{precision_score(y_train, predictions)}')
-
 
     # 交叉验证
     # scores = cross_val_score(model, x_train, y_train, cv=10)

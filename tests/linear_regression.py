@@ -58,9 +58,10 @@ def _adfTest(data):
     """计算一组数据的均值及adf检测结果"""
     mean = np.mean(data)
     result = adfuller(data)
-    return (mean, result)
+    return mean, result
 
 
+# noinspection PyUnusedLocal
 def _linear_trans(data, plot=False, title=None, filename=None):
     """线性回归通用函数，对一组数据进行线性回归
     数据经转换为监督学习序列后拟合
@@ -102,6 +103,7 @@ def _linear_trans(data, plot=False, title=None, filename=None):
     return dict(intercept=intercept, coef=coef, r2=r2)
 
 
+# noinspection PyUnusedLocal
 def _linear(data, plot=False, title=None, filename=None):
     """线性回归通用函数，对一组数据进行线性回归
     :param data:
@@ -132,6 +134,7 @@ def _linear(data, plot=False, title=None, filename=None):
     return dict(intercept=intercept, coef=coef, r2=r2)
 
 
+# noinspection PyUnusedLocal
 def _linearHuber(data, plot=False, title=None, filename=None):
     """线性回归通用函数，对一组数据进行线性回归
     :param data:
@@ -163,6 +166,7 @@ def _linearHuber(data, plot=False, title=None, filename=None):
     return dict(intercept=intercept, coef=coef, r2=r2)
 
 
+# noinspection DuplicatedCode
 def linearPlot(data, plot=False, title=None, filename=None):
     """绘图函数，接受_linear产生的数据绘制原始数据和一阶差分的散点图和回归直线"""
     pass
@@ -171,7 +175,7 @@ def linearPlot(data, plot=False, title=None, filename=None):
 
     # 绘图
     # ax = plt.subplot()
-    fig = plt.figure(figsize=(10, 5))
+    _ = plt.figure(figsize=(10, 5))
     gs = gridspec.GridSpec(1, 2)
     ax1 = plt.subplot(gs[0, 0])
     ax2 = plt.subplot(gs[0, 1])
@@ -268,7 +272,7 @@ def _linearProfitIncDouble(ts_code, startDate, endDate):
     result_huber = _linearHuber(df.inc.values)
     print('linear:', result_linear)
     print('huber:', result_huber)
-    return (result_linear, result_huber)
+    return result_linear, result_huber
 
 
 def _linearProfits(ts_code, startQuarter, fig):
@@ -282,7 +286,7 @@ def _linearProfits(ts_code, startQuarter, fig):
     result = engine.execute(sql).fetchall()
     cnt = len(result)
     if cnt < 10:
-        return (None, None, None)
+        return None, None, None
     y = [i[0] / 10000 / 10000 for i in result]
     x = np.array(range(cnt))
     x = x[:, np.newaxis]
@@ -299,7 +303,7 @@ def _linearProfits(ts_code, startQuarter, fig):
     try:
         cha = sum(map(lambda a, b: abs(sqrt((a - b) ** 2) / a), y, Y)) / cnt
     except ZeroDivisionError:
-        return (None, None, None)
+        return None, None, None
 
     # 绘图
     # ax = plt.subplot()
@@ -313,7 +317,7 @@ def _linearProfits(ts_code, startQuarter, fig):
     plt.savefig(filename)
     plt.clf()
 
-    return (intercept, coef, cha)
+    return intercept, coef, cha
 
 
 def plotPairs(df, intercept, coef):
@@ -539,8 +543,8 @@ def linearAll():
     indexDf = pro.index_weight(index_code='399300.SZ', start_date='20200301')
     codeList = indexDf.con_code.to_list()
     nameDf = pd.DataFrame(readStockList(), columns=['id', 'name'])
-    startDate = '20140101'
-    endDate = '20191231'
+    # startDate = '20140101'
+    # endDate = '20191231'
     # codeList = codeList[:6]
 
     total = len(codeList) * (len(codeList) - 1) // 2
@@ -648,7 +652,7 @@ def series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
     # 丢弃含有NaN值的行
     if dropnan:
         agg.dropna(inplace=True)
-    return (agg.iloc[:, 0:n_in].values, agg.iloc[:, -1].values)
+    return agg.iloc[:, 0:n_in].values, agg.iloc[:, -1].values
 
 
 def trans_series():
@@ -710,7 +714,7 @@ def profits_inc_lof(ts_code, startDate='20150101', endDate='20191231'):
     print(model.negative_outlier_factor_)
 
     # numpy计算四分位数
-    q1, q2, q3 = np.percentile(a, [25, 50, 75])
+    # q1, q2, q3 = np.percentile(a, [25, 50, 75])
 
     ax = plt.subplot()
     colors = np.array(['r', 'g'])
@@ -742,6 +746,7 @@ def _normaltest(data):
     result = normaltest(data)
     # print('正态检验结果:', result)
     return round(result[1], 2)
+
 
 def stocknormaltest(ts_code, startDate='20090101', endDate='20191231'):
     """正态分布检验
@@ -790,7 +795,7 @@ def stocknormaltest(ts_code, startDate='20090101', endDate='20191231'):
     # ax2twin.plot(bins, y, 'r--')
 
     # plt.show()
-    return (p1, p2)
+    return p1, p2
 
 
 def _testoutlier(data):
@@ -812,6 +817,7 @@ def _testoutlier(data):
     diff = q3 - q1
     low = q1 - diff * 1.5
     high = q3 + diff * 1.5
+    # noinspection PyTypeChecker
     data1 = data[(data >= low) & (data <= high)]
     cnt = len(data1)
     mean = np.mean(data1)
@@ -820,7 +826,7 @@ def _testoutlier(data):
     up = mean + std
     dic = dict(cnt=cnt, low=low, q1=q1, q3=q3, high=high,
                mean=mean, std=std, down=down, up=up)
-    return (data1, dic)
+    return data1, dic
 
 
 def testoutlier(end_date=2017):
@@ -839,6 +845,7 @@ def testoutlier(end_date=2017):
     df.to_excel('../data/testoutlier.xlsx')
     plt.hist(data, bins=30)
     plt.show()
+
 
 if __name__ == '__main__':
     pass

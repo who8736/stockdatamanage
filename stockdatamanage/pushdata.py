@@ -8,6 +8,8 @@ import datetime as dt
 
 from . import config
 
+
+# noinspection PyTypeChecker
 def push(title, filename):
     """发送邮件
     :param title: 邮件标题
@@ -72,6 +74,7 @@ def push1(title, filename):
 
     # 增加附件
     f = open(os.path.join('data', filename), 'rb').read()
+    # noinspection PyTypeChecker
     att = MIMEText(f, 'base64', 'utf-8')
     att['Content-Type'] = 'application/octet-stream'
     att['Content-Disposition'] = f'attachment; filename="{filename}"'

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 2016年12月5日
 
 @author: who8736
-'''
+"""
 import codecs
 
 from . import sqlrw
@@ -13,7 +13,7 @@ from .classifyanalyse import (readClassifyName, getHYProfitsIncRates,
 from . import datatrans
 
 
-class ReportItem():
+class ReportItem:
 
     def __init__(self, ts_code):
         self.ts_code = ts_code

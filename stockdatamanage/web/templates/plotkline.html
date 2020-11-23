@@ -1,25 +1,7 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="content-type" content="text/html; charset=utf-8">
-    <title>Embed Demo</title>
-    {{ js_resources|indent(4)|safe }}
-    {{ css_resources|indent(4)|safe }}
-    {{ plot_script|indent(4)|safe }}
-  </head>
-  <body>
+{% extends base.html %}
+
+{% block title %}Embed Demo{% endblock %}
+
+{% block body %}
     {{ plot_div|indent(4)|safe }}
-  </body>
-<!--  <head>-->
-<!--    <title>Bar charts with Bokeh!</title>-->
-<!--    <link href="http://cdn.pydata.org/bokeh/release/bokeh-1.1.0.min.css" rel="stylesheet">-->
-<!--    <link href="http://cdn.pydata.org/bokeh/release/bokeh-widgets-1.1.0.min.css" rel="stylesheet">-->
-<!--  </head>-->
-<!--  <body>-->
-<!--    {{ the_div|safe }}-->
-<!--    <script src="http://cdn.pydata.org/bokeh/release/bokeh-1.1.0.min.js"></script>-->
-<!--    <script src="http://cdn.pydata.org/bokeh/release/bokeh-widgets-1.1.0.min.js"></script>-->
-<!--    {{ the_script|safe }}-->
-<!--  </body>-->
-</html>
+{% endblock %}

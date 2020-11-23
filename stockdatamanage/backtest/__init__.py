@@ -145,6 +145,7 @@ class TestStrategy(bt.Strategy):
                 #          f' cost: {order.executed.value:.2f}'
                 #          f' comm: {order.executed.comm:.2f}')
 
+            # noinspection PyAttributeOutsideInit
             self.bar_executed = len(self)
         elif order.status in [order.Canceled, order.Margin, order.Rejected]:
             self.log(f'Order Canceled/Margin/Rejected')
@@ -177,7 +178,7 @@ class TestStrategy(bt.Strategy):
         if self.dividentData.empty:
             return False
         traderdate = self.datas[0].datetime.date(0)
-        df = self.dividentData[self.dividentData.ex_date==traderdate]
+        df = self.dividentData[self.dividentData.ex_date == traderdate]
         return not df.empty
 
     def exDivident(self):
@@ -263,8 +264,8 @@ class TestStrategy(bt.Strategy):
             # buydate = dt.date(2010, 1, 4)
             # if self.datas[0].datetime.date(0) == buydate:
             #     self.log(f'buy stock close {self.dataclose[0]}')
-                # 追踪交易指令，避免发送重复指令
-                # self.order = self.buy()
+            # 追踪交易指令，避免发送重复指令
+            # self.order = self.buy()
 
         else:
             # if len(self) >= self.bar_executed + self.params.exitbars:
@@ -338,7 +339,8 @@ class Ssa(bt.Indicator):
         # 这个很有用，会有 not maturity生成
         self.addminperiod(self.params.ssa_window * 2)
 
-    def get_window_matrix(self, input_array, t, m):
+    @staticmethod
+    def get_window_matrix(input_array, t, m):
         # 将时间序列变成矩阵
         temp = []
         n = t - m + 1
@@ -347,7 +349,8 @@ class Ssa(bt.Indicator):
         window_matrix = np.array(temp)
         return window_matrix
 
-    def svd_reduce(self, window_matrix):
+    @staticmethod
+    def svd_reduce(window_matrix):
         # svd分解
         u, s, v = np.linalg.svd(window_matrix)
         m1, n1 = u.shape
@@ -357,11 +360,13 @@ class Ssa(bt.Indicator):
         v1 = v[index]
         u1 = u1.reshape((m1, 1))
         v1 = v1.reshape((1, n2))
+        # noinspection PyArgumentList
         value = s.max()
         new_matrix = value * (np.dot(u1, v1))
         return new_matrix
 
-    def recreate_array(self, new_matrix, t, m):
+    @staticmethod
+    def recreate_array(new_matrix, t, m):
         # 时间序列重构
         ret = []
         n = t - m + 1
@@ -375,7 +380,7 @@ class Ssa(bt.Indicator):
             sigma = 0
             for j in range(1, m + 1):
                 i = p - j + 1
-                if i > 0 and i < n + 1:
+                if 0 < i < n + 1:
                     sigma += new_matrix[i - 1][j - 1]
             ret.append(sigma / alpha)
         return ret
@@ -399,16 +404,16 @@ def getdf_sql(ts_code, startDate, endDate):
     return df
 
 
-def getdf_tushare(ts_code, startDate):
-    df = ts.pro_bar(ts_code='000651.SZ', start_date='20090101', adj='hfq',
-                    adjfactor=True)
-    df.rename(columns={'trade_date': 'date', 'vol': 'nouse'}, inplace=True)
-    # df.date = pd.to_datetime(df.date)
-    df.sort_values('date', inplace=True)
-    # df.set_index(keys='date', inplace=True)
-    # df.reset_index(inplace=True)
-    df.set_index(keys='date', inplace=True)
-    return df
+# def getdf_tushare(ts_code, startDate):
+#     df = ts.pro_bar(ts_code='000651.SZ', start_date='20090101', adj='hfq',
+#                     adjfactor=True)
+#     df.rename(columns={'trade_date': 'date', 'vol': 'nouse'}, inplace=True)
+#     # df.date = pd.to_datetime(df.date)
+#     df.sort_values('date', inplace=True)
+#     # df.set_index(keys='date', inplace=True)
+#     # df.reset_index(inplace=True)
+#     df.set_index(keys='date', inplace=True)
+#     return df
 
 
 def getData(ts_code, startDate=None, endDate=None):
@@ -431,6 +436,7 @@ def getData(ts_code, startDate=None, endDate=None):
     return df
 
 
+# noinspection PyArgumentList
 def runstrat():
     ts_code = '000651.SZ'
     # ts_code = '000002.SZ'
@@ -453,6 +459,7 @@ def runstrat():
     print(df.head())
     # print(df.dtypes)
     kwargs = dict(pe=4, pe200=5, pe1000=6, volume=None)
+    # noinspection PyArgumentList
     data = PandasData(dataname=df, **kwargs)
     # 添加数据
     cerebro.adddata(data)

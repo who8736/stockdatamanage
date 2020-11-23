@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 2018年1月24日
 
 @author: who8736
-'''
+"""
 
 import numpy as np
 import jpush
@@ -21,6 +21,7 @@ def readChiguInfo():
 #                     for i in stockReportList])
 
     msgList = []
+    # noinspection PyTypeChecker
     for stock in stockReportList:
         #         stockmsgs
         stockmsg = '%s%s,%s,%s' % (stock[0], stock[1], stock[5], stock[6])

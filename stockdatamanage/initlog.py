@@ -1,6 +1,7 @@
 import logging
 import os
 import datetime as dt
+from functools import wraps
 
 from .config import Config
 
@@ -31,3 +32,20 @@ def initlog():
     console.setFormatter(formatter)
     logging.getLogger('').addHandler(console)
     ##########################################################################
+
+
+def logfun(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        #         def _func(*args):
+        #         print "hello, %s" % func.__name__
+        logging.info('===========start %s===========', func.__name__)
+        startTime = dt.datetime.now()
+        func(*args, **kwargs)
+        endTime = dt.datetime.now()
+        logging.info('===========end %s===========', func.__name__)
+        logging.info('%s cost time: %s ',
+                     func.__name__, endTime - startTime)
+
+    #         return _func
+    return wrapper

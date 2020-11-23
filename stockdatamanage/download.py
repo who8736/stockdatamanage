@@ -20,8 +20,10 @@ import pandas as pd
 
 # from misc import (urlGuzhi, filenameGuzhi)
 # from .datatrans import dateStrList
-from .sqlrw import (writeSQL, writeClassifyMemberToSQL, writeClassifyNameToSQL,
-                   readTableFields, readCal)
+from .sqlrw import (
+    writeSQL, writeClassifyMemberToSQL, writeClassifyNameToSQL,
+    readTableFields, readCal,
+)
 from .sqlconn import engine
 from .initlog import initlog
 from .misc import tsCode
@@ -316,14 +318,13 @@ def downClassifyFile(_date):
     """ 从中证指数网下载行业数据文件
     下载按钮的xpath
     /html/body/div[3]/div/div/div[1]/div[1]/form/a[1]
-    :param timeout: int
     :type _date: str 'YYYYmmdd'
     """
     logging.debug(f'downClassifyFile: {_date}')
     url = f'http://47.97.204.47/syl/csi{_date}.zip'
     cf = Config()
-    zipfilename= os.path.join(cf.datapath, f'csi{_date}.zip')
-    datafilename= os.path.join(cf.datapath, 'data', f'csi{_date}.xls')
+    zipfilename = os.path.join(cf.datapath, f'csi{_date}.zip')
+    datafilename = os.path.join(cf.datapath, 'data', f'csi{_date}.xls')
     req = WebRequest()
     req.get(url)
     req.save(zipfilename)
@@ -607,6 +608,7 @@ def downIndexWeight():
         if initDate is None:
             initDate = dt.date(2001, 1, 1)
         assert isinstance(initDate, dt.date)
+        # noinspection DuplicatedCode
         while initDate < dt.datetime.today().date():
             nowtime = dt.datetime.now()
             delta = dt.timedelta(seconds=perTimes)

@@ -13,9 +13,9 @@ from multiprocessing.dummy import Pool as ThreadPool
 import pandas as pd
 import tushare as ts
 
-from sqlrw import readStockList, writeSQL, readTableFields
-from sqlconn import engine
-from download import DownloaderMisc
+from .sqlrw import readStockList, writeSQL, readTableFields
+from .sqlconn import engine
+from .download import DownloaderMisc
 from datamanage import logfun
 from initlog import initlog
 
@@ -26,6 +26,8 @@ tables = [
     ['disclosure_date', 60, 50],
     ['dividend', 60, 80],
 ]
+
+
 # def pledge_stat():
 #     """下载股权质押信息
 #
@@ -86,8 +88,8 @@ def runner():
     pool.close()
     pool.join()
 
+
 if __name__ == '__main__':
     pass
     initlog()
     runner()
-

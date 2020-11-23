@@ -14,7 +14,7 @@ select a.ts_code, c.name, a.ttmprofits, b.ttmprofits, b.ttmprofits/a.ttmprofits 
 (SELECT ts_code, ttmprofits FROM stockdata.ttmlirun where date='20144' and ttmprofits>0) a,
 (SELECT ts_code, ttmprofits FROM stockdata.ttmlirun where date='20193' and ttmprofits>0) b,
 stocklist c
-where a.ts_code=b.ts_code and a.ts_code=c.ts_code having zz>10 order by zz desc;
+where a.ts_code=b.ts_code and a.ts_code=c.ts_code and zz>10 order by zz desc;
 
 -- 近5年某支股票利润增长情况
 select a.ts_code, c.name, round(a.ttmprofits / 10000 / 10000, 2) profits_a, round(b.ttmprofits / 10000 / 10000, 2) profits_b,

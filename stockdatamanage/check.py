@@ -11,10 +11,10 @@ from .sqlrw import readStockList, readCal
 from .config import Config
 
 
-def checkGuben():
-    # ids = readts_codesFromSQL()
-    sql = 'select ts_code from klinestock'
-    # for ts_code in ids:
+# def checkGuben():
+#     # ids = readts_codesFromSQL()
+#     sql = 'select ts_code from klinestock'
+#     # for ts_code in ids:
 
 
 def checkQuarterData_del():
@@ -86,8 +86,8 @@ def checkQuarterData():
 
 def checkClassifyMemberListdate():
     """校验行业分类清单中的股票是否存在未上市就已列入行业清单"""
-    cf = Config()
-    datapath = cf.datapath
+    # cf = Config()
+    # datapath = cf.datapath
     # for root, path, files in os.walk(datapath):
     #     print(root, path, files)
 

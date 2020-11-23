@@ -143,38 +143,40 @@ def getHYProfitsIncRates(hyID):
 
 
 def readProfitInc(startDate, endDate=None, ptype='stock',
-                       ts_code=None, reportType='quarter'):
+                  code=None, reportType='quarter'):
     """ 股票TTM利润增长率,按季或按年返回数个报告期增长率
     :param ptype: str, stock股票, classify行业
     :param reportType: str, quarter季报， year年报
-    :param ts_code:
+    :param code:
     :param startDate:
     :param endDate:
     :return:
     """
     if ptype == 'stock':
         table = 'ttmprofits'
+        field = 'ts_code'
     else:
-        table = classify_profits
+        table = 'classify_profits'
+        field = 'code'
     if endDate is None:
         endDate = startDate
     df = None
     dates = quarterList(startDate, endDate, reportType=reportType)
     import copy
     for index, date in enumerate(dates):
-        sql = ('select ts_code, inc from {table} '
+        sql = (f'select {field}, inc from {table} '
                f'where end_date="{date}";')
         _df = pd.read_sql(sql, engine)
-        if isinstance(ts_code, str):
-            _df = _df[_df.ts_code == ts_code]
-        elif isinstance(ts_code, list):
-            _df = _df[_df.ts_code.isin(ts_code)]
+        if isinstance(code, str):
+            _df = _df[_df[f'{field}'] == code]
+        elif isinstance(code, list):
+            _df = _df[_df[f'{field}'].isin(code)]
 
         _df.rename(columns={'inc': f'inc_{index}'}, inplace=True)
         if df is None:
             df = copy.deepcopy(_df)
         else:
-            df = df.merge(_df, on='ts_code', how='left')
+            df = df.merge(_df, on=f'{field}', how='left')
     return df
 
 
@@ -215,6 +217,7 @@ def calClassifyStaticTTMProfitHigh(classify, end_date, replace=False):
         writeSQL(result, 'classify_profits', replace=replace)
 
 
+# noinspection DuplicatedCode
 def calClassifyStaticTTMProfitLow(end_date, replace=False):
     """ 计算第4级行业的TTM利润
     报告期后上市的股票才将该报告期利润计入行业利润
