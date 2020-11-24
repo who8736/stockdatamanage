@@ -1000,7 +1000,7 @@ def readProfitInc(startDate, endDate=None, ptype='stock',
         elif isinstance(code, list):
             _df = _df[_df[f'{field}'].isin(code)]
 
-        _df.rename(columns={'inc': f'inc_{index}'}, inplace=True)
+        _df.rename(columns={'inc': f'inc{index}'}, inplace=True)
         if df is None:
             df = copy.deepcopy(_df)
         else:

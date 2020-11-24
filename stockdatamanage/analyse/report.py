@@ -17,6 +17,8 @@ from ..sqlrw import (
     readStockList, readTTMProfitsForStock, writeSQL,
     readProfitInc, readValuation,
 )
+
+
 # from ..valuation import ReportItem
 
 
@@ -396,31 +398,42 @@ def reportValuation(ts_code):
 
     today = dt.datetime.today()
     startDate = f'{today.year - 3}1231'
+    endDate = today.strftime('%Y%m%d')
     # 最近三年TTM利润增长率水平
-    valuation['profitsInc'] = sqlrw.readProfitInc(startDate, code=ts_code,
+    valuation['profitsInc'] = sqlrw.readProfitInc(startDate=startDate,
+                                                  endDate=endDate,
+                                                  code=ts_code,
                                                   reportType='year')
     # 所属1级行业
     valuation['lv1Code'] = lv1Code
     valuation['lv1Name'] = readClassifyName(lv1Code)
-    valuation['lv1Inc'] = readProfitInc(startDate, code=lv1Code,
+    valuation['lv1Inc'] = readProfitInc(startDate=startDate,
+                                        endDate=endDate,
+                                        code=lv1Code,
                                         ptype='classify',
                                         reportType='year')
     # 所属2级行业
     valuation['lv2Code'] = lv2Code
     valuation['lv2Name'] = readClassifyName(lv2Code)
-    valuation['lv2Inc'] = readProfitInc(startDate, code=lv2Code,
+    valuation['lv2Inc'] = readProfitInc(startDate=startDate,
+                                        endDate=endDate,
+                                        code=lv2Code,
                                         ptype='classify',
                                         reportType='year')
     # 所属3级行业
     valuation['lv3Code'] = lv3Code
     valuation['lv3Name'] = readClassifyName(lv3Code)
-    valuation['lv3Inc'] = readProfitInc(startDate, code=lv3Code,
+    valuation['lv3Inc'] = readProfitInc(startDate=startDate,
+                                        endDate=endDate,
+                                        code=lv3Code,
                                         ptype='classify',
                                         reportType='year')
     # 所属4级行业
     valuation['lv4Code'] = lv4Code
     valuation['lv4Name'] = readClassifyName(lv4Code)
-    valuation['lv4Inc'] = readProfitInc(startDate, code=lv4Code,
+    valuation['lv4Inc'] = readProfitInc(startDate=startDate,
+                                        endDate=endDate,
+                                        code=lv4Code,
                                         ptype='classify',
                                         reportType='year')
 
@@ -428,7 +441,8 @@ def reportValuation(ts_code):
     stocks = getStockForClassify(lv4Code)
     # print(f'223 line: {stockList}')
 
-    incs = readProfitInc(startDate, code=stocks.ts_code.to_list(),
+    incs = readProfitInc(startDate=startDate, endDate=endDate,
+                         code=stocks.ts_code.to_list(),
                          reportType='year')
     stocks = stocks.merge(incs, on='ts_code')
     # print(f'230 stocks:', stocks)
