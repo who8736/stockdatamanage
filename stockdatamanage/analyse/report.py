@@ -5,11 +5,19 @@ import logging
 import numpy as np
 import pandas as pd
 
-from .. import datatrans
+from .. import datatrans, sqlrw
 # from .. import sqlrw
+from ..classifyanalyse import (
+    getHYProfitsIncRates, getStockForClassify, readClassifyForStock,
+    readClassifyName,
+)
 from ..sqlconn import engine
-from ..sqlrw import (readCal, loadChigu, readLastTTMPEs, readLastTTMProfits,
-                     readStockList, readTTMProfitsForStock, writeSQL)
+from ..sqlrw import (
+    readCal, loadChigu, readLastTTMPEs, readLastTTMProfits,
+    readStockList, readTTMProfitsForStock, writeSQL,
+    readProfitInc, readValuation,
+)
+# from ..valuation import ReportItem
 
 
 def calGuzhi(stockList=None):
@@ -371,9 +379,63 @@ def analysePEHist(ts_code, startDate, endDate, dayCount=200,
     print(df)
     return df
 
-# timec = dt.datetime.now()
-# ts_code = '000651'
-# startDate = '20130101'
-# endDate = '20191231'
-# df = analysePEHist(ts_code, startDate, endDate, dayCount=1000)
-# timed = dt.datetime.now()
+
+def reportValuation(ts_code):
+    """读取评估报告
+    """
+    valuation = readValuation(ts_code)
+    # guzhi = getGuzhi(ts_code)
+
+    # TODO: 需补充：根据平均绝对离差计算的增长率差异水平
+    # myItem.profitsIncMad = guzhiData[14]
+
+    lv4Code = readClassifyForStock(ts_code)
+    lv3Code = lv4Code[:6]
+    lv2Code = lv4Code[:4]
+    lv1Code = lv4Code[:2]
+
+    today = dt.datetime.today()
+    startDate = f'{today.year - 3}1231'
+    # 最近三年TTM利润增长率水平
+    valuation['profitsInc'] = sqlrw.readProfitInc(startDate, code=ts_code,
+                                                  reportType='year')
+    # 所属1级行业
+    valuation['lv1Code'] = lv1Code
+    valuation['lv1Name'] = readClassifyName(lv1Code)
+    valuation['lv1Inc'] = readProfitInc(startDate, code=lv1Code,
+                                        ptype='classify',
+                                        reportType='year')
+    # 所属2级行业
+    valuation['lv2Code'] = lv2Code
+    valuation['lv2Name'] = readClassifyName(lv2Code)
+    valuation['lv2Inc'] = readProfitInc(startDate, code=lv2Code,
+                                        ptype='classify',
+                                        reportType='year')
+    # 所属3级行业
+    valuation['lv3Code'] = lv3Code
+    valuation['lv3Name'] = readClassifyName(lv3Code)
+    valuation['lv3Inc'] = readProfitInc(startDate, code=lv3Code,
+                                        ptype='classify',
+                                        reportType='year')
+    # 所属4级行业
+    valuation['lv4Code'] = lv4Code
+    valuation['lv4Name'] = readClassifyName(lv4Code)
+    valuation['lv4Inc'] = readProfitInc(startDate, code=lv4Code,
+                                        ptype='classify',
+                                        reportType='year')
+
+    # 同行业股票
+    stocks = getStockForClassify(lv4Code)
+    # print(f'223 line: {stockList}')
+
+    incs = readProfitInc(startDate, code=stocks.ts_code.to_list(),
+                         reportType='year')
+    stocks = stocks.merge(incs, on='ts_code')
+    # print(f'230 stocks:', stocks)
+    valuation['classifyStocks'] = stocks
+    return valuation
+
+
+def reportIndex(ID):
+    myItem = ReportItem(ID)
+    return myItem

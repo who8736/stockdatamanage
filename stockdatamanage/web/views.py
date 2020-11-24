@@ -15,8 +15,7 @@ from flask_paginate import Pagination, get_page_parameter
 
 from stockdatamanage.plot import plotKline, BokehPlot
 from stockdatamanage.plot import PlotProfitsInc
-from stockdatamanage.report import reportValuation
-from stockdatamanage.report import reportIndex
+from ..analyse.report import reportIndex, reportValuation
 from stockdatamanage.sqlrw import (
     readChigu, readStockKline, readIndexKline, readStockList, writeChigu,
     readValuationSammary, readProfitsIncAdf,

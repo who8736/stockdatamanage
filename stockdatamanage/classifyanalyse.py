@@ -98,15 +98,14 @@ def getSubHY(hyID, subLevel):
 def readClassifyName(code=None):
     """取行业代码和名称
     """
+    assert isinstance(code, (str, pd.DataFrame)), 'code应为str或DataFrame'
     sql = f'select code, name from classify;'
     df = pd.read_sql(sql, engine)
     if df.empty:
         return None
     if isinstance(code, str):
-        df = df[df.code == code]
-        return df.name[0]
-    elif isinstance(code, list):
-        df = df[df.code.isin(code)]
+        return df.loc[df.code == code, 'name'].values[0]
+    df = df[df.code.isin(code)]
     return df
 
 

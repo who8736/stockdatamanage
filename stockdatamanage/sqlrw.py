@@ -173,11 +173,12 @@ def dropTable(tableName):
 #     return df
 
 
-def getGuzhi(ts_code):
+def readGuzhi(ts_code):
     # noinspection SqlResolve
     sql = f'select * from guzhiresult where "{ts_code}"=ts_code limit 1'
-    result = engine.execute(sql)
-    return result.fetchone()
+    df = pd.read_sql(sql, engine)
+    if not df.empty:
+        return df.iloc[0].todict()
 
 
 def readStockList(list_date=None):
@@ -322,10 +323,13 @@ def readValuationSammary(date=None):
 
 
 def readValuation(ts_code):
-    sql = (f'select * from valuation where ts_code="{ts_code}"'
-           'order by date desc limit 1')
-    result = engine.execute(sql).fetchone()
-    return result
+    """读取评估报告
+    """
+    sql = (f'select * from valuation where ts_code="{ts_code}" '
+           ' order by date desc limit 1')
+    df = pd.read_sql(sql, engine)
+    if not df.empty:
+        return df.iloc[0].to_dict()
 
 
 # def downloadKline(ts_code, startDate=None, endDate=None):

@@ -19,8 +19,8 @@ class SQLConn:
     """建立mysql连接"""
     def __init__(self):
         mycnf = config.Config()
-        connectStr = (f'mysql://{mycnf.user}:{mycnf.password}@{mycnf.ip}'
-                      f'/stockdata?charset=utf8')
+        connectStr = (f'mysql://{mycnf.sqlUser}:{mycnf.sqlPassword}'
+                      f'@{mycnf.sqlIp}/stockdata?charset=utf8')
         self.engine = create_engine(connectStr,
                                     strategy='threadlocal', echo=False)
         self.Session = scoped_session(
