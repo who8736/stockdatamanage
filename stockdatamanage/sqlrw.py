@@ -142,11 +142,6 @@ def writeClassifyNameToSQL(filename):
 #     return 'kline%s' % ts_code
 
 
-def loadChigu():
-    sql = 'select ts_code from chigu;'
-    result = engine.execute(sql)
-    return [i[0] for i in result.fetchall()]
-
 
 def dropTable(tableName):
     engine.execute('DROP TABLE %s' % tableName)
@@ -164,13 +159,13 @@ def dropTable(tableName):
 #     engine.execute(sql)
 
 
-# def getLowPEStockList(maxPE=40):
-#     """选取指定范围PE的股票
-#     maxPE: 最大PE
-#     """
-#     sql = f'select ts_code, pe from stocklist where pe>0 and pe<={maxPE}'
-#     df = pd.read_sql(sql, engine)
-#     return df
+def readLowPEStock(maxPE=40):
+    """选取指定范围PE的股票
+    maxPE: 最大PE
+    """
+    sql = f'select ts_code, pe from stocklist where pe>0 and pe<={maxPE}'
+    df = pd.read_sql(sql, engine)
+    return df
 
 
 def readGuzhi(ts_code):
@@ -469,7 +464,7 @@ def readTTMProfitsForDate(end_date):
     end_date: str, YYYYMMDD, 报告期
     return: 返回DataFrame格式TTM利润
     """
-    sql = (f'select ts_code, ttmprofits, incrate from ttmprofits '
+    sql = (f'select ts_code, ttmprofits, inc from ttmprofits '
            f'where `end_date`="{end_date}"')
     df = pd.read_sql(sql, engine)
     return df
@@ -619,13 +614,13 @@ def calTTMProfitsIncRate(end_date, replace=False):
             update ttmprofits t1,
             (select ts_code, ttmprofits from ttmprofits 
                 where end_date='{int(end_date[:4]) - 1}{end_date[4:]}') t2
-            set t1.incrate = round((t1.ttmprofits / t2.ttmprofits - 1) * 100, 2)
+            set t1.inc = round((t1.ttmprofits / t2.ttmprofits - 1) * 100, 2)
             where t1.end_date='{end_date}' 
                 and t1.ts_code=t2.ts_code and t1.ttmprofits is not null 
                 and t2.ttmprofits is not null
     '''
     if not replace:
-        sql += ' and t1.incrate is null '
+        sql += ' and t1.inc is null '
     engine.execute(sql)
 
 
@@ -716,7 +711,7 @@ def del_updateKlineTTMPE(ts_code, startDate, endDate=None):
     return endDate
 
 
-def readGuben(ts_code, startDate=None, endDate=None):
+def del_readGuben(ts_code, startDate=None, endDate=None):
     """取指定股票一段日间的股本变动数据，startDate当日无数据时，取之前最近一次变动数据
     Parameters
     --------
@@ -816,8 +811,7 @@ def readChigu():
     #     sql = ('select chigu.ts_code, stocklist.name from chigu, stocklist '
     #            'where chigu.ts_code=stocklist.ts_code')
     sql = 'select ts_code from chigu'
-    result = engine.execute(sql)
-    return [ts_code[0] for ts_code in result.fetchall()]
+    return pd.read_sql(sql, engine)
 
 
 def getGuzhiList():

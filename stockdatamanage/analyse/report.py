@@ -8,26 +8,26 @@ import pandas as pd
 from .. import datatrans, sqlrw
 # from .. import sqlrw
 from ..classifyanalyse import (
-    getHYProfitsIncRates, getStockForClassify, readClassifyForStock,
+    # getHYProfitsIncRates,
+    getStockForClassify, readClassifyForStock,
     readClassifyName,
 )
 from ..sqlconn import engine
 from ..sqlrw import (
-    readCal, loadChigu, readLastTTMPEs, readLastTTMProfits,
-    readStockList, readTTMProfitsForStock, writeSQL,
-    readProfitInc, readValuation,
+    readCal, readChigu, readLastTTMPEs, readLastTTMProfits, readStockList,
+    readTTMProfitsForStock, writeSQL, readProfitInc, readValuation,
 )
 
 
 # from ..valuation import ReportItem
 
 
-def calGuzhi(stockList=None):
+def calGuzhi(stocks=None):
     """生成估值水平评估列表，
     # 包括以下数据： peg, 未来三个PE预测， 过去6个季度TTM利润增长率， 平均增长率， 增长率方差
     Parameters
     --------
-    stockList:list 股票列表 e.g:[600519, 600999]
+    stockList: DataFrame 股票列表
 
     Return
     --------
@@ -54,13 +54,13 @@ def calGuzhi(stockList=None):
         pe1000: 参考pe200的说明
     """
 
-    if stockList is None:
-        stockList = getLowPEStockList().ts_code.values
+    if stocks is None:
+        stocks = getLowPEStockList()
 
     #     print stockList.head()
     #     print type(stockList)
     # pe数据
-    peDf = readLastTTMPEs(stockList)
+    peDf = readLastTTMPEs(stocks)
     # 估值数据
     #     pegDf = readGuzhiFilesToDf(stockList)
     #     pegDf = readGuzhiSQLToDf(stockList)
@@ -69,7 +69,7 @@ def calGuzhi(stockList=None):
 
     sectionNum = 6  # 取6个季度
     # 新取TTM利润方法，取每支股票最后N季度数据
-    incDf = readLastTTMProfits(stockList, sectionNum)
+    incDf = readLastTTMProfits(stocks, sectionNum)
     #     print 'incDf:'
     #     print incDf
     guzhiDf = pd.merge(peDf, incDf, on='ts_code', how='left')
@@ -263,9 +263,9 @@ def testChigu():
     # outFilename = './data/chiguguzhi.csv'
     #     testStockList = ['600519', '600999', '000651', '000333']
     #     testStockList = readStockListFromFile(inFilename)
-    stockList = loadChigu()
+    stocks = readChigu()
     #     print testStockList
-    df = calGuzhi(stockList)
+    df = calGuzhi(stocks)
     #     df = calGuzhi()
     #    dfToCsvFile(df, outFilename)
     #     df.to_csv(outFilename)

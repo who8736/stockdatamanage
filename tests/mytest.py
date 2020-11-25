@@ -468,13 +468,11 @@ def __testUpdate():
     """测试专用函数:数据下载
     """
     pass
-    # updateQuarterData()
-    # 自动更新全部数据，包括K线历史数据、利润数据、K线表中的TTM市盈率
     # 更新交易日历
     # updateTradeCal()
 
     # 更新股票列表
-    # downStockList()
+    # updateStockList()
 
     # 更新股票日交易数据
     # updateDaily()
@@ -482,12 +480,15 @@ def __testUpdate():
     # 更新每日指标
     # updateDailybasic()
 
+    # 更新复权因子
+    # updateAdjFacotr()
+
     # 更新非季报表格
-    # 财务披露表
+    # 财务披露表（另外单独更新）
     # 质押表（另外单独更新）
-    # 业绩预告
-    # 业绩快报
-    # 分红送股
+    # 业绩预告（另外单独更新）
+    # 业绩快报（另外单独更新）
+    # 分红送股（另外单独更新）
 
     # 更新股票季报数据
     # 资产负债表
@@ -496,24 +497,26 @@ def __testUpdate():
     # 财务指标表
     # updateQuarterData()
 
-    # 更新股票ttm利润
-    updateTTMProfits()
+    # 更新股票TTM利润
+    # updateTTMProfits()
 
     # 更新行业列表
-    # downClassify()
+    # updateClassifyList()
+
+    # 更新行业利润
     # updateClassifyProfits()
 
     # 更新股票估值
     # updateGuzhiData()
 
     # 更新股票评分
-    # updatePf()
+    updatePf()
 
     # 更新指数数据及PE
-    # updateIndex()
+    updateIndex()
 
     # 更新全市PE
-    # updateAllMarketPE()
+    updateAllMarketPE()
 
 
 # 更新股票市值与PE
@@ -878,7 +881,7 @@ if __name__ == "__main__":
     # __testMisc()
     # __testPlot()
     # __testRepair()
-    # __testUpdate()
+    __testUpdate()
     # __testValuation()
 
     print('程序正常退出')

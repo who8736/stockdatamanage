@@ -71,13 +71,13 @@ def getClassifyProfitCnt(code, quarter):
     return result.fetchone()[0]
 
 
-def getHYList(level=4):
-    """ 查询指定级别的所有行业代码
-    """
-    sql = 'select hyid from hangyename where hylevel=%(level)s;' % locals()
-    #     print sql
-    result = engine.execute(sql).fetchall()
-    return [i[0] for i in result]
+# def getHYList(level=4):
+#     """ 查询指定级别的所有行业代码
+#     """
+#     sql = 'select hyid from hangyename where hylevel=%(level)s;' % locals()
+#     #     print sql
+#     result = engine.execute(sql).fetchall()
+#     return [i[0] for i in result]
 
 
 def getSubHY(hyID, subLevel):
@@ -118,26 +118,26 @@ def getHYStockCount(code):
         return result[0]
 
 
-def getHYProfitsIncRate(hyID, _date):
-    sql = (f'select inc from classify_profits '
-           f'where code="{hyID}" and end_date="{_date}";')
-    # print(sql)
-    result = engine.execute(sql).fetchone()
-    if result is None:
-        return None
-    else:
-        return result[0]
-
-
-def getHYProfitsIncRates(hyID):
-    curYear = datatrans.getCurYear()
-    lastYearQuarter1 = f'{curYear - 3}1231'
-    lastYearQuarter2 = f'{curYear - 2}1231'
-    lastYearQuarter3 = f'{curYear - 1}1231'
-    hyIncRate1 = getHYProfitsIncRate(hyID, lastYearQuarter1)
-    hyIncRate2 = getHYProfitsIncRate(hyID, lastYearQuarter2)
-    hyIncRate3 = getHYProfitsIncRate(hyID, lastYearQuarter3)
-    return hyIncRate1, hyIncRate2, hyIncRate3
+# def getHYProfitsIncRate(hyID, _date):
+#     sql = (f'select inc from classify_profits '
+#            f'where code="{hyID}" and end_date="{_date}";')
+#     # print(sql)
+#     result = engine.execute(sql).fetchone()
+#     if result is None:
+#         return None
+#     else:
+#         return result[0]
+#
+#
+# def getHYProfitsIncRates(hyID):
+#     curYear = datatrans.getCurYear()
+#     lastYearQuarter1 = f'{curYear - 3}1231'
+#     lastYearQuarter2 = f'{curYear - 2}1231'
+#     lastYearQuarter3 = f'{curYear - 1}1231'
+#     hyIncRate1 = getHYProfitsIncRate(hyID, lastYearQuarter1)
+#     hyIncRate2 = getHYProfitsIncRate(hyID, lastYearQuarter2)
+#     hyIncRate3 = getHYProfitsIncRate(hyID, lastYearQuarter3)
+#     return hyIncRate1, hyIncRate2, hyIncRate3
 
 
 def calClassifyStaticTTMProfit(end_date, replace=False):
@@ -259,7 +259,7 @@ def readClassifyPE(date=None, code=None):
         condition = f'(select max(date) from classify_pe)'
     else:
         condition = f'"{date}"'
-    sql = f'select code, pe from classify_pe where date="{condition}"'
+    sql = f'select code, pe from classify_pe where date={condition}'
     df = pd.read_sql(sql, engine)
     if code is not None:
         df = df[df.code.isin(code)]

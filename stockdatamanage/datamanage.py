@@ -72,13 +72,13 @@ def startUpdate():
     updateTTMProfits()
 
     # 更新行业列表
-    updateHYList()
+    updateClassifyList()
 
     # 更新行业利润
     updateClassifyProfits()
 
     # 更新股票估值
-    updateGuzhiData()
+    # updateGuzhiData()
 
     # 更新股票评分
     updatePf()
@@ -141,7 +141,7 @@ def updateIndex():
 
 
 @logfun
-def updateHYList():
+def updateClassifyList():
     downClassify()
 
 
@@ -200,7 +200,7 @@ def updateHYList():
 
 
 @logfun
-def updateQuarterData(startDate=None, endDate=None, replace=False):
+def updateQuarterData():
     """更新股票季报数据
 
     :return:
@@ -216,10 +216,7 @@ def updateQuarterData(startDate=None, endDate=None, replace=False):
         if e_date is not None:
             e_date += relativedelta(days=1)
             datestr = e_date.strftime('%Y%m%d')
-        downloader = DownloaderQuarter(ts_code=ts_code,
-                                       startDate=datestr,
-                                       endDate=endDate,
-                                       replace=replace)
+        downloader = DownloaderQuarter(ts_code=ts_code, startDate=datestr)
         downloader.run()
 
 
