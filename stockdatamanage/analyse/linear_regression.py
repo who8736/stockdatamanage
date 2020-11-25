@@ -2,7 +2,7 @@
 
 """
 import os
-from math import sqrt, log, exp
+from math import sqrt, log
 
 from collections import OrderedDict
 # import matplotlib.mlab as mlab
@@ -19,12 +19,13 @@ from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.preprocessing import PowerTransformer
-from scipy.stats import zscore, norm, normaltest
+from scipy.stats import zscore, normaltest
 import tushare as ts
 
-from sqlconn import engine
-from sqlrw import readStockList
-from sqlrw import getStockName
+from ..sqlconn import engine
+from ..sqlrw import readStockList, getStockName
+from ..config import Config
+from ..plot import plotProfitInc
 
 
 def studyTime():
@@ -166,58 +167,19 @@ def _linearHuber(data, plot=False, title=None, filename=None):
     return dict(intercept=intercept, coef=coef, r2=r2)
 
 
-# noinspection DuplicatedCode
-def linearPlot(data, plot=False, title=None, filename=None):
-    """绘图函数，接受_linear产生的数据绘制原始数据和一阶差分的散点图和回归直线"""
-    pass
-    cnt = len(data)
-    x = list(range(cnt))
-
-    # 绘图
-    # ax = plt.subplot()
-    _ = plt.figure(figsize=(10, 5))
-    gs = gridspec.GridSpec(1, 2)
-    ax1 = plt.subplot(gs[0, 0])
-    ax2 = plt.subplot(gs[0, 1])
-
-    # 拟合
-    trainx = np.array(x)
-    trainx = trainx[:, np.newaxis]
-    regr = linear_model.LinearRegression()
-    regr.fit(trainx, data)
-    intercept = regr.intercept_
-    coef = regr.coef_[0]
-    y = [intercept + coef * i for i in x]
-    ax1.scatter(x, data)
-    ax1.plot(x, y, color='r')
-
-    diff_data = np.diff(data)
-    diff_cnt = len(diff_data)
-    diff_x = list(range(diff_cnt))
-    diff_trainx = np.array(diff_x)
-    diff_trainx = diff_trainx[:, np.newaxis]
-    regr = linear_model.LinearRegression()
-    regr.fit(diff_trainx, diff_data)
-    intercept = regr.intercept_
-    coef = regr.coef_[0]
-    diff_y = [intercept + coef * i for i in diff_x]
-    ax2.scatter(diff_x, diff_data)
-    ax2.plot(diff_x, diff_y, color='r')
-
-    plt.title(title, fontproperties='simsun', fontsize=26)
-    if plot:
-        plt.show()
-    if filename is not None:
-        plt.savefig(os.path.join('../data/linear_img', filename))
-    plt.close()
 
 
-def linearProfitInc():
+def linearProfitInc(startDate = '20150331', endDate = '20191231'):
     stocks = readStockList()
     # stocks = stocks[456:]
-    startDate = '20150331'
-    endDate = '20191231'
-    filename = '../data/profits_inc_linear.xlsx'
+
+    if endDate is None:
+        endDate = dt.date.today().strftime('%Y%m%d')
+    if startDate is None:
+        startDate = f'{int(endDate[:4]) - 3}0331'
+
+    cf = Config()
+    filename = os.path.join(cf.datapath, 'profits_inc_linear.xlsx')
 
     resultList = []
     cnt = len(stocks)

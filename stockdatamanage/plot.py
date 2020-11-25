@@ -12,12 +12,14 @@ from io import BytesIO
 import datetime as dt
 
 import matplotlib
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt  # @IgnorePep8
 # from matplotlib.finance import candlestick_ohlc  # @IgnorePep8
 # from mplfinance import candlestick_ohlc  # @IgnorePep8
 import mplfinance as mpf
 import matplotlib.gridspec as gs  # @IgnorePep8
+from matplotlib import gridspec as gridspec, pyplot as plt
 from matplotlib.dates import DateFormatter, MonthLocator  # @IgnorePep8
 from matplotlib.ticker import FixedLocator  # @IgnorePep8
 # 三维图需引用下面这句
@@ -27,8 +29,9 @@ from bokeh.plotting import figure, show, output_file
 from bokeh.layouts import column
 from bokeh.models import ColumnDataSource, RangeTool
 from bokeh.models import Slider, CustomJS
+from sklearn import linear_model
 
-from .sqlrw import engine, readStockKline, readCal  # @IgnorePep8
+from .sqlrw import engine, getStockName, readStockKline, readCal  # @IgnorePep8
 from .config import Config
 
 matplotlib.use('Agg')  # @UndefinedVariable
@@ -527,8 +530,8 @@ class BokehPlot:
 
 class PlotProfitsInc:
     """
-    绘制K线,pe走势图
-    :param ts_code: string, 股票代码, 600619
+    绘制利润增长趋势图
+    :param ts_code: string, 股票代码, 600619.SH
     :param days: int, 走势图显示的总天数
     :return:
     """
@@ -604,3 +607,62 @@ class PlotProfitsInc:
 #     # plotKline('600801')
 #     BokehPlot('600519')
 # #     tests()
+def linearPlot(data, plot=False, title=None, filename=None):
+    """绘图函数，接受_linear产生的数据绘制原始数据和一阶差分的散点图和回归直线"""
+    pass
+    cnt = len(data)
+    x = list(range(cnt))
+
+    # 绘图
+    # ax = plt.subplot()
+    _ = plt.figure(figsize=(10, 5))
+    try:
+        gs = gridspec.GridSpec(1, 2)
+        ax1 = plt.subplot(gs[0, 0])
+        ax2 = plt.subplot(gs[0, 1])
+
+        # 拟合
+        trainx = np.array(x)
+        trainx = trainx[:, np.newaxis]
+        regr = linear_model.LinearRegression()
+        regr.fit(trainx, data)
+        intercept = regr.intercept_
+        coef = regr.coef_[0]
+        y = [intercept + coef * i for i in x]
+        ax1.scatter(x, data)
+        ax1.plot(x, y, color='r')
+
+        diff_data = np.diff(data)
+        diff_cnt = len(diff_data)
+        diff_x = list(range(diff_cnt))
+        diff_trainx = np.array(diff_x)
+        diff_trainx = diff_trainx[:, np.newaxis]
+        regr = linear_model.LinearRegression()
+        regr.fit(diff_trainx, diff_data)
+        intercept = regr.intercept_
+        coef = regr.coef_[0]
+        diff_y = [intercept + coef * i for i in diff_x]
+        ax2.scatter(diff_x, diff_data)
+        ax2.plot(diff_x, diff_y, color='r')
+
+        plt.title(title, fontproperties='simsun', fontsize=26)
+        if plot:
+            plt.show()
+        if filename is not None:
+            plt.savefig(filename)
+    except Exception as e:
+        logging.warning(e)
+    finally:
+        plt.close()
+
+
+def plotProfitInc(ts_code, data):
+    # sql = select
+    # data = getProfitsInc(ts_code, startDate, endDate)
+    cf = Config()
+    filename = os.path.join(cf.datapath, 'linear_img',
+                            f'profit_inc_{ts_code[:6]}.png')
+    name = getStockName(ts_code)
+    title = f'{ts_code} {name}'
+    # linearPlot(data, plot=True, title=title, filename=filename)
+    linearPlot(data, plot=False, title=title, filename=filename)

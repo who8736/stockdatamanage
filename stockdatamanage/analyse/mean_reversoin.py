@@ -6,19 +6,20 @@
 第二种：
 """
 
-import matplotlib.dates as mdates
+import os
+import datetime as dt
+import logging
+
 import matplotlib.pyplot as plt  # @IgnorePep8
 import matplotlib.gridspec as gridspec
-from matplotlib.dates import DateFormatter
-from matplotlib.dates import YearLocator  # @IgnorePep8
 import numpy as np
 import pandas as pd
 from statsmodels.tsa.stattools import adfuller
-import tushare as ts
 
-from sqlconn import engine
-from sqlrw import readStockList
-from sqlrw import getStockName
+from ..sqlconn import engine
+from ..sqlrw import readStockList
+from ..config import Config
+from ..plot import plotProfitInc
 
 
 def adfTestPE(ts_code, startDate, endDate, plotFlag=False):
@@ -132,7 +133,7 @@ def adfTestProfitsInc(data):
     # return (round(resultb[0], 2), round(resultb[1], 2), flag)
     resultdict = {'mean': mean,
                   'std': std,
-                  'sharp': round(mean/std, 2),
+                  'sharp': round(mean / std, 2),
                   'flag': flag,
                   'adf': result[0],
                   'pvalue': result[1],
@@ -150,12 +151,14 @@ def adfTestProfitsInc(data):
     return resultdict
 
 
-def adfTestAllProfitsInc():
-    """对所有股票2009年1季度至2020年1季度TTM利润增长率进行ADF检测"""
+def adfTestAllProfitsInc(startDate=None, endDate=None):
+    """对所有股票TTM利润增长率进行ADF检测"""
     # ts_code = '000651'
-    startDate = '20150331'
-    endDate = '20200331'
     # adfTestProfits(ts_code, startDate, endDate)
+    if endDate is None:
+        endDate = dt.date.today().strftime('%Y%m%d')
+    if startDate is None:
+        startDate = f'{int(endDate[:4]) - 3}0331'
 
     stocks = readStockList()
     # stocks = stocks[:20]
@@ -179,26 +182,16 @@ def adfTestAllProfitsInc():
             result = adfTestProfitsInc(data)
             plotProfitInc(ts_code, data)
         except Exception as e:
-            print(ts_code, e)
-            result = None
-        if result is not None:
+            logging.warning(f'{ts_code}: {e}')
+        else:
             result['ts_code'] = ts_code
             resultList.append(result)
 
     df = pd.DataFrame(resultList)
     stocks = pd.merge(stocks, df, left_on='ts_code', right_on='ts_code')
-    stocks.to_excel('../data/profits_inc_adf.xlsx')
+    cf = Config()
+    stocks.to_excel(os.path.join(cf.datapath, 'profits_inc_adf.xlsx'))
     # print(df)
-
-
-def plotProfitInc(ts_code, data):
-    # sql = select
-    # data = getProfitsInc(ts_code, startDate, endDate)
-    filename = f'profit_inc_{ts_code[:6]}.png'
-    name = getStockName(ts_code)
-    title = f'{ts_code} {name}'
-    # linearPlot(data, plot=True, title=title, filename=filename)
-    linearPlot(data, plot=False, title=title, filename=filename)
 
 
 def adfTestAllPE(stockList, startDate, endDate, plotFlag):

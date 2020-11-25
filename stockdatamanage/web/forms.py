@@ -16,7 +16,8 @@ class StockListForm(Form):
 class Select2MultipleField(SelectMultipleField):
 
     # noinspection PyArgumentList
-    def __init__(self, label=None, validators=None, coerce=text_type,
+    def __init__(self, label=None, validators=None,
+                 # coerce=text_type,
                  choices=None, **kwargs):
         super().__init__(label, validators, coerce, choices, kwargs)
         self.data = ""

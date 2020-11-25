@@ -167,15 +167,13 @@ def _klineimg(df):
     plotImg = BokehPlot(df)
     scripts, div = components(plotImg.plot())
     # return render_template("plotkline.html", the_div=div, the_script=scripts)
-    html = render_template(
+    return render_template(
         'plotkline.html',
         plot_script=scripts,
         plot_div=div,
         js_resources=js_resources,
         css_resources=css_resources,
     )
-    # return encode_utf8(html)
-    return html
 
 
 @app.route('/profitsinc/<ts_code>')
@@ -189,14 +187,13 @@ def profitsIncImg(ts_code):
     plotImg = PlotProfitsInc(ts_code)
     scripts, div = components(plotImg.plot())
     # return render_template("plotkline.html", the_div=div, the_script=scripts)
-    html = render_template(
+    return render_template(
         'plotkline.html',
         plot_script=scripts,
         plot_div=div,
         js_resources=js_resources,
         css_resources=css_resources,
     )
-    return html
 
 
 @app.route('/indexinfo/<ID>')

@@ -144,37 +144,29 @@
         <tr>
             <td>{{ stock.ts_code }}</td>
             <td>{{ stock.name }}</td>
-            <td>{{ stock.profitsInc3Years[0] }}</td>
-            <td>{{ stock.profitsInc3Years[1] }}</td>
-            <td>{{ stock.profitsInc3Years[2] }}</td>
+            <td>{{ stock.profitsInc.iloc[0, 1] }}</td>
+            <td>{{ stock.profitsInc.iloc[0, 2] }}</td>
+            <td>{{ stock.profitsInc.iloc[0, 3] }}</td>
         </tr>
         <tr>
             <td>{{ stock.lv1Code }}</td>
             <td>{{ stock.lv1Name }}</td>
-            <td>{{ stock.lv1Inc[0] }}</td>
-            <td>{{ stock.lv1Inc[1] }}</td>
-            <td>{{ stock.lv1Inc[2] }}</td>
+            <td>{{ stock.lv1Inc.iloc[0, 1] }}</td>
+            <td>{{ stock.lv1Inc.iloc[0, 2] }}</td>
+            <td>{{ stock.lv1Inc.iloc[0, 3] }}</td>
         </tr>
         <tr>
             <td>{{ stock.lv2Code }}</td>
             <td>{{ stock.lv2Name }}</td>
-            <td>{{ stock.lv2Inc[0] }}</td>
-            <td>{{ stock.lv2Inc[1] }}</td>
-            <td>{{ stock.lv2Inc[2] }}</td>
+            <td>{{ stock.lv1Inc.iloc[0, 1] }}</td>
         </tr>
         <tr>
             <td>{{ stock.lv3Code }}</td>
             <td>{{ stock.lv3Name }}</td>
-            <td>{{ stock.lv3Inc[0] }}</td>
-            <td>{{ stock.lv3Inc[1] }}</td>
-            <td>{{ stock.lv3Inc[2] }}</td>
         </tr>
         <tr>
             <td>{{ stock.lv4Code }}</td>
             <td>{{ stock.lv4Name }}</td>
-            <td>{{ stock.lv4Inc[0] }}</td>
-            <td>{{ stock.lv4Inc[1] }}</td>
-            <td>{{ stock.lv4Inc[2] }}</td>
         </tr>
     </table>
     <h3>同行业股票：</h3>

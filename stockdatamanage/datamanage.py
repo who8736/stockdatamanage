@@ -200,7 +200,7 @@ def updateHYList():
 
 
 @logfun
-def updateQuarterData():
+def updateQuarterData(startDate=None, endDate=None, replace=False):
     """更新股票季报数据
 
     :return:
@@ -216,7 +216,10 @@ def updateQuarterData():
         if e_date is not None:
             e_date += relativedelta(days=1)
             datestr = e_date.strftime('%Y%m%d')
-        downloader = DownloaderQuarter(ts_code=ts_code, startDate=datestr)
+        downloader = DownloaderQuarter(ts_code=ts_code,
+                                       startDate=datestr,
+                                       endDate=endDate,
+                                       replace=replace)
         downloader.run()
 
 

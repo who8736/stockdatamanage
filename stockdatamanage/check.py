@@ -1,3 +1,6 @@
+"""
+检查和修复数据
+"""
 import os
 import logging
 import datetime as dt
@@ -116,3 +119,30 @@ def checkClassifyMemberListdate():
                         & (stocks.list_date > __date)]
         if not result.empty:
             logging.error(f'股票未上市时已列入行业清单：[code:{result}], [date:{_date}]')
+
+def checkPath():
+    cf = Config()
+    if not os.path.isdir(cf.logpath):
+        os.makedirs(cf.logpath)
+    if not os.path.isdir(cf.datapath):
+        os.makedirs(cf.datapath)
+    linearpath = os.path.join(cf.datapath, 'linear_img')
+    if not os.path.isdir(linearpath):
+        os.makedirs(linearpath)
+
+def repairQuarterData(stocks=None, startDate=None, endDate=None, replace=False):
+    """修复指定报告期的股票季报数据
+
+    TODO:
+
+    :return:
+    """
+    if stocks is None:
+        stocks = readStockList()
+
+    for ts_code in stocks.index:
+        downloader = DownloaderQuarter(ts_code=ts_code,
+                                       startDate=startDate,
+                                       endDate=startDate,
+                                       replace=replace)
+        downloader.run()

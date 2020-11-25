@@ -324,7 +324,7 @@ def downClassifyFile(_date):
     url = f'http://47.97.204.47/syl/csi{_date}.zip'
     cf = Config()
     zipfilename = os.path.join(cf.datapath, f'csi{_date}.zip')
-    datafilename = os.path.join(cf.datapath, 'data', f'csi{_date}.xls')
+    datafilename = os.path.join(cf.datapath, f'csi{_date}.xls')
     req = WebRequest()
     req.get(url)
     req.save(zipfilename)
