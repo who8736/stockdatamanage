@@ -3,11 +3,17 @@
 # datetime:2020/11/16 20:41
 import logging
 
-from stockdatamanage.check import checkClassifyMemberListdate, checkPath
+from stockdatamanage.check import (
+    checkClassifyMemberListdate, checkPath,
+    checkQuarterDataNew,
+)
 from stockdatamanage.initlog import initlog
 
 if __name__ == '__main__':
-    # initlog()
+    pass
+    initlog()
     # checkClassifyMemberListdate()
 
-    checkPath()
+    # checkPath()
+
+    checkQuarterDataNew()

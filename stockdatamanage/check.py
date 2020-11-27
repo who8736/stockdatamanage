@@ -61,6 +61,63 @@ def checkQuarterData_del():
     # return df.ts_code.values
 
 
+def checkQuarterDataNew():
+    """
+    每支股票最后更新季报日期与每日指标中的最后日期计算的净资产是否存在差异
+    如有差异则说明需更新季报
+    如每日指标中无市净率的也应更新季报，因可能为新上市股票
+    """
+    end_date = '20200331'
+    """
+    查询balancesheet, cashflow, income, fina_indicator表
+    报告期不同的，应更新报表
+    报告期相同，则计算最后一期公告日的净利润，
+        与前一日的净利润比较，有差异的更新报表
+    如每日指标中无市净率的，根据当前日期计算需更新的报表
+    """
+    sql = f'''select ts_code, max(end_date) as e_date_balancesheet, 
+                     max(ann_date) as a_date_balancesheet
+                     from balancesheet group by ts_code'''
+    df = pd.read_sql(sql, engine)
+
+    sql = f'''select ts_code, max(end_date) as e_date_income, 
+                     max(ann_date) as a_date_income
+                     from income group by ts_code'''
+    dftmp = pd.read_sql(sql, engine)
+    df = df.merge(dftmp, how='outer', on='ts_code')
+
+    sql = f'''select ts_code, max(end_date) as e_date_cashflow, 
+                     max(ann_date) as a_date_cashflow
+                     from cashflow group by ts_code'''
+    dftmp = pd.read_sql(sql, engine)
+    df = df.merge(dftmp, how='outer', on='ts_code')
+
+    sql = f'''select ts_code, max(end_date) as e_date_fina_indicator, 
+                     max(ann_date) as a_date_fina_indicator
+                     from fina_indicator group by ts_code'''
+    dftmp = pd.read_sql(sql, engine)
+    df = df.merge(dftmp, how='outer', on='ts_code')
+
+    # df['e_date']
+
+    # sql = f'call checkquarterdata("{end_date}");'
+    # df = pd.read_sql(sql, engine)
+    # # print(df)
+    # sql = f"""select ts_code from stock_basic where ts_code not in
+    #             (select distinct ts_code from daily_basic
+    #             where trade_date=(select max(trade_date) from daily_basic)
+    #                 and pb is not null);
+    #         """
+    # df1 = pd.read_sql(sql, engine)
+    # # print(df1)
+    # df1['e_date'] = None
+    # df1['networth_diff'] = 1
+    # df = pd.concat([df, df1])
+    # # df.reset_index(inplace=True)
+    # # df = pd.merge(df, df1, how='left', on='ts_code')
+    print(df)
+    return df
+
 def checkQuarterData():
     """
     每支股票最后更新季报日期与每日指标中的最后日期计算的净资产是否存在差异
