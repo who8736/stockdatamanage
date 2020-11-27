@@ -98,8 +98,18 @@ def checkQuarterDataNew():
     dftmp = pd.read_sql(sql, engine)
     df = df.merge(dftmp, how='outer', on='ts_code')
 
-    # df['e_date']
+    df_e_date = df[['e_date_balancesheet', 'e_date_income', 'e_date_cashflow',
+                    'e_date_fina_indicator']]
+    df['min_e_date'] = df_e_date.min(axis=1)
+    df['max_e_date'] = df_e_date.max(axis=1)
 
+    df_a_date = df[['a_date_balancesheet', 'a_date_income', 'a_date_cashflow',
+                    'a_date_fina_indicator']]
+    df['min_a_date'] = df_a_date.min(axis=1)
+    df['max_a_date'] = df_a_date.max(axis=1)
+
+    # 最小报告期不等于最大报告期时，最小报告期的公告日为报表更新日期
+    df['a_date'] = df[df.min_e_date != df.max_e_date].min_a_date
     # sql = f'call checkquarterdata("{end_date}");'
     # df = pd.read_sql(sql, engine)
     # # print(df)
@@ -117,6 +127,7 @@ def checkQuarterDataNew():
     # # df = pd.merge(df, df1, how='left', on='ts_code')
     print(df)
     return df
+
 
 def checkQuarterData():
     """
@@ -177,6 +188,7 @@ def checkClassifyMemberListdate():
         if not result.empty:
             logging.error(f'股票未上市时已列入行业清单：[code:{result}], [date:{_date}]')
 
+
 def checkPath():
     cf = Config()
     if not os.path.isdir(cf.logpath):
@@ -186,6 +198,7 @@ def checkPath():
     linearpath = os.path.join(cf.datapath, 'linear_img')
     if not os.path.isdir(linearpath):
         os.makedirs(linearpath)
+
 
 def repairQuarterData(stocks=None, startDate=None, endDate=None, replace=False):
     """修复指定报告期的股票季报数据

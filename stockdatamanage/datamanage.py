@@ -211,11 +211,11 @@ def updateQuarterData():
     stocks.set_index('ts_code', inplace=True)
 
     for ts_code in stocks.index:
-        e_date = stocks.loc[ts_code, 'e_date']
+        a_date = stocks.loc[ts_code, 'a_date']
         datestr = None
-        if e_date is not None:
-            e_date += relativedelta(days=1)
-            datestr = e_date.strftime('%Y%m%d')
+        if a_date is not None:
+            a_date += relativedelta(days=1)
+            datestr = a_date.strftime('%Y%m%d')
         downloader = DownloaderQuarter(ts_code=ts_code, startDate=datestr)
         downloader.run()
 
