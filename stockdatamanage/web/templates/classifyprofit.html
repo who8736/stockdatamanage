@@ -4,24 +4,38 @@
 
 {% block body %}
 {{ super() }}
+
 <div class="container">
     <h2>行业利润查询</h2>
-    <style>
-        #selectid {
-            width: 150px;
-            display: inline-block;
-        }
-    </style>
 
-    <div class="toolbar">
-        <select id="selectid" class="form-control" name="lv">
-            <option value="" selected>显示全部</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-        </select>
-        <button class="btn btn-secondary" id="searchBy">查询</button>
+    <!--    <div class="toolbar">-->
+    <div class="row">
+        <div class="col-5">
+
+            <div class="input-group">
+                <label for="classifylv">行业级别</label>
+                <select id="classifylv" class="form-control" name="lv">
+                    <option value="" selected>显示全部</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                </select>
+                <label for="selectyear">报告期</label>
+                <select class="form-control" id="selectyear" name="year">
+                    {% for i in range(2010, 2030) %}
+                        <option value={{i}}>{{i}}年</option>
+                    {% endfor %}
+                </select>
+                <!--suppress HtmlFormInputWithoutLabel -->
+                <select class="form-control" id="selectquarter" name="quarter">
+                    <option value="1">1季度</option>
+                    <option value="2">2季度</option>
+                    <option value="3">3季度</option>
+                    <option value="4">4季度</option>
+                </select>
+            </div>
+        </div>
     </div>
 
     <table id="table"
@@ -39,10 +53,18 @@
             <!--            <th data-field="selected" data-checkbox="true"></th>-->
             <th data-field="code" data-sortable="true">代码</th>
             <th data-field="name" data-sortable="true">名称</th>
-            <th data-field="profits" data-sortable="true" data-formatter="currencyFormatter" data-align="right">利润</th>
-            <th data-field="profits_com" data-sortable="true" data-formatter="currencyFormatter" data-align="right">可比利润</th>
-            <th data-field="lastprofits" data-sortable="true" data-formatter="currencyFormatter" data-align="right">上年同期利润</th>
-            <th data-field="inc" data-sortable="true" data-formatter="currencyFormatter" data-align="right">同比增长率</th>
+            <th data-field="profits" data-sortable="true"
+                data-formatter="currencyFormatter" data-align="right">利润
+            </th>
+            <th data-field="profits_com" data-sortable="true"
+                data-formatter="currencyFormatter" data-align="right">可比利润
+            </th>
+            <th data-field="lastprofits" data-sortable="true"
+                data-formatter="currencyFormatter" data-align="right">上年同期利润
+            </th>
+            <th data-field="inc" data-sortable="true"
+                data-formatter="currencyFormatter" data-align="right">同比增长率
+            </th>
         </tr>
         </thead>
     </table>
@@ -59,44 +81,60 @@
             xhr.setRequestHeader('lv', '1')
         },
     }
-    var $table = $('#table')
+    let $table = $('#table')
+    let $selectyear = $('#selectyear')
+    let $selectquarter = $('#selectquarter')
 
     function queryParams(params) {
-        var checkValue = $('#selectid').val()
-        params.lv = checkValue
+        params.lv = $('#classifylv').val()
+        params.year = $selectyear.val()
+        params.quarter = $selectquarter.val()
         console.log('queryParams: ' + JSON.stringify(params))
         return params
     }
 
-    function currencyFormatter(value, row, index) {
-        return accounting.formatMoney(value, symbol='')
-        // return ['<span>' + accounting.formatMoney(value) + '</span>'].join('')
+    function currencyFormatter(value) {
+        return accounting.formatMoney(value, symbol = '')
     }
 
+    // 表格
     $(function () {
         $table.bootstrapTable('refreshOptions', {
-            pageSize: 13,                       //每页的记录行数（*）
-            pageList: [13, 25, 50, 100],        //可供选择的每页的行数（*）
+            pageSize: 10,                       //每页的记录行数（*）
+            pageList: [10, 20, 50, 100],        //可供选择的每页的行数（*）
 
         })
 
-        $('#selectid').change(function () {
-            var lvValue = $(this).val()
-            console.log('aaa checkValue' + lvValue)
-            // $table.bootstrapTable('getData')
-            var opt = {
-                url: 'classifyprofitjson', silent: true, query: {
-                    type: 1, lv: lvValue,
-                },
-            }
-            //带参数 刷新
-            $table.bootstrapTable('refresh')
-            // $table.bootstrapTable('refresh', opt)
-            // var queryParamsType = $('.toolbar input:checked').next().text()
+        // 设置当前报告期
+        let today = new Date()
+        let quarters = [4, 4, 4, 1, 1, 1, 2, 2, 2, 3, 3, 3]
+        $selectyear.val(today.getFullYear())
+        $selectquarter.val(quarters[today.getMonth()])
+        $table.bootstrapTable('refresh')
+        console.log(today.getFullYear())
+        console.log(quarters[today.getMonth()])
 
-            // $table.bootstrapTable('refreshOptions', {
-            //     queryParamsType: queryParamsType,
-            // })
+        // 报告期变动时更新表
+        $('#selectyear').change(function () {
+            $table.bootstrapTable('refresh')
+        })
+        $('#selectquarter').change(function () {
+            $table.bootstrapTable('refresh')
+        })
+
+        // 行业级别变动时更新表
+        $('#classifylv').change(function () {
+            // let lvValue = $(this).val()
+            // console.log('aaa checkValue' + lvValue)
+            $table.bootstrapTable('refresh')
+
+            //带参数 刷新
+            // var opt = {
+            //     url: 'classifyprofitjson', silent: true, query: {
+            //         type: 1, lv: lvValue,
+            //     },
+            // }
+            // $table.bootstrapTable('refresh', opt)
         })
 
     })

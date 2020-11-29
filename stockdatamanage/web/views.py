@@ -239,16 +239,22 @@ def classifyProfit():
 
 @app.route('/classifyprofitjson', methods=["GET", "POST"])
 def classifyProfitJson():
-    print(request.args)
-    date = request.args.get('date', '')
-    if not date:
+    # print(request.args)
+    year = request.args.get('year', '')
+    quarter = request.args.get('quarter', '')
+    qmonth = ['0331', '0630', '0930', '1231']
+    if not ('2010' <= year <= '2030') or quarter not in '1234':
+        # assert quarter in '1234', '季度参数不为1， 2， 3， 4'
         date = lastQuarter()
+    else:
+        date = f'{year}{qmonth[int(quarter) - 1]}'
+    print('date:', date)
     lv = request.args.get('lv', '')
     if lv and '1' <= lv <= '4':
         lv = int(lv)
     else:
         lv = ''
-    print(date, lv)
+    # print(date, lv)
     df = readClassifyProfit(date, lv)
     stocks = df.to_json(orient='records', force_ascii=False)
     return stocks
