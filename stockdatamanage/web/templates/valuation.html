@@ -69,7 +69,7 @@
 
                 window.setInterval('reinitIframeProfits()', 200)
             </script>
-            <p class="lead">当前TTMPE: {{ stock.curTTMPE }}</p>
+            <p class="lead">当前TTMPE: {{ stock.pe }}</p>
             <p class="lead">peg: {{ stock.peg }}</p>
             <p class="lead">评分: {{ stock.pf }}</p>
             <table class="table">
@@ -122,21 +122,24 @@
                     {% endfor %}
                 </tr>
             </table>
-            <p>近2年TTM利润增长率:</p>
+            <div class="bg-warning"><p>近2年TTM利润增长率(待修改):</p></div>
             <table class="table table-striped table-bordered">
                 <tr>
-                    <td>待补充，以柱状图表示</td>
-                    <!--            {% for inc in stock.profitsInc %}-->
-                    <!--            <td>{{ inc }}</td>-->
-                    <!--            {% endfor %}-->
+                    <td>{{ stock.incrate0 }}</td>
+                    <td>{{ stock.incrate1 }}</td>
+                    <td>{{ stock.incrate2 }}</td>
+                    <td>{{ stock.incrate3 }}</td>
+                    <td>{{ stock.incrate4 }}</td>
+                    <td>{{ stock.incrate5 }}</td>
                 </tr>
             </table>
+            <div class="bg-warning">待补充，以柱状图表示</div>
             <!--	</p>-->
-            <p>最近6个季度TTM利润平均增长率: {{ stock.profitsIncAvg }}</P>
+            <p>最近6个季度TTM利润平均增长率: {{ stock.avg }}</P>
             <p>根据平均绝对离差计算的增长率差异水平: {{ stock.profitsIncMad }}</P>
-            <p>根据标准差计算的增长率差异水平: {{ stock.profitsIncStand }}</P>
-            <p>当前TTMPE参考最近200个工作日水平: {{ stock.PERate200 }}</P>
-            <p>当前TTMPE参考最近1000个工作日水平: {{ stock.PERate1000 }}</P>
+            <p>根据标准差计算的增长率差异水平: {{ stock.std }}</P>
+            <p>当前TTMPE参考最近200个工作日水平: {{ stock.pe200 }}</P>
+            <p>当前TTMPE参考最近1000个工作日水平: {{ stock.pe1000 }}</P>
             <h3>行业比较：</h3>
             <table class="table table-striped table-bordered">
                 <tr>
@@ -197,9 +200,9 @@
                            href="/valuation/{{ stock.ts_code }}">
                         {{ stock.ts_code }}</a></td>
                     <td>{{ stock.sname }}</td>
+                    <td>{{ stock.inc0 }}</td>
                     <td>{{ stock.inc1 }}</td>
                     <td>{{ stock.inc2 }}</td>
-                    <td>{{ stock.inc3 }}</td>
                 </tr>
                 {% endfor %}
             </table>

@@ -15,7 +15,7 @@ import pandas as pd
 from . import datatrans
 from .datatrans import calDate
 from .sqlconn import engine
-from .sqlrw import readTTMProfitsForDate, writeSQL
+from .sqlrw import readTTMProfitsForDate, writeSQL, readStockList
 
 
 # import logging
@@ -33,7 +33,11 @@ def getStockForClassify(code=None, date=None):
         sql += f' and classify_code="{code}" '
     sql += (f' and date=(select max(date) from classify_member where '
             f'date<="{date}")')
-    return pd.read_sql(sql, engine)
+    df = pd.read_sql(sql, engine)
+
+    stockname = readStockList()
+    df = df.merge(stockname, on='ts_code', how='left')
+    return df
     # result = engine.execute(sql).fetchall()
     # if result:
     #     return [row[0] for row in result]
