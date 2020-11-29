@@ -447,7 +447,6 @@ def reportValuation(ts_code):
     stocks = stocks.merge(incs, on='ts_code', how='left')
     # print(f'230 stocks:', stocks)
     stocks.rename(columns={'name': 'sname'}, inplace=True)
-    print(stocks)
     valuation['classifyStocks'] = stocks
     return valuation
 

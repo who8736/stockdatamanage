@@ -5,6 +5,8 @@ Created on 2016年12月14日
 @author: who8736
 """
 
+import logging
+
 from bokeh.embed import components
 from bokeh.resources import INLINE
 from flask import (
@@ -184,16 +186,21 @@ def profitsIncImg(ts_code):
     # plotImg = PlotProfitsInc(ts_code,
     #                          startDate='20150331',
     #                          endDate='20191231')
-    plotImg = PlotProfitsInc(ts_code)
-    scripts, div = components(plotImg.plot())
-    # return render_template("plotkline.html", the_div=div, the_script=scripts)
-    return render_template(
-        'plotkline.html',
-        plot_script=scripts,
-        plot_div=div,
-        js_resources=js_resources,
-        css_resources=css_resources,
-    )
+    try:
+        plotImg = PlotProfitsInc(ts_code)
+        scripts, div = components(plotImg.plot())
+        # return render_template("plotkline.html", the_div=div, the_script=scripts)
+        return render_template(
+            'plotkline.html',
+            plot_script=scripts,
+            plot_div=div,
+            js_resources=js_resources,
+            css_resources=css_resources,
+        )
+    except Exception as e:
+        logging.warning(e)
+        return '<div>绘图失败</div>'
+
 
 
 @app.route('/indexinfo/<ID>')
