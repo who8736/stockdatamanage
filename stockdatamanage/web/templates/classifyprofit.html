@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}行业利润查询{% endblock %}
+
+{% block body %}
+{{ super() }}
+<div class="container">
+    <h2>行业利润查询</h2>
+    <style>
+        #selectid {
+            width: 150px;
+            display: inline-block;
+        }
+    </style>
+
+    <div class="toolbar">
+        <select id="selectid" class="form-control" name="lv">
+            <option value="" selected>显示全部</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+        </select>
+        <button class="btn btn-secondary" id="searchBy">查询</button>
+    </div>
+
+    <table id="table"
+           data-toggle="table"
+           data-toolbar="#toolbar"
+           data-search="true"
+           data-pagination="true"
+           data-click-to-select="true"
+           data-ajax-options="ajaxOptions"
+           data-query-params="queryParams"
+           data-url="classifyprofitjson"
+           data-locale="zh-CN">
+        <thead>
+        <tr>
+            <!--            <th data-field="selected" data-checkbox="true"></th>-->
+            <th data-field="code" data-sortable="true">代码</th>
+            <th data-field="name" data-sortable="true">名称</th>
+            <th data-field="profits" data-sortable="true" data-formatter="currencyFormatter" data-align="right">利润</th>
+            <th data-field="profits_com" data-sortable="true" data-formatter="currencyFormatter" data-align="right">可比利润</th>
+            <th data-field="lastprofits" data-sortable="true" data-formatter="currencyFormatter" data-align="right">上年同期利润</th>
+            <th data-field="inc" data-sortable="true" data-formatter="currencyFormatter" data-align="right">同比增长率</th>
+        </tr>
+        </thead>
+    </table>
+
+</div>
+
+{% endblock %}}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    window.ajaxOptions = {
+        beforeSend: function (xhr) {
+            xhr.setRequestHeader('lv', '1')
+        },
+    }
+    var $table = $('#table')
+
+    function queryParams(params) {
+        var checkValue = $('#selectid').val()
+        params.lv = checkValue
+        console.log('queryParams: ' + JSON.stringify(params))
+        return params
+    }
+
+    function currencyFormatter(value, row, index) {
+        return accounting.formatMoney(value, symbol='')
+        // return ['<span>' + accounting.formatMoney(value) + '</span>'].join('')
+    }
+
+    $(function () {
+        $table.bootstrapTable('refreshOptions', {
+            pageSize: 13,                       //每页的记录行数（*）
+            pageList: [13, 25, 50, 100],        //可供选择的每页的行数（*）
+
+        })
+
+        $('#selectid').change(function () {
+            var lvValue = $(this).val()
+            console.log('aaa checkValue' + lvValue)
+            // $table.bootstrapTable('getData')
+            var opt = {
+                url: 'classifyprofitjson', silent: true, query: {
+                    type: 1, lv: lvValue,
+                },
+            }
+            //带参数 刷新
+            $table.bootstrapTable('refresh')
+            // $table.bootstrapTable('refresh', opt)
+            // var queryParamsType = $('.toolbar input:checked').next().text()
+
+            // $table.bootstrapTable('refreshOptions', {
+            //     queryParamsType: queryParamsType,
+            // })
+        })
+
+    })
+</script>
+{% endblock %}

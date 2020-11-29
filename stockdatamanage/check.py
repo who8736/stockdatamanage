@@ -1,17 +1,17 @@
 """
 检查和修复数据
 """
-import os
-import logging
 import datetime as dt
+import logging
+import os
 
-import numpy as np
 import pandas as pd
-from dateutil.relativedelta import relativedelta
 
-from .sqlconn import engine
-from .sqlrw import readStockList, readCal
 from .config import Config
+from .datatrans import lastQuarter, quarterList
+from .sqlconn import engine
+from .sqlrw import readCal, readStockList
+from .download import DownloaderQuarter
 
 
 # def checkGuben():
@@ -61,96 +61,16 @@ def checkQuarterData_del():
     # return df.ts_code.values
 
 
-def checkQuarterDataNew():
-    """
-    每支股票最后更新季报日期与每日指标中的最后日期计算的净资产是否存在差异
-    如有差异则说明需更新季报
-    如每日指标中无市净率的也应更新季报，因可能为新上市股票
-    """
-    end_date = '20200331'
-    """
-    查询balancesheet, cashflow, income, fina_indicator表
-    报告期不同的，应更新报表
-    报告期相同，则计算最后一期公告日的净利润，
-        与前一日的净利润比较，有差异的更新报表
-    如每日指标中无市净率的，根据当前日期计算需更新的报表
-    """
-    sql = f'''select ts_code, max(end_date) as e_date_balancesheet, 
-                     max(ann_date) as a_date_balancesheet
-                     from balancesheet group by ts_code'''
-    df = pd.read_sql(sql, engine)
-
-    sql = f'''select ts_code, max(end_date) as e_date_income, 
-                     max(ann_date) as a_date_income
-                     from income group by ts_code'''
-    dftmp = pd.read_sql(sql, engine)
-    df = df.merge(dftmp, how='outer', on='ts_code')
-
-    sql = f'''select ts_code, max(end_date) as e_date_cashflow, 
-                     max(ann_date) as a_date_cashflow
-                     from cashflow group by ts_code'''
-    dftmp = pd.read_sql(sql, engine)
-    df = df.merge(dftmp, how='outer', on='ts_code')
-
-    sql = f'''select ts_code, max(end_date) as e_date_fina_indicator, 
-                     max(ann_date) as a_date_fina_indicator
-                     from fina_indicator group by ts_code'''
-    dftmp = pd.read_sql(sql, engine)
-    df = df.merge(dftmp, how='outer', on='ts_code')
-
-    df_e_date = df[['e_date_balancesheet', 'e_date_income', 'e_date_cashflow',
-                    'e_date_fina_indicator']]
-    df['min_e_date'] = df_e_date.min(axis=1)
-    df['max_e_date'] = df_e_date.max(axis=1)
-
-    df_a_date = df[['a_date_balancesheet', 'a_date_income', 'a_date_cashflow',
-                    'a_date_fina_indicator']]
-    df['min_a_date'] = df_a_date.min(axis=1)
-    df['max_a_date'] = df_a_date.max(axis=1)
-
-    # 最小报告期不等于最大报告期时，最小报告期的公告日为报表更新日期
-    df['a_date'] = df[df.min_e_date != df.max_e_date].min_a_date
-    # sql = f'call checkquarterdata("{end_date}");'
-    # df = pd.read_sql(sql, engine)
-    # # print(df)
-    # sql = f"""select ts_code from stock_basic where ts_code not in
-    #             (select distinct ts_code from daily_basic
-    #             where trade_date=(select max(trade_date) from daily_basic)
-    #                 and pb is not null);
-    #         """
-    # df1 = pd.read_sql(sql, engine)
-    # # print(df1)
-    # df1['e_date'] = None
-    # df1['networth_diff'] = 1
-    # df = pd.concat([df, df1])
-    # # df.reset_index(inplace=True)
-    # # df = pd.merge(df, df1, how='left', on='ts_code')
-    print(df)
-    return df
-
-
 def checkQuarterData():
     """
     每支股票最后更新季报日期与每日指标中的最后日期计算的净资产是否存在差异
     如有差异则说明需更新季报
     如每日指标中无市净率的也应更新季报，因可能为新上市股票
     """
-    end_date = '20200331'
+    # end_date = '20200331'
+    end_date = lastQuarter(dt.date.today())
     sql = f'call checkquarterdata("{end_date}");'
     df = pd.read_sql(sql, engine)
-    # print(df)
-    sql = f"""select ts_code from stock_basic where ts_code not in
-                (select distinct ts_code from daily_basic 
-                where trade_date=(select max(trade_date) from daily_basic) 
-                    and pb is not null);
-            """
-    df1 = pd.read_sql(sql, engine)
-    # print(df1)
-    df1['e_date'] = None
-    df1['networth_diff'] = 1
-    df = pd.concat([df, df1])
-    # df.reset_index(inplace=True)
-    # df = pd.merge(df, df1, how='left', on='ts_code')
     # print(df)
     return df
 
@@ -190,6 +110,9 @@ def checkClassifyMemberListdate():
 
 
 def checkPath():
+    """
+
+    """
     cf = Config()
     if not os.path.isdir(cf.logpath):
         os.makedirs(cf.logpath)
@@ -200,19 +123,43 @@ def checkPath():
         os.makedirs(linearpath)
 
 
-def repairQuarterData(stocks=None, startDate=None, endDate=None, replace=False):
-    """修复指定报告期的股票季报数据
-
-    TODO:
+def repairLost(startDate, endDate):
+    """修复缺失的股票季报数据
+    1. 某股票上市后缺某季报表，如资产负债表等
+    2. 财务指标中缺基本每股收益或扣非净利润则视为财务指标缺失
 
     :return:
-    """
-    if stocks is None:
-        stocks = readStockList()
 
-    for ts_code in stocks.index:
-        downloader = DownloaderQuarter(ts_code=ts_code,
-                                       startDate=startDate,
-                                       endDate=startDate,
-                                       replace=replace)
-        downloader.run()
+    Parameters
+    ----------
+    startDate : str
+    endDate : str
+    replace : bool
+    """
+    # if stocks is None:
+    #     stocks = readStockList()
+
+    tables = ['balancesheet', 'income', 'cashflow', 'fina_indicator']
+    dates = quarterList(startDate, endDate)
+    for _date in dates:
+        # print(_date)
+        sql = f'select ts_code from stock_basic where list_date<="{_date}"'
+        stocks = pd.read_sql(sql, engine)
+        for table in tables:
+            sql = f'select ts_code from {table} where end_date="{_date}"'
+            df = pd.read_sql(sql, engine)
+            lost = stocks[~stocks.ts_code.isin(df.ts_code)]
+            if table == 'fina_indicator':
+                sql = f'''select ts_code from fina_indicator
+                            where end_date="{_date}" 
+                                and (profit_dedt is null or eps is null);'''
+                df = pd.read_sql(sql, engine)
+                lost = pd.concat([lost, df])
+                lost.drop_duplicates(['ts_code'])
+            for code in lost.ts_code.values:
+                print(_date, table, code)
+                downloader = DownloaderQuarter(ts_code=code,
+                                               tables=[table],
+                                               period=_date,
+                                               replace=True)
+                downloader.run()

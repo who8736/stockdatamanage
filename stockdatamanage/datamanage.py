@@ -33,6 +33,7 @@ from .sqlrw import (
 )
 from .check import checkQuarterData
 from .datatrans import classifyEndDate, quarterList
+from .classifyanalyse import calClassifyStaticTTMProfit
 
 
 @logfun
@@ -77,6 +78,9 @@ def startUpdate():
     # 更新行业利润
     updateClassifyProfits()
 
+    # 计算行业PE
+    updateClassifyPE()
+
     # 更新股票估值
     # updateGuzhiData()
 
@@ -91,6 +95,19 @@ def startUpdate():
 
 
 @logfun
+def updateClassifyPE():
+    sql = 'select max(date) from classify_pe'
+    result = engine.execute(sql).fetchone()
+    if result:
+        startDate = (result[0] + dt.timedelta(days=1)).strftime('%Y%m%d')
+    else:
+        startDate = '20000101'
+    endDate = (dt.date.today() - dt.timedelta(days=1)).strftime('%Y%m%d')
+    dates = readCal(startDate, endDate)
+    for _date in dates:
+        calClassifyPE(_date)
+
+@logfun
 def updateAllMarketPE():
     """
     更新全市场PE
@@ -103,7 +120,7 @@ def updateAllMarketPE():
 
 
 @logfun
-def updateClassifyProfits():
+def updateClassifyProfits(replace=False):
     """
     更新行业利润
     :return:
@@ -114,11 +131,11 @@ def updateClassifyProfits():
         startDate = '20121231'
     else:
         startDate = result[0].strftime('%Y%m%d')
-    endDate = dt.datetime.today().strftime('%Y%m%d')
+    endDate = (dt.datetime.today() - dt.timedelta(days=1)).strftime('%Y%m%d')
     _endDate = classifyEndDate(endDate)
     dates = quarterList(startDate, _endDate)
     for date in dates:
-        classifyanalyse.calClassifyStaticTTMProfit(date)
+        calClassifyStaticTTMProfit(date, replace=replace)
 
 
 @logfun
@@ -211,11 +228,12 @@ def updateQuarterData():
     stocks.set_index('ts_code', inplace=True)
 
     for ts_code in stocks.index:
-        a_date = stocks.loc[ts_code, 'a_date']
+        e_date = stocks.loc[ts_code, 'e_date']
         datestr = None
-        if a_date is not None:
-            a_date += relativedelta(days=1)
-            datestr = a_date.strftime('%Y%m%d')
+        if e_date is not None:
+            # _date = dt.datetime.strptime(e_date, '%Y%m%d')
+            e_date += relativedelta(days=1)
+            datestr = e_date.strftime('%Y%m%d')
         downloader = DownloaderQuarter(ts_code=ts_code, startDate=datestr)
         downloader.run()
 

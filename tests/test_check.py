@@ -5,7 +5,7 @@ import logging
 
 from stockdatamanage.check import (
     checkClassifyMemberListdate, checkPath,
-    checkQuarterDataNew,
+    repairLost,
 )
 from stockdatamanage.initlog import initlog
 
@@ -16,4 +16,8 @@ if __name__ == '__main__':
 
     # checkPath()
 
-    checkQuarterDataNew()
+    # checkQuarterDataNew()
+
+    startDate = '20100331'
+    endDate = '20200930'
+    repairLost(startDate=startDate, endDate=endDate)

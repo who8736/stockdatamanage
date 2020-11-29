@@ -7,27 +7,26 @@ Created on Thu Oct 26 21:12:40 2017
 # 各类下载功能
 """
 
-import logging
-import zipfile
-import time
-import os
 import datetime as dt
+import logging
+import os
+import socket
+import time
+import zipfile
 
-from lxml import etree
-
-import tushare as ts
 import pandas as pd
+import tushare as ts
 
+from .config import Config
+from .initlog import initlog
+from .misc import tsCode
+from .sqlconn import engine
 # from misc import (urlGuzhi, filenameGuzhi)
 # from .datatrans import dateStrList
 from .sqlrw import (
-    writeSQL, writeClassifyMemberToSQL, writeClassifyNameToSQL,
-    readTableFields, readCal,
+    readCal, readTableFields, writeClassifyMemberToSQL, writeClassifyNameToSQL,
+    writeSQL,
 )
-from .sqlconn import engine
-from .initlog import initlog
-from .misc import tsCode
-from .config import ROOTPATH, Config
 from .webRequest import WebRequest
 
 
@@ -57,11 +56,13 @@ class DownloaderQuarter:
                'fina_indicator': 0}
     fields = readTableFields('fina_indicator')
 
-    def __init__(self, ts_code, startDate, tables=None,
+    def __init__(self, ts_code, startDate=None, tables=None, period=None,
                  replace=False, retry=3):
         pass
+        assert startDate is not None or period is not None, '必须指定startDate或period'
         self.ts_code = ts_code
         self.startDate = startDate
+        self.period = period
         if tables is None:
             self.tables = ['balancesheet', 'income', 'cashflow',
                            'fina_indicator']
@@ -94,12 +95,16 @@ class DownloaderQuarter:
                 try:
                     kwargs = dict(table=table,
                                   ts_code=self.ts_code,
-                                  start_date=self.startDate,
                                   replace=self.replace)
+                    if self.period is None:
+                        kwargs['start_date'] = self.startDate
+                    else:
+                        kwargs['period'] = self.period
+
                     if table == 'fina_indicator':
                         kwargs['fields'] = DownloaderQuarter.fields
                     result = downStockQuarterData(**kwargs)
-                except(socket.timeout, ConnectTimeout):
+                except(socket.timeout):
                     logging.warning(f'downloader timeout: '
                                     f'{table}-{self.ts_code}-{self.startDate}')
                 else:
@@ -229,12 +234,16 @@ class DownloaderMisc:
                 self.cur += 1
 
 
-def downStockQuarterData(table, ts_code, start_date, fields='', replace=False):
-    print(f'downStockQuarterData table:{table}, ts_code:{ts_code}')
-    logging.debug(f'downStockQuarterData table:{table}, ts_code:{ts_code}')
+def downStockQuarterData(**kwargs):
+    table = kwargs.get('table', '')
+    ts_code = kwargs.get('ts_code', '')
+    assert table, '表名不能为空'
+    assert ts_code, '股票代码不能为空'
+    replace = getattr(kwargs, 'replace', 'False')
+    logging.debug(f'downStockQuarterData '
+                  f'table:{table}, ts_code:{ts_code}')
     pro = ts.pro_api()
     fun = getattr(pro, table)
-    kwargs = dict(ts_code=ts_code, start_date=start_date, fields=fields)
     df = fun(**kwargs)
     if df.empty:
         return False

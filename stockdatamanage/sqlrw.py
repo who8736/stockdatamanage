@@ -142,7 +142,6 @@ def writeClassifyNameToSQL(filename):
 #     return 'kline%s' % ts_code
 
 
-
 def dropTable(tableName):
     engine.execute('DROP TABLE %s' % tableName)
 
@@ -811,6 +810,25 @@ def readChigu():
     #     sql = ('select chigu.ts_code, stocklist.name from chigu, stocklist '
     #            'where chigu.ts_code=stocklist.ts_code')
     sql = 'select ts_code from chigu'
+    return pd.read_sql(sql, engine)
+
+
+def readClassifyProfit(date, lv=None):
+    """
+
+    Parameters
+    ----------
+    date : str, YYYYMMDD
+    lv : int
+    """
+    if not isinstance(lv, int) or (lv > 4 or lv < 1):
+        lv = None
+    sql = f'''select a.code, b.name, a.profits, a.profits_com, 
+                        a.lastprofits, a.inc
+                from classify_profits a, classify b
+                where end_date="{date}" and a.code=b.code'''
+    if lv is not None:
+        sql += f' and length(a.code)={lv * 2}'
     return pd.read_sql(sql, engine)
 
 

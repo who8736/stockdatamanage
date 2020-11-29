@@ -5,24 +5,24 @@ Created on 2016年12月14日
 @author: who8736
 """
 
-from flask import (
-    render_template, redirect, url_for, request, send_file, current_app,
-)
 from bokeh.embed import components
 from bokeh.resources import INLINE
+from flask import (
+    current_app, redirect, render_template, request, send_file, url_for,
+)
 # from bokeh.util.string import encode_utf8
 from flask_paginate import Pagination, get_page_parameter
 
-from stockdatamanage.plot import plotKline, BokehPlot
-from stockdatamanage.plot import PlotProfitsInc
-from ..analyse.report import reportIndex, reportValuation
-from stockdatamanage.sqlrw import (
-    readChigu, readStockKline, readIndexKline, readStockList, writeChigu,
-    readValuationSammary, readProfitsIncAdf,
-)
-from stockdatamanage.misc import tsCode
 from . import app
-from .forms import StockListForm, HoldForm
+from .forms import HoldForm, StockListForm
+from ..analyse.report import reportIndex, reportValuation
+from ..datatrans import lastQuarter
+from ..misc import tsCode
+from ..plot import BokehPlot, PlotProfitsInc, plotKline
+from ..sqlrw import (
+    readChigu, readIndexKline, readProfitsIncAdf, readStockKline, readStockList,
+    readValuationSammary, writeChigu, readClassifyProfit
+)
 
 
 @app.route('/')
@@ -229,3 +229,26 @@ def holdjson():
 
     stocksList = stocks.to_json(orient='records', force_ascii=False)
     return stocksList
+
+@app.route('/classifyprofit', methods=["GET", "POST"])
+def classifyProfit():
+    date = lastQuarter()
+    df = readClassifyProfit(date)
+    return render_template("classifyprofit.html")
+
+
+@app.route('/classifyprofitjson', methods=["GET", "POST"])
+def classifyProfitJson():
+    print(request.args)
+    date = request.args.get('date', '')
+    if not date:
+        date = lastQuarter()
+    lv = request.args.get('lv', '')
+    if lv and '1' <= lv <= '4':
+        lv = int(lv)
+    else:
+        lv = ''
+    print(date, lv)
+    df = readClassifyProfit(date, lv)
+    stocks = df.to_json(orient='records', force_ascii=False)
+    return stocks

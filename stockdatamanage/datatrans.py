@@ -232,11 +232,13 @@ def transQuarterToDate(_date):
     return f'{year}{month:02}{day:02}'
 
 
-def lastQarterDate(_date):
+def lastQuarter(_date=None):
+    if _date is None:
+        _date = dt.date.today()
     if isinstance(_date, str):
         _date = dt.datetime.strptime(_date, '%Y%m%d')
     quarterFirstDay = dt.date(_date.year, (_date.month - 1) // 3 * 3 + 1, 1)
-    return quarterFirstDay - dt.timedelta(days=1)
+    return (quarterFirstDay - dt.timedelta(days=1)).strftime('%Y%m%d')
 
 
 def lastYearDate(_date):

@@ -5,32 +5,19 @@ Created on Mon Apr 15 15:27:38 2019
 @author: ff
 """
 
-# import pandas as pd
 from urllib.request import urlopen
-# from lxml import etree
-# from datetime import datetime
-# import baostock as bs
-# import tushare as ts
-# from bokeh.plotting import figure
-from matplotlib.widgets import Cursor
-
 from xml import etree
 
-# from .context import stockdatamanage
-from stockdatamanage.sqlrw import *
-# from sqlalchemy.ext.declarative import declarative_base
+from matplotlib.widgets import Cursor
 
-from stockdatamanage.datamanage import *
-# from sqlconn import Session
-# from misc import urlGubenEastmoney
-from stockdatamanage.misc import *
-from stockdatamanage.check import *
-# from initlog import initlog
-from stockdatamanage.datatrans import *
-from stockdatamanage.classifyanalyse import *
-from stockdatamanage.plot import *
-
-matplotlib.use('Qt5Agg')  # @UndefinedVariable
+from stockdatamanage.classifyanalyse import (
+    calClassifyPE,
+)
+from stockdatamanage.datamanage import (
+    updateAllMarketPE, updateIndex, updatePf, updateTTMProfits,
+)
+from stockdatamanage.initlog import initlog
+from stockdatamanage.sqlrw import readCal
 
 INDEXNAME = {'000001.SH': '上证综指',
              # '000005.SH': '上证商业类指数',
@@ -469,19 +456,19 @@ def __testUpdate():
     """
     pass
     # 更新交易日历
-    updateTradeCal()
+    # updateTradeCal()
 
     # 更新股票列表
-    updateStockList()
+    # updateStockList()
 
     # 更新股票日交易数据
-    updateDaily()
+    # updateDaily()
 
     # 更新每日指标
-    updateDailybasic()
+    # updateDailybasic()
 
     # 更新复权因子
-    updateAdjFacotr()
+    # updateAdjFacotr()
 
     # 更新非季报表格
     # 财务披露表（另外单独更新）
@@ -495,19 +482,19 @@ def __testUpdate():
     # 利润表
     # 现金流量表
     # 财务指标表
-    updateQuarterData()
+    # updateQuarterData()
 
     # 更新股票TTM利润
     updateTTMProfits()
 
     # 更新行业列表
-    updateClassifyList()
+    # updateClassifyList()
 
     # 更新行业利润
-    updateClassifyProfits()
+    # updateClassifyProfits()
 
     # 更新股票估值
-    updateGuzhiData()
+    # updateGuzhiData()
 
     # 更新股票评分
     updatePf()
@@ -615,6 +602,16 @@ def __testRepair():
     #     # calAllTTMLirun(date)
     #     calAllHYTTMLirun(date)
     # calAllTTMLirun('20200331', replace=True)
+
+    # 重算行业ttm利润或ttmPE
+    # dates = quarterList('20121231', '20201101')
+    # for d in dates:
+    #     calClassifyStaticTTMProfit(d, replace=True)
+
+    # 重算行业ttm利润或ttmPE
+    dates = readCal('20121204', '20201127')
+    for d in dates:
+        calClassifyPE(d)
 
     # 重新下载lirun数据
     # resetLirun()
@@ -877,11 +874,12 @@ if __name__ == "__main__":
     """
     initlog()
 
+    # TODO: 重算2019-2020行业利润和PE
     # __testDownload()
     # __testMisc()
     # __testPlot()
-    # __testRepair()
-    __testUpdate()
+    __testRepair()
+    # __testUpdate()
     # __testValuation()
 
     print('程序正常退出')

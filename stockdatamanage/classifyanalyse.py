@@ -274,14 +274,23 @@ def calClassifyPE(date):
     #     date = dt.datetime.today() - timedelta(days=1)
     #     date = date.strftime('%Y%m%d')
     logging.debug(f'update hangyepe: {date}')
-    sql = (f'replace into classify_pe(code, date, pe)'
-           f' select classify_code, "{date}",'
-           f' round(sum(b.total_mv) / sum(b.profits_ttm), 2) pe_ttm '
-           f' from classify_member a left join'
-           f' (select ts_code, trade_date, pe_ttm, total_mv,'
-           f' round(total_mv / pe_ttm, 2) as profits_ttm'
-           f' from daily_basic where trade_date="{date}" and pe_ttm > 0) b'
-           f' on a.ts_code = b.ts_code group by classify_code;')
+    sql = f'''replace into classify_pe(code, date, pe)
+            SELECT classify_code, '{date}',
+                    ROUND(SUM(b.total_mv) / SUM(b.profits_ttm), 2) pe_ttm
+            FROM
+                (SELECT c.ts_code, c.classify_code
+                FROM classify_member c, (SELECT ts_code, MAX(date) mdate
+                                          FROM classify_member
+                                          WHERE date <= '{date}'
+                                          GROUP BY ts_code) groupc
+                WHERE c.ts_code = groupc.ts_code AND c.date = groupc.mdate) a
+                LEFT JOIN
+                (SELECT ts_code, trade_date, pe_ttm, total_mv,
+                        ROUND(total_mv / pe_ttm, 2) AS profits_ttm
+                FROM daily_basic
+                WHERE trade_date = '{date}' AND pe_ttm > 0) b ON a.ts_code = b.ts_code
+            GROUP BY classify_code;
+'''
     # print(sql)
     try:
         engine.execute(sql)

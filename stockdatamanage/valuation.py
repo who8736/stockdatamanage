@@ -222,21 +222,23 @@ def calpfnew(_date, replace=False):
     stocks['lowpe'] = stocks.apply(lowpe, axis=1)
 
     # 市盈率低于行业平均
-    sql = f'select ts_code, classify_code from classify_member where date="{_date}";'
+    sql = f'''
+            select a.ts_code, a.classify_code from classify_member a, 
+            (select ts_code, max(date) cdate from classify_member 
+                where date<="{_date}" group by ts_code) b
+            where a.ts_code=b.ts_code and a.date=b.cdate;'''
     classifyDf = pd.read_sql(sql, engine)
     stocks = pd.merge(stocks, classifyDf, on='ts_code', how='left')
     classifyPEDf = classifyanalyse.readClassifyPE(_date)
-    if classifyPEDf is None or classifyPEDf.empty:
-        classifyanalyse.calClassifyPE(_date)
-        classifyPEDf = classifyanalyse.readClassifyPE(_date)
-    stocks = pd.merge(stocks, classifyPEDf,
-                      left_on='classify_code',
-                      rigth_on='code',
-                      how='left')
+    classifyPEDf.rename(columns={'pe': 'classify_pe'}, inplace=True)
+    stocks = stocks.merge(classifyPEDf,
+                          left_on='classify_code',
+                          right_on='code',
+                          how='left')
     stocks['lowhype'] = stocks.apply(lowhype, axis=1)
 
     # 近2年每季的TTM利润稳定增长
-    startDate = f'{int(_date[:4] - 2)}0331'
+    startDate = f'{int(_date[:4]) - 2}0331'
     incDf = sqlrw.readProfitInc(startDate=startDate)
     # stocks = pd.merge(stocks, incDf, on='ts_code', how='left')
     stocks['avg'] = incDf.mean(axis=1).round(2)
