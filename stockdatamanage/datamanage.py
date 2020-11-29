@@ -104,8 +104,9 @@ def updateClassifyPE():
         startDate = '20000101'
     endDate = (dt.date.today() - dt.timedelta(days=1)).strftime('%Y%m%d')
     dates = readCal(startDate, endDate)
-    for _date in dates:
-        calClassifyPE(_date)
+    if dates:
+        for _date in dates:
+            calClassifyPE(_date)
 
 @logfun
 def updateAllMarketPE():
