@@ -33,7 +33,7 @@ from .sqlrw import (
 )
 from .check import checkQuarterData
 from .datatrans import classifyEndDate, quarterList
-from .classifyanalyse import calClassifyStaticTTMProfit
+from .classifyanalyse import calClassifyStaticTTMProfit, calClassifyPE
 
 
 @logfun
