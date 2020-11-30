@@ -6,6 +6,7 @@ Created on 2016年12月14日
 """
 
 import logging
+import json
 
 from bokeh.embed import components
 from bokeh.resources import INLINE
@@ -98,7 +99,10 @@ def valuationNav(typeid):
     elif typeid == 'youzhi':
         df = df[(df.pf >= 5) & (df.pe < 30)]
     # stockReportList = np.array(df).tolist()
-    return render_template('valuationnav.html', stocksDf=df)
+    stocksStr = df.to_json(orient='records', force_ascii=False)
+    stocks = json.loads(stocksStr)
+    print(stocks)
+    return render_template('valuationnav.html', stocks=stocks)
 
 
 @app.route('/valuation/<ts_code>')
