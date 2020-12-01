@@ -319,8 +319,9 @@ def downClassify():
         for _date in dates:
             logging.debug(f'下载行业数据：{_date}')
             filename = downClassifyFile(_date)
-            writeClassifyMemberToSQL(_date, filename)
-            writeClassifyNameToSQL(filename)
+            if filename:
+                writeClassifyMemberToSQL(_date, filename)
+                writeClassifyNameToSQL(filename)
 
 
 def downClassifyFile(_date):
@@ -334,12 +335,15 @@ def downClassifyFile(_date):
     cf = Config()
     zipfilename = os.path.join(cf.datapath, f'csi{_date}.zip')
     datafilename = os.path.join(cf.datapath, f'csi{_date}.xls')
-    req = WebRequest()
-    req.get(url)
-    req.save(zipfilename)
-    zfile = zipfile.ZipFile(zipfilename, 'r')
-    zfile.extract(os.path.basename(datafilename), os.path.dirname(datafilename))
-    return datafilename
+    try:
+        req = WebRequest()
+        req.get(url)
+        req.save(zipfilename)
+        zfile = zipfile.ZipFile(zipfilename, 'r')
+        zfile.extract(os.path.basename(datafilename), os.path.dirname(datafilename))
+        return datafilename
+    except Exception as e:
+        logging.warning(e)
 
 
 def getreq_del(url, includeHeader=False):
