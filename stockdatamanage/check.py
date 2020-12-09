@@ -156,6 +156,13 @@ def repairLost(startDate, endDate):
                 df = pd.read_sql(sql, engine)
                 lost = pd.concat([lost, df])
                 lost.drop_duplicates(['ts_code'])
+            if table == 'income':
+                sql = f'''select ts_code from income
+                            where end_date="{_date}" 
+                                and (n_income is null);'''
+                df = pd.read_sql(sql, engine)
+                lost = pd.concat([lost, df])
+                lost.drop_duplicates(['ts_code'])
             for code in lost.ts_code.values:
                 print(_date, table, code)
                 downloader = DownloaderQuarter(ts_code=code,

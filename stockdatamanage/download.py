@@ -57,7 +57,7 @@ class DownloaderQuarter:
     fields = readTableFields('fina_indicator')
 
     def __init__(self, ts_code, startDate=None, tables=None, period=None,
-                 replace=False, retry=3):
+                 replace=True, retry=3):
         pass
         assert startDate is not None or period is not None, '必须指定startDate或period'
         self.ts_code = ts_code
@@ -74,7 +74,6 @@ class DownloaderQuarter:
     # 每个股票一个下载器，下载第一张无数据时可跳过其他表
     # 下载限制由类静态成员记载与控制
     def run(self):
-        pass
         for table in self.tables:
             # result = pd.DataFrame()
             perTimes = DownloaderQuarter.perTimes[table]
