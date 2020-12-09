@@ -239,7 +239,7 @@ def calpfnew(_date, replace=False):
 
     # 近2年每季的TTM利润稳定增长
     startDate = f'{int(_date[:4]) - 2}0331'
-    incDf = sqlrw.readProfitInc(startDate=startDate)
+    incDf = sqlrw.readProfitInc(startDate=startDate, endDate=_date)
     # stocks = pd.merge(stocks, incDf, on='ts_code', how='left')
     stocks['avg'] = incDf.mean(axis=1).round(2)
     stocks['std'] = incDf.std(axis=1).round(2)
@@ -294,7 +294,7 @@ def calpfnew(_date, replace=False):
     #    print stocks
     # if initsql.existTable('valuation'):
     #     engine.execute('TRUNCATE TABLE valuation')
-    stocks = stocks.dropna()
+    # stocks = stocks.dropna()
     stocks['date'] = _date
 
     # 当计算peg时，如果平均增长率为0，则结果为inf
