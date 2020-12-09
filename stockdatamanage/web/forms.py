@@ -16,11 +16,11 @@ class StockListForm(Form):
 class Select2MultipleField(SelectMultipleField):
 
     # noinspection PyArgumentList
-    def __init__(self, label=None, validators=None,
-                 # coerce=text_type,
-                 choices=None, **kwargs):
-        super().__init__(label, validators, coerce, choices, kwargs)
-        self.data = ""
+    # def __init__(self, label=None, validators=None,
+    #              coerce=text_type,
+    #              choices=None, **kwargs):
+    #     super().__init__(label, validators, coerce, choices, kwargs)
+    #     self.data = ""
 
     def pre_validate(self, form):
         # Prevent "not a valid choice" error
@@ -29,6 +29,8 @@ class Select2MultipleField(SelectMultipleField):
     def process_formdata(self, valuelist):
         if valuelist:
             self.data = "|".join(valuelist)
+        else:
+            self.data = ''
 
 
 class HoldForm(FlaskForm):

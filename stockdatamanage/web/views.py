@@ -234,10 +234,11 @@ def holdjson():
     stocks['text'] = stocks.id + ' ' + stocks.name
     stocks['selected'] = False
     chigu = readChigu()
-    stocks.loc[stocks.id.isin(chigu), 'selected'] = True
+    stocks.loc[stocks.id.isin(chigu.ts_code), 'selected'] = True
     # print(chigu)
     current_app.logger.debug(f'持有的股票: {chigu}')
 
+    print(stocks.head())
     stocksList = stocks.to_json(orient='records', force_ascii=False)
     return stocksList
 
@@ -253,6 +254,7 @@ def classifyProfitJson():
     # print(request.args)
     year = request.args.get('year', '')
     quarter = request.args.get('quarter', '')
+    print(f'year: {year}; quarter: {quarter}')
     qmonth = ['0331', '0630', '0930', '1231']
     if not ('2010' <= year <= '2030') or quarter not in '1234':
         # assert quarter in '1234', '季度参数不为1， 2， 3， 4'
