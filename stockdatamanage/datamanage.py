@@ -300,13 +300,15 @@ def updatePf():
         startDate = startDate.strftime('%Y%m%d')
     endDate = dt.datetime.today() - dt.timedelta(days=1)
     endDate = endDate.strftime('%Y%m%d')
-    pro = ts.pro_api()
-    df = pro.trade_cal(exchange='', start_date=startDate, end_date=endDate)
-    dateList = df['cal_date'].loc[df.is_open == 1].tolist()
+    dates = readCal(startDate, endDate)
+    # pro = ts.pro_api()
+    # df = pro.trade_cal(exchange='', start_date=startDate, end_date=endDate)
+    # dateList = df['cal_date'].loc[df.is_open == 1].tolist()
     # print(type(dateList))
     # print(dateList)
-    for date in dateList:
+    for date in dates:
         # print('计算评分：', date)
+        logging.debug(f'计算评分： {date}')
         valuation.calpfnew(date)
 
 

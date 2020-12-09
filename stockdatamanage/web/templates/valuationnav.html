@@ -36,7 +36,7 @@
 
     console.log('文档初始化完成')
     $(function () {
-        var d = {{ stocks | tojson }}
+        let d = {{ stocks | tojson }}
         console.log(d)
         $table.bootstrapTable({data: d})
     })

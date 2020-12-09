@@ -280,13 +280,13 @@ def calpfnew(_date, replace=False):
     stocks = stocks.sort_values(by='pf', ascending=False)
 
     # 保存评价结果
+    cf = Config()
     stocks.set_index(['ts_code'], inplace=True)
     # stocks.to_csv('./data/valuation.csv')
     pfFilename = f'valuations{_date}.xlsx'
-    stocks.to_excel(os.path.join('data', pfFilename))
+    stocks.to_excel(os.path.join(cf.datapath, pfFilename))
 
     # 将评分发送到邮箱
-    cf = Config()
     pushflag = cf.pushData
     if pushflag:
         mailTitle = f'评分{_date}'

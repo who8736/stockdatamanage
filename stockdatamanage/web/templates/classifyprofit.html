@@ -24,7 +24,7 @@
                 <label for="selectyear">报告期</label>
                 <select class="form-control" id="selectyear" name="year">
                     {% for i in range(2010, 2030) %}
-                        <option value={{i}}>{{i}}年</option>
+                    <option value={{i}}>{{i}}年</option>
                     {% endfor %}
                 </select>
                 <!--suppress HtmlFormInputWithoutLabel -->
@@ -39,34 +39,7 @@
     </div>
 
     <table id="table"
-           data-toggle="table"
-           data-toolbar="#toolbar"
-           data-search="true"
-           data-pagination="true"
-           data-click-to-select="true"
-           data-ajax-options="ajaxOptions"
-           data-query-params="queryParams"
-           data-url="classifyprofitjson"
-           data-locale="zh-CN">
-        <thead>
-        <tr>
-            <!--            <th data-field="selected" data-checkbox="true"></th>-->
-            <th data-field="code" data-sortable="true">代码</th>
-            <th data-field="name" data-sortable="true">名称</th>
-            <th data-field="profits" data-sortable="true"
-                data-formatter="currencyFormatter" data-align="right">利润
-            </th>
-            <th data-field="profits_com" data-sortable="true"
-                data-formatter="currencyFormatter" data-align="right">可比利润
-            </th>
-            <th data-field="lastprofits" data-sortable="true"
-                data-formatter="currencyFormatter" data-align="right">上年同期利润
-            </th>
-            <th data-field="inc" data-sortable="true"
-                data-formatter="currencyFormatter" data-align="right">同比增长率
-            </th>
-        </tr>
-        </thead>
+    >
     </table>
 
 </div>
@@ -97,19 +70,54 @@
         return accounting.formatMoney(value, symbol = '')
     }
 
+    var columns = [{
+        field: 'code', title: '代码', align: 'left', sortable: 'true'
+    }, {
+        field: 'name', title: '名称', align: 'center', sortable: 'true'
+    }, {
+        field: 'profits',
+        title: '利润',
+        align: 'right',
+        formatter: 'currencyFormatter', sortable: 'true'
+    }, {
+        field: 'profits_com',
+        title: '可比利润',
+        align: 'right',
+        formatter: 'currencyFormatter', sortable: 'true'
+    }, {
+        field: 'lastprofits',
+        title: '上年同期利润',
+        align: 'right',
+        formatter: 'currencyFormatter', sortable: 'true'
+    }, {
+        field: 'inc',
+        title: '同比增长率',
+        align: 'right',
+        formatter: 'currencyFormatter', sortable: 'true'
+    }]
     // 表格
     $(function () {
-        $table.bootstrapTable('refreshOptions', {
-            pageSize: 10,                       //每页的记录行数（*）
-            pageList: [10, 20, 50, 100],        //可供选择的每页的行数（*）
-
-        })
+        // $table.bootstrapTable('refreshOptions', {
+        //     smartDisplay: true,
+        // pageSize: 10,                       //每页的记录行数（*）
+        // pageList: [10, 20, 50, 100],        //可供选择的每页的行数（*）
+        // })
 
         // 设置当前报告期
         let today = new Date()
         let quarters = [4, 4, 4, 1, 1, 1, 2, 2, 2, 3, 3, 3]
         $selectyear.val(today.getFullYear())
         $selectquarter.val(quarters[today.getMonth()])
+
+        $table.bootstrapTable({
+            url: '/classifyprofitjson',
+            toolbar: '#toolbar',
+            pagination: true,
+            smartDisplay: true,
+            search: true,
+            columns: columns,
+            theadClasses: 'text-center',
+        })
         $table.bootstrapTable('refresh')
         console.log(today.getFullYear())
         console.log(quarters[today.getMonth()])
