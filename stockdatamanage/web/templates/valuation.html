@@ -24,16 +24,22 @@
                class="btn btn-large btn-info" target="_blank">
                 同花顺</a>
             <!--	<p><img src="/klineimg/{{ stock.ts_code }}"></p>-->
-            <p>
+            <div class="row">
+                <div class="col">
                 <iframe src="/stockklineimgnew/{{ stock.ts_code }}"
                         id="bokehplot"
-                        name="kline bokeh plot" onload="this.height=100">
+                        name="kline bokeh plot"
+{#                        onload="this.height=100"#}
+                >
                 </iframe>
-            </p>
+                </div>
+            </div>
             <p>
                 <iframe src="/profitsinc/{{ stock.ts_code }}"
                         id="profitsincplot"
-                        name="profits inc plot" onload="this.height=100">
+                        name="profits inc plot"
+{#                        onload="this.height=100"#}
+                >
                 </iframe>
             </p>
             <script type="text/javascript">
@@ -83,14 +89,14 @@
                 </tr>
                 <tr>
                     {% if stock.lowpe==1 %}
-                    <td class="table-success">{{ stock.curTTMPE }}</td>
+                    <td class="table-success">{{ stock.pe }}</td>
                     {% else %}
-                    <td>{{ stock.curTTMPE }}</td>
+                    <td>{{ stock.pe }}</td>
                     {% endif %}
                     {% if stock.lowhype==1 %}
-                    <td class="table-success"> {{ stock.hype }}</td>
+                    <td class="table-success"> {{ stock.classify_pe }}</td>
                     {% else %}
-                    <td> {{ stock.hype }}</td>
+                    <td> {{ stock.classify_pe }}</td>
                     {% endif %}
                     {% if stock.lowpeg==1 %}
                     <td class="table-success"> {{ stock.peg }}</td>
@@ -98,9 +104,9 @@
                     <td> {{ stock.peg }}</td>
                     {% endif %}
                     {% if stock.wdzz==1 %}
-                    <td class="table-success"> {{ stock.profitsIncAvg }}</td>
+                    <td class="table-success"> {{ stock.avg }}</td>
                     {% else %}
-                    <td> {{ stock.profitsIncAvg }}</td>
+                    <td> {{ stock.avg }}</td>
                     {% endif %}
                     {% if stock.lowpez200==1 %}
                     <td class="table-success"> {{ stock.pez200 }}</td>

@@ -24,7 +24,7 @@ from ..misc import tsCode
 from ..plot import BokehPlot, PlotProfitsInc, plotKline
 from ..sqlrw import (
     readChigu, readIndexKline, readProfitsIncAdf, readStockKline, readStockList,
-    readValuationSammary, writeChigu, readClassifyProfit
+    readValuationSammary, writeChigu, readClassifyProfit,
 )
 
 
@@ -97,8 +97,12 @@ def valuationNav(typeid):
     if typeid == 'chigu':
         df = df[df['ts_code'].isin(readChigu())]
     elif typeid == 'youzhi':
-        df = df[(df.pf >= 5) & (df.pe < 30)]
+        df = df[
+            (df.pf >= 5) & (df.pe < 30) & (df.pe200 >= 0) & (df.pe1000 >= 0) &
+            (df.pe200 <= 20)]
     # stockReportList = np.array(df).tolist()
+    df['trade_date'] = df['date'].apply(lambda x: x.strftime('%Y%m%d'))
+    df['fina_date'] = df['fina_date'].apply(lambda x: x.strftime('%Y%m%d'))
     stocksStr = df.to_json(orient='records', force_ascii=False)
     stocks = json.loads(stocksStr)
     print(stocks)
@@ -206,7 +210,6 @@ def profitsIncImg(ts_code):
         return '<div>绘图失败</div>'
 
 
-
 @app.route('/indexinfo/<ID>')
 def indexInfo(ID):
     stockItem = reportIndex(ID)
@@ -241,6 +244,7 @@ def holdjson():
     print(stocks.head())
     stocksList = stocks.to_json(orient='records', force_ascii=False)
     return stocksList
+
 
 @app.route('/classifyprofit', methods=["GET", "POST"])
 def classifyProfit():
