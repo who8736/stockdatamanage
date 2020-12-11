@@ -41,14 +41,14 @@
         // $("select").select2({});
 
         $.ajax({
-            url: "/holdjson",
-            dataType: 'json'
+            url: '/holdjson',
+            dataType: 'json',
         }).then(function (data) {
-            console.log(data);
-            $("#selected").select2({data: data});
-        });
+            console.log(data)
+            $('#selected').select2({data: data})
+        })
 
-    });
+    })
 </script>
 {% endblock %}
 
