@@ -2,7 +2,7 @@
 # author:who8736
 # datetime:2020/11/17 14:21
 
-from stockdatamanage.datatrans import quarterList, classifyEndDate
+from stockdatamanage.util.datatrans import quarterList, classifyEndDate
 
 
 def test_quarterList():

@@ -6,7 +6,6 @@ Created on 2016年11月30日
 """
 import pandas as pd
 
-from . import sqlrw
 from .sqlconn import engine
 
 

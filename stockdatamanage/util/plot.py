@@ -7,32 +7,30 @@ Created on 2017年2月10日
 
 # import datetime
 import os
-import time
-from io import BytesIO
 import datetime as dt
 
 import matplotlib
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt  # @IgnorePep8
 # from matplotlib.finance import candlestick_ohlc  # @IgnorePep8
 # from mplfinance import candlestick_ohlc  # @IgnorePep8
-import mplfinance as mpf
-import matplotlib.gridspec as gs  # @IgnorePep8
 from matplotlib import gridspec as gridspec, pyplot as plt
-from matplotlib.dates import DateFormatter, MonthLocator  # @IgnorePep8
 from matplotlib.ticker import FixedLocator  # @IgnorePep8
 # 三维图需引用下面这句
 # from mpl_toolkits.mplot3d import Axes3D
 import tushare  # @IgnorePep8
-from bokeh.plotting import figure, show, output_file
+from bokeh.plotting import figure
 from bokeh.layouts import column
 from bokeh.models import ColumnDataSource, RangeTool
-from bokeh.models import Slider, CustomJS
+from bokeh.models import CustomJS
 from sklearn import linear_model
 
-from .sqlrw import engine, getStockName, readStockKline, readCal  # @IgnorePep8
-from .config import Config
+from stockdatamanage.db.sqlrw import (
+    engine, readStockName, readStockKline,
+    readCal,  # @IgnorePep8
+)
+
+from ..config import datapath
 
 matplotlib.use('Agg')  # @UndefinedVariable
 
@@ -584,8 +582,7 @@ class PlotProfitsInc:
         # xmin = min(df.index)
         # xmax = max(df.index)
         # print(xmin, xmax)
-        cf = Config()
-        filename = os.path.join(cf.datapath, 'profits_inc_adf_linear.xlsx')
+        filename = os.path.join(datapath, 'profits_inc_adf_linear.xlsx')
         linearDf = pd.read_excel(filename)
         intercept = linearDf[linearDf.ts_code == ts_code].intercept.values[0]
         coef = linearDf[linearDf.ts_code == ts_code].coef.values[0]
@@ -659,10 +656,9 @@ def linearPlot(data, plot=False, title=None, filename=None):
 def plotProfitInc(ts_code, data):
     # sql = select
     # data = getProfitsInc(ts_code, startDate, endDate)
-    cf = Config()
-    filename = os.path.join(cf.datapath, 'linear_img',
+    filename = os.path.join(datapath, 'linear_img',
                             f'profit_inc_{ts_code[:6]}.png')
-    name = getStockName(ts_code)
+    name = readStockName(ts_code)
     title = f'{ts_code} {name}'
     # linearPlot(data, plot=True, title=title, filename=filename)
     linearPlot(data, plot=False, title=title, filename=filename)

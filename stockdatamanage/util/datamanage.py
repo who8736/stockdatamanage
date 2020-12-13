@@ -9,31 +9,33 @@ import datetime as dt
 # import sys  # python的系统调用模块
 # import os
 import logging
-from multiprocessing.dummy import Pool as ThreadPool
 
 import baostock as bs
 import tushare as ts
 from dateutil.relativedelta import relativedelta
 
-from . import (analyse, classifyanalyse, config, valuation)
+from stockdatamanage import (analyse)
+from stockdatamanage.util import config
+from stockdatamanage.analyse import valuation
 # from . import analyse
 # from . import (analyse, classifyanalyse, config, valuation)
 # from . import (analyse, classifyanalyse, config, valuation)
 # from . import (analyse, classifyanalyse, config, valuation)
 # from check import checkQuarterData
-from .download import (
+from stockdatamanage.downloader.download import (
     downStockList, downDaily, downDailyBasic, downTradeCal, downIndexDaily,
     downIndexDailyBasic, downIndexBasic, downIndexWeight, DownloaderQuarter,
     downClassify, downAdjFactor,
 )
-from .initlog import initlog, logfun
-from .sqlconn import engine
-from .sqlrw import (
-    readCal, getLastUpdate, calAllTTMProfits, setLastUpdate,
+from stockdatamanage.util.initlog import initlog, logfun
+from stockdatamanage.db.sqlconn import engine
+from stockdatamanage.db.sqlrw import (
+    readCal, readUpdate, calAllTTMProfits, setLastUpdate,
 )
-from .check import checkQuarterData
-from .datatrans import classifyEndDate, quarterList
-from .classifyanalyse import calClassifyStaticTTMProfit, calClassifyPE
+from stockdatamanage.util.check import checkQuarterData
+from stockdatamanage.util.datatrans import classifyEndDate, quarterList
+from stockdatamanage.analyse.classifyanalyse import calClassifyStaticTTMProfit, calClassifyPE
+from ..config import tusharetoken
 
 
 @logfun
@@ -115,7 +117,7 @@ def updateAllMarketPE():
     :return:
     """
     dataName = 'index_all'
-    startDate = getLastUpdate(dataName)
+    startDate = readUpdate(dataName)
     analyse.report.calAllPEHistory(startDate)
     setLastUpdate(dataName)
 
@@ -153,7 +155,7 @@ def updateIndex():
     ID = '000010.SH'
     # startDate = getIndexKlineUpdateDate() + dt.timedelta(days=1)
     # startDate = getIndexPEUpdateDate()
-    startDate = getLastUpdate('index_000010.SH')
+    startDate = readUpdate('index_000010.SH')
     # startDate = getIndexPEUpdateDate() + dt.timedelta(days=1)
     analyse.report.calPEHistory(ID, startDate)
 
@@ -422,7 +424,7 @@ def updateTTMProfits():
     上次更新日至当前日期间有新财务报表的，更新这几期财报的ttmprofits
     """
     pass
-    lastDate = getLastUpdate('ttmprofits')
+    lastDate = readUpdate('ttmprofits')
     today = dt.datetime.today().strftime('%Y%m%d')
     sql = (f'select distinct end_date from income '
            f'where ann_date>="{lastDate}" and ann_date<="{today}"')
@@ -473,9 +475,8 @@ if __name__ == '__main__':
         logging.error('login baostock failed')
 
     # 加载tushare.pro用户的token,需事先在sql.conf文件中设置
-    cf = config.Config()
-    ts.set_token(cf.tushareToken)
-    print('设置访问tushare的token:', cf.tushareToken)
+    ts.set_token(tusharetoken)
+    print('设置访问tushare的token:', tusharetoken)
 
     #     updateDataTest()
 

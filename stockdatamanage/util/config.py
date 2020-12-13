@@ -9,7 +9,7 @@ import sys
 import configparser
 
 ROOTPATH = os.path.split(os.path.abspath(__file__))[0]
-CFILE = os.path.join(ROOTPATH, 'stockdata.conf')
+CFILE = os.path.join(ROOTPATH, '../stockdata.conf')
 
 # 用于flask CSRF 的配置
 SECRET_KEY = 'Sm9obiBTY2hyb20ga2lja3MgYXNz'

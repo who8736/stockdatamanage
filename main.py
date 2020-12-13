@@ -2,7 +2,7 @@
 # author:who8736
 # datetime:2020/11/16 18:15
 
-from stockdatamanage import datamanage, initlog, check
+from stockdatamanage.util import check, datamanage, initlog
 
 if __name__ == '__main__':
     check.checkPath()

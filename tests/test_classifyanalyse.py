@@ -2,14 +2,14 @@
 # author:who8736
 # datetime:2020/11/17 8:35
 
-from stockdatamanage.datatrans import calDate
-from stockdatamanage.classifyanalyse import (
+from stockdatamanage.util.datatrans import calDate
+from stockdatamanage.analyse.classifyanalyse import (
     calClassifyStaticTTMProfitLow,
     calClassifyStaticTTMProfit,
     readClassifyPE,
     # readClassifyProfitInc,
 )
-from stockdatamanage.sqlrw import readProfitInc
+from stockdatamanage.db.sqlrw import readProfitInc
 
 
 def test_calDate():

@@ -1,13 +1,11 @@
 # -*- coding:utf-8 -*-
 # author:who8736
 # datetime:2020/11/16 20:41
-import logging
 
-from stockdatamanage.check import (
-    checkClassifyMemberListdate, checkPath,
+from stockdatamanage.util.check import (
     repairLost,
 )
-from stockdatamanage.initlog import initlog
+from stockdatamanage.util.initlog import initlog
 
 if __name__ == '__main__':
     pass

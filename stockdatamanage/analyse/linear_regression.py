@@ -22,10 +22,9 @@ from sklearn.preprocessing import PowerTransformer
 from scipy.stats import zscore, normaltest
 import tushare as ts
 
-from ..sqlconn import engine
-from ..sqlrw import readStockList, getStockName
-from ..config import Config
-from ..plot import plotProfitInc
+from stockdatamanage.db.sqlconn import engine
+from stockdatamanage.db.sqlrw import readStockList, readStockName
+from ..config import datapath
 
 
 def studyTime():
@@ -178,8 +177,7 @@ def linearProfitInc(startDate = '20150331', endDate = '20191231'):
     if startDate is None:
         startDate = f'{int(endDate[:4]) - 3}0331'
 
-    cf = Config()
-    filename = os.path.join(cf.datapath, 'profits_inc_linear.xlsx')
+    filename = os.path.join(datapath, 'profits_inc_linear.xlsx')
 
     resultList = []
     cnt = len(stocks)
@@ -272,7 +270,7 @@ def _linearProfits(ts_code, startQuarter, fig):
     ax = fig.add_subplot()
     ax.scatter(x, y)
     ax.plot(x, Y, color='r')
-    name = getStockName(ts_code)
+    name = readStockName(ts_code)
     plt.title(f'{ts_code} {name}', fontproperties='simsun', fontsize=26)
     # plt.show()
     filename = f'../data/linear_img/{ts_code[:6]}.png'

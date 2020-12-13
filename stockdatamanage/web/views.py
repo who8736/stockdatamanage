@@ -19,12 +19,12 @@ from flask_paginate import Pagination, get_page_parameter
 from . import app
 from .forms import HoldForm, StockListForm
 from ..analyse.report import reportIndex, reportValuation
-from ..datatrans import lastQuarter
-from ..misc import tsCode
-from ..plot import BokehPlot, PlotProfitsInc, plotKline
-from ..sqlrw import (
+from stockdatamanage.util.datatrans import lastQuarter
+from stockdatamanage.util.misc import tsCode
+from stockdatamanage.util.plot import BokehPlot, PlotProfitsInc, plotKline
+from stockdatamanage.db.sqlrw import (
     readChigu, readIndexKline, readProfitsIncAdf, readStockKline, readStockList,
-    readValuationSammary, writeChigu, readClassifyProfit,
+    readValuationSammary, writeHold, readClassifyProfit,
 )
 
 
@@ -54,7 +54,7 @@ def setStockList():
                 break
         if checkFlag:
             print('all ok')
-            writeChigu(chigu)
+            writeHold(chigu)
             return redirect(url_for('index'))
     return render_template('stocklist.html',
                            form=form,
@@ -224,7 +224,7 @@ def holdsetting():
     if hold:
         holdList = hold.split('|')
         current_app.logger.debug(f'保存股票清单：{holdList}')
-        writeChigu(holdList)
+        writeHold(holdList)
 
     return render_template("holdsetting.html", form=form)
 

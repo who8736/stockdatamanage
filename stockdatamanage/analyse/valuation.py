@@ -16,15 +16,12 @@ import os
 import pandas as pd
 import numpy as np
 
-from .analyse import report
-from . import initsql
-from . import classifyanalyse
-from . import analyse
-from . import sqlrw
-from .sqlconn import engine
-from .sqlrw import readLastTTMPEs, readStockList
-from . import pushdata
-from .config import Config
+from stockdatamanage.analyse import classifyanalyse, report
+from stockdatamanage.db import sqlrw
+from stockdatamanage.db.sqlconn import engine
+from stockdatamanage.db.sqlrw import readLastTTMPEs, readStockList
+from stockdatamanage.util import pushdata
+from ..config import datapath
 
 # 定义指标常数
 LOWPE = 20
@@ -280,11 +277,10 @@ def calpfnew(_date, replace=False):
     stocks = stocks.sort_values(by='pf', ascending=False)
 
     # 保存评价结果
-    cf = Config()
     stocks.set_index(['ts_code'], inplace=True)
     # stocks.to_csv('./data/valuation.csv')
     pfFilename = f'valuations{_date}.xlsx'
-    stocks.to_excel(os.path.join(cf.datapath, pfFilename))
+    stocks.to_excel(os.path.join(datapath, pfFilename))
 
     # 将评分发送到邮箱
     pushflag = cf.pushData

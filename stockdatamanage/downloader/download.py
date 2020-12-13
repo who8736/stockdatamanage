@@ -17,17 +17,17 @@ import zipfile
 import pandas as pd
 import tushare as ts
 
-from .config import Config
-from .initlog import initlog
-from .misc import tsCode
-from .sqlconn import engine
+from stockdatamanage.util.initlog import initlog
+from stockdatamanage.util.misc import tsCode
+from stockdatamanage.db.sqlconn import engine
 # from misc import (urlGuzhi, filenameGuzhi)
 # from .datatrans import dateStrList
-from .sqlrw import (
+from stockdatamanage.db.sqlrw import (
     readCal, readTableFields, writeClassifyMemberToSQL, writeClassifyNameToSQL,
     writeSQL,
 )
-from .webRequest import WebRequest
+from stockdatamanage.downloader.webRequest import WebRequest
+from ..config import datapath
 
 
 class DownloaderQuarter:
@@ -331,9 +331,8 @@ def downClassifyFile(_date):
     """
     logging.debug(f'downClassifyFile: {_date}')
     url = f'http://47.97.204.47/syl/csi{_date}.zip'
-    cf = Config()
-    zipfilename = os.path.join(cf.datapath, f'csi{_date}.zip')
-    datafilename = os.path.join(cf.datapath, f'csi{_date}.xls')
+    zipfilename = os.path.join(datapath, f'csi{_date}.zip')
+    datafilename = os.path.join(datapath, f'csi{_date}.xls')
     try:
         req = WebRequest()
         req.get(url)

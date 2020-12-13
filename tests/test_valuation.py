@@ -1,5 +1,5 @@
-from stockdatamanage.valuation import calpfnew
-from stockdatamanage.initlog import initlog
+from stockdatamanage.analyse.valuation import calpfnew
+from stockdatamanage.util.initlog import initlog
 
 
 def test_calpfnew():

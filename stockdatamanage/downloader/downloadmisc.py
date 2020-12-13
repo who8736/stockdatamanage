@@ -10,11 +10,7 @@
 """
 from multiprocessing.dummy import Pool as ThreadPool
 
-import pandas as pd
-import tushare as ts
-
-from .sqlrw import readStockList, writeSQL, readTableFields
-from .sqlconn import engine
+from stockdatamanage.db.sqlrw import readStockList, writeSQL, readTableFields
 from .download import DownloaderMisc
 from datamanage import logfun
 from initlog import initlog

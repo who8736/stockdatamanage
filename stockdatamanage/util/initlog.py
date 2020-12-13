@@ -3,16 +3,15 @@ import os
 import datetime as dt
 from functools import wraps
 
-from .config import Config
 
+from ..config import logpath
 
 def initlog():
     # 取得当前年份，按年记录日志
     nowTime = dt.datetime.now()
     logDate = nowTime.strftime('%Y')
-    cf = Config()
     logfilename = f'datamanage{logDate}.log'
-    logfilename = os.path.join(cf.logpath, logfilename)
+    logfilename = os.path.join(logpath, logfilename)
 
     formatStr = ('%(asctime)s %(filename)s[line:%(lineno)d] '
                  '%(levelname)s %(message)s')

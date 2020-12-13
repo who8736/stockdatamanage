@@ -16,10 +16,10 @@ import numpy as np
 import pandas as pd
 from statsmodels.tsa.stattools import adfuller
 
-from ..sqlconn import engine
-from ..sqlrw import readStockList
-from ..config import Config
-from ..plot import plotProfitInc
+from stockdatamanage.db.sqlconn import engine
+from stockdatamanage.db.sqlrw import readStockList
+from stockdatamanage.util.plot import plotProfitInc
+from ..config import datapath
 
 
 def adfTestPE(ts_code, startDate, endDate, plotFlag=False):
@@ -189,8 +189,7 @@ def adfTestAllProfitsInc(startDate=None, endDate=None):
 
     df = pd.DataFrame(resultList)
     stocks = pd.merge(stocks, df, left_on='ts_code', right_on='ts_code')
-    cf = Config()
-    stocks.to_excel(os.path.join(cf.datapath, 'profits_inc_adf.xlsx'))
+    stocks.to_excel(os.path.join(datapath, 'profits_inc_adf.xlsx'))
     # print(df)
 
 

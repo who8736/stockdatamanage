@@ -7,11 +7,11 @@ import os
 
 import pandas as pd
 
-from .config import Config
-from .datatrans import lastQuarter, quarterList
-from .sqlconn import engine
-from .sqlrw import readCal, readStockList
-from .download import DownloaderQuarter
+from stockdatamanage.util.datatrans import lastQuarter, quarterList
+from stockdatamanage.db.sqlconn import engine
+from stockdatamanage.db.sqlrw import readCal
+from stockdatamanage.downloader.download import DownloaderQuarter
+from ..config import datapath, logpath
 
 
 # def checkGuben():
@@ -113,12 +113,11 @@ def checkPath():
     """
 
     """
-    cf = Config()
-    if not os.path.isdir(cf.logpath):
-        os.makedirs(cf.logpath)
-    if not os.path.isdir(cf.datapath):
-        os.makedirs(cf.datapath)
-    linearpath = os.path.join(cf.datapath, 'linear_img')
+    if not os.path.isdir(logpath):
+        os.makedirs(logpath)
+    if not os.path.isdir(datapath):
+        os.makedirs(datapath)
+    linearpath = os.path.join(datapath, 'linear_img')
     if not os.path.isdir(linearpath):
         os.makedirs(linearpath)
 

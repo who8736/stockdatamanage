@@ -310,3 +310,4 @@ gen
 /exportdata/
 /data/
 /stockdatamanage/stockdata.conf
+/stockdatamanage/config.py

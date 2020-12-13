@@ -2,13 +2,12 @@ import os
 
 import pandas as pd
 
-from ..sqlrw import readLastTTMPEs
-from ..config import Config
+from stockdatamanage.db.sqlrw import readLastTTMPEs
+from ..config import datapath
 
 
 def profits_inc_linear_adf():
-    cf = Config()
-    df_adf = pd.read_excel(os.path.join(cf.datapath, 'profits_inc_adf.xlsx'))
+    df_adf = pd.read_excel(os.path.join(datapath, 'profits_inc_adf.xlsx'))
     df_adf.set_index('ts_code', inplace=True)
     df_adf = df_adf[['name', 'mean', 'std', 'sharp', 'flag']]
 

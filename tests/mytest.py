@@ -10,14 +10,14 @@ from xml import etree
 
 from matplotlib.widgets import Cursor
 
-from stockdatamanage.classifyanalyse import (
+from stockdatamanage.analyse.classifyanalyse import (
     calClassifyPE,
 )
-from stockdatamanage.datamanage import (
+from stockdatamanage.util.datamanage import (
     updateAllMarketPE, updateIndex, updatePf, updateTTMProfits,
 )
-from stockdatamanage.initlog import initlog
-from stockdatamanage.sqlrw import readCal
+from stockdatamanage.util.initlog import initlog
+from stockdatamanage.db.sqlrw import readCal
 
 INDEXNAME = {'000001.SH': '上证综指',
              # '000005.SH': '上证商业类指数',
@@ -567,13 +567,6 @@ def __testUpdate():
 # startDate = '20191220'
 # endDate = '20191231'
 # formatStr = '%Y%m%d'
-# cf = configparser.ConfigParser()
-# cf.read('stockdata.conf')
-# if cf.has_option('main', 'token'):
-#     token = cf.get('main', 'token')
-# else:
-#     token = ''
-# ts.set_token(token)
 # print(token)
 # pro = ts.pro_api()
 # df = pro.trade_cal(exchange='', start_date='20200101', end_date='20201231')

@@ -19,7 +19,7 @@ from pandas.core.frame import DataFrame
 import xlrd
 # import tushare as ts
 
-from .datatrans import quarterList, transDfToList
+from stockdatamanage.util.datatrans import quarterList, transDfToList
 from .sqlconn import engine, Session
 from . import initsql
 
@@ -223,36 +223,6 @@ def writeSQL(data: pd.DataFrame, tableName: str, replace=False):
         logging.error(f'写表失败[{tableName}]: {e}')
         return False
     return True
-
-
-def writets_codeListToFile(ts_codeList, filename):
-    stockFile = open(filename, 'wb')
-    stockFile.write(bytes('\n').join(ts_codeList))
-    stockFile.close()
-
-
-# def readGuzhiFileToDict(ts_code):
-#     """
-#     读取估值文件
-#     :rtype: dict
-#     :type ts_code: string
-#     :return dict
-#     """
-#     guzhiFilename = filenameGuzhi(ts_code)
-#     guzhiFile = open(guzhiFilename)
-#     guzhiData = guzhiFile.read()
-#     guzhiFile.close()
-#     return datatrans.transGuzhiDataToDict(guzhiData)
-
-
-# def readGuzhiFilesToDf(stockList):
-#     guzhiList = []
-#     for ts_code in stockList:
-#         logging.debug('readGuzhiFilesToDf: %s', ts_code)
-#         guzhidata = readGuzhiFileToDict(ts_code)
-#         if guzhidata is not None:
-#             guzhiList.append(guzhidata)
-#     return DataFrame(guzhiList)
 
 
 def readGuzhiSQLToDf(stockList):
@@ -624,29 +594,9 @@ def calTTMProfitsIncRate(end_date, replace=False):
     engine.execute(sql)
 
 
-def del_calTTMLirun(stockdf, date):
-    lirun1 = stockdf[stockdf.date == date - 10]  # 上年同期利润
-    lirun2 = stockdf[stockdf.date == (date / 10 - 1) * 10 + 4]  # 上年末利润
-    lirun3 = stockdf[stockdf.date == date]  # 本期利润
-    if lirun1.empty or lirun2.empty or lirun3.empty:
-        return None
-    lirun1 = lirun1.iat[0, 2]
-    lirun2 = lirun2.iat[0, 2]
-    ts_code = lirun3.iat[0, 0]
-    reportdate = lirun3.iat[0, 3]
-    lirun3 = lirun3.iat[0, 2]
-    # TTM利润 = 本期利润＋上年末利润-上年同期利润
-    lirun = lirun3 + lirun2 - lirun1
-    return [ts_code, date, lirun, reportdate]
-
-
-# def getLirunUpdateEndQuarter():
-#     curQuarter = datatrans.transDateToQuarter(dt.datetime.now())
-#     return datatrans.quarterSub(curQuarter, 1)
-
-
-def getLastUpdate(dataName):
+def readUpdate(dataName):
     """
+    获取数据的更新日期
     Parameters
     --------
     :param dataName: str 更新的数据的类型
@@ -665,96 +615,13 @@ def getLastUpdate(dataName):
             return _date
 
 
-def writeChigu(stockList):
+def writeHold(stockList):
+    """将持股清单写入数据库"""
     engine.execute('TRUNCATE TABLE chigu')
     for ts_code in stockList:
         sql = ('insert into chigu (`ts_code`) '
                'values ("%s");') % ts_code
         engine.execute(sql)
-
-
-# def setGubenLastUpdate(ts_code, endDate=None):
-#     sql = ('insert into lastupdate (`ts_code`, `guben`) '
-#            'values ("%(ts_code)s", "%(endDate)s") '
-#            'on duplicate key update `guben`="%(endDate)s";' % locals())
-#     result = engine.execute(sql)
-#     return result
-
-
-def del_updateKlineTTMPE(ts_code, startDate, endDate=None):
-    """
-    # 更新Kline表TTMPE
-    """
-    #     engine = getEngine()
-    if startDate is None:
-        return
-
-    startDateStr = startDate.strftime('%Y-%m-%d')
-    klineTablename = 'klinestock'
-    sql = ('update %(klineTablename)s '
-           'set ttmpe = round(totalmarketvalue / ttmprofits, 2)'
-           ' where ts_code="%(ts_code)s" and date>="%(startDateStr)s"'
-           % locals())
-    if endDate:
-        sql += ' and date < "%s"' % endDate
-    sql += ' and totalmarketvalue is not null'
-    sql += ' and ttmprofits is not null'
-    unusedResult = engine.execute(sql)
-    sql = f'select max(date) from klinestock where ts_code="{ts_code}"'
-    result = engine.execute(sql)
-    endDate = result.fetchone()[0]
-    if endDate is not None:
-        endDate = endDate.strftime('%Y-%m-%d')
-    else:
-        endDate = (dt.datetime.today() - dt.timedelta(days=1))
-        endDate = endDate.strftime('%Y-%m-%d')
-    return endDate
-
-
-def del_readGuben(ts_code, startDate=None, endDate=None):
-    """取指定股票一段日间的股本变动数据，startDate当日无数据时，取之前最近一次变动数据
-    Parameters
-    --------
-    ts_code: str 股票代码  e.g: '600519'
-    startDate: str 起始日期  e.g: '1990-01-01'
-    endDate: str 截止日期  e.g: '1990-01-01'
-
-    Return
-    --------
-    DataFrame
-        date: 股本变动日期
-        totalshares: 变动后总股本
-    """
-    # 指定日期（含）前最近一次股本变动日期
-    if startDate is None:
-        return
-    startDateStr = startDate.strftime('%Y-%m-%d')
-    sql = ('select max(date) from guben '
-           'where ts_code="%(ts_code)s" '
-           'and date<="%(startDateStr)s"' % locals())
-    result = engine.execute(sql)
-    lastUpdate = result.fetchone()[0]
-
-    # 指定日期（含）前无股本变动数据的，查询起始日期设定为startDate
-    # 否则设定为最近一次变动日期
-    if lastUpdate is None:
-        gubenStartDate = startDateStr
-    else:
-        gubenStartDate = lastUpdate.strftime('%Y-%m-%d')
-
-    sql = ('select date, totalshares from guben '
-           'where ts_code = "%(ts_code)s"'
-           ' and `date`>="%(gubenStartDate)s"' % locals())
-    if endDate:
-        sql += ' and `date` <= "%s"' % endDate.strftime('%Y-%m-%d')
-    df = pd.read_sql(sql, engine)
-
-    # 指定日期（含）前存在股本变动数据的，重设第1次变动日期为startDate，
-    # 减少更新Kline表中总市值所需计算量
-    if lastUpdate is not None:
-        gbdate = datetime.strptime(gubenStartDate, '%Y-%m-%d').date()
-        df.loc[df['date'] == gbdate, 'date'] = startDateStr
-    return df
 
 
 def readGubenUpdateList():
@@ -778,13 +645,6 @@ def readGubenUpdateList():
     updateList = updateList[abs(
         updateList.totalsnew - updateList.totalsold) > 0.1]
     return updateList.ts_code
-
-
-def readClose(ts_code):
-    sql = ('select date, close from klinestock where ts_code="%(ts_code)s";'
-           % locals())
-    df = pd.read_sql(sql, engine)
-    return df
 
 
 def readCurrentClose(ts_code):
@@ -833,29 +693,25 @@ def readClassifyProfit(date, lv=None):
     return pd.read_sql(sql, engine)
 
 
-def getGuzhiList():
-    #     sql = ('select guzhiresult.ts_code, stocklist.name '
-    #            'from guzhiresult, stocklist '
-    #            'where guzhiresult.ts_code=stocklist.ts_code')
-    sql = 'select ts_code from youzhiguzhi'
-    result = engine.execute(sql)
-    return [ts_code[0] for ts_code in result.fetchall()]
+# def getGuzhiList():
+#     #     sql = ('select guzhiresult.ts_code, stocklist.name '
+#     #            'from guzhiresult, stocklist '
+#     #            'where guzhiresult.ts_code=stocklist.ts_code')
+#     sql = 'select ts_code from youzhiguzhi'
+#     result = engine.execute(sql)
+#     return [ts_code[0] for ts_code in result.fetchall()]
 
 
 #     return result.fetchall()
 
 
-def getYouzhiList():
-    #     sql = ('select youzhiguzhi.ts_code, stocklist.name '
-    #            'from youzhiguzhi, stocklist '
-    #            'where youzhiguzhi.ts_code=stocklist.ts_code')
-    #     sql = 'select ts_code from guzhiresult'
-    sql = 'select ts_code from youzhiguzhi'
-    result = engine.execute(sql)
-    return [ts_code[0] for ts_code in result.fetchall()]
+# def getYouzhiList():
+#     sql = 'select ts_code from youzhiguzhi'
+#     result = engine.execute(sql)
+#     return [ts_code[0] for ts_code in result.fetchall()]
 
 
-def getStockName(ts_code):
+def readStockName(ts_code):
     sql = f'select name from stock_basic where ts_code="{ts_code}";'
     result = engine.execute(sql).first()
     if result is not None:
