@@ -7,7 +7,7 @@
 
 import pandas as pd
 
-from sqlconn import engine
+from ..db import engine
 
 
 def allIndexProInc():

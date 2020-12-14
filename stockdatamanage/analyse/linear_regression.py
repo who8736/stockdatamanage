@@ -2,25 +2,24 @@
 
 """
 import os
-from math import sqrt, log
-
 from collections import OrderedDict
+from math import log, sqrt
+
 # import matplotlib.mlab as mlab
 import matplotlib.dates as mdates
-import matplotlib.pyplot as plt  # @IgnorePep8
 import matplotlib.gridspec as gridspec
-from matplotlib.dates import DateFormatter
-from matplotlib.dates import YearLocator  # @IgnorePep8
+import matplotlib.pyplot as plt  # @IgnorePep8
 import numpy as np
 import pandas as pd
-from statsmodels.tsa.stattools import adfuller
+import tushare as ts
+from matplotlib.dates import DateFormatter, YearLocator  # @IgnorePep8
+from scipy.stats import normaltest, zscore
 from sklearn import datasets, linear_model
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.preprocessing import PowerTransformer
-from scipy.stats import zscore, normaltest
-import tushare as ts
+from statsmodels.tsa.stattools import adfuller
 
 from stockdatamanage.db.sqlconn import engine
 from stockdatamanage.db.sqlrw import readStockList, readStockName
@@ -166,9 +165,7 @@ def _linearHuber(data, plot=False, title=None, filename=None):
     return dict(intercept=intercept, coef=coef, r2=r2)
 
 
-
-
-def linearProfitInc(startDate = '20150331', endDate = '20191231'):
+def linearProfitInc(startDate='20150331', endDate='20191231'):
     stocks = readStockList()
     # stocks = stocks[456:]
 

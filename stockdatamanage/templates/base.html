@@ -4,18 +4,18 @@
     {% block head %}
     <!-- Required meta tags -->
     <meta charset="utf-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta content="width=device-width, initial-scale=1, shrink-to-fit=no"
+          name="viewport">
+    <meta content="{{ csrf_token() }}" name="csrf-token">
 
     {% block styles %}
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" type="text/css"
-          href="{{url_for('static', filename='bootstrap.min.4.5.3.css')}}">
-    <link rel="stylesheet" type="text/css"
-          href="{{url_for('static', filename='select2.min.4.1.0.css')}}">
-    <link rel="stylesheet" type="text/css"
-          href="{{url_for('static', filename='bootstrap-table.min.1.18.0.css')}}">
+    <link href="{{url_for('static', filename='bootstrap.min.4.5.3.css')}}" rel="stylesheet"
+          type="text/css">
+    <link href="{{url_for('static', filename='select2.min.4.1.0.css')}}" rel="stylesheet"
+          type="text/css">
+    <link href="{{url_for('static', filename='bootstrap-table.min.1.18.0.css')}}" rel="stylesheet"
+          type="text/css">
     {% endblock %}
 
     <title>
@@ -28,39 +28,46 @@
 {# Finally, round things out with navigation #}
 {% block navbar %}
 <div class="container-fluid">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-secondary"> <a class="navbar-brand" href="#">Navbar</a>
-      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarColor02" aria-controls="navbarColor02" aria-expanded="false" aria-label="Toggle navigation"> <span class="navbar-toggler-icon"></span> </button>
-      <div class="collapse navbar-collapse" id="navbarColor02">
-        <ul class="navbar-nav mr-auto">
-          <li class="nav-item">
-              <a class="nav-link" href="/">首页</a>
-          </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/valuationtype/chigu">持股股票评分</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/valuationtype/youzhi">优质股票评分</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/valuationtype/all">全部股票评分</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/classifyprofit">查询行业利润</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link"
-                   href="/indexklineimgnew/000010.SH">上证180历史PE</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link"
-                   href="/holdsetting">设置持股</a>
-            </li>
-        </ul>
-        <form class="form-inline">
-          <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
-          <button class="btn btn-outline-light my-2 my-sm-0" type="submit">Search</button>
-        </form>
-      </div>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-secondary"><a
+            class="navbar-brand" href="#">Navbar</a>
+        <button aria-controls="navbarColor02" aria-expanded="false" aria-label="Toggle navigation"
+                class="navbar-toggler" data-target="#navbarColor02"
+                data-toggle="collapse" type="button"><span
+                class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="navbarColor02">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">首页</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/valuationtype/chigu">持股股票评分</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/valuationtype/youzhi">优质股票评分</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/valuationtype/all">全部股票评分</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/classifyprofit">查询行业利润</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link"
+                       href="/indexklineimgnew/000010.SH">上证180历史PE</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link"
+                       href="/holdsetting">设置持股</a>
+                </li>
+            </ul>
+            <form class="form-inline">
+                <input aria-label="Search" class="form-control mr-sm-2"
+                       placeholder="Search" type="search">
+                <button class="btn btn-outline-light my-2 my-sm-0"
+                        type="submit">Search
+                </button>
+            </form>
+        </div>
     </nav>
 </div>
 {% endblock %}

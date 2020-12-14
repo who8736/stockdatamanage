@@ -6,20 +6,20 @@
 {{ super() }}
 <div class="container">
     <div id="toolbar">
-        <button id="button" class="btn btn-secondary">getSelections</button>
+        <button class="btn btn-secondary" id="button">getSelections</button>
     </div>
     <table
-            id="table"
+            data-click-to-select="true"
+            data-height="560"
+            data-pagination="true"
+            data-search="true"
             data-toggle="table"
             data-toolbar="#toolbar"
-            data-height="560"
-            data-search="true"
-            data-pagination="true"
-            data-click-to-select="true"
-            data-url="holdjson">
+            data-url="holdjson"
+            id="table">
         <thead>
         <tr>
-            <th data-field="selected" data-checkbox="true"></th>
+            <th data-checkbox="true" data-field="selected"></th>
             <th data-field="id" data-sortable="true">ID</th>
             <th data-field="text" data-sortable="true">Item Name</th>
         </tr>
@@ -53,7 +53,6 @@
     </div>
 
 
-
 </div>
 {% endblock %}
 
@@ -67,7 +66,8 @@
         $(function () {
             $button.click(function () {
                 console.log('按下按钮')
-                alert('getSelections: ' + JSON.stringify($table.bootstrapTable('getSelections')))
+                alert('getSelections: ' + JSON.stringify(
+                    $table.bootstrapTable('getSelections')))
             })
         })
     })

@@ -1,98 +1,102 @@
 {% extends "base.html" %}
 {% block title %}股票评分{% endblock %}
 {% block body %}
-    <div class="container-fluid">
-        {{ super() }}
-        <hr>
-        <div class="text-center">
-            <table class="table" id="table">
-                <thead>
-                <tr>
-                    <th data-field="ts_code">代码</th>
-                    <th data-field="name">名称</th>
-                    <th data-field="trade_date">交易日期</th>
-                    <th data-field="classify_name">行业名称</th>
-                    <th data-field="pf">评分</th>
-                    <th data-field="pe">PE</th>
-                    <th data-field="peg">PEG</th>
-                    <th data-field="pe200">PE200</th>
-                    <th data-field="pe1000">PE1000</th>
-                    <th data-field="fina_date">财务报告期</th>
-                    <th data-field="grossprofit_margin">毛利率</th>
-                    <th data-field="roe">净资产收益率</th>
-                    <th data-field="dv_ttm">股息率</th>
-                </tr>
-                </thead>
-            </table>
-        </div>
+<div class="container-fluid">
+    {{ super() }}
+    <hr>
+    <div class="text-center">
+        <table class="table" id="table">
+            <thead>
+            <tr>
+                <th data-field="ts_code">代码</th>
+                <th data-field="name">名称</th>
+                <th data-field="trade_date">交易日期</th>
+                <th data-field="classify_name">行业名称</th>
+                <th data-field="pf">评分</th>
+                <th data-field="pe">PE</th>
+                <th data-field="peg">PEG</th>
+                <th data-field="pe200">PE200</th>
+                <th data-field="pe1000">PE1000</th>
+                <th data-field="fina_date">财务报告期</th>
+                <th data-field="grossprofit_margin">毛利率</th>
+                <th data-field="roe">净资产收益率</th>
+                <th data-field="dv_ttm">股息率</th>
+            </tr>
+            </thead>
+        </table>
     </div>
+</div>
 {% endblock %}
 
 
 {% block scripts %}
-    {{ super() }}
-    <script>
-        var $table = $('#table')
+{{ super() }}
+<script>
+    var $table = $('#table')
 
-        let columns = [{
-            field: 'ts_code', title: '代码', align: 'center',
-            sortable: true,
-            formatter: 'codeFormatter',
-        }, {
-            field: 'name', title: '名称', align: 'center',
-            sortable: true,
-        }, {
-            field: 'trade_date', title: '交易日期', align: 'center',
-            sortable: true,
-        }, {
-            field: 'classify_name', title: '行业名称', align: 'center',
-            sortable: true,
-        }, {
-            field: 'pf', title: '评分', align: 'right',
-            sortable: true,
-        }, {
-            field: 'pe', title: 'PE', align: 'right',
-            sortable: true,
-        }, {
-            field: 'peg', title: 'PEG', align: 'right',
-            sortable: true,
-        }, {
-            field: 'pe200', title: 'PE200', align: 'right',
-            sortable: true,
-        }, {
-            field: 'pe1000', title: 'PE1000', align: 'right',
-            sortable: true,
-        }, {
-            field: 'fina_date', title: '财务报告期', align: 'right',
-            sortable: true,
-        }, {
-            field: 'grossprofit_margin', title: '毛利率', align: 'right',
-            sortable: true,
-        }, {
-            field: 'roe', title: '净资产收益率', align: 'right',
-            sortable: true,
-        }, {
-            field: 'dv_ttm', title: '股息率', align: 'right',
-            sortable: true,
-        }]
-        console.log('文档初始化完成')
+    let columns = [{
+        field: 'ts_code', title: '代码', align: 'center',
+        sortable: true,
+        formatter: 'codeFormatter',
+    }, {
+        field: 'name', title: '名称', align: 'center',
+        sortable: true,
+    }, {
+        field: 'trade_date', title: '交易日期', align: 'center',
+        sortable: true,
+    }, {
+        field: 'classify_name', title: '行业名称', align: 'center',
+        sortable: true,
+    }, {
+        field: 'pf', title: '评分', align: 'right',
+        sortable: true,
+    }, {
+        field: 'pe', title: 'PE', align: 'right',
+        sortable: true,
+    }, {
+        field: 'peg', title: 'PEG', align: 'right',
+        sortable: true,
+    }, {
+        field: 'pe200', title: 'PE200', align: 'right',
+        sortable: true,
+    }, {
+        field: 'pe1000', title: 'PE1000', align: 'right',
+        sortable: true,
+    }, {
+        field: 'fina_date', title: '财务报告期', align: 'right',
+        sortable: true,
+    }, {
+        field: 'grossprofit_margin', title: '毛利率', align: 'right',
+        sortable: true,
+    }, {
+        field: 'roe', title: '净资产收益率', align: 'right',
+        sortable: true,
+    }, {
+        field: 'dv_ttm', title: '股息率', align: 'right',
+        sortable: true,
+    }]
+    console.log('文档初始化完成')
 
-        $(function () {
-            let d = {{ stocks | tojson }}
-            console.log(d)
-            $table.bootstrapTable({
-                columns: columns,
-                data: d,
-                pagination: true,
-                search: true,
-
-            })
-        })
-
-        // 行业代码添加链接
-        function codeFormatter(value) {
-            return '<a href="/valuation/' + value + '">' + value + '</a>'
+    $(function () {
+        let d = {
+        {
+            stocks | tojson
         }
+    }
+        console.log(d)
+        $table.bootstrapTable({
+            columns: columns,
+            data: d,
+            pagination: true,
+            search: true,
 
-    </script>
+        })
+    })
+
+    // 行业代码添加链接
+    function codeFormatter(value) {
+        return '<a href="/valuation/' + value + '">' + value + '</a>'
+    }
+
+</script>
 {% endblock %}

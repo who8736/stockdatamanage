@@ -5,8 +5,8 @@ Created on 2016年12月14日
 @author: who8736
 """
 
-import logging
 import json
+import logging
 
 from bokeh.embed import components
 from bokeh.resources import INLINE
@@ -16,16 +16,16 @@ from flask import (
 # from bokeh.util.string import encode_utf8
 from flask_paginate import Pagination, get_page_parameter
 
-from . import app
-from .forms import HoldForm, StockListForm
-from ..analyse.report import reportIndex, reportValuation
+from stockdatamanage.db.sqlrw import (
+    readChigu, readClassifyProfit, readIndexKline, readProfitsIncAdf,
+    readStockKline, readStockList, readValuationSammary, writeHold,
+)
 from stockdatamanage.util.datatrans import lastQuarter
 from stockdatamanage.util.misc import tsCode
 from stockdatamanage.util.plot import BokehPlot, PlotProfitsInc, plotKline
-from stockdatamanage.db.sqlrw import (
-    readChigu, readIndexKline, readProfitsIncAdf, readStockKline, readStockList,
-    readValuationSammary, writeHold, readClassifyProfit,
-)
+from . import app
+from .forms import HoldForm, StockListForm
+from ..analyse.report import reportIndex, reportValuation
 
 
 @app.route('/')

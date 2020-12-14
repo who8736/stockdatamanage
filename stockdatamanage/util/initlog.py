@@ -1,10 +1,10 @@
+import datetime as dt
 import logging
 import os
-import datetime as dt
 from functools import wraps
 
-
 from ..config import logpath
+
 
 def initlog():
     # 取得当前年份，按年记录日志

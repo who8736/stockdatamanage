@@ -13,15 +13,11 @@ from bokeh.plotting import figure, show, output_file
 from bokeh.sampledata.stocks import MSFT
 from bokeh.layouts import column
 from bokeh.models import ColumnDataSource, RangeTool
-# from bokeh.layouts import row
-# from bokeh.layouts import gridplot
-# from bokeh.models import FixedFormatter
 from bokeh.models import CustomJS
 
-from sqlrw import engine  # @IgnorePep8
+from stockdatamanage.db import engine  # @IgnorePep8
 
 
-# df = pd.DataFrame(MSFT)
 def plotCandlestick(p, df):
     inc = df.close > df.open
     dec = df.open > df.close

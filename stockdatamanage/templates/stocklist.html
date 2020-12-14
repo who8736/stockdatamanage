@@ -10,15 +10,15 @@
             <div class="control-group">
                 <label class="control-label" for="holdstocks">持股股票列表</label>
                 <div class="controls">
-                    <input class="input-block-level" id='holdstocks' type="text"
-                           name="stockList" value="{{ stockListStr }}"
-                           size="100"/>
+                    <input class="input-block-level" id='holdstocks' name="stockList"
+                           size="100" type="text"
+                           value="{{ stockListStr }}"/>
                 </div>
             </div>
 
             {{ form.csrf_token }}
             <p>
-                <button type="submit" class="btn">提交</button>
+                <button class="btn" type="submit">提交</button>
             </p>
         </fieldset>
     </form>

@@ -4,10 +4,11 @@ Created on 2016年12月14日
 
 @author: who8736
 """
-from flask import Flask
-import sys
-from flask_bootstrap import Bootstrap
 import importlib
+import sys
+
+from flask import Flask
+from flask_bootstrap import Bootstrap
 from flask_wtf.csrf import CSRFProtect
 
 # noinspection PyTypeChecker

@@ -2,14 +2,13 @@
 # author:xx
 # datetime:2020/4/7 9:07
 
+import matplotlib.pyplot as plt
 import numpy as np
-import tushare as ts
 import pandas as pd
 import talib
-import matplotlib.pyplot as plt
 
-from sqlconn import engine
-from sqlrw import readStockList
+from ..db import engine
+from ..db.sqlrw import readStockList
 
 
 def stockinc(ts_code):

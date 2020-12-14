@@ -5,18 +5,13 @@ Created on Mon Mar 25 10:22:14 2019
 @author: ff
 """
 
-from os import path
-import datetime as dt
-import sys
-
 import backtrader as bt
 import backtrader.indicators as btind
 import numpy as np
 import pandas as pd
-import tushare as ts
 
-from sqlconn import engine
-from sqlrw import readStockKline
+from ..db import engine
+from ..db.sqlrw import readStockKline
 
 
 class PandasData(bt.feeds.PandasData):

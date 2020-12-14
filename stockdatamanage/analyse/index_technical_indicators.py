@@ -4,26 +4,20 @@
 
 """计算指数的技术分析指标，并按技术指标做线性回归或分类"""
 
-import pandas as pd
 import numpy as np
-from sklearn.linear_model import (
-    LinearRegression, Ridge, Lasso,
-    RidgeCV, LassoCV,
-)
-from sklearn.svm import LinearSVC, SVC, NuSVC
-from sklearn.model_selection import (
-    train_test_split, cross_val_score,
-    cross_val_predict,
-)
-from sklearn.metrics import r2_score, confusion_matrix, precision_score
-from sklearn.utils import check_X_y
-from sklearn.datasets.samples_generator import make_classification
-from sklearn.preprocessing import scale, PowerTransformer
+import pandas as pd
 import talib as ta
-from talib import MA_Type
-import matplotlib.pyplot as plt
-
+from sklearn.datasets.samples_generator import make_classification
+from sklearn.linear_model import (LassoCV, LinearRegression, RidgeCV)
+from sklearn.metrics import confusion_matrix, precision_score, r2_score
+from sklearn.model_selection import (
+    train_test_split,
+)
+from sklearn.preprocessing import PowerTransformer, scale
+from sklearn.svm import LinearSVC, SVC
+from sklearn.utils import check_X_y
 from sqlconn import engine
+from talib import MA_Type
 
 
 def getdata(ts_code, startDate='20090101', endDate='20191231',

@@ -3,7 +3,6 @@
 # datetime:2020/4/26 11:06
 # 季报数据分析
 
-from sqlrw import *
 
 
 # noinspection PyUnusedLocal

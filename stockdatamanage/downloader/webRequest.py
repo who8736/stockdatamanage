@@ -12,13 +12,13 @@
 """
 __author__ = 'J_hao'
 
-from requests.models import Response
-from lxml import etree
-import requests
+import logging
 import random
 import time
-import logging
 
+import requests
+from lxml import etree
+from requests.models import Response
 from selenium import webdriver
 
 requests.packages.urllib3.disable_warnings()

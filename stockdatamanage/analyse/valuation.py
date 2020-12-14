@@ -13,15 +13,15 @@ Created on Wed Oct 25 21:30:01 2017
 """
 import os
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
-from stockdatamanage.analyse import classifyanalyse, report
-from stockdatamanage.db import sqlrw
-from stockdatamanage.db.sqlconn import engine
-from stockdatamanage.db.sqlrw import readLastTTMPEs, readStockList
-from stockdatamanage.util import pushdata
+from ..analyse import classifyanalyse, report
 from ..config import datapath
+from ..db import sqlrw
+from ..db.sqlconn import engine
+from ..db.sqlrw import readLastTTMPEs, readStockList
+from ..util import pushdata
 
 # 定义指标常数
 LOWPE = 20

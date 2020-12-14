@@ -8,13 +8,12 @@
 
 import time
 
-import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-
+import numpy as np
 from sklearn import svm
-from sklearn.datasets import make_moons, make_blobs
 from sklearn.covariance import EllipticEnvelope
+from sklearn.datasets import make_blobs, make_moons
 from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
 

@@ -10,10 +10,11 @@
 """
 from multiprocessing.dummy import Pool as ThreadPool
 
-from stockdatamanage.db.sqlrw import readStockList, writeSQL, readTableFields
-from .download import DownloaderMisc
 from datamanage import logfun
 from initlog import initlog
+
+from ..db.sqlrw import readStockList, readTableFields, writeSQL
+from .download import DownloaderMisc
 
 tables = [
     ['pledge_stat', 60, 50],

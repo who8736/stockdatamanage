@@ -7,9 +7,9 @@
     {{ super() }}
 
     <p>
-        <iframe src="/indexklineimgnew/{{ stock.ts_code }}" id="bokehplot"
-                name="kline bokeh plot"
-                onload="this.height=100">
+        <iframe id="bokehplot" name="kline bokeh plot"
+                onload="this.height=100"
+                src="/indexklineimgnew/{{ stock.ts_code }}">
         </iframe>
     </p>
 

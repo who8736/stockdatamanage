@@ -12,10 +12,12 @@ import logging
 
 import pandas as pd
 
-from stockdatamanage.util import datatrans
-from stockdatamanage.util.datatrans import calDate
-from stockdatamanage.db.sqlconn import engine
-from stockdatamanage.db.sqlrw import readTTMProfitsForDate, writeSQL, readStockList
+from ..db.sqlconn import engine
+from ..db.sqlrw import (
+    readStockList, readTTMProfitsForDate, writeSQL,
+)
+from ..util import datatrans
+from ..util.datatrans import calDate
 
 
 # import logging

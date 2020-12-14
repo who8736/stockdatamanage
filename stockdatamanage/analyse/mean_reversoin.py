@@ -6,12 +6,12 @@
 第二种：
 """
 
-import os
 import datetime as dt
 import logging
+import os
 
-import matplotlib.pyplot as plt  # @IgnorePep8
 import matplotlib.gridspec as gridspec
+import matplotlib.pyplot as plt  # @IgnorePep8
 import numpy as np
 import pandas as pd
 from statsmodels.tsa.stattools import adfuller

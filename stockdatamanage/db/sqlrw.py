@@ -5,23 +5,18 @@ Created on Thu Mar 10 21:11:51 2016
 @author: who8736
 """
 
-# import os
-import logging
 import datetime as dt
-from datetime import datetime
+import logging
+
 import pandas as pd
-# from io import StringIO
-
-from sqlalchemy import MetaData, Table
-# from sqlalchemy import DATE, DECIMAL, String
-from sqlalchemy.ext.declarative import declarative_base
-from pandas.core.frame import DataFrame
 import xlrd
-# import tushare as ts
+from pandas.core.frame import DataFrame
+from sqlalchemy import MetaData, Table
+from sqlalchemy.ext.declarative import declarative_base
 
-from stockdatamanage.util.datatrans import quarterList, transDfToList
-from .sqlconn import engine, Session
 from . import initsql
+from .sqlconn import Session, engine
+from ..util.datatrans import quarterList, transDfToList
 
 
 def writeClassifyMemberToSQL(_date, filename):
@@ -381,7 +376,7 @@ def readTTMProfitsForStock(ts_code: str, startDate=None, endDate=None):
 
 
 # TODO: 废弃本函数， 用readProfitInc代替
-def readLastTTMProfit(ts_code, limit=1, date=None):
+def del_readLastTTMProfit(ts_code, limit=1, date=None):
     """取指定股票最近几期TTM利润
     Parameters
     --------
@@ -418,7 +413,7 @@ def readLastTTMProfits(stockList, limit=1, date=None):
     """
     TTMLirunList = []
     for ts_code in stockList:
-        TTMLirun = readLastTTMProfit(ts_code, limit, date)
+        TTMLirun = readProfitInc(ts_code, limit, date)
         TTMLirun.insert(0, ts_code)
         TTMLirunList.append(TTMLirun)
 
@@ -539,59 +534,6 @@ def readLastTTMPEs(stocks, trade_date=None):
     df = df.loc[df.ts_code.isin(stocks.ts_code)]
     df = df.dropna()
     return df
-
-
-def calAllTTMProfits(end_date, replace=False):
-    """计算全部股票本期TTM利润并写入TTMLirun表
-    date: 格式YYYYMMDD
-    replace: True, 覆盖已有数据， False, 增量更新
-    # 计算公式： TTM利润 = 本期利润 + 上年第四季度利润 - 上年同期利润
-    # 计算原理：TTM利润为之前连续四个季度利润之和
-    # 本期利润包含今年以来产生所有利润，上年第四季度利润 减上年同期利润为上年同期后一个季度至年末利润
-    # 两者相加即为TTM利润
-    # 举例：2016年1季度TTM利润 = 2016年1季度利润 + 2015年4季度利润  - 2015年1季度利润
-    # 数据完整的情况下等同于：
-    # 2015年2季度利润 + 2015年3季度利润 + 2015年4季度利润 + 2016年1季度利润
-    # 当本期为第4季度时，计算公式仍有效， 如：
-    # 2016年4季度TTM利润 = 2016年4季度利润 + 2015年4季度利润  - 2015年4季度利润
-    """
-    logging.debug(f'更新ttmprofits: {end_date}')
-    end_date1 = f'{int(end_date[:4]) - 1}1231'
-    end_date2 = f'{int(end_date[:4]) - 1}{end_date[4:]}'
-    if replace:
-        sql = f'delete from ttmprofits where end_date="{end_date}"'
-        engine.execute(sql)
-    sql = f'''
-            insert into ttmprofits (ts_code, end_date, ttmprofits, ann_date)
-            select a.ts_code, '{end_date}' as end_date, (a.p + b.p - c.p) ttmprofits, a.ann_date from 
-            (select ts_code, n_income_attr_p p, ann_date from stockdata.income where end_date='{end_date}' and n_income_attr_p is not null) a,
-            (select ts_code, n_income_attr_p p from stockdata.income where end_date='{end_date1}' and n_income_attr_p is not null) b,
-            (select ts_code, n_income_attr_p p from stockdata.income where end_date='{end_date2}' and n_income_attr_p is not null) c,
-            (select ts_code from stock_basic where ts_code not in
-            (select ts_code from ttmprofits where end_date='{end_date}')) d
-            where a.ts_code=d.ts_code and a.ts_code=b.ts_code and a.ts_code=c.ts_code and a.ann_date is not null
-            '''
-    engine.execute(sql)
-    calTTMProfitsIncRate(end_date)
-
-
-def calTTMProfitsIncRate(end_date, replace=False):
-    """计算全部股票本期TTM利润增长率并写入TTMLirun表
-    date: 格式YYYYMMDD
-    # 计算公式： TTM利润增长率= (本期TTM利润  - 上年同期TTM利润) / TTM利润 * 100
-    """
-    sql = f'''
-            update ttmprofits t1,
-            (select ts_code, ttmprofits from ttmprofits 
-                where end_date='{int(end_date[:4]) - 1}{end_date[4:]}') t2
-            set t1.inc = round((t1.ttmprofits / t2.ttmprofits - 1) * 100, 2)
-            where t1.end_date='{end_date}' 
-                and t1.ts_code=t2.ts_code and t1.ttmprofits is not null 
-                and t2.ttmprofits is not null
-    '''
-    if not replace:
-        sql += ' and t1.inc is null '
-    engine.execute(sql)
 
 
 def readUpdate(dataName):

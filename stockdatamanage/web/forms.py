@@ -4,8 +4,8 @@ Created on 2017年1月14日
 
 @author: who8736
 """
-from flask_wtf import Form, FlaskForm
-from wtforms import StringField, SelectMultipleField, SelectField, SubmitField
+from flask_wtf import FlaskForm, Form
+from wtforms import SelectMultipleField, StringField, SubmitField
 from wtforms.validators import DataRequired
 
 

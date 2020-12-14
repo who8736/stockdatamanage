@@ -7,11 +7,11 @@ import os
 
 import pandas as pd
 
-from stockdatamanage.util.datatrans import lastQuarter, quarterList
-from stockdatamanage.db.sqlconn import engine
-from stockdatamanage.db.sqlrw import readCal
-from stockdatamanage.downloader.download import DownloaderQuarter
 from ..config import datapath, logpath
+from ..db import engine
+from ..db.sqlrw import readCal
+from ..downloader.download import DownloaderQuarter
+from ..util.datatrans import lastQuarter, quarterList
 
 
 # def checkGuben():

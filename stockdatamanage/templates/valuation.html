@@ -10,35 +10,35 @@
 
         <div class="col-12">
             <h2>估值报告： {{ stock.ts_code }} {{ stock.name }}</h2>
-            <a href="http://finance.sina.com.cn/realstock/company/
+            <a class="btn btn-large btn-info"
+               href="http://finance.sina.com.cn/realstock/company/
 		{% if stock.ts_code[0]=='6' %}sh{% else %}sz{% endif %}
-		{{ stock.ts_code[:6] }}/nc.shtml"
-               class="btn btn-large btn-info" target="_blank">
+		{{ stock.ts_code[:6] }}/nc.shtml" target="_blank">
                 新浪财经</a>
-            <a href="http://f9.eastmoney.com/
+            <a class="btn btn-large btn-info"
+               href="http://f9.eastmoney.com/
 		{% if stock.ts_code[0]=='6' %}sh{% else %}sz{% endif %}
-		{{ stock.ts_code[:6] }}.html"
-               class="btn btn-large btn-info" target="_blank">
+		{{ stock.ts_code[:6] }}.html" target="_blank">
                 东方财富</a>
-            <a href="http://stockpage.10jqka.com.cn/{{ stock.ts_code[:6] }}"
-               class="btn btn-large btn-info" target="_blank">
+            <a class="btn btn-large btn-info"
+               href="http://stockpage.10jqka.com.cn/{{ stock.ts_code[:6] }}" target="_blank">
                 同花顺</a>
             <!--	<p><img src="/klineimg/{{ stock.ts_code }}"></p>-->
             <div class="row">
                 <div class="col">
-                <iframe src="/stockklineimgnew/{{ stock.ts_code }}"
-                        id="bokehplot"
-                        name="kline bokeh plot"
-{#                        onload="this.height=100"#}
-                >
-                </iframe>
+                    <iframe #}
+                            id="bokehplot"
+                            name="kline bokeh plot"
+                            onload="this.height=100" src="/stockklineimgnew/{{ stock.ts_code }}" {#
+                    >
+                    </iframe>
                 </div>
             </div>
             <p>
-                <iframe src="/profitsinc/{{ stock.ts_code }}"
+                <iframe #}
                         id="profitsincplot"
                         name="profits inc plot"
-{#                        onload="this.height=100"#}
+                        onload="this.height=100" src="/profitsinc/{{ stock.ts_code }}" {#
                 >
                 </iframe>
             </p>

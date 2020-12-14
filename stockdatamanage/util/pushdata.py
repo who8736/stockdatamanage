@@ -1,13 +1,12 @@
+import datetime as dt
+import logging
 import os
 import smtplib
-import logging
-from email.mime.text import MIMEText
 from email.header import Header
 from email.mime.multipart import MIMEMultipart
-import datetime as dt
+from email.mime.text import MIMEText
 
-from stockdatamanage.util import config
-from ..config import mailuser, mailport, mailpassword, mailServer
+from ..config import mailServer, mailUser, mailPort, mailPassword
 
 
 # noinspection PyTypeChecker
@@ -40,8 +39,8 @@ def push(title, filename):
     port = mailPort
     password = mailPassword
     try:
-        serv = smtplib.SMTP(server, port)
-        serv.login(user, password)
+        serv = smtplib.SMTP(mailServer, mailPort)
+        serv.login(mailUser, mailPassword)
         serv.sendmail(user, receivers, message.as_string())
         # serv.sendmail(user, ';'.join(receivers), message.as_string())
         serv.quit()
@@ -49,7 +48,6 @@ def push(title, filename):
         logging.debug(f'邮件发送成功: {title}')
     except Exception as e:
         print(e)
-
 
 # def push1(title, filename):
 #     """发送邮件
@@ -91,4 +89,3 @@ def push(title, filename):
 #     except Exception as e:
 #         print(e)
 #         logging.error('邮件发送失败: ', e)
-

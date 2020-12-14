@@ -14,28 +14,26 @@ import baostock as bs
 import tushare as ts
 from dateutil.relativedelta import relativedelta
 
-from stockdatamanage import (analyse)
-from stockdatamanage.util import config
-from stockdatamanage.analyse import valuation
 # from . import analyse
-# from . import (analyse, classifyanalyse, config, valuation)
-# from . import (analyse, classifyanalyse, config, valuation)
-# from . import (analyse, classifyanalyse, config, valuation)
-# from check import checkQuarterData
-from stockdatamanage.downloader.download import (
-    downStockList, downDaily, downDailyBasic, downTradeCal, downIndexDaily,
-    downIndexDailyBasic, downIndexBasic, downIndexWeight, DownloaderQuarter,
-    downClassify, downAdjFactor,
+import stockdatamanage.analyse.compute
+from ..analyse import valuation
+from ..analyse.classifyanalyse import (
+    calClassifyPE, calClassifyStaticTTMProfit,
 )
-from stockdatamanage.util.initlog import initlog, logfun
-from stockdatamanage.db.sqlconn import engine
-from stockdatamanage.db.sqlrw import (
-    readCal, readUpdate, calAllTTMProfits, setLastUpdate,
+from ..analyse.compute import calAllPEHistory, calAllTTMProfits
+from ..config import tushareToken
+from ..db.sqlconn import engine
+from ..db.sqlrw import (
+    readCal, readUpdate, setLastUpdate,
 )
-from stockdatamanage.util.check import checkQuarterData
-from stockdatamanage.util.datatrans import classifyEndDate, quarterList
-from stockdatamanage.analyse.classifyanalyse import calClassifyStaticTTMProfit, calClassifyPE
-from ..config import tusharetoken
+from ..downloader.download import (
+    DownloaderQuarter, downAdjFactor, downClassify, downDaily, downDailyBasic,
+    downIndexBasic, downIndexDaily, downIndexDailyBasic, downIndexWeight,
+    downStockList, downTradeCal,
+)
+from ..util.check import checkQuarterData
+from ..util.datatrans import classifyEndDate, quarterList
+from ..util.initlog import initlog, logfun
 
 
 @logfun
@@ -83,7 +81,7 @@ def startUpdate():
     # 计算行业PE
     updateClassifyPE()
 
-    # 更新股票估值
+    # 更新股票估值, 废弃, 用股票评分代替
     # updateGuzhiData()
 
     # 更新股票评分
@@ -110,6 +108,7 @@ def updateClassifyPE():
         for _date in dates:
             calClassifyPE(_date)
 
+
 @logfun
 def updateAllMarketPE():
     """
@@ -118,7 +117,7 @@ def updateAllMarketPE():
     """
     dataName = 'index_all'
     startDate = readUpdate(dataName)
-    analyse.report.calAllPEHistory(startDate)
+    calAllPEHistory(startDate)
     setLastUpdate(dataName)
 
 
@@ -157,7 +156,7 @@ def updateIndex():
     # startDate = getIndexPEUpdateDate()
     startDate = readUpdate('index_000010.SH')
     # startDate = getIndexPEUpdateDate() + dt.timedelta(days=1)
-    analyse.report.calPEHistory(ID, startDate)
+    stockdatamanage.analyse.compute.calPEHistory(ID, startDate)
 
 
 @logfun
@@ -292,7 +291,6 @@ def updateQuarterData():
 def updatePf():
     """ 重算评分
     """
-    # valuation.calpfnew()
     sql = 'select max(date) from valuation'
     result = engine.execute(sql).fetchone()
     if result is None:
@@ -303,15 +301,11 @@ def updatePf():
     endDate = dt.datetime.today() - dt.timedelta(days=1)
     endDate = endDate.strftime('%Y%m%d')
     dates = readCal(startDate, endDate)
-    # pro = ts.pro_api()
-    # df = pro.trade_cal(exchange='', start_date=startDate, end_date=endDate)
-    # dateList = df['cal_date'].loc[df.is_open == 1].tolist()
-    # print(type(dateList))
-    # print(dateList)
-    for date in dates:
-        # print('计算评分：', date)
-        logging.debug(f'计算评分： {date}')
-        valuation.calpfnew(date)
+    if dates:
+        for date in dates:
+            # print('计算评分：', date)
+            logging.debug(f'计算评分： {date}')
+            valuation.calpfnew(date)
 
 
 #
@@ -370,10 +364,10 @@ def del_updateKline():
 #         time.sleep(1)
 
 
-@logfun
-def updateGuzhiData():
-    analyse.report.testChigu()
-    analyse.report.testShaixuan()
+# @logfun
+# def updateGuzhiData():
+#     testChigu()
+#     testShaixuan()
 
 
 def readStockListFromFile(filename):
@@ -475,8 +469,8 @@ if __name__ == '__main__':
         logging.error('login baostock failed')
 
     # 加载tushare.pro用户的token,需事先在sql.conf文件中设置
-    ts.set_token(tusharetoken)
-    print('设置访问tushare的token:', tusharetoken)
+    ts.set_token(tushareToken)
+    print('设置访问tushare的token:', tushareToken)
 
     #     updateDataTest()
 

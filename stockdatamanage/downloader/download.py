@@ -17,17 +17,15 @@ import zipfile
 import pandas as pd
 import tushare as ts
 
-from stockdatamanage.util.initlog import initlog
-from stockdatamanage.util.misc import tsCode
-from stockdatamanage.db.sqlconn import engine
-# from misc import (urlGuzhi, filenameGuzhi)
-# from .datatrans import dateStrList
-from stockdatamanage.db.sqlrw import (
+from ..config import datapath
+from ..db.sqlconn import engine
+from ..db.sqlrw import (
     readCal, readTableFields, writeClassifyMemberToSQL, writeClassifyNameToSQL,
     writeSQL,
 )
-from stockdatamanage.downloader.webRequest import WebRequest
-from ..config import datapath
+from ..downloader.webRequest import WebRequest
+from ..util.initlog import initlog
+from ..util.misc import tsCode
 
 
 class DownloaderQuarter:
@@ -89,7 +87,7 @@ class DownloaderQuarter:
                         cur - limit]
                     sleeptime = DownloaderQuarter.perTimes[
                                     table] - _timedelta.seconds
-                    print(f'******暂停{sleeptime}秒******')
+                    logging.debug(f'******暂停{sleeptime}秒******')
                     time.sleep(sleeptime)
                 try:
                     kwargs = dict(table=table,
@@ -117,84 +115,6 @@ class DownloaderQuarter:
                     DownloaderQuarter.curcall[table] += 1
 
 
-# class DownloaderFinaIndicator:
-#     """限时下载器
-#     """
-#
-#     # 调用时间限制，如60秒调用80次
-#     perTimes = {'balancesheet': 60,
-#                 'income': 60,
-#                 'cashflow': 60,
-#                 'fina_indicator': 60}
-#     # 一定时间内调用次数限制
-#     limit = {'balancesheet': 80,
-#              'income': 80,
-#              'cashflow': 80,
-#              'fina_indicator': 60}
-#     # 下载开始时间，按表格保存不同的时间
-#     times = {'balancesheet': [],
-#              'income': [],
-#              'cashflow': [],
-#              'fina_indicator': []}
-#     # 记录当前调用某个表的累计次数
-#     curcall = {'balancesheet': 0,
-#                'income': 0,
-#                'cashflow': 0,
-#                'fina_indicator': 0}
-#     fields = readTableFields('fina_indicator')
-#
-#     def __init__(self, ts_code, tables=None, replace=False, retry=3):
-#         pass
-#         self.ts_code = ts_code
-#         self.retry = retry
-#         self.replace = replace
-#         if tables == None:
-#             self.tables = ['balancesheet', 'income', 'cashflow',
-#                            'fina_indicator']
-#         else:
-#             self.tables = tables
-#
-#     # 每个股票一个下载器，下载第一张无数据时可跳过其他表
-#     # 下载限制由类静态成员记载与控制
-#     def run(self):
-#         pass
-#         table = 'fina_indicator'
-#         # result = pd.DataFrame()
-#         perTimes = DownloaderQuarter.perTimes[table]
-#         limit = DownloaderQuarter.limit[table]
-#         cur = DownloaderQuarter.curcall[table]
-#         for _ in range(self.retry):
-#             nowtime = dt.datetime.now()
-#             delta = dt.timedelta(seconds=perTimes)
-#             if (perTimes > 0 and limit <= cur
-#                     and (nowtime < delta +
-#                          DownloaderQuarter.times[table][cur - limit])):
-#                 _timedelta = nowtime - DownloaderQuarter.times[table][
-#                     cur - limit]
-#                 sleeptime = DownloaderQuarter.perTimes[
-#                                 table] - _timedelta.seconds
-#                 print(f'******暂停{sleeptime}秒******')
-#                 time.sleep(sleeptime)
-#             try:
-#                 kwargs = dict(table=table,
-#                               ts_code=self.ts_code,
-#                               fields=DownloaderFinaIndicator.fields,
-#                               start_date='',
-#                               replace=self.replace)
-#                 result = downStockQuarterData(**kwargs)
-#             except(socket.timeout, ConnectTimeout):
-#                 logging.warning(f'downloader timeout: {table}-{self.ts_code}')
-#             else:
-#                 if result:
-#                     break
-#                 else:
-#                     return
-#             finally:
-#                 nowtime = dt.datetime.now()
-#                 DownloaderQuarter.times[table].append(nowtime)
-#                 DownloaderQuarter.curcall[table] += 1
-#
-#
 class DownloaderMisc:
     """限时下载器, 不定期更新
     """
@@ -219,7 +139,7 @@ class DownloaderMisc:
                          + dt.timedelta(seconds=self.perTimes))):
                 _timedelta = nowtime - self.times[self.cur - self.limit]
                 sleeptime = self.perTimes - _timedelta.seconds
-                print(f'******暂停{sleeptime}秒******')
+                logging.debug(f'******暂停{sleeptime}秒******')
                 time.sleep(sleeptime)
             try:
                 result = fun(**kwargs)
@@ -251,40 +171,6 @@ def downStockQuarterData(**kwargs):
         return True
 
 
-# def downGubenToSQL(ts_code, retry=3, timeout=10):
-#     """下载单个股票股本数据写入数据库"""
-#     logging.debug('downGubenToSQL: %s', ts_code)
-#     socket.setdefaulttimeout(timeout)
-#     gubenURL = urlGuben(ts_code)
-#     req = getreq(gubenURL)
-#
-#     gubenDf = pd.DataFrame()
-#
-#     # 使用代理抓取数据
-# #     proxy_handler = urllib2.ProxyHandler({"http": 'http://127.0.0.1:8087'})
-# #     opener = urllib2.build_opener(proxy_handler)
-# #     urllib2.install_opener(opener)
-#
-#     for _ in range(retry):
-#         try:
-#             guben = urllib2.urlopen(req).read()
-#         except IOError, e:
-#             logging.warning('[%s]:download %s guben data, retry...',
-#                             e, ts_code)
-# #             print type(e)
-#             errorString = '%s' % e
-#             if errorString == 'HTTP Error 456: ':
-#                 print 'sleep 60 seconds...'
-#                 time.sleep(60)
-#         else:
-#             gubenDf = datatrans.gubenDataToDf(ts_code, guben)
-#             tablename = 'guben'
-#             lastUpdate = getGubenLastUpdateDate(ts_code)
-#             gubenDf = gubenDf[gubenDf.date > lastUpdate]
-#             if not gubenDf.empty:
-#                 writeSQL(gubenDf, tablename)
-#             return
-#     logging.error('fail download %s guben data.', ts_code)
 
 
 def downStockList():
@@ -338,7 +224,8 @@ def downClassifyFile(_date):
         req.get(url)
         req.save(zipfilename)
         zfile = zipfile.ZipFile(zipfilename, 'r')
-        zfile.extract(os.path.basename(datafilename), os.path.dirname(datafilename))
+        zfile.extract(os.path.basename(datafilename),
+                      os.path.dirname(datafilename))
         return datafilename
     except Exception as e:
         logging.warning(e)
@@ -450,7 +337,7 @@ def downDailyRepair():
     stocks = pd.read_sql(sql, engine)
     pro = ts.pro_api()
     for ts_code in stocks.ts_code.to_list():
-        print('下载日K线：', ts_code)
+        logging.info('下载日K线：', ts_code)
         df = pro.daily(ts_code=ts_code)
         writeSQL(df, 'daily')
 
@@ -500,12 +387,12 @@ def downIncome(ts_code, startDate='', endDate=''):
     :param endDate: str, 结束日期, yyyymmdd
     :return:
     """
+    logging.debug(f'下载利润表：{ts_code}, {startDate}-{endDate}')
     if len(ts_code) == 6:
         ts_code = tsCode(ts_code)
     pro = ts.pro_api()
     df = pro.income(ts_code=tsCode(ts_code), start_date=startDate,
                     end_date=endDate)
-    print(df)
     writeSQL(df, 'income')
 
 
@@ -517,14 +404,13 @@ def downBalancesheet(ts_code, startDate='', endDate=''):
     :param endDate: str, 结束日期, yyyymmdd
     :return:
     """
+    logging.debug(f'下载资产负债表：{ts_code}, {startDate}-{endDate}')
     if len(ts_code) == 6:
         ts_code = tsCode(ts_code)
     pro = ts.pro_api()
     df = pro.balancesheet(ts_code=tsCode(ts_code), start_date=startDate,
                           end_date=endDate)
-    print(df)
     return df
-    # writeSQL(df, 'income')
 
 
 def downloaderStock(tablename, stocks, perTimes=0, downLimit=0):
@@ -545,28 +431,22 @@ def downloaderStock(tablename, stocks, perTimes=0, downLimit=0):
                 nowtime < times[i - downLimit] + delta):
             _timedelta = nowtime - times[i - 50]
             sleeptime = 60 - _timedelta.seconds
-            print(f'******暂停{sleeptime}秒******')
+            logging.debug(f'******暂停{sleeptime}秒******')
             time.sleep(sleeptime)
             nowtime = dt.datetime.now()
         times.append(nowtime)
-        print(f'第{i}个，时间：{nowtime}')
         ts_code = stocks[i]
-        print(ts_code)
+        logging.debug(f'使用限时下载器下载第{i}只股票：{ts_code}')
         flag = True
         df = None
         fun = getattr(pro, tablename)
         while flag:
             try:
-                # 下载质押统计表
-                # df = downPledgeStat(ts_code)
-                # 下载利润表
-                # df = downIncome(ts_code)
                 df = fun(ts_code=ts_code, stocks=stocks)
                 flag = False
             except Exception as e:
-                print(e)
+                logging.warning(e)
                 time.sleep(10)
-        # print(df)
         time.sleep(1)
         if df is not None:
             writeSQL(df, tablename)
@@ -627,14 +507,14 @@ def downIndexWeight():
                     and (nowtime < times[cur - downLimit] + delta)):
                 _timedelta = nowtime - times[cur - downLimit]
                 sleeptime = perTimes - _timedelta.seconds
-                print(f'******暂停{sleeptime}秒******')
+                logging.debug(f'******暂停{sleeptime}秒******')
                 time.sleep(sleeptime)
 
             startDate = initDate.strftime('%Y%m%d')
             initDate += dt.timedelta(days=30)
             endDate = initDate.strftime('%Y%m%d')
             initDate += dt.timedelta(days=1)
-            print(f'下载{code},日期{startDate}-{endDate}')
+            logging.debug(f'下载指数成分和权重{code},日期{startDate}-{endDate}')
             df = pro.index_weight(index_code=code,
                                   start_date=startDate, end_date=endDate)
             writeSQL(df, 'index_weight')
@@ -732,9 +612,7 @@ def downIndexDailyBasic():
         # startDate = '20040101'
         # endDate = '20080101'
         df = pro.index_dailybasic(ts_code=code, start_date=startDate)
-        print('index_dailybasic:', startDate)
-        print('ts_code:', code)
-        print(df.head())
+        logging.debug(f'下载指数每日指标:{code}, startDate:{startDate}')
         writeSQL(df, 'index_dailybasic')
 
 
