@@ -30,6 +30,7 @@ class Select2MultipleField(SelectMultipleField):
         if valuelist:
             self.data = "|".join(valuelist)
         else:
+            # noinspection PyAttributeOutsideInit
             self.data = ''
 
 

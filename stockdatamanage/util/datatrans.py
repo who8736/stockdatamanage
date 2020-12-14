@@ -14,6 +14,7 @@ from lxml import etree
 
 
 # from initlog import initlog
+import stockdatamanage.views.home
 
 
 def del_quarterSub(_quarterDate, subNum):
@@ -216,8 +217,8 @@ def transDfToList(df):
     outList = []
     for index, row in df.iterrows():
         tmpDict = row.to_dict()
-        if df.index.name is not None:
-            tmpDict[df.index.name] = index
+        if stockdatamanage.views.home.index.name is not None:
+            tmpDict[stockdatamanage.views.home.index.name] = index
         outList.append(tmpDict)
     return outList
 

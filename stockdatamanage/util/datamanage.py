@@ -16,6 +16,7 @@ from dateutil.relativedelta import relativedelta
 
 # from . import analyse
 import stockdatamanage.analyse.compute
+import stockdatamanage.views.home
 from ..analyse import valuation
 from ..analyse.classifyanalyse import (
     calClassifyPE, calClassifyStaticTTMProfit,
@@ -229,7 +230,7 @@ def updateQuarterData():
     stocks = checkQuarterData()
     stocks.set_index('ts_code', inplace=True)
 
-    for ts_code in stocks.index:
+    for ts_code in stockdatamanage.views.home.index:
         e_date = stocks.loc[ts_code, 'e_date']
         datestr = None
         if e_date is not None:

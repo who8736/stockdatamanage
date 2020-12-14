@@ -18,7 +18,7 @@ from statsmodels.tsa.stattools import adfuller
 
 from stockdatamanage.db.sqlconn import engine
 from stockdatamanage.db.sqlrw import readStockList
-from stockdatamanage.util.plot import plotProfitInc
+from stockdatamanage.util.bokeh_plot import plotProfitInc
 from ..config import datapath
 
 

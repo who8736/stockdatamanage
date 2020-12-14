@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import talib
 
+import stockdatamanage.views.home
 from ..db import engine
 from ..db.sqlrw import readStockList
 
@@ -195,7 +196,7 @@ def _divRange(df):
 
     pos = 0
     while True:
-        next = df[(df.index > pos) & (df.flag != 0)].index.min()
+        next = stockdatamanage.views.home.index.min()
         if next is np.nan:
             break
         if next - pos <= 60:
@@ -208,8 +209,8 @@ def _divRange(df):
     ax.plot(df.ma120)
     ymin, ymax = plt.ylim()
     offset = (ymax - ymin) / 40
-    ax.plot(df[df.flag == 1].index, df[df.flag == 1].ma120 - offset, 'r^')
-    ax.plot(df[df.flag == 2].index, df[df.flag == 2].ma120 + offset, 'gv')
+    ax.plot(stockdatamanage.views.home.index, df[df.flag == 1].ma120 - offset, 'r^')
+    ax.plot(stockdatamanage.views.home.index, df[df.flag == 2].ma120 + offset, 'gv')
 
     plt.show()
 

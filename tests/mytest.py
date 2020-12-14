@@ -10,6 +10,7 @@ from xml import etree
 
 from matplotlib.widgets import Cursor
 
+import stockdatamanage.views.home
 from stockdatamanage.analyse.classifyanalyse import (
     calClassifyPE,
 )
@@ -86,9 +87,9 @@ def analyIndex(code1='000001.SH', code2='000016.SH', startDate='20070101',
         label1 = INDEXNAME[code1]
         label2 = INDEXNAME[code2]
         # noinspection PyUnusedLocal
-        line1 = ax.plot(df.index, df.line1, label=label1, color='blue')
+        line1 = ax.plot(stockdatamanage.views.home.index, df.line1, label=label1, color='blue')
         # noinspection PyUnusedLocal
-        line2 = ax.plot(df.index, df.line2, label=label2, color='red')
+        line2 = ax.plot(stockdatamanage.views.home.index, df.line2, label=label2, color='red')
         dates = [date.strftime('%Y%m%d') for date in df.trade_date]
         tickerIndex, tickerLabels = getMonthIndex(dates, ptype='year')
         locator = FixedLocator(tickerIndex)

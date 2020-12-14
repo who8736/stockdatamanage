@@ -4,7 +4,7 @@ Created on 2016年12月14日
 
 @author: who8736
 """
-from stockdatamanage.web import app
+from stockdatamanage import app
 import sys
 
 if __name__ == '__main__':

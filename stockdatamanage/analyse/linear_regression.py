@@ -21,6 +21,7 @@ from sklearn.neighbors import LocalOutlierFactor
 from sklearn.preprocessing import PowerTransformer
 from statsmodels.tsa.stattools import adfuller
 
+import stockdatamanage.views.home
 from stockdatamanage.db.sqlconn import engine
 from stockdatamanage.db.sqlrw import readStockList, readStockName
 from ..config import datapath
@@ -283,8 +284,8 @@ def plotPairs(df, intercept, coef):
     ax1 = plt.subplot(gs[0, 0])
     ax2 = plt.subplot(gs[0, 1])
     # 绘制拆线图
-    ax1.plot(df.index, df.ttmpea, color='blue', label='ts_codea')
-    ax1.plot(df.index, df.ttmpeb, color='yellow', label='ts_codeb')
+    ax1.plot(stockdatamanage.views.home.index, df.ttmpea, color='blue', label='ts_codea')
+    ax1.plot(stockdatamanage.views.home.index, df.ttmpeb, color='yellow', label='ts_codeb')
     ax1.legend()
     # 设置X轴的刻度间隔
     # 可选:YearLocator,年刻度; MonthLocator,月刻度; DayLocator,日刻度

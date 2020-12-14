@@ -22,6 +22,7 @@ from matplotlib import gridspec as gridspec, pyplot as plt
 from matplotlib.ticker import FixedLocator  # @IgnorePep8
 from sklearn import linear_model
 
+import stockdatamanage.views.home
 from ..config import datapath
 from ..db.sqlrw import (
     engine, readCal, readStockKline, readStockName,
@@ -271,9 +272,9 @@ def test():
     df = df[-200:]
     ax = plt.subplot(111)
     print(df.head())
-    ax.plot(df.index, df.close)
+    ax.plot(stockdatamanage.views.home.index, df.close)
     monthIndex = getMonthIndex(df.date)
-    tickerIndex = df.index[monthIndex]
+    tickerIndex = stockdatamanage.views.home.index[monthIndex]
     tickerLabels = df.date[monthIndex].str[:7]
     locator = FixedLocator(tickerIndex)
     ax.xaxis.set_major_locator(locator)
