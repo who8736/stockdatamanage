@@ -6,15 +6,14 @@
 {% block body %}
 <div class="container">
     {{ super() }}
-    <h2><a href="/valuationtype/chigu">持股股票评分</a></h2>
-    <h2><a href="/valuationtype/youzhi">优质股票评分</a></h2>
-    <h2><a href="/valuationtype/all">全部股票评分</a></h2>
-    <h2><a href="/indexklineimgnew/000010.SH">上证180历史PE</a><br></h2>
-    <h2><a href="/holdsetting">设置持股股票</a><br></h2>
+    <h2><a href="{{ url_for('valuation.valuationNav', valu_type='chigu') }}">持股股票评分</a></h2>
+    <h2><a href="{{ url_for('valuation.valuationNav', valu_type='youzhi') }}">优质股票评分</a></h2>
+    <h2><a href="{{ url_for('valuation.valuationNav', valu_type='all') }}">全部股票评分</a></h2>
+    <h2><a href="{{ url_for('ajax_img.indexklineimgnew', indexcode='000010.SH') }}">上证180历史PE</a><br></h2>
+    <h2><a href="{{ url_for('settings.holdsetting') }}">设置持股股票</a><br></h2>
     <h2><a href="/stocklist">设置持股股票(废弃)</a><br></h2>
-    <h2><a href="/test_select2">select2 测试页</a><br></h2>
-    <h2><a href="/test_table">测试页1</a><br></h2>
-    <h2><a href="/test2">测试页2</a><br></h2>
+    <h2><a href="{{ url_for('misc.test_table') }}">测试页1</a><br></h2>
+    <h2><a href="{{ url_for('misc.test2') }}">测试页2</a><br></h2>
 </div>
 {% endblock %}
 

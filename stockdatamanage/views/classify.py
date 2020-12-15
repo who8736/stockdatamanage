@@ -5,7 +5,7 @@ from stockdatamanage.util.datatrans import lastQuarter
 
 classify = Blueprint('classify', __name__)
 
-@classify.route('/classifyprofit', methods=["GET", "POST"])
+@classify.route('/profit', methods=["GET", "POST"])
 def classifyProfit():
     date = lastQuarter()
     # df = readClassifyProfit(date)

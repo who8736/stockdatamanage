@@ -1,11 +1,13 @@
 import json
+import logging
 
-from flask import render_template, Blueprint
+from flask import Blueprint, render_template, request
 
 from stockdatamanage.analyse.report import reportValuation
 from stockdatamanage.db.sqlrw import readChigu, readValuationSammary
 
-valuation = Blueprint('valueation', __name__)
+valuation = Blueprint('valuation', __name__)
+
 
 @valuation.route('/')
 def valuationNav():
@@ -19,6 +21,8 @@ def valuationNav():
             (df.pe200 <= 20)]
     # stockReportList = np.array(df).tolist()
     df['trade_date'] = df['date'].apply(lambda x: x.strftime('%Y%m%d'))
+    logging.debug(f'fina_date: [{type(df["fina_date"])}] {df["fina_date"]}')
+    print(f'fina_date: [{type(df["fina_date"])}] {df["fina_date"]}')
     df['fina_date'] = df['fina_date'].apply(lambda x: x.strftime('%Y%m%d'))
     stocksStr = df.to_json(orient='records', force_ascii=False)
     stocks = json.loads(stocksStr)

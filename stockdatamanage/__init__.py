@@ -10,9 +10,13 @@ from flask_wtf.csrf import CSRFProtect
 
 # from .views import home
 from .views.ajax_data import ajax_data
-# from .views.ajax_img import ajax_img
-# from .views.classify import classify
-# from .views.indexinfo import indexinfo
+from .views.ajax_img import ajax_img
+from .views.classify import classify
+from .views.indexinfo import indexinfo
+from .views.valuation import valuation
+from .views import misc
+from .views import settings
+
 importlib.reload(sys)
 
 app = Flask(__name__)
@@ -24,12 +28,12 @@ Bootstrap(app)
 
 
 app.register_blueprint(ajax_data, url_prefix='/ajax_data')
-# app.register_blueprint(ajax_img, url_prefix='/ajax_img')
-# app.register_blueprint(classify, url_prefix='/classify')
-# app.register_blueprint(indexinfo, url_prefix='/indexinfo')
-# app.register_blueprint(misc, url_prefix='/misc')
-# app.register_blueprint(settings, url_prefix='/settings')
-# app.register_blueprint(valuation, url_prefix='/valuation')
+app.register_blueprint(ajax_img, url_prefix='/ajax_img')
+app.register_blueprint(classify, url_prefix='/classify')
+app.register_blueprint(indexinfo, url_prefix='/indexinfo')
+app.register_blueprint(misc, url_prefix='/misc')
+app.register_blueprint(settings, url_prefix='/settings')
+app.register_blueprint(valuation, url_prefix='/valuation')
 
 @app.route('/')
 def index():
