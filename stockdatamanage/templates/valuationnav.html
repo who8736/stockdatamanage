@@ -78,11 +78,7 @@
     console.log('文档初始化完成')
 
     $(function () {
-        let d = {
-        {
-            stocks | tojson
-        }
-    }
+        let d = {{ stocks | tojson }}
         console.log(d)
         $table.bootstrapTable({
             columns: columns,
@@ -93,9 +89,10 @@
         })
     })
 
-    // 行业代码添加链接
+    // 股票代码添加链接
     function codeFormatter(value) {
-        return '<a href="/valuation/' + value + '">' + value + '</a>'
+        url = "{{ url_for('valuationView', ts_code=value) }}"
+        return '<a href="' + url + '">' +  value + '</a>'
     }
 
 </script>

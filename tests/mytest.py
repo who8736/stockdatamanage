@@ -9,11 +9,13 @@ from urllib.request import urlopen
 from xml import etree
 
 from matplotlib.widgets import Cursor
+import pandas as pd
 
 import stockdatamanage.views.home
 from stockdatamanage.analyse.classifyanalyse import (
     calClassifyPE,
 )
+from stockdatamanage.db import engine
 from stockdatamanage.db.sqlrw import readCal
 from stockdatamanage.util.initlog import initlog
 
@@ -630,108 +632,34 @@ def __testPlot():
     # testBokehtest()
 
 
+def __test_fina_indicator_end_date():
+    sql = f'''
+    select a.ts_code, a.end_date as fina_date,
+            a.grossprofit_margin, a.roe
+            from fina_indicator a,
+            (select ts_code, max(end_date) as fina_date 
+            from fina_indicator group by ts_code) b
+            where a.ts_code = b.ts_code and a.end_date = b.fina_date
+            order by fina_date;
+    '''
+    df = pd.read_sql(sql, engine)
+    df['fina_date'] = df.fina_date.apply(lambda x: x.strftime('%Y%m%d'))
+    # for index, row in df.iterrows():
+    #     print(index, row)
+        # datestr = row.fina_date.strftime('%Y%m%d')
+        # print(row.ts_code, datestr)
+
 def __testMisc():
     """测试专用函数:杂项测试
     """
     pass
-    # 更新股票评分
-    updatePf()
-
-    # 更新指数数据及PE
-    updateIndex()
-
-    # 更新全市PE
-    updateAllMarketPE()
-
-    # checkIncome()
-    # updateAdjFacotr()
-
-    # checkQuarterData()
-    # checkQuarterData()
-
-    # stocks = readStockList()
-    # sql = 'select ts_code from income where end_date="20191231"'
-    # stocks = pd.read_sql(sql, engine)
-    # results = []
-    # for ts_code in stocks.ts_code:
-    #     print(ts_code)
-    #     basicprofits, incomeprofits, div = testPEProfitsTTM1(ts_code)
-    #     results.append(dict(ts_code=ts_code,
-    #                         basicprofits=basicprofits,
-    #                         incomeprofits=incomeprofits,
-    #                         div=div))
-    # df = pd.DataFrame(results)
-    # df.to_excel('data/profitsdiv.xlsx')
-
-    # ts_code = '000029.SZ'
-    # result = testPEPRfitsTTM(ts_code)
-    # print('TTM result: ', result)
-
-    # stocks = readStockList()
-    # resultList = []
-    # for ts_code in stocks.ts_code:
-    #     print(ts_code)
-    #     result = testPEPRfitsTTM(ts_code)
-    #     resultList.append(dict(ts_code=ts_code, result=result))
-    # df = pd.DataFrame(resultList)
-    # df.to_excel('data/mvpettm.xlsx')
-
-    # code1 = '000001.SH'
-    # code2 = '399300.SZ'
-    # code3 = '399905.SZ'
-    # result = analyIndex(code2, code2=code3, plot=True)
-
-    # results = []
-    # for code2 in INDEXNAME.keys():
-    #     result = analyIndex(code1, code2)
-    #     results.append(dict(code=code2, name=INDEXNAME[code2], inc=result))
-    # df = pd.DataFrame(results)
-    # df.to_excel('data/指数涨幅比较.xlsx')
-    # print(df)
-
-    # profits_inc_linear_adf()
-    # matplotlib.use('Qt5Agg')  # @UndefinedVariable
-    # sql = 'select trade_date, pe from index_pe where ts_code="000010.SH"'
-    # df = pd.read_sql(sql, engine)
-    # plotPE(df)
-    # calPEHistory('000010.SH', '20200317')
-    # calClassifyPE('20200310')
-    # testChigu()
-    # testShaixuan()
     ##############################################
     # 杂项测试
     ##############################################
-    # sqlrw中的readStockListFromSQL读取指定日期股票
-    # testReadStockListFromSQL()
 
-    # sqlrw中的readLastTTMPE读取指定日期TTMPE
-    # testReadLastTTMPE()
-
-    # 读取近几个季度的TTM利润
-    # date = '20200102'
-    # stocks = readStockListDf(date)
-    # sectionNum = 6  # 取6个季度
-    # incDf = sqlrw.readLastTTMLirun(stocks.ts_code.tolist(), sectionNum, date)
-    # incDf = sqlrw.readLastTTMLirunForts_code('000651', 6, '20181231')
-
-    # print(incDf)
-    # print(incDf.loc[incDf.ts_code=='000651'])
-
-    # 测试sqlrw.writeSQL函数的replace功能
-    # testWriteSQL()
-
-    # 测试datamanage中的updatePf
-    # datamanage.updatePf()
-
-    # 建表测试
-    # createTable()
-
-    # 使用tushare下载器
-    # tableList = ['balancesheet', 'cashflow', 'forecast',
-    #              'express', 'dividend', 'fina_indicator',
-    #              'disclosure_date']
-    # for tablename in tableList:
-    #     downloader(tablename)
+    # 财务指标表中的报表日期转换为字符串报错
+    # 尝试逐条记录转换
+    # __test_fina_indicator_end_date()
 
     # 发送邮件
     # datestr = '20200303'
@@ -814,10 +742,10 @@ if __name__ == "__main__":
     initlog()
 
     # __testDownload()
-    # __testMisc()
+    __testMisc()
     # __testPlot()
     # __testRepair()
-    __testUpdate()
+    # __testUpdate()
     # __testValuation()
 
     print('程序正常退出')

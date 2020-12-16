@@ -10,11 +10,11 @@
 
     {% block styles %}
     <!-- Bootstrap CSS -->
-    <link href="{{url_for('static', filename='bootstrap.min.4.5.3.css')}}" rel="stylesheet"
+    <link href="{{url_for('static', filename='css/bootstrap.min.4.5.3.css')}}" rel="stylesheet"
           type="text/css">
-    <link href="{{url_for('static', filename='select2.min.4.1.0.css')}}" rel="stylesheet"
+    <link href="{{url_for('static', filename='css/select2.min.4.1.0.css')}}" rel="stylesheet"
           type="text/css">
-    <link href="{{url_for('static', filename='bootstrap-table.min.1.18.0.css')}}" rel="stylesheet"
+    <link href="{{url_for('static', filename='css/bootstrap-table.min.1.18.0.css')}}" rel="stylesheet"
           type="text/css">
     {% endblock %}
 
@@ -75,13 +75,13 @@
 
 {% block scripts %}
 <!-- Optional JavaScript -->
-<script src="{{url_for('static', filename='jquery-3.5.1.min.js')}}"></script>
-<script src="{{url_for('static', filename='popper.min.1.16.1.js')}}"></script>
-<script src="{{url_for('static', filename='bootstrap.min.4.5.3.js')}}"></script>
-<script src="{{url_for('static', filename='select2.min.4.1.0.js')}}"></script>
-<script src="{{url_for('static', filename='bootstrap-table.min.1.18.0.js')}}"></script>
-<script src="{{url_for('static', filename='bootstrap-table-zh-CN.js')}}"></script>
-<script src="{{url_for('static', filename='accounting.min.js')}}"></script>
+<script src="{{url_for('static', filename='js/jquery-3.5.1.min.js')}}"></script>
+<script src="{{url_for('static', filename='js/popper.min.js')}}"></script>
+<script src="{{url_for('static', filename='js/bootstrap.min.4.5.3.js')}}"></script>
+<script src="{{url_for('static', filename='js/select2.min.4.1.0.js')}}"></script>
+<script src="{{url_for('static', filename='js/bootstrap-table.min.1.18.0.js')}}"></script>
+<script src="{{url_for('static', filename='js/bootstrap-table-zh-CN.js')}}"></script>
+<script src="{{url_for('static', filename='js/accounting.min.js')}}"></script>
 {% endblock %}
 </body>
 </html>
