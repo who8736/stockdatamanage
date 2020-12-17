@@ -15,8 +15,9 @@ import stockdatamanage.views.home
 from stockdatamanage.analyse.classifyanalyse import (
     calClassifyPE,
 )
+from stockdatamanage.analyse.valuation import calpfnew
 from stockdatamanage.db import engine
-from stockdatamanage.db.sqlrw import readCal
+from stockdatamanage.db.sqlrw import readCal, readValuationSammary
 from stockdatamanage.util.initlog import initlog
 
 INDEXNAME = {'000001.SH': '上证综指',
@@ -590,14 +591,12 @@ def __testValuation():
     # analyse.testShaixuan()
 
     # 计算评分
-    # calpf()
+    # calpfnew('20201202', replace=True)
 
     # 更新估值数据
     # testChigu()
     # testShaixuan()
 
-    # 更新股票评分
-    # calpf()
 
     # 更新股票估值
     # calGuzhi()
@@ -633,16 +632,18 @@ def __testPlot():
 
 
 def __test_fina_indicator_end_date():
-    sql = f'''
-    select a.ts_code, a.end_date as fina_date,
-            a.grossprofit_margin, a.roe
-            from fina_indicator a,
-            (select ts_code, max(end_date) as fina_date 
-            from fina_indicator group by ts_code) b
-            where a.ts_code = b.ts_code and a.end_date = b.fina_date
-            order by fina_date;
-    '''
-    df = pd.read_sql(sql, engine)
+    # sql = f'''
+    # select a.ts_code, a.end_date as fina_date,
+    #         a.grossprofit_margin, a.roe
+    #         from fina_indicator a,
+    #         (select ts_code, max(end_date) as fina_date
+    #         from fina_indicator group by ts_code) b
+    #         where a.ts_code = b.ts_code and a.end_date = b.fina_date
+    #         order by fina_date;
+    # '''
+    # df = pd.read_sql(sql, engine)
+
+    df = readValuationSammary()
     df['fina_date'] = df.fina_date.apply(lambda x: x.strftime('%Y%m%d'))
     # for index, row in df.iterrows():
     #     print(index, row)
@@ -659,7 +660,7 @@ def __testMisc():
 
     # 财务指标表中的报表日期转换为字符串报错
     # 尝试逐条记录转换
-    # __test_fina_indicator_end_date()
+    __test_fina_indicator_end_date()
 
     # 发送邮件
     # datestr = '20200303'

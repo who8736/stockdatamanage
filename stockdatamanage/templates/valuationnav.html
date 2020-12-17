@@ -91,8 +91,7 @@
 
     // 股票代码添加链接
     function codeFormatter(value) {
-        url = "{{ url_for('valuationView', ts_code=value) }}"
-        return '<a href="' + url + '">' +  value + '</a>'
+        return '<a href="detail?ts_code=' + value + '">' +  value + '</a>'
     }
 
 </script>

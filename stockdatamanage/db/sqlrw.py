@@ -261,7 +261,7 @@ def readValuationSammary(date=None):
     finastat['grossprofit_margin'] = finastat.grossprofit_margin.round(2)
     finastat['roe'] = finastat.roe.round(2)
     finastat = finastat[['ts_code', 'fina_date', 'grossprofit_margin', 'roe']]
-    stocks = pd.merge(stocks, finastat, how='left')
+    stocks = stocks.merge(finastat, how='inner')
 
     # 每日指标
     # sql = ('select a.ts_code, a.dv_ttm,'
