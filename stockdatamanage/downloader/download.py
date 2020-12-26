@@ -363,9 +363,9 @@ def downDailyBasic(ts_code=None, tradeDate=None, startDate=None, endDate=None):
         # df.rename(columns={'ts_code': 'ts_code', 'trade_date': 'date'},
         #           inplace=True)
         # df['ts_code'] = df['ts_code'].str[:6]
-        df.set_index(keys=['ts_code'], inplace=True)
+        # df.set_index(keys=['ts_code'], inplace=True)
         writeSQL(df, 'daily_basic')
-    return df
+    # return df
 
 
 def downPledgeStat(ts_code):

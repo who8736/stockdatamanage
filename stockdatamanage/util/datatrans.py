@@ -213,14 +213,14 @@ def transGuzhiDataToDict(guzhi):
     return guzhiDict
 
 
-def transDfToList(df):
-    outList = []
-    for index, row in df.iterrows():
-        tmpDict = row.to_dict()
-        if stockdatamanage.views.home.index.name is not None:
-            tmpDict[stockdatamanage.views.home.index.name] = index
-        outList.append(tmpDict)
-    return outList
+# def transDfToList(df):
+#     outList = []
+#     for _index, row in df.iterrows():
+#         tmpDict = row.to_dict()
+#         if _index.name is not None:
+#             tmpDict[_index.name] = _index
+#         outList.append(tmpDict)
+#     return outList
 
 
 def transQuarterToDate(_date):

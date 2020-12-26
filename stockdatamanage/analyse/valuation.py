@@ -277,7 +277,7 @@ def calpfnew(_date, replace=False):
     stocks = stocks.sort_values(by='pf', ascending=False)
 
     # 保存评价结果
-    stocks.set_index(['ts_code'], inplace=True)
+    # stocks.set_index(['ts_code'], inplace=True)
     # stocks.to_csv('./data/valuation.csv')
     pfFilename = f'valuations{_date}.xlsx'
     stocks.to_excel(os.path.join(datapath, pfFilename))

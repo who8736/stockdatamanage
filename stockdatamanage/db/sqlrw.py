@@ -16,7 +16,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 from . import initsql
 from .sqlconn import Session, engine
-from ..util.datatrans import quarterList, transDfToList
+from ..util.datatrans import quarterList
 
 
 def writeClassifyMemberToSQL(_date, filename):
@@ -178,19 +178,19 @@ def readStockList(list_date=None):
     return df
 
 
-def writeSQL(data: pd.DataFrame, tableName: str, replace=False):
+def writeSQL(df: pd.DataFrame, tableName: str, replace=False):
     """
     Dataframe格式数据写入tableName指定的表中
     replace: True，主键重复时更新数据， False, 忽略重复主键, 默认为False
     """
-    if data.empty:
+    if df.empty:
         return True
     logging.debug('start writeSQL %s' % tableName)
     if not initsql.existTable(tableName):
         logging.error('not exist %s' % tableName)
         return False
-    data = data.where(pd.notnull(data), None)
-    data = transDfToList(data)
+    df = df.where(pd.notnull(df), None)
+    # df = transDfToList(df)
 
     Base = declarative_base()
 
@@ -202,14 +202,15 @@ def writeSQL(data: pd.DataFrame, tableName: str, replace=False):
         session = Session()
         metadata = MetaData(bind=engine)
         if replace:
-            for d in data:
+            for _index, row in df.iterrows():
                 # noinspection PyArgumentList
-                table = MyTable(**d)
+                table = MyTable(**(row.to_dict()))
                 session.merge(table)
                 session.commit()
         else:
             mytable = Table(tableName, metadata, autoload=True)
-            session.execute(mytable.insert().prefix_with('IGNORE'), data)
+            session.execute(mytable.insert().prefix_with('IGNORE'),
+                            df.to_dict(orient='records'))
         session.commit()
         session.close()
     except Exception as e:

@@ -230,7 +230,7 @@ def updateQuarterData():
     stocks = checkQuarterData()
     stocks.set_index('ts_code', inplace=True)
 
-    for ts_code in stockdatamanage.views.home.index:
+    for ts_code in stocks.index:
         e_date = stocks.loc[ts_code, 'e_date']
         datestr = None
         if e_date is not None:

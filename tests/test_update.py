@@ -10,19 +10,19 @@ def testUpdate():
     """
     pass
     # 更新交易日历
-    updateTradeCal()
+    # updateTradeCal()
 
     # 更新股票列表
-    updateStockList()
+    # updateStockList()
 
     # 更新股票日交易数据
-    updateDaily()
+    # updateDaily()
 
     # 更新每日指标
-    updateDailybasic()
+    # updateDailybasic()
 
     # 更新复权因子
-    updateAdjFacotr()
+    # updateAdjFacotr()
 
     # 更新非季报表格
     # 财务披露表（另外单独更新）
@@ -36,16 +36,16 @@ def testUpdate():
     # 利润表
     # 现金流量表
     # 财务指标表
-    updateQuarterData()
+    # updateQuarterData()
 
     # 更新股票TTM利润
     # updateTTMProfits()
 
     # 更新行业列表
-    updateClassifyList()
+    # updateClassifyList()
 
     # 更新行业利润
-    updateClassifyProfits()
+    # updateClassifyProfits()
 
     # 更新股票估值, 废弃, 用股票评分代替
     # updateGuzhiData()
