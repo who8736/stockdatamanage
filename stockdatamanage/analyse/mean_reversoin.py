@@ -19,7 +19,7 @@ from statsmodels.tsa.stattools import adfuller
 from stockdatamanage.db.sqlconn import engine
 from stockdatamanage.db.sqlrw import readStockList
 from stockdatamanage.util.bokeh_plot import plotProfitInc
-from ..config import datapath
+from ..config import DATAPATH
 
 
 def adfTestPE(ts_code, startDate, endDate, plotFlag=False):
@@ -189,7 +189,7 @@ def adfTestAllProfitsInc(startDate=None, endDate=None):
 
     df = pd.DataFrame(resultList)
     stocks = pd.merge(stocks, df, left_on='ts_code', right_on='ts_code')
-    stocks.to_excel(os.path.join(datapath, 'profits_inc_adf.xlsx'))
+    stocks.to_excel(os.path.join(DATAPATH, 'profits_inc_adf.xlsx'))
     # print(df)
 
 

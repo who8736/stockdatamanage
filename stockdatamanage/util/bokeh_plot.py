@@ -23,7 +23,7 @@ from matplotlib.ticker import FixedLocator  # @IgnorePep8
 from sklearn import linear_model
 
 import stockdatamanage.views.home
-from ..config import datapath
+from ..config import DATAPATH
 from ..db.sqlrw import (
     engine, readCal, readStockKline, readStockName,
 )  # @IgnorePep8
@@ -578,7 +578,7 @@ class PlotProfitsInc:
         # xmin = min(df.index)
         # xmax = max(df.index)
         # print(xmin, xmax)
-        filename = os.path.join(datapath, 'profits_inc_adf_linear.xlsx')
+        filename = os.path.join(DATAPATH, 'profits_inc_adf_linear.xlsx')
         linearDf = pd.read_excel(filename)
         intercept = linearDf[linearDf.ts_code == ts_code].intercept.values[0]
         coef = linearDf[linearDf.ts_code == ts_code].coef.values[0]
@@ -652,7 +652,7 @@ def linearPlot(data, plot=False, title=None, filename=None):
 def plotProfitInc(ts_code, data):
     # sql = select
     # data = getProfitsInc(ts_code, startDate, endDate)
-    filename = os.path.join(datapath, 'linear_img',
+    filename = os.path.join(DATAPATH, 'linear_img',
                             f'profit_inc_{ts_code[:6]}.png')
     name = readStockName(ts_code)
     title = f'{ts_code} {name}'

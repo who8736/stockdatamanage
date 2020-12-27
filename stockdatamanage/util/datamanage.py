@@ -22,10 +22,10 @@ from ..analyse.classifyanalyse import (
     calClassifyPE, calClassifyStaticTTMProfit,
 )
 from ..analyse.compute import calAllPEHistory, calAllTTMProfits
-from ..config import tushareToken
+from ..config import TUSHARETOKEN
 from ..db.sqlconn import engine
 from ..db.sqlrw import (
-    readCal, readUpdate, setLastUpdate,
+    readCal, readUpdate, setUpdate,
 )
 from ..downloader.download import (
     DownloaderQuarter, downAdjFactor, downClassify, downDaily, downDailyBasic,
@@ -119,7 +119,7 @@ def updateAllMarketPE():
     dataName = 'index_all'
     startDate = readUpdate(dataName)
     calAllPEHistory(startDate)
-    setLastUpdate(dataName)
+    setUpdate(dataName)
 
 
 @logfun
@@ -147,7 +147,7 @@ def updateIndex():
     更新指数数据及PE
     :return:
     """
-    downIndexBasic()
+    # downIndexBasic()
     downIndexDaily()
     downIndexDailyBasic()
     downIndexWeight()
@@ -429,7 +429,7 @@ def updateTTMProfits():
         for row in result:
             calAllTTMProfits(row[0].strftime('%Y%m%d'))
 
-    setLastUpdate(today, 'ttmprofits')
+    setUpdate(today, 'ttmprofits')
 
 
 @logfun
@@ -470,8 +470,8 @@ if __name__ == '__main__':
         logging.error('login baostock failed')
 
     # 加载tushare.pro用户的token,需事先在sql.conf文件中设置
-    ts.set_token(tushareToken)
-    print('设置访问tushare的token:', tushareToken)
+    ts.set_token(TUSHARETOKEN)
+    print('设置访问tushare的token:', TUSHARETOKEN)
 
     #     updateDataTest()
 

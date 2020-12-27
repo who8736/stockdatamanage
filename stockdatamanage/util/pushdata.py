@@ -6,8 +6,7 @@ from email.header import Header
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from ..config import mailServer, mailUser, mailPort, mailPassword
-
+from ..config import MAILSERVER, MAILUSER, MAILPORT, MAILPASSWORD, SENDTO
 
 # noinspection PyTypeChecker
 def push(title, filename):
@@ -17,11 +16,11 @@ def push(title, filename):
     :return:
     """
     user = mailuser
-    receivers = [f'aa<{s}>' for s in sendto.split('|')]
+    receivers = [f'aa<{s}>' for s in SENDTO.split('|')]
     sendTime = dt.datetime.now().strftime('%Y%m%d %H:%M:%S')
 
     message = MIMEMultipart()
-    message['From'] = f'aa<{user}>'
+    message['From'] = f'aa<{MAILUSER}>'
     message['To'] = ';'.join(receivers)
     message.attach(MIMEText(title, 'plain', 'utf-8'))
 
@@ -35,13 +34,10 @@ def push(title, filename):
     att['Content-Disposition'] = f'attachment; filename="{filename}"'
     message.attach(att)
 
-    server = mailServer
-    port = mailPort
-    password = mailPassword
     try:
-        serv = smtplib.SMTP(mailServer, mailPort)
-        serv.login(mailUser, mailPassword)
-        serv.sendmail(user, receivers, message.as_string())
+        serv = smtplib.SMTP(MAILSERVER, MAILPORT)
+        serv.login(MAILUSER, MAILPASSWORD)
+        serv.sendmail(MAILUSER, receivers, message.as_string())
         # serv.sendmail(user, ';'.join(receivers), message.as_string())
         serv.quit()
         print('邮件发送成功')

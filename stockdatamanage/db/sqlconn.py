@@ -8,7 +8,7 @@ Created on 2016年11月21日
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 
-from ..config import sqlHost, sqlUser, sqlPassword
+from ..config import SQLHOST, SQLUSER, SQLPASSWORD
 # from initlog import initlog
 
 
@@ -16,8 +16,8 @@ class SQLConn:
     """建立mysql连接"""
 
     def __init__(self):
-        connectStr = (f'mysql://{sqlUser}:{sqlPassword}'
-                      f'@{sqlHost}/stockdata?charset=utf8')
+        connectStr = (f'mysql://{SQLUSER}:{SQLPASSWORD}'
+                      f'@{SQLHOST}/stockdata?charset=utf8')
         self.engine = create_engine(connectStr,
                                     strategy='threadlocal', echo=False)
         self.Session = scoped_session(

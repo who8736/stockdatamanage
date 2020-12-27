@@ -3,7 +3,7 @@ import logging
 import os
 from functools import wraps
 
-from ..config import logpath
+from ..config import LOGPATH
 
 
 def initlog():
@@ -11,7 +11,7 @@ def initlog():
     nowTime = dt.datetime.now()
     logDate = nowTime.strftime('%Y')
     logfilename = f'datamanage{logDate}.log'
-    logfilename = os.path.join(logpath, logfilename)
+    logfilename = os.path.join(LOGPATH, logfilename)
 
     formatStr = ('%(asctime)s %(filename)s[line:%(lineno)d] '
                  '%(levelname)s %(message)s')

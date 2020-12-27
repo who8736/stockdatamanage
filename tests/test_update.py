@@ -3,6 +3,8 @@ from stockdatamanage.util.datamanage import (
     updateClassifyProfits, updateDaily, updateDailybasic, updateIndex, updatePf,
     updateQuarterData, updateStockList, updateTradeCal,
 )
+from stockdatamanage.util.initlog import initlog
+from stockdatamanage.downloader.download import downIndexWeight
 
 
 def testUpdate():
@@ -51,14 +53,20 @@ def testUpdate():
     # updateGuzhiData()
 
     # 更新股票评分
-    updatePf()
+    # updatePf()
 
     # 更新指数数据及PE
     updateIndex()
 
     # 更新全市PE
-    updateAllMarketPE()
+    # updateAllMarketPE()
 
+
+def test_download_index_weight():
+    downIndexWeight()
 
 if __name__ == '__main__':
-    testUpdate()
+    initlog()
+
+    # testUpdate()
+    test_download_index_weight()

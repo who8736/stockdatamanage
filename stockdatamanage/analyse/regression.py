@@ -4,15 +4,15 @@ import pandas as pd
 
 import stockdatamanage.views.home
 from stockdatamanage.db.sqlrw import readLastTTMPEs
-from ..config import datapath
+from ..config import DATAPATH
 
 
 def profits_inc_linear_adf():
-    df_adf = pd.read_excel(os.path.join(datapath, 'profits_inc_adf.xlsx'))
+    df_adf = pd.read_excel(os.path.join(DATAPATH, 'profits_inc_adf.xlsx'))
     df_adf.set_index('ts_code', inplace=True)
     df_adf = df_adf[['name', 'mean', 'std', 'sharp', 'flag']]
 
-    df_linear = pd.read_excel(os.path.join(cf.datapath,
+    df_linear = pd.read_excel(os.path.join(cf.DATAPATH,
                                            'profits_inc_linear.xlsx'))
     df_linear.set_index('ts_code', inplace=True)
     df_linear = df_linear[['intercept', 'coef', 'r2']]
@@ -26,4 +26,4 @@ def profits_inc_linear_adf():
     #               left_on='ts_code', right_on='ts_code')
     df = pd.merge(df, df_pe, left_index=True, right_index=True)
 
-    df.to_excel(os.path.join(cf.datapath, 'profits_inc_adf_linear.xlsx'))
+    df.to_excel(os.path.join(cf.DATAPATH, 'profits_inc_adf_linear.xlsx'))

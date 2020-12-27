@@ -17,11 +17,11 @@ import zipfile
 import pandas as pd
 import tushare as ts
 
-from ..config import datapath
+from ..config import DATAPATH
 from ..db.sqlconn import engine
 from ..db.sqlrw import (
     readCal, readTableFields, writeClassifyMemberToSQL, writeClassifyNameToSQL,
-    writeSQL,
+    writeSQL, readUpdate
 )
 from ..downloader.webRequest import WebRequest
 from ..util.initlog import initlog
@@ -117,9 +117,16 @@ class DownloaderQuarter:
 
 class DownloaderMisc:
     """限时下载器, 不定期更新
+
     """
 
     def __init__(self, perTimes, limit, retry=3):
+        """
+
+        :param perTimes: 单位为秒
+        :param limit: 指定时间内限制的下载次数
+        :param retry: 下载失败时的重试次数
+        """
         pass
         self.perTimes = perTimes
         self.limit = limit
@@ -129,6 +136,12 @@ class DownloaderMisc:
 
     # 下载限制由类静态成员记载与控制
     def run(self, table, **kwargs):
+        """
+        :param table:
+        :param kwargs:
+        :return:
+        :type table: str
+        """
         pass
         pro = ts.pro_api()
         fun = getattr(pro, table)
@@ -153,6 +166,65 @@ class DownloaderMisc:
                 self.cur += 1
 
 
+class Downloader:
+    """通用限时下载器
+    # TODO: 返回下载结果，由调用者写入数据库，并记录更新日期
+    通过类变量记录下载限制并进行控制
+    """
+
+    def __init__(self, funcName, tableName, argsList, perTimes, limit, retry=3):
+        """
+
+        :param funcName: 调用下载函数的名称
+        :param tableName: 写数据库的表名
+        :param perTimes: 单位为秒
+        :param limit: 指定时间内限制的下载次数
+        :param retry: 下载失败时的重试次数
+        """
+        pass
+        self.func = getattr(ts.pro_api(), funcName)
+        self.tableName = tableName
+        self.args = argsList
+        self.perTimes = perTimes
+        self.limit = limit
+        self.retry = retry
+        self.cur = 0
+        self.times = []
+
+    # 下载限制由类静态成员记载与控制
+    def run(self):
+        """
+        :param table:
+        :param kwargs:
+        :return:
+        :type table: str
+        """
+        pass
+        for arg in self.args:
+            self._run(**arg)
+
+    def _run(self, **kwargs):
+        for _ in range(self.retry):
+            nowtime = dt.datetime.now()
+            if (self.cur >= self.limit
+                    and (nowtime < self.times[self.cur - self.limit]
+                         + dt.timedelta(seconds=self.perTimes))):
+                _timedelta = nowtime - self.times[self.cur - self.limit]
+                sleeptime = self.perTimes - _timedelta.seconds
+                logging.debug(f'******暂停{sleeptime}秒******')
+                time.sleep(sleeptime)
+            try:
+                result = fun(**kwargs)
+            except(socket.timeout, ConnectTimeout, ReadTimeout):
+                logging.warning(f'downloader timeout: {table}')
+            else:
+                writeSQL(result, self.tableName)
+            finally:
+                nowtime = dt.datetime.now()
+                self.times.append(nowtime)
+                self.cur += 1
+
+
 def downStockQuarterData(**kwargs):
     table = kwargs.get('table', '')
     ts_code = kwargs.get('ts_code', '')
@@ -169,8 +241,6 @@ def downStockQuarterData(**kwargs):
     else:
         writeSQL(df, table, replace=replace)
         return True
-
-
 
 
 def downStockList():
@@ -217,8 +287,8 @@ def downClassifyFile(_date):
     """
     logging.debug(f'downClassifyFile: {_date}')
     url = f'http://47.97.204.47/syl/csi{_date}.zip'
-    zipfilename = os.path.join(datapath, f'csi{_date}.zip')
-    datafilename = os.path.join(datapath, f'csi{_date}.xls')
+    zipfilename = os.path.join(DATAPATH, f'csi{_date}.zip')
+    datafilename = os.path.join(DATAPATH, f'csi{_date}.xls')
     try:
         req = WebRequest()
         req.get(url)
@@ -476,7 +546,7 @@ def downIndexWeight():
 
     :return:
     """
-    pro = ts.pro_api()
+    # pro = ts.pro_api()
     codeList = ['000001.SH',
                 '000005.SH',
                 '000006.SH',
@@ -488,40 +558,72 @@ def downIndexWeight():
                 '399006.SZ',
                 '399016.SZ',
                 '399300.SZ', ]
-    times = []
-    cur = 0
+    # times = []
+    # cur = 0
     perTimes = 60
-    downLimit = 70
+    limit = 70
+
+    args = []
     for code in codeList:
-        sql = (f'select max(trade_date) from index_weight'
-               f' where index_code="{code}"')
-        initDate = engine.execute(sql).fetchone()[0]
-        if initDate is None:
-            initDate = dt.date(2001, 1, 1)
-        assert isinstance(initDate, dt.date)
+        dataName = f'weight_{code}'
+        lastDate = readUpdate(dataName)
+        if lastDate is None:
+            startDate = dt.date(2001, 1, 1)
+        else:
+            startDate = dt.datetime.strptime(lastDate, '%Y%m%d') + dt.timedelta(days=1)
+        endDate = dt.date.today() - dt.timedelta(days=1)
+
         # noinspection DuplicatedCode
-        while initDate < dt.datetime.today().date():
-            nowtime = dt.datetime.now()
-            delta = dt.timedelta(seconds=perTimes)
-            if (perTimes > 0 and 0 < downLimit <= cur
-                    and (nowtime < times[cur - downLimit] + delta)):
-                _timedelta = nowtime - times[cur - downLimit]
-                sleeptime = perTimes - _timedelta.seconds
-                logging.debug(f'******暂停{sleeptime}秒******')
-                time.sleep(sleeptime)
+        while startDate <= endDate:
+            _startDate = startDate.strftime('%Y%m%d')
+            startDate += dt.timedelta(days=30)
+            _endDate = startDate.strftime('%Y%m%d')
+            arg = {'index_code': code,
+                   'start_date': _startDate,
+                   'end_date': _end_date, }
+            args.append(arg)
+            startDate += dt.timedelta(days=1)
 
-            startDate = initDate.strftime('%Y%m%d')
-            initDate += dt.timedelta(days=30)
-            endDate = initDate.strftime('%Y%m%d')
-            initDate += dt.timedelta(days=1)
-            logging.debug(f'下载指数成分和权重{code},日期{startDate}-{endDate}')
-            df = pro.index_weight(index_code=code,
-                                  start_date=startDate, end_date=endDate)
-            writeSQL(df, 'index_weight')
+    d = Downloader(funcName='index_weight',
+                   tableName='index_weight',
+                   argsList=args,
+                   perTimes=perTimes,
+                   limit=limit)
+    d.run()
 
-            nowtime = dt.datetime.now()
-            times.append(nowtime)
-            cur += 1
+
+# for code in codeList:
+#     dataName = f'weight_{code}'
+#     lastDate = readUpdate(dataName)
+#     if lastDate is None:
+#         startDate = dt.date(2001, 1, 1)
+#     else:
+#         startDate = dt.datetime.strptime(lastDate, '%Y%m%d') + dt.timedelta(days=1)
+#     endDate = dt.date.today() - dt.timedelta(days=1)
+#
+#     # noinspection DuplicatedCode
+#     while startDate <= endDate:
+#         nowtime = dt.datetime.now()
+#         delta = dt.timedelta(seconds=perTimes)
+#         if (perTimes > 0 and 0 < downLimit <= cur
+#                 and (nowtime < times[cur - downLimit] + delta)):
+#             _timedelta = nowtime - times[cur - downLimit]
+#             sleeptime = perTimes - _timedelta.seconds
+#             logging.debug(f'******暂停{sleeptime}秒******')
+#             time.sleep(sleeptime)
+#
+#         _startDate = initDate.strftime('%Y%m%d')
+#         initDate += dt.timedelta(days=30)
+#         _endDate = initDate.strftime('%Y%m%d')
+#         initDate += dt.timedelta(days=1)
+#         logging.debug(f'下载指数成分和权重{code},日期{_startDate}-{_endDate}')
+#         df = pro.index_weight(index_code=code,
+#                               start_date=_startDate, end_date=_endDate)
+#         writeSQL(df, 'index_weight')
+#
+#         nowtime = dt.datetime.now()
+#         times.append(nowtime)
+#         cur += 1
 
 
 def downIndexDaily():

@@ -24,7 +24,7 @@ from statsmodels.tsa.stattools import adfuller
 import stockdatamanage.views.home
 from stockdatamanage.db.sqlconn import engine
 from stockdatamanage.db.sqlrw import readStockList, readStockName
-from ..config import datapath
+from ..config import DATAPATH
 
 
 def studyTime():
@@ -175,7 +175,7 @@ def linearProfitInc(startDate='20150331', endDate='20191231'):
     if startDate is None:
         startDate = f'{int(endDate[:4]) - 3}0331'
 
-    filename = os.path.join(datapath, 'profits_inc_linear.xlsx')
+    filename = os.path.join(DATAPATH, 'profits_inc_linear.xlsx')
 
     resultList = []
     cnt = len(stocks)

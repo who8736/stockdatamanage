@@ -7,7 +7,7 @@ import os
 
 import pandas as pd
 
-from ..config import datapath, logpath
+from ..config import DATAPATH, LOGPATH
 from ..db import engine
 from ..db.sqlrw import readCal
 from ..downloader.download import DownloaderQuarter
@@ -113,11 +113,11 @@ def checkPath():
     """
 
     """
-    if not os.path.isdir(logpath):
-        os.makedirs(logpath)
-    if not os.path.isdir(datapath):
-        os.makedirs(datapath)
-    linearpath = os.path.join(datapath, 'linear_img')
+    if not os.path.isdir(LOGPATH):
+        os.makedirs(LOGPATH)
+    if not os.path.isdir(DATAPATH):
+        os.makedirs(DATAPATH)
+    linearpath = os.path.join(DATAPATH, 'linear_img')
     if not os.path.isdir(linearpath):
         os.makedirs(linearpath)
 

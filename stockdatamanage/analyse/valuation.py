@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 
 from ..analyse import classifyanalyse, report
-from ..config import datapath
+from ..config import DATAPATH, PUSHDATA
 from ..db import sqlrw
 from ..db.sqlconn import engine
 from ..db.sqlrw import readLastTTMPEs, readStockList
@@ -280,11 +280,10 @@ def calpfnew(_date, replace=False):
     # stocks.set_index(['ts_code'], inplace=True)
     # stocks.to_csv('./data/valuation.csv')
     pfFilename = f'valuations{_date}.xlsx'
-    stocks.to_excel(os.path.join(datapath, pfFilename))
+    stocks.to_excel(os.path.join(DATAPATH, pfFilename))
 
     # 将评分发送到邮箱
-    pushflag = cf.pushData
-    if pushflag:
+    if PUSHDATA:
         mailTitle = f'评分{_date}'
         pushdata.push(mailTitle, pfFilename)
     #    print stocks

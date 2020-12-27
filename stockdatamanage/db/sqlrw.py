@@ -767,7 +767,7 @@ def _readKline(sql):
     # return klineDf
 
 
-def setLastUpdate(dataName, _date=None):
+def setUpdate(dataName, _date=None):
     # 更新最后更新日期
     if _date is None:
         _date = dt.datetime.today().strftime('%Y%m%d')
