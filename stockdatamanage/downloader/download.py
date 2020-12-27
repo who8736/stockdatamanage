@@ -13,6 +13,7 @@ import os
 import socket
 import time
 import zipfile
+from requests.exceptions import ReadTimeout, ConnectTimeout
 
 import pandas as pd
 import tushare as ts
@@ -21,7 +22,7 @@ from ..config import DATAPATH
 from ..db.sqlconn import engine
 from ..db.sqlrw import (
     readCal, readTableFields, writeClassifyMemberToSQL, writeClassifyNameToSQL,
-    writeSQL, readUpdate
+    writeSQL, readUpdate, setUpdate
 )
 from ..downloader.webRequest import WebRequest
 from ..util.initlog import initlog
@@ -156,7 +157,7 @@ class DownloaderMisc:
                 time.sleep(sleeptime)
             try:
                 result = fun(**kwargs)
-            except(socket.timeout, ConnectTimeout, ReadTimeout):
+            except(socket.timeout, CONNECTTIMEOUT, ReadTimeout):
                 logging.warning(f'downloader timeout: {table}')
             else:
                 return result
@@ -172,19 +173,16 @@ class Downloader:
     通过类变量记录下载限制并进行控制
     """
 
-    def __init__(self, funcName, tableName, argsList, perTimes, limit, retry=3):
+    def __init__(self, funcName, perTimes, limit, retry=3):
         """
 
         :param funcName: 调用下载函数的名称
-        :param tableName: 写数据库的表名
         :param perTimes: 单位为秒
         :param limit: 指定时间内限制的下载次数
         :param retry: 下载失败时的重试次数
         """
         pass
         self.func = getattr(ts.pro_api(), funcName)
-        self.tableName = tableName
-        self.args = argsList
         self.perTimes = perTimes
         self.limit = limit
         self.retry = retry
@@ -192,18 +190,7 @@ class Downloader:
         self.times = []
 
     # 下载限制由类静态成员记载与控制
-    def run(self):
-        """
-        :param table:
-        :param kwargs:
-        :return:
-        :type table: str
-        """
-        pass
-        for arg in self.args:
-            self._run(**arg)
-
-    def _run(self, **kwargs):
+    def run(self, **kwargs):
         for _ in range(self.retry):
             nowtime = dt.datetime.now()
             if (self.cur >= self.limit
@@ -214,11 +201,11 @@ class Downloader:
                 logging.debug(f'******暂停{sleeptime}秒******')
                 time.sleep(sleeptime)
             try:
-                result = fun(**kwargs)
+                result = self.func(**kwargs)
             except(socket.timeout, ConnectTimeout, ReadTimeout):
                 logging.warning(f'downloader timeout: {table}')
             else:
-                writeSQL(result, self.tableName)
+                return result
             finally:
                 nowtime = dt.datetime.now()
                 self.times.append(nowtime)
@@ -563,7 +550,10 @@ def downIndexWeight():
     perTimes = 60
     limit = 70
 
-    args = []
+    downloader = Downloader(funcName='index_weight',
+                            perTimes=perTimes,
+                            limit=limit,
+                            )
     for code in codeList:
         dataName = f'weight_{code}'
         lastDate = readUpdate(dataName)
@@ -580,16 +570,13 @@ def downIndexWeight():
             _endDate = startDate.strftime('%Y%m%d')
             arg = {'index_code': code,
                    'start_date': _startDate,
-                   'end_date': _end_date, }
-            args.append(arg)
+                   'end_date': _endDate, }
+            logging.debug(f'download index_weight {code} {_startDate}-{_endDate}')
+            result = downloader.run(**arg)
+            if result is not None:
+                writeSQL(result, 'index_weight')
+            setUpdate(dataName=dataName, _date=_endDate)
             startDate += dt.timedelta(days=1)
-
-    d = Downloader(funcName='index_weight',
-                   tableName='index_weight',
-                   argsList=args,
-                   perTimes=perTimes,
-                   limit=limit)
-    d.run()
 
 
 # for code in codeList:
@@ -731,7 +718,7 @@ def downAdjFactor(trade_date, retry=3):
         try:
             df = pro.adj_factor(trade_date=trade_date)
             writeSQL(df, 'adj_factor')
-        except (socket.timeout, ConnectTimeout):
+        except (socket.timeout, CONNECTTIMEOUT):
             continue
         else:
             break

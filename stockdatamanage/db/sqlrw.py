@@ -768,10 +768,16 @@ def _readKline(sql):
 
 
 def setUpdate(dataName, _date=None):
+    """
+
+    :param dataName:
+    :param _date: str YYYYmmdd
+    """
     # 更新最后更新日期
     if _date is None:
         _date = dt.datetime.today().strftime('%Y%m%d')
-    sql = f'update update_date set `date`="{_date}" where dataname="{dataName}"'
+    # sql = f'update update_date set `date`="{_date}" where dataname="{dataName}"'
+    sql = f'replace into update_date(`dataname`, `date`) values("{dataName}", "{_date}")'
     engine.execute(sql)
 
 
