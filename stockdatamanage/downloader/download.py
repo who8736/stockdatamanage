@@ -560,13 +560,13 @@ def downIndexWeight():
         if lastDate is None:
             startDate = dt.date(2001, 1, 1)
         else:
-            startDate = dt.datetime.strptime(lastDate, '%Y%m%d') + dt.timedelta(days=1)
+            startDate = dt.datetime.strptime(lastDate, '%Y%m%d').date() + dt.timedelta(days=1)
         endDate = dt.date.today() - dt.timedelta(days=1)
 
         # noinspection DuplicatedCode
         while startDate <= endDate:
             _startDate = startDate.strftime('%Y%m%d')
-            startDate += dt.timedelta(days=30)
+            startDate = min(startDate + dt.timedelta(days=30), endDate)
             _endDate = startDate.strftime('%Y%m%d')
             arg = {'index_code': code,
                    'start_date': _startDate,

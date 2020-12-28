@@ -249,13 +249,14 @@ def calAllPEHistory(startDate, endDate=None):
     :return:
     """
     if endDate is None:
-        endDate = dt.datetime.today().strftime('%Y%m%d')
+        endDate = (dt.datetime.today() - dt.timedelta(days=1)).strftime('%Y%m%d')
     logging.debug(f'计算全市场PE:{startDate}-{endDate}')
     dates = readCal(startDate, endDate)
     if dates:
         for tradeDate in dates:
             sql = 'call calallpe("%(tradeDate)s");' % locals()
             engine.execute(sql)
+            setUpdate('index_all', tradeDate.strftime('%Y%m%d'))
 
 
 def calPEHistory(ID, startDate, endDate=None):

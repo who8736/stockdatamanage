@@ -556,6 +556,8 @@ def readUpdate(dataName):
             return _date.strftime('%Y%m%d')
         else:
             return _date
+    else:
+        return '20100101'
 
 
 def writeHold(stockList):

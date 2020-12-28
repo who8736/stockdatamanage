@@ -1,0 +1,23 @@
+# flask secretkey
+SECRET_KEY = 'adlkfasdal'
+
+# data path
+LOGPATH = r'path/to/logfile'
+DATAPATH = r'path/to/datafile'
+
+# sql
+SQLUSER = 'user'
+SQLPASSWORD = 'password'
+SQLHOST = '127.0.0.1'
+
+# tushare
+TUSHARETOKEN = 'tusharetoken'
+
+# mail
+PUSHDATA = False
+MAILSERVER = 'smtp.163.com'
+MAILPORT = 25
+MAILUSER = 'tests@163.com'
+MAILPASSWORD = 'testpassword'
+SENDTO = 'tests@qq.com|test1@qq.com'
+
