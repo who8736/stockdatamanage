@@ -48,6 +48,7 @@ def calAllTTMProfits(end_date, replace=False):
     calTTMProfitsIncRate(end_date)
 
 
+
 def calTTMProfitsIncRate(end_date, replace=False):
     """计算全部股票本期TTM利润增长率并写入TTMLirun表
     date: 格式YYYYMMDD

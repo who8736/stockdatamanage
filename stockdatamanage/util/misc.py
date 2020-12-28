@@ -90,5 +90,17 @@ def tsCode(ts_code):
         return ts_code
 
 
+def dayDelta(sorDate, days, dateformat='%Y%m%d'):
+    """字符串形式返回增减天数后的日期
+
+    :parameter
+
+    """
+    if isinstance(sorDate, dt.Date):
+        return (sorDate + timedelta(days=days)).strftime(dateformat)
+    elif isinstance(sorDate, str):
+        _sorDate = dt.datetime.strptime(sorDate, '%Y%m%d')
+        return (_sorDate + timedelta(days=days)).strftime(dateformat)
+
 if __name__ == '__main__':
     pass

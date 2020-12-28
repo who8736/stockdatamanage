@@ -17,6 +17,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from . import initsql
 from .sqlconn import Session, engine
 from ..util.datatrans import quarterList
+from ..util.misc import dayDelta
 
 
 def writeClassifyMemberToSQL(_date, filename):
@@ -481,6 +482,9 @@ def readTTMPE(ts_code):
 
 
 def readCal(startDate=None, endDate=None, exchange='SSE', is_open=1):
+    """读取一段时间内的市场交易日期
+    :rtype: list, eg. ['20201101', '20201102']
+    """
     sql = (f'select cal_date trade_date from trade_cal'
            f' where exchange="{exchange}"')
     if startDate is not None:
@@ -537,7 +541,7 @@ def readLastTTMPEs(stocks, trade_date=None):
     return df
 
 
-def readUpdate(dataName):
+def readUpdate(dataName, offsetdays = 0):
     """
     获取数据的更新日期
     Parameters
@@ -552,10 +556,7 @@ def readUpdate(dataName):
     result = engine.execute(sql).fetchone()
     if result:
         _date = result[0]
-        if isinstance(_date, dt.date):
-            return _date.strftime('%Y%m%d')
-        else:
-            return _date
+        return dayDelta(_date, days=offsetdays)
     else:
         return '20100101'
 

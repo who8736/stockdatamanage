@@ -35,6 +35,7 @@ from ..downloader.download import (
 from ..util.check import checkQuarterData
 from ..util.datatrans import classifyEndDate, quarterList
 from ..util.initlog import initlog, logfun
+from ..util.misc import dayDelta
 
 
 @logfun
@@ -420,17 +421,12 @@ def updateTTMProfits():
     上次更新日至当前日期间有新财务报表的，更新这几期财报的ttmprofits
     """
     pass
-    lastDate = readUpdate('ttmprofits')
-    today = dt.datetime.today().strftime('%Y%m%d')
-    sql = (f'select distinct end_date from income '
-           f'where ann_date>="{lastDate}" and ann_date<="{today}"')
-
-    result = engine.execute(sql).fetchall()
-    if result:
-        for row in result:
-            calAllTTMProfits(row[0].strftime('%Y%m%d'))
-
-    setUpdate('ttmprofits', today)
+    startDate = readUpdate('ttmprofits', offsetdays=1)
+    endDate = dayDelta(dt.datetime.today(), days=-1)
+    dates = readCal(startDate, endDate)
+    for d in dates:
+        calAllTTMProfits(d)
+        setUpdate('ttmprofits', d)
 
 
 @logfun
