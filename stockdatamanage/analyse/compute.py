@@ -8,7 +8,7 @@ import pandas as pd
 # from stockdatamanage.analyse import peHistRate
 from ..db import engine
 from ..db.sqlrw import (
-    readCal, readLastTTMPEs, readLastTTMProfits,
+    readCal, readLastTTMPEs, readLastTTMProfits, setUpdate,
     readStockList, readTTMProfitsForStock,
 )
 from ..util import datatrans
@@ -255,9 +255,9 @@ def calAllPEHistory(startDate, endDate=None):
     dates = readCal(startDate, endDate)
     if dates:
         for tradeDate in dates:
-            sql = 'call calallpe("%(tradeDate)s");' % locals()
+            sql = f'call calallpe("{tradeDate}");'
             engine.execute(sql)
-            setUpdate('index_all', tradeDate.strftime('%Y%m%d'))
+            setUpdate('index_all', tradeDate)
 
 
 def calPEHistory(ID, startDate, endDate=None):

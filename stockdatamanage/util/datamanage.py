@@ -119,7 +119,7 @@ def updateAllMarketPE():
     """
     dataName = 'index_all'
     startDate = readUpdate(dataName)
-    _startDate = (dt.datetime.strptime(startDate, '%Y%m%d') - dt.datetime.timedelta(days=1))
+    _startDate = (dt.datetime.strptime(startDate, '%Y%m%d') - dt.timedelta(days=1))
     calAllPEHistory(_startDate.strftime('%Y%m%d'))
     # setUpdate(dataName)
 
@@ -424,9 +424,10 @@ def updateTTMProfits():
     startDate = readUpdate('ttmprofits', offsetdays=1)
     endDate = dayDelta(dt.datetime.today(), days=-1)
     dates = readCal(startDate, endDate)
-    for d in dates:
-        calAllTTMProfits(d)
-        setUpdate('ttmprofits', d)
+    if dates is not None:
+        for d in dates:
+            calAllTTMProfits(d)
+            setUpdate('ttmprofits', d)
 
 
 @logfun
