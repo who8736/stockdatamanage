@@ -5,6 +5,8 @@ Created on 2017年10月26日
 @author: who8736
 """
 
+import datetime as dt
+from datetime import timedelta
 
 # from download import DownloaderQuarter
 # from sqlrw import readStockList
@@ -96,7 +98,7 @@ def dayDelta(sorDate, days, dateformat='%Y%m%d'):
     :parameter
 
     """
-    if isinstance(sorDate, dt.Date):
+    if isinstance(sorDate, dt.date):
         return (sorDate + timedelta(days=days)).strftime(dateformat)
     elif isinstance(sorDate, str):
         _sorDate = dt.datetime.strptime(sorDate, '%Y%m%d')
