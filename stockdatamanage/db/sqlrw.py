@@ -495,6 +495,8 @@ def readCal(startDate=None, endDate=None, exchange='SSE', is_open=1):
     result = engine.execute(sql).fetchall()
     if result:
         return [d[0].strftime('%Y%m%d') for d in result]
+    else:
+        return []
 
 
 # def alterKline():

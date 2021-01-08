@@ -5,6 +5,8 @@ from stockdatamanage.util.datamanage import (
 )
 from stockdatamanage.util.initlog import initlog
 from stockdatamanage.downloader.download import downIndexWeight
+from stockdatamanage.db.sqlrw import readUpdate
+from stockdatamanage.analyse.compute import calIndexPE
 
 
 def testUpdate():
@@ -65,8 +67,19 @@ def testUpdate():
 def test_download_index_weight():
     downIndexWeight()
 
+def test_update_index_pe():
+    ID = '000010.SH'
+    startDate = readUpdate('index_000010.SH', offsetdays=1)
+    calIndexPE(ID, startDate)
+
+
+def test_update_all_pe():
+    updateAllMarketPE()
+
 if __name__ == '__main__':
     initlog()
 
     # testUpdate()
-    test_download_index_weight()
+    # test_download_index_weight()
+    # test_update_index_pe()
+    test_update_all_pe()

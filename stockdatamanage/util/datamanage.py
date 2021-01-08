@@ -21,7 +21,7 @@ from ..analyse import valuation
 from ..analyse.classifyanalyse import (
     calClassifyPE, calClassifyStaticTTMProfit,
 )
-from ..analyse.compute import calAllPEHistory, calAllTTMProfits
+from ..analyse.compute import calAllPEHistory, calAllTTMProfits, calIndexPE
 from ..config import TUSHARETOKEN
 from ..db.sqlconn import engine
 from ..db.sqlrw import (
@@ -118,9 +118,8 @@ def updateAllMarketPE():
     :return:
     """
     dataName = 'index_all'
-    startDate = readUpdate(dataName)
-    _startDate = (dt.datetime.strptime(startDate, '%Y%m%d') - dt.timedelta(days=1))
-    calAllPEHistory(_startDate.strftime('%Y%m%d'))
+    startDate = readUpdate(dataName, offsetdays=1)
+    calAllPEHistory(startDate)
     # setUpdate(dataName)
 
 
@@ -159,7 +158,7 @@ def updateIndex():
     # startDate = getIndexPEUpdateDate()
     startDate = readUpdate('index_000010.SH')
     # startDate = getIndexPEUpdateDate() + dt.timedelta(days=1)
-    stockdatamanage.analyse.compute.calPEHistory(ID, startDate)
+    calIndexPE(ID, startDate)
 
 
 @logfun

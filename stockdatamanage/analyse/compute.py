@@ -260,7 +260,7 @@ def calAllPEHistory(startDate, endDate=None):
             setUpdate('index_all', tradeDate)
 
 
-def calPEHistory(ID, startDate, endDate=None):
+def calIndexPE(ID, startDate, endDate=None):
     """
     计算某一指数的TTMPE
     :param ID: 长格式的指数代码，如: 000010.SH
@@ -268,13 +268,19 @@ def calPEHistory(ID, startDate, endDate=None):
     :param endDate: str, YYYYMMDD
     :return:
     """
+    ID = ID.upper()
+    dataName = f'index_{ID}'
+
     if startDate is None:
         startDate = datetime.strptime('19900101', '%Y%m%d').date()
     assert len(ID) == 9, '指数代码错误， 正确格式：000010.SH'
-    ID = ID.upper()
     if endDate is None:
-        endDate = dt.datetime.today().strftime('%Y%m%d')
-    for tradeDate in readCal(startDate, endDate):
-        sql = f'call calchengfenpe("{ID}", "{tradeDate}");'
-        logging.debug(f'calIndexPE: {tradeDate}')
-        engine.execute(sql)
+        endDate = (dt.datetime.today() - dt.timedelta(days=1)).strftime('%Y%m%d')
+
+    dates = readCal(startDate, endDate)
+    if dates:
+        for tradeDate in dates:
+            sql = f'call calchengfenpe("{ID}", "{tradeDate}");'
+            logging.debug(f'calIndexPE: {ID} {tradeDate}')
+            engine.execute(sql)
+            setUpdate(dataName, tradeDate)
