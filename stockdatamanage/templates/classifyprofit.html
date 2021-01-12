@@ -120,8 +120,13 @@
         // 设置当前报告期
         let today = new Date()
         let quarters = [4, 4, 4, 1, 1, 1, 2, 2, 2, 3, 3, 3]
-        $selectyear.val(today.getFullYear())
-        $selectquarter.val(quarters[today.getMonth()])
+        let year = today.getFullYear()
+        let quarter = quarters[today.getMonth()]
+        if (quarter = 4) {
+            year = year - 1
+        }
+        $selectyear.val(year)
+        $selectquarter.val(quarter)
         $table.bootstrapTable('refresh')
         console.log(today.getFullYear())
         console.log(quarters[today.getMonth()])
