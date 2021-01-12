@@ -15,8 +15,6 @@ import tushare as ts
 from dateutil.relativedelta import relativedelta
 
 # from . import analyse
-import stockdatamanage.analyse.compute
-import stockdatamanage.views.home
 from ..analyse import valuation
 from ..analyse.classifyanalyse import (
     calClassifyPE, calClassifyStaticTTMProfit,
@@ -29,7 +27,7 @@ from ..db.sqlrw import (
 )
 from ..downloader.download import (
     DownloaderQuarter, downAdjFactor, downClassify, downDaily, downDailyBasic,
-    downIndexBasic, downIndexDaily, downIndexDailyBasic, downIndexWeight,
+    downIndexDaily, downIndexDailyBasic, downIndexWeight,
     downStockList, downTradeCal,
 )
 from ..util.check import checkQuarterData
@@ -383,7 +381,15 @@ def readStockListFromFile(filename):
 def updateDaily():
     """更新日K线
     """
-    downDaily()
+    sql = 'select max(trade_date) from daily'
+    startDate = engine.execute(sql).fetchone()[0]
+    assert isinstance(startDate, dt.date), 'startDate应为date类型'
+    startDate = (startDate + dt.timedelta(days=1)).strftime('%Y%m%d')
+    endDate = dt.datetime.now().strftime('%Y%m%d')
+    dates = readCal(startDate, endDate)
+    if dates:
+        for d in dates:
+            downDaily(d)
 
 
 @logfun

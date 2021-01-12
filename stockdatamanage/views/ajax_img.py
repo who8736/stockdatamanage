@@ -2,7 +2,7 @@ import logging
 
 from bokeh.embed import components
 from bokeh.resources import INLINE
-from flask import Blueprint, render_template, send_file
+from flask import Blueprint, render_template, send_file, request
 
 from stockdatamanage.db.sqlrw import readIndexKline, readStockKline
 from stockdatamanage.util.bokeh_plot import BokehPlot, PlotProfitsInc, plotKline
@@ -24,6 +24,7 @@ def klineimg():
 def stockklineimgnew():
     ts_code = request.args.get('ts_code')
     df = readStockKline(ts_code, days=1000)
+    logging.info(f'stockklineimgnew: {ts_code}')
     return _klineimg(df)
 
 

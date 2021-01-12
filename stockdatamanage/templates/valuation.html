@@ -27,24 +27,14 @@
         <!--	<p><img src="/klineimg/{{ stock.ts_code }}"></p>-->
         <div class="row">
             <div class="col">
-                <iframe #}
+                <iframe
                         id="bokehplot"
                         name="kline bokeh plot"
                         onload="this.height=100"
-                        src="/stockklineimgnew/{{ stock.ts_code }}" {#
-                    >
-                    </iframe>
-                </div>
-            </div>
-            <p>
-                <iframe #}
-                        id="profitsincplot"
-                        name="profits inc plot"
-                        onload="this.height=100"
-                        src="/profitsinc/{{ stock.ts_code }}" {#
+                        src="{{ url_for('ajax_img.stockklineimgnew', ts_code=stock.ts_code) }}"
+                        {#                        src="/ajax_img/stockkline/{{ stock.ts_code }}"#}
                 >
                 </iframe>
-                </p>
                 <script type="text/javascript">
                     function reinitIframeKline() {
                         const iframe = document.getElementById('bokehplot')
@@ -206,7 +196,7 @@
                     {% for index, stock in stock.classifyStocks.iterrows() %}
                         <tr>
                             <td><a class="text-center"
-                                   href="/valuation/{{ stock.ts_code }}">
+                                   href="{{ url_for('valuation.detail', ts_code=stock.ts_code) }}">
                                 {{ stock.ts_code }}</a></td>
                             <td>{{ stock.sname }}</td>
                             <td>{{ stock.inc0 }}</td>

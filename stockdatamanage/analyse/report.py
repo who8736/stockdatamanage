@@ -145,6 +145,8 @@ def reportValuation(ts_code):
     # myItem.profitsIncMad = guzhiData[14]
 
     lv4Code = readClassifyForStock(ts_code)
+    if lv4Code is None:
+        return valuation
     lv3Code = lv4Code[:6]
     lv2Code = lv4Code[:4]
     lv1Code = lv4Code[:2]

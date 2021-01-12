@@ -368,22 +368,9 @@ def downDaily(trade_date=None):
     :return:
     """
     pro = ts.pro_api()
-    dates = []
-    if trade_date is None:
-        sql = 'select max(trade_date) from daily'
-        startDate = engine.execute(sql).fetchone()[0]
-        assert isinstance(startDate, dt.date), 'startDate应为date类型'
-        startDate += dt.timedelta(days=1)
-        startDate = startDate.strftime('%Y%m%d')
-        endDate = dt.datetime.now().strftime('%Y%m%d')
-        dates = readCal(startDate, endDate)
-    else:
-        dates.append(trade_date)
-    if dates:
-        for d in dates:
-            logging.debug(f'下载日线:{d}')
-            df = pro.daily(trade_date=d)
-            writeSQL(df, 'daily')
+    logging.debug(f'下载日线:{trade_date}')
+    df = pro.daily(trade_date=trade_date)
+    writeSQL(df, 'daily')
 
 
 def downDailyRepair():

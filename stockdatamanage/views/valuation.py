@@ -30,9 +30,10 @@ def valuationNav():
 
 
 @valuation.route('/detail')
-def valuationView():
+def detail():
     ts_code = request.args.get('ts_code')
     stockItem = reportValuation(ts_code)
+    logging.info('valuationsView')
     #     reportstr = reportstr[:20]
     #     reportstr = 'tests'
     return render_template('valuation.html',
