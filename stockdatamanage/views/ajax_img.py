@@ -52,8 +52,8 @@ def _klineimg(df):
     )
 
 
-@ajax_img.route('/profitsinc')
-def profitsIncImg():
+@ajax_img.route('/profitsinc_del')
+def del_profitsIncImg():
     ts_code = request.args.get('profitsinc')
     js_resources = INLINE.render_js()
     css_resources = INLINE.render_css()
@@ -75,3 +75,5 @@ def profitsIncImg():
     except Exception as e:
         logging.warning(e)
         return '<div>绘图失败</div>'
+
+

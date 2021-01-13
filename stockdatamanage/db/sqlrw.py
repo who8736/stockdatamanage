@@ -823,9 +823,13 @@ def readProfitInc(startDate, endDate=None, ptype='stock',
         elif isinstance(code, list):
             _df = _df[_df[f'{field}'].isin(code)]
 
-        _df.rename(columns={'inc': f'inc{index}'}, inplace=True)
+        if _df.inc.isna().all():
+            continue
+
+        _df.rename(columns={'inc': f'inc{date}'}, inplace=True)
         if df is None:
             df = copy.deepcopy(_df)
         else:
             df = df.merge(_df, on=f'{field}', how='left')
+
     return df

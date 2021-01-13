@@ -136,10 +136,9 @@ def analysePEHist(ts_code, startDate, endDate, dayCount=200,
 
 
 def reportValuation(ts_code):
-    """读取评估报告
+    """生成评估报告
     """
     valuation = readValuation(ts_code)
-    # guzhi = getGuzhi(ts_code)
 
     # TODO: 需补充：根据平均绝对离差计算的增长率差异水平
     # myItem.profitsIncMad = guzhiData[14]

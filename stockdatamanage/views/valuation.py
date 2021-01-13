@@ -21,7 +21,7 @@ def valuationNav():
             (df.pf >= 5) & (df.pe < 30) & (df.pe200 >= 0) & (df.pe1000 >= 0) &
             (df.pe200 <= 20)]
     df['trade_date'] = df['date'].apply(lambda x: x.strftime('%Y%m%d'))
-    logging.debug(f'fina_date: [{type(df["fina_date"])}] {df["fina_date"]}')
+    # logging.debug(f'fina_date: [{type(df["fina_date"])}] {df["fina_date"]}')
     df['fina_date'] = df['fina_date'].apply(lambda x: x.strftime('%Y%m%d'))
     stocksStr = df.to_json(orient='records', force_ascii=False)
     stocks = json.loads(stocksStr)
@@ -33,7 +33,6 @@ def valuationNav():
 def detail():
     ts_code = request.args.get('ts_code')
     stockItem = reportValuation(ts_code)
-    logging.info('valuationsView')
     #     reportstr = reportstr[:20]
     #     reportstr = 'tests'
     return render_template('valuation.html',

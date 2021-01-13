@@ -1,8 +1,9 @@
 import logging
+import datetime as dt
 
 from flask import current_app, request, Blueprint
 
-from ..db.sqlrw import readChigu, readClassifyProfit, readStockList
+from ..db.sqlrw import readChigu, readClassifyProfit, readStockList, readProfitInc
 from ..util.datatrans import lastQuarter
 
 
@@ -46,3 +47,14 @@ def holdjson():
 
     stocksList = stocks.to_json(orient='records', force_ascii=False)
     return stocksList
+
+@ajax_data.route('/stockprofitsinc', methods=["GET", "POST"])
+def stockProfitsInc():
+    logging.debug(f'stock profits inc')
+    ts_code = request.args.get('ts_code')
+    startDate = dt.date(dt.date.today().year - 2, 1, 1).strftime('%Y%m%d')
+    endDate = dt.date.today().strftime('%Y%m%d')
+    df = readProfitInc(startDate=startDate, endDate=endDate, code=ts_code)
+    incDict = df.to_dict(orient='records')[0]
+    logging.debug(f'stock profits inc for {ts_code}')
+

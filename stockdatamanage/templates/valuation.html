@@ -9,204 +9,228 @@
     <div class="row justify-content-md-center">
 
     <div class="col-12">
-        <h2>估值报告： {{ stock.ts_code }} {{ stock.name }}</h2>
-        <a class="btn btn-large btn-info"
-           href="http://finance.sina.com.cn/realstock/company/
+    <h2>估值报告： {{ stock.ts_code }} {{ stock.name }}</h2>
+    <a class="btn btn-large btn-info"
+       href="http://finance.sina.com.cn/realstock/company/
 		{% if stock.ts_code[0]=='6' %}sh{% else %}sz{% endif %}
 		{{ stock.ts_code[:6] }}/nc.shtml" target="_blank">
-            新浪财经</a>
-        <a class="btn btn-large btn-info"
-           href="http://f9.eastmoney.com/
+        新浪财经</a>
+    <a class="btn btn-large btn-info"
+       href="http://f9.eastmoney.com/
 		{% if stock.ts_code[0]=='6' %}sh{% else %}sz{% endif %}
 		{{ stock.ts_code[:6] }}.html" target="_blank">
-            东方财富</a>
-        <a class="btn btn-large btn-info"
-           href="http://stockpage.10jqka.com.cn/{{ stock.ts_code[:6] }}"
-           target="_blank">
-            同花顺</a>
-        <!--	<p><img src="/klineimg/{{ stock.ts_code }}"></p>-->
-        <div class="row">
-            <div class="col">
-                <iframe
-                        id="bokehplot"
-                        name="kline bokeh plot"
-                        onload="this.height=100"
-                        src="{{ url_for('ajax_img.stockklineimgnew', ts_code=stock.ts_code) }}"
-                        {#                        src="/ajax_img/stockkline/{{ stock.ts_code }}"#}
-                >
-                </iframe>
-                <script type="text/javascript">
-                    function reinitIframeKline() {
-                        const iframe = document.getElementById('bokehplot')
-                        try {
-                            const bHeight = iframe.contentWindow.document.body.scrollHeight
-                            const dHeight = iframe.contentWindow.document.documentElement.scrollHeight
-                            iframe.height = Math.max(bHeight, dHeight)
-                            const bWidth = iframe.contentWindow.document.body.scrollWidth
-                            const dWidth = iframe.contentWindow.document.documentElement.scrollWidth
-                            iframe.width = Math.max(bWidth, dWidth)
-                            console.log(width)
-                        } catch (ex) {
-                        }
-                    }
+        东方财富</a>
+    <a class="btn btn-large btn-info"
+       href="http://stockpage.10jqka.com.cn/{{ stock.ts_code[:6] }}"
+       target="_blank">
+        同花顺</a>
+    <!--	<p><img src="/klineimg/{{ stock.ts_code }}"></p>-->
+    <div class="row">
+    <div class="col">
+        <iframe
+                id="bokehplot"
+                name="kline bokeh plot"
+                onload="this.height=100"
+                src="{{ url_for('ajax_img.stockklineimgnew', ts_code=stock.ts_code) }}"
+                {#                        src="/ajax_img/stockkline/{{ stock.ts_code }}"#}
+        >
+        </iframe>
+        <script type="text/javascript">
+            function reinitIframeKline() {
+                const iframe = document.getElementById('bokehplot')
+                try {
+                    const bHeight = iframe.contentWindow.document.body.scrollHeight
+                    const dHeight = iframe.contentWindow.document.documentElement.scrollHeight
+                    iframe.height = Math.max(bHeight, dHeight)
+                    const bWidth = iframe.contentWindow.document.body.scrollWidth
+                    const dWidth = iframe.contentWindow.document.documentElement.scrollWidth
+                    iframe.width = Math.max(bWidth, dWidth)
+                    console.log(width)
+                } catch (ex) {
+                }
+            }
 
-                    window.setInterval('reinitIframeKline()', 200)
+            window.setInterval('reinitIframeKline()', 200)
 
-                    function reinitIframeProfits() {
-                        const iframe = document.getElementById('profitsincplot')
-                        try {
-                            const bHeight = iframe.contentWindow.document.body.scrollHeight
-                            const dHeight = iframe.contentWindow.document.documentElement.scrollHeight
-                            iframe.height = Math.max(bHeight, dHeight)
-                            const bWidth = iframe.contentWindow.document.body.scrollWidth
-                            const dWidth = iframe.contentWindow.document.documentElement.scrollWidth
-                            iframe.width = Math.max(bWidth, dWidth)
-                            console.log(width)
-                        } catch (ex) {
-                        }
-                    }
-                    window.setInterval('reinitIframeProfits()', 200)
-                </script>
+            function reinitIframeProfits() {
+                const iframe = document.getElementById('profitsincplot')
+                try {
+                    const bHeight = iframe.contentWindow.document.body.scrollHeight
+                    const dHeight = iframe.contentWindow.document.documentElement.scrollHeight
+                    iframe.height = Math.max(bHeight, dHeight)
+                    const bWidth = iframe.contentWindow.document.body.scrollWidth
+                    const dWidth = iframe.contentWindow.document.documentElement.scrollWidth
+                    iframe.width = Math.max(bWidth, dWidth)
+                    console.log(width)
+                } catch (ex) {
+                }
+            }
 
-                <p class="lead">当前TTMPE: {{ stock.pe }}</p>
-                <p class="lead">peg: {{ stock.peg }}</p>
-                <p class="lead">评分: {{ stock.pf }}</p>
-                <table class="table">
+            window.setInterval('reinitIframeProfits()', 200)
+        </script>
+
+        <p class="lead">当前TTMPE: {{ stock.pe }}</p>
+        <p class="lead">peg: {{ stock.peg }}</p>
+        <p class="lead">评分: {{ stock.pf }}</p>
+        <table class="table">
+            <tr>
+                <th>低市盈率</th>
+                <th>低于行业市盈率</th>
+                <th>低PEG</th>
+                <th>稳定增长</th>
+                <th>低估值水平（200日）</th>
+                <th>低估值水平（1000日）</th>
+            </tr>
+            <tr>
+                {% if stock.lowpe==1 %}
+                    <td class="table-success">{{ stock.pe }}</td>
+                {% else %}
+                    <td>{{ stock.pe }}</td>
+                {% endif %}
+                {% if stock.lowhype==1 %}
+                    <td class="table-success"> {{ stock.classify_pe }}</td>
+                {% else %}
+                    <td> {{ stock.classify_pe }}</td>
+                {% endif %}
+                {% if stock.lowpeg==1 %}
+                    <td class="table-success"> {{ stock.peg }}</td>
+                {% else %}
+                    <td> {{ stock.peg }}</td>
+                {% endif %}
+                {% if stock.wdzz==1 %}
+                    <td class="table-success"> {{ stock.avg }}</td>
+                {% else %}
+                    <td> {{ stock.avg }}</td>
+                {% endif %}
+                {% if stock.lowpez200==1 %}
+                    <td class="table-success"> {{ stock.pez200 }}</td>
+                {% else %}
+                    <td> {{ stock.pez200 }}</td>
+                {% endif %}
+                {% if stock.lowpez1000==1 %}
+                    <td class="table-success"> {{ stock.pez1000 }}</td>
+                {% else %}
+                    <td> {{ stock.pez1000 }}</td>
+                {% endif %}
+            </tr>
+        </table>
+        <p>未来三年PE预计:</p>
+        <table class="table">
+            <tr>
+                {% for pe in stock.PEYuji %}
+                    <td>{{ pe }}</td>
+                {% endfor %}
+            </tr>
+        </table>
+        <div class="bg-warning"><p>近2年TTM利润增长率(待修改):</p></div>
+        <table class="table table-striped table-bordered">
+            <tr>
+                <td>{{ stock.incrate0 }}</td>
+                <td>{{ stock.incrate1 }}</td>
+                <td>{{ stock.incrate2 }}</td>
+                <td>{{ stock.incrate3 }}</td>
+                <td>{{ stock.incrate4 }}</td>
+                <td>{{ stock.incrate5 }}</td>
+            </tr>
+        </table>
+        <div class="bg-warning">待补充，以柱状图表示</div>
+        <div id="profitinc"></div>
+        <div>
+            <!--	</p>-->
+            <p>最近6个季度TTM利润平均增长率: {{ stock.avg }}</P>
+            <p>根据平均绝对离差计算的增长率差异水平: {{ stock.profitsIncMad }}</P>
+            <p>根据标准差计算的增长率差异水平: {{ stock.std }}</P>
+            <p>当前TTMPE参考最近200个工作日水平: {{ stock.pe200 }}</P>
+            <p>当前TTMPE参考最近1000个工作日水平: {{ stock.pe1000 }}</P>
+            <h3>行业比较：</h3>
+            <table class="table table-striped table-bordered">
+                <tr>
+                    <th>代码</th>
+                    <th>名称</th>
+                    <th>第1年</th>
+                    <th>第2年</th>
+                    <th>第3年</th>
+                </tr>
+                <tr>
+                    <td>{{ stock.ts_code }}</td>
+                    <td>{{ stock.name }}</td>
+                    <td>{{ stock.profitsInc.iloc[0, 1] }}</td>
+                    <td>{{ stock.profitsInc.iloc[0, 2] }}</td>
+                    <td>{{ stock.profitsInc.iloc[0, 3] }}</td>
+                </tr>
+                <tr>
+                    <td>{{ stock.lv1Code }}</td>
+                    <td>{{ stock.lv1Name }}</td>
+                    <td>{{ stock.lv1Inc.iloc[0, 1] }}</td>
+                    <td>{{ stock.lv1Inc.iloc[0, 2] }}</td>
+                    <td>{{ stock.lv1Inc.iloc[0, 3] }}</td>
+                </tr>
+                <tr>
+                    <td>{{ stock.lv2Code }}</td>
+                    <td>{{ stock.lv2Name }}</td>
+                    <td>{{ stock.lv2Inc.iloc[0, 1] }}</td>
+                    <td>{{ stock.lv2Inc.iloc[0, 2] }}</td>
+                    <td>{{ stock.lv2Inc.iloc[0, 3] }}</td>
+                </tr>
+                <tr>
+                    <td>{{ stock.lv3Code }}</td>
+                    <td>{{ stock.lv3Name }}</td>
+                    <td>{{ stock.lv3Inc.iloc[0, 1] }}</td>
+                    <td>{{ stock.lv3Inc.iloc[0, 2] }}</td>
+                    <td>{{ stock.lv3Inc.iloc[0, 3] }}</td>
+                </tr>
+                <tr>
+                    <td>{{ stock.lv4Code }}</td>
+                    <td>{{ stock.lv4Name }}</td>
+                    <td>{{ stock.lv4Inc.iloc[0, 1] }}</td>
+                    <td>{{ stock.lv4Inc.iloc[0, 2] }}</td>
+                    <td>{{ stock.lv4Inc.iloc[0, 3] }}</td>
+                </tr>
+            </table>
+            <h3>同行业股票：</h3>
+            <table class="table table-striped table-bordered">
+                <tr>
+                    <th>代码</th>
+                    <th>名称</th>
+                    <th>第N-3年</th>
+                    <th>第N-2年</th>
+                    <th>第N-1年</th>
+                </tr>
+                {% for index, stock in stock.classifyStocks.iterrows() %}
                     <tr>
-                        <th>低市盈率</th>
-                        <th>低于行业市盈率</th>
-                        <th>低PEG</th>
-                        <th>稳定增长</th>
-                        <th>低估值水平（200日）</th>
-                        <th>低估值水平（1000日）</th>
+                        <td><a class="text-center"
+                               href="{{ url_for('valuation.detail', ts_code=stock.ts_code) }}">
+                            {{ stock.ts_code }}</a></td>
+                        <td>{{ stock.sname }}</td>
+                        <td>{{ stock.inc0 }}</td>
+                        <td>{{ stock.inc1 }}</td>
+                        <td>{{ stock.inc2 }}</td>
                     </tr>
-                    <tr>
-                        {% if stock.lowpe==1 %}
-                            <td class="table-success">{{ stock.pe }}</td>
-                        {% else %}
-                            <td>{{ stock.pe }}</td>
-                        {% endif %}
-                        {% if stock.lowhype==1 %}
-                            <td class="table-success"> {{ stock.classify_pe }}</td>
-                        {% else %}
-                            <td> {{ stock.classify_pe }}</td>
-                        {% endif %}
-                        {% if stock.lowpeg==1 %}
-                            <td class="table-success"> {{ stock.peg }}</td>
-                        {% else %}
-                            <td> {{ stock.peg }}</td>
-                        {% endif %}
-                        {% if stock.wdzz==1 %}
-                            <td class="table-success"> {{ stock.avg }}</td>
-                        {% else %}
-                            <td> {{ stock.avg }}</td>
-                        {% endif %}
-                        {% if stock.lowpez200==1 %}
-                            <td class="table-success"> {{ stock.pez200 }}</td>
-                        {% else %}
-                            <td> {{ stock.pez200 }}</td>
-                        {% endif %}
-                        {% if stock.lowpez1000==1 %}
-                            <td class="table-success"> {{ stock.pez1000 }}</td>
-                        {% else %}
-                            <td> {{ stock.pez1000 }}</td>
-                        {% endif %}
-                    </tr>
-                </table>
-                <p>未来三年PE预计:</p>
-                <table class="table">
-                    <tr>
-                        {% for pe in stock.PEYuji %}
-                            <td>{{ pe }}</td>
-                        {% endfor %}
-                    </tr>
-                </table>
-                <div class="bg-warning"><p>近2年TTM利润增长率(待修改):</p></div>
-                <table class="table table-striped table-bordered">
-                    <tr>
-                        <td>{{ stock.incrate0 }}</td>
-                        <td>{{ stock.incrate1 }}</td>
-                        <td>{{ stock.incrate2 }}</td>
-                        <td>{{ stock.incrate3 }}</td>
-                        <td>{{ stock.incrate4 }}</td>
-                        <td>{{ stock.incrate5 }}</td>
-                    </tr>
-                </table>
-                <div class="bg-warning">待补充，以柱状图表示</div>
-                <!--	</p>-->
-                <p>最近6个季度TTM利润平均增长率: {{ stock.avg }}</P>
-                <p>根据平均绝对离差计算的增长率差异水平: {{ stock.profitsIncMad }}</P>
-                <p>根据标准差计算的增长率差异水平: {{ stock.std }}</P>
-                <p>当前TTMPE参考最近200个工作日水平: {{ stock.pe200 }}</P>
-                <p>当前TTMPE参考最近1000个工作日水平: {{ stock.pe1000 }}</P>
-                <h3>行业比较：</h3>
-                <table class="table table-striped table-bordered">
-                    <tr>
-                        <th>代码</th>
-                        <th>名称</th>
-                        <th>第1年</th>
-                        <th>第2年</th>
-                        <th>第3年</th>
-                    </tr>
-                    <tr>
-                        <td>{{ stock.ts_code }}</td>
-                        <td>{{ stock.name }}</td>
-                        <td>{{ stock.profitsInc.iloc[0, 1] }}</td>
-                        <td>{{ stock.profitsInc.iloc[0, 2] }}</td>
-                        <td>{{ stock.profitsInc.iloc[0, 3] }}</td>
-                    </tr>
-                    <tr>
-                        <td>{{ stock.lv1Code }}</td>
-                        <td>{{ stock.lv1Name }}</td>
-                        <td>{{ stock.lv1Inc.iloc[0, 1] }}</td>
-                        <td>{{ stock.lv1Inc.iloc[0, 2] }}</td>
-                        <td>{{ stock.lv1Inc.iloc[0, 3] }}</td>
-                    </tr>
-                    <tr>
-                        <td>{{ stock.lv2Code }}</td>
-                        <td>{{ stock.lv2Name }}</td>
-                        <td>{{ stock.lv2Inc.iloc[0, 1] }}</td>
-                        <td>{{ stock.lv2Inc.iloc[0, 2] }}</td>
-                        <td>{{ stock.lv2Inc.iloc[0, 3] }}</td>
-                    </tr>
-                    <tr>
-                        <td>{{ stock.lv3Code }}</td>
-                        <td>{{ stock.lv3Name }}</td>
-                        <td>{{ stock.lv3Inc.iloc[0, 1] }}</td>
-                        <td>{{ stock.lv3Inc.iloc[0, 2] }}</td>
-                        <td>{{ stock.lv3Inc.iloc[0, 3] }}</td>
-                    </tr>
-                    <tr>
-                        <td>{{ stock.lv4Code }}</td>
-                        <td>{{ stock.lv4Name }}</td>
-                        <td>{{ stock.lv4Inc.iloc[0, 1] }}</td>
-                        <td>{{ stock.lv4Inc.iloc[0, 2] }}</td>
-                        <td>{{ stock.lv4Inc.iloc[0, 3] }}</td>
-                    </tr>
-                </table>
-                <h3>同行业股票：</h3>
-                <table class="table table-striped table-bordered">
-                    <tr>
-                        <th>代码</th>
-                        <th>名称</th>
-                        <th>第N-3年</th>
-                        <th>第N-2年</th>
-                        <th>第N-1年</th>
-                    </tr>
-                    {% for index, stock in stock.classifyStocks.iterrows() %}
-                        <tr>
-                            <td><a class="text-center"
-                                   href="{{ url_for('valuation.detail', ts_code=stock.ts_code) }}">
-                                {{ stock.ts_code }}</a></td>
-                            <td>{{ stock.sname }}</td>
-                            <td>{{ stock.inc0 }}</td>
-                            <td>{{ stock.inc1 }}</td>
-                            <td>{{ stock.inc2 }}</td>
-                        </tr>
-                    {% endfor %}
-                </table>
-            </div>
+                {% endfor %}
+            </table>
         </div>
     </div>
 {% endblock %}
 
+
+{% block scripts %}
+    {{ super() }}
+    <script>
+        $(function () {
+                let chart = echarts.init(document.getElementById('profitinc'), 'white', {renderer: 'canvas'});
+                $.ajax({
+                    type: "GET",
+                    url: "http://127.0.0.1:5000/ajax_data/stockprofitsinc",
+                    data: {
+                        ts_code: "{{ stock.ts_code }}",
+                    },
+                    dataType: 'json',
+                    success: function (result) {
+                        chart.setOption(result);
+                    }
+                });
+            }
+        )
+    </script>
+
+{% endblock %}
