@@ -114,29 +114,8 @@
                 {% endif %}
             </tr>
         </table>
-        <p>未来三年PE预计:</p>
-        <table class="table">
-            <tr>
-                {% for pe in stock.PEYuji %}
-                    <td>{{ pe }}</td>
-                {% endfor %}
-            </tr>
-        </table>
-        <div class="bg-warning"><p>近2年TTM利润增长率(待修改):</p></div>
-        <table class="table table-striped table-bordered">
-            <tr>
-                <td>{{ stock.incrate0 }}</td>
-                <td>{{ stock.incrate1 }}</td>
-                <td>{{ stock.incrate2 }}</td>
-                <td>{{ stock.incrate3 }}</td>
-                <td>{{ stock.incrate4 }}</td>
-                <td>{{ stock.incrate5 }}</td>
-            </tr>
-        </table>
-        <div class="bg-warning">待补充，以柱状图表示</div>
-        <div id="profitinc" style="width:800px; height:450px;"></div>
+        <div id="profitinc" style="width:800px; height:300px;"></div>
         <div>
-            <!--	</p>-->
             <p>最近6个季度TTM利润平均增长率: {{ stock.avg }}</P>
             <p>根据平均绝对离差计算的增长率差异水平: {{ stock.profitsIncMad }}</P>
             <p>根据标准差计算的增长率差异水平: {{ stock.std }}</P>
@@ -155,8 +134,8 @@
                     <td>{{ stock.ts_code }}</td>
                     <td>{{ stock.name }}</td>
                     <td>{{ stock.profitsInc.iloc[0, 1] }}</td>
-                    <td>{{ stock.profitsInc.iloc[0, 2] }}</td>
-                    <td>{{ stock.profitsInc.iloc[0, 3] }}</td>
+                    <td>{{ stock.profitsInc.iloc[0, 2]}}</td>
+                    <td>{{ stock.profitsInc.iloc[0, 3]}}</td>
                 </tr>
                 <tr>
                     <td>{{ stock.lv1Code }}</td>
@@ -188,25 +167,7 @@
                 </tr>
             </table>
             <h3>同行业股票：</h3>
-            <table class="table table-striped table-bordered">
-                <tr>
-                    <th>代码</th>
-                    <th>名称</th>
-                    <th>第N-3年</th>
-                    <th>第N-2年</th>
-                    <th>第N-1年</th>
-                </tr>
-                {% for index, stock in stock.classifyStocks.iterrows() %}
-                    <tr>
-                        <td><a class="text-center"
-                               href="{{ url_for('valuation.detail', ts_code=stock.ts_code) }}">
-                            {{ stock.ts_code }}</a></td>
-                        <td>{{ stock.sname }}</td>
-                        <td>{{ stock.inc0 }}</td>
-                        <td>{{ stock.inc1 }}</td>
-                        <td>{{ stock.inc2 }}</td>
-                    </tr>
-                {% endfor %}
+            <table class="table table-striped table-bordered" id="classifystockstable">
             </table>
         </div>
     </div>
@@ -217,21 +178,63 @@
     {{ super() }}
     <script>
         $(function () {
-                let chart = echarts.init(document.getElementById('profitinc'), 'white', {renderer: 'canvas'});
-                $.ajax({
-                    type: "GET",
-                    url: "http://127.0.0.1:5000/ajax_data/stockprofitsinc",
-                    data: {
-                        ts_code: "{{ stock.ts_code }}",
-                    },
-                    dataType: 'json',
-                    success: function (result) {
-                        console.log('ajax_data return success')
-                        chart.setOption(result);
-                    }
-                });
-            }
-        )
+            let chart = echarts.init(document.getElementById('profitinc'), 'white', {renderer: 'canvas'});
+            $.ajax({
+                type: "GET",
+                url: "http://127.0.0.1:5000/ajax_data/stockprofitsinc",
+                data: {
+                    ts_code: "{{ stock.ts_code }}",
+                },
+                dataType: 'json',
+                success: function (result) {
+                    console.log('ajax_data return success')
+                    chart.setOption(result);
+                }
+            });
+        })
+
+        let $table = $('#classifystockstable')
+        $(function () {
+            $table.bootstrapTable({
+                url: '/ajax_data/classifystocks?ts_code={{ stock.ts_code }}',
+                dataType: 'json',
+                pagination: true,
+                search: true,
+                columns: [{
+                    field: 'ts_code',
+                    title: '代码',
+                    align: 'center',
+                    sortable: true,
+                    formatter: 'codeFormatter',
+                }, {
+                    field: 'name',
+                    title: '名称',
+                    align: 'center',
+                    sortable: true,
+                }, {
+                    field: 'inc0',
+                    title: '增长率N-3年',
+                    align: 'center',
+                    sortable: true,
+                }, {
+                    field: 'inc1',
+                    title: '增长率N-2年',
+                    align: 'center',
+                    sortable: true,
+                }, {
+                    field: 'inc2',
+                    title: '增长率N-1年',
+                    align: 'center',
+                    sortable: true,
+                }],
+            })
+        })
+
+        // 股票代码添加链接
+        function codeFormatter(value) {
+            return '<a href="/valuation/detail?ts_code=' + value + '">' +  value + '</a>'
+        }
+
     </script>
 
 {% endblock %}

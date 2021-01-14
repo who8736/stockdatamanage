@@ -2,9 +2,10 @@ import datetime as dt
 import logging
 
 from flask import current_app, request, Blueprint
-from pyecharts.charts import Bar
 from pyecharts import options as opts
+from pyecharts.charts import Bar
 
+from ..analyse.classifyanalyse import readClassifyCodeForStock, getStockForClassify
 from ..db.sqlrw import readChigu, readClassifyProfit, readStockList, readProfitInc
 from ..util.datatrans import lastQuarter
 
@@ -70,3 +71,29 @@ def stockProfitsInc():
             .set_global_opts(title_opts=opts.TitleOpts(title="近2年TTM利润增长率"))
     )
     return c.dump_options_with_quotes()
+
+
+@ajax_data.route('/classifystocks', methods=["GET", "POST"])
+def calssifyStocks():
+    logging.debug(f'stock profits inc')
+    ts_code = request.args.get('ts_code')
+    logging.debug(ts_code)
+
+    lv4Code = readClassifyCodeForStock(ts_code)
+    stocks = getStockForClassify(lv4Code)
+    # print(f'223 line: {stockList}')
+
+    startDate = f'{dt.date.today().year - 3}0101'
+    endDate = dt.date.today().strftime('%Y%m%d')
+    incs = readProfitInc(startDate=startDate, endDate=endDate,
+                         code=stocks.ts_code.to_list(),
+                         reportType='year')
+    stocks = stocks.merge(incs, on='ts_code', how='left')
+
+    # columns = {stocks.keys()[3]: 'inc0', stocks.keys()[4]: 'inc1'}
+    # stocks.rename(columns=columns, inplace=True)
+    for i in range(3, len(stocks.keys())):
+        stocks.rename(columns={stocks.keys()[i]: f'inc{i-3}'}, inplace=True)
+
+    # return jsonify(data)
+    return stocks.to_json(orient='records')

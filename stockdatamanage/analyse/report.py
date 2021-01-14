@@ -5,7 +5,7 @@ import pandas as pd
 # from .. import sqlrw
 from .classifyanalyse import (
     # getHYProfitsIncRates,
-    getStockForClassify, readClassifyForStock,
+    getStockForClassify, readClassifyCodeForStock,
     readClassifyName,
 )
 from ..db import sqlrw
@@ -143,7 +143,7 @@ def reportValuation(ts_code):
     # TODO: 需补充：根据平均绝对离差计算的增长率差异水平
     # myItem.profitsIncMad = guzhiData[14]
 
-    lv4Code = readClassifyForStock(ts_code)
+    lv4Code = readClassifyCodeForStock(ts_code)
     if lv4Code is None:
         return valuation
     lv3Code = lv4Code[:6]

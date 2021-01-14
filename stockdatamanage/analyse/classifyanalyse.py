@@ -45,7 +45,7 @@ def getStockForClassify(code=None, date=None):
     #     return [row[0] for row in result]
 
 
-def readClassifyForStock(ts_code, date=None):
+def readClassifyCodeForStock(ts_code, date=None):
     """ 当查询指定股票的4级行业的代码
     """
     sql = f'select classify_code from classify_member where ts_code="{ts_code}" '
