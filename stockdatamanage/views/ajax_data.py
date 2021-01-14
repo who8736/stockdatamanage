@@ -1,13 +1,15 @@
-import logging
 import datetime as dt
+import logging
 
 from flask import current_app, request, Blueprint
+from pyecharts.charts import Bar
+from pyecharts import options as opts
 
 from ..db.sqlrw import readChigu, readClassifyProfit, readStockList, readProfitInc
 from ..util.datatrans import lastQuarter
 
-
 ajax_data = Blueprint('ajax_data', __name__)
+
 
 @ajax_data.route('/profitjson', methods=["GET", "POST"])
 def classifyProfitJson():
@@ -48,6 +50,7 @@ def holdjson():
     stocksList = stocks.to_json(orient='records', force_ascii=False)
     return stocksList
 
+
 @ajax_data.route('/stockprofitsinc', methods=["GET", "POST"])
 def stockProfitsInc():
     logging.debug(f'stock profits inc')
@@ -58,3 +61,12 @@ def stockProfitsInc():
     incDict = df.to_dict(orient='records')[0]
     logging.debug(f'stock profits inc for {ts_code}')
 
+    dates = [k[3:] for k in df.keys().to_list()[1:]]
+    values = df.iloc[0, :].to_list()[1:]
+    c = (
+        Bar()
+            .add_xaxis(dates)
+            .add_yaxis('利润增长率', values)
+            .set_global_opts(title_opts=opts.TitleOpts(title="近2年TTM利润增长率"))
+    )
+    return c.dump_options_with_quotes()
