@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}pyechart demo 首页{% endblock %}
+
+
+{% block body %}
+    {{ super() }}
+    <div class="container">
+        <div class="text-center">
+            <div><h1>行业利润增长比较</h1></div>
+            <div><label for="selectcode">行业:</label>
+                <select class="js-example-basic-multiple
+                                js-states
+                                form-control
+                                js-data-example-ajax"
+                        id="selectcode"
+                        multiple="multiple"
+                        {#                        data-ajax--url="{{ url_for('helpers.readstocks') }}"#}
+                ></select>
+            </div>
+            <div>
+                <button class="btn btn-primary" id="loaddata">读取数据</button>
+            </div>
+            <div id="bar" style="width:800px; height:450px;"></div>
+        </div>
+    </div>
+{% endblock %}
+
+
+{% block scripts %}
+    {{ super() }}
+    <script>
+        $(
+            function () {
+                let chart = echarts.init(document.getElementById('bar'),
+                    'white', {renderer: 'canvas'})
+                $.ajax({
+                    type: 'GET',
+                    url: '/ajax_data/classify_profit_inc_hist',
+                    dataType: 'json',
+                    data: {'code': '00'},
+                    success: function (result) {
+                        console.log('ajax return success')
+                        chart.setOption(result)
+                    },
+                })
+            },
+        )
+
+
+        {#$('#selectcode').select2({#}
+        {#data: data,#}
+        {#maximumSelectionLength: 2,#}
+        {#ajax: {#}
+        {#    type: 'GET',#}
+        {#    url: 'http://127.0.0.1:5000/helpers/stocks',#}
+        {#    dataType: 'json',#}
+        {#    processResults: function (data) {#}
+        {#        // Transforms the top-level key of the response object from 'items' to 'results'#}
+        {#        console.log(data)#}
+        {#        return {#}
+        {#            results: data,#}
+        {#        }#}
+        {#    },#}
+        {# },#}
+        {# })#}
+
+        $.ajax({
+            type: 'GET',
+            url: '/ajax_data/classifylist',
+            dataType: 'json',
+            success: function (data) {
+                $('#selectcode').select2({
+                    data: data,
+                    maximumSelectionLength: 2,
+                })
+            },
+        })
+
+        $('#loaddata').click(function () {
+            selected = $('#selectcode').val()
+            console.log(selected)
+            let chart = echarts.init(document.getElementById('bar'),
+                'white', {renderer: 'canvas'})
+            $.ajax({
+                type: 'GET',
+                url: '/ajax_data/classify_profit_inc_hist',
+                dataType: 'json',
+                contentType: 'application/json; charset=UTF-8',
+                data: {ts_codes: JSON.stringify(selected)},
+                success: function (result) {
+                    console.log(result)
+                    chart.setOption(result)
+                },
+            })
+        })
+
+
+    </script>
+{% endblock %}

@@ -543,7 +543,7 @@ def readLastTTMPEs(stocks, trade_date=None):
     return df
 
 
-def readUpdate(dataName, offsetdays = 0):
+def readUpdate(dataName, offsetdays=0):
     """
     获取数据的更新日期
     Parameters
@@ -622,6 +622,14 @@ def readChigu():
     return pd.read_sql(sql, engine)
 
 
+def readClassify():
+    """
+    """
+    sql = 'select code, name from classify'
+    df = pd.read_sql(sql, engine)
+    return df
+
+
 def readClassifyProfit(date, lv=None):
     """
 
@@ -640,6 +648,8 @@ def readClassifyProfit(date, lv=None):
         sql += f' and length(a.code)={lv * 2}'
     return pd.read_sql(sql, engine)
 
+def readClassifyProfitInc(code, startDate, endDate):
+    pass
 
 # def getGuzhiList():
 #     #     sql = ('select guzhiresult.ts_code, stocklist.name '

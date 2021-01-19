@@ -97,3 +97,34 @@ def calssifyStocks():
 
     # return jsonify(data)
     return stocks.to_json(orient='records')
+
+@ajax_data.route("/classifylist")
+def readstocks():
+    classify = readClassify()
+    # stocks = stocks[:10]
+    # stocks.rename(columns={'ts_code': 'id'}, inplace=True)
+    classify['text'] = classify.id + ' ' + classify.name
+    # print(stocks.to_json(orient='records', force_ascii=False))
+    return classify.to_json(orient='records', force_ascii=False)
+
+
+@ajax_data.route('/classify_profit_inc_hist')
+def stockProfitsInc():
+    logging.debug(f'ajax/classify_profit_inc_hist')
+    codes = request.args.get('code')
+
+    startDate = dt.date(dt.date.today().year - 2, 1, 1).strftime('%Y%m%d')
+    endDate = dt.date.today().strftime('%Y%m%d')
+    df = readProfitInc(startDate=startDate, endDate=endDate, code=ts_code)
+    incDict = df.to_dict(orient='records')[0]
+    logging.debug(f'stock profits inc for {ts_code}')
+
+    dates = [k[3:] for k in df.keys().to_list()[1:]]
+    values = df.iloc[0, :].to_list()[1:]
+    c = (
+        Bar()
+            .add_xaxis(dates)
+            .add_yaxis('利润增长率', values)
+            .set_global_opts(title_opts=opts.TitleOpts(title="近2年TTM利润增长率"))
+    )
+    return c.dump_options_with_quotes()

@@ -10,3 +10,9 @@ def classifyProfit():
     date = lastQuarter()
     # df = readClassifyProfit(date)
     return render_template("classifyprofit.html")
+
+@classify.route("/profit_inc_hist")
+def profitIncHist():
+    # c = bar_base1()
+    # return Markup(c.render_embed())
+    return render_template("classify_proift_inc_hist.html")
