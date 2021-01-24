@@ -70,7 +70,7 @@
                 url: '/ajax_img/classify_profit_inc_hist',
                 dataType: 'json',
                 contentType: 'application/json; charset=UTF-8',
-                data: {ts_codes: JSON.stringify(selected)},
+                data: {codes: JSON.stringify(selected)},
                 success: function (result) {
                     console.log(result)
                     chart.setOption(result)

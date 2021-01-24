@@ -101,4 +101,5 @@ def calssifyStocks():
 def classifylist():
     classify = readClassify()
     classify['text'] = classify.code + ' ' + classify.name
+    classify.rename(columns={'code': 'id'}, inplace=True)
     return classify.to_json(orient='records', force_ascii=False)

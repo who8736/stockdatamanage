@@ -88,21 +88,21 @@ def classifyProfitIncHist():
     if args is not None:
         codes = json.loads(args)
 
-    c = Bar()
-    endDate = (dt.date.today() - dt.timedelta(days=1)).strftime('%Y%m%d')
-    startDate = f'{dt.date.today().year - 3}0101'
-    df = readClassifyProfitInc(codes, startDate, endDate)
-    stocks = []
+        c = Bar()
+        endDate = (dt.date.today() - dt.timedelta(days=1)).strftime('%Y%m%d')
+        startDate = f'{dt.date.today().year - 3}0101'
+        df = readClassifyProfitInc(codes, startDate, endDate)
+        stocks = []
 
-    for key, data in df.iteritems():
-        if key == 'end_date':
-            c.add_xaxis(data.to_list())
-        else:
-            name = readClassifyName(key)
-            title = f'{key} {name}'
-            stocks.append(title)
-            c.add_yaxis(title, data.to_list())
-    c.set_global_opts(
-        title_opts=opts.TitleOpts(title="Bar-基本示例",
-                                  subtitle=', '.join(stocks)))
-    return c.dump_options_with_quotes()
+        for key, data in df.iteritems():
+            if key == 'end_date':
+                c.add_xaxis(data.to_list())
+            else:
+                name = readClassifyName(key)
+                title = f'{key} {name}'
+                stocks.append(title)
+                c.add_yaxis(title, data.to_list())
+        c.set_global_opts(
+            title_opts=opts.TitleOpts(title="Bar-基本示例",
+                                      subtitle=', '.join(stocks)))
+        return c.dump_options_with_quotes()
