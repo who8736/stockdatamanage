@@ -630,6 +630,12 @@ def readClassify():
     return df
 
 
+def readClassifyName(code):
+    sql = f'select name from classify where code="{code}"'
+    result = engine.execute(sql).fetchone()
+    if result:
+        return result[0]
+
 def readClassifyProfit(date, lv=None):
     """
 
@@ -648,8 +654,33 @@ def readClassifyProfit(date, lv=None):
         sql += f' and length(a.code)={lv * 2}'
     return pd.read_sql(sql, engine)
 
-def readClassifyProfitInc(code, startDate, endDate):
-    pass
+
+def readClassifyProfitInc(codes, startDate, endDate):
+    """
+    读一段时期的行业利润增长率
+    :rtype: DataFrame
+    :param codes: list 行业代码
+    :param startDate:
+    :param endDate:
+    """
+    assert isinstance(codes, list), 'codes 应为list类型'
+    incdf = None
+    for code in codes:
+        df = _readClassifyProfitInc(code, startDate, endDate)
+        df.rename(columns={'inc': code}, inplace=True)
+        if incdf is None:
+            incdf = df.copy()
+        else:
+            incdf = incdf.merge(df, on='end_date', how='outer')
+    return incdf
+
+
+def _readClassifyProfitInc(code, startDate, endDate):
+    sql = f'''select end_date, inc from classify_profits
+                where code="{code}" and
+                    end_date>="{startDate}" and end_date<="{endDate}"
+            '''
+    return pd.read_sql(sql, engine)
 
 # def getGuzhiList():
 #     #     sql = ('select guzhiresult.ts_code, stocklist.name '

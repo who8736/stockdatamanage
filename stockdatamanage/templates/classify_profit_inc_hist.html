@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}pyechart demo 首页{% endblock %}
+{% block title %}行业利润增长率比较{% endblock %}
 
 
 {% block body %}
@@ -30,40 +30,23 @@
 {% block scripts %}
     {{ super() }}
     <script>
-        $(
-            function () {
-                let chart = echarts.init(document.getElementById('bar'),
-                    'white', {renderer: 'canvas'})
-                $.ajax({
-                    type: 'GET',
-                    url: '/ajax_data/classify_profit_inc_hist',
-                    dataType: 'json',
-                    data: {'code': '00'},
-                    success: function (result) {
-                        console.log('ajax return success')
-                        chart.setOption(result)
-                    },
-                })
-            },
-        )
+        $(function () {
+            let chart = echarts.init(document.getElementById('bar'),
+                'white', {renderer: 'canvas'})
+            let codes = ['00']
+            $.ajax({
+                type: 'GET',
+                url: '/ajax_img/classify_profit_inc_hist',
+                dataType: 'json',
+                data: {'codes': JSON.stringify(codes)},
+                success: function (result) {
+                    console.log('ajax return success')
+                    chart.setOption(result)
+                },
 
+            })
+        })
 
-        {#$('#selectcode').select2({#}
-        {#data: data,#}
-        {#maximumSelectionLength: 2,#}
-        {#ajax: {#}
-        {#    type: 'GET',#}
-        {#    url: 'http://127.0.0.1:5000/helpers/stocks',#}
-        {#    dataType: 'json',#}
-        {#    processResults: function (data) {#}
-        {#        // Transforms the top-level key of the response object from 'items' to 'results'#}
-        {#        console.log(data)#}
-        {#        return {#}
-        {#            results: data,#}
-        {#        }#}
-        {#    },#}
-        {# },#}
-        {# })#}
 
         $.ajax({
             type: 'GET',
@@ -84,7 +67,7 @@
                 'white', {renderer: 'canvas'})
             $.ajax({
                 type: 'GET',
-                url: '/ajax_data/classify_profit_inc_hist',
+                url: '/ajax_img/classify_profit_inc_hist',
                 dataType: 'json',
                 contentType: 'application/json; charset=UTF-8',
                 data: {ts_codes: JSON.stringify(selected)},

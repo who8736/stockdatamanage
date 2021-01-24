@@ -8,7 +8,7 @@ import datetime as dt
 
 from pyecharts.charts import Bar
 
-from stockdatamanage.db.sqlrw import readProfitInc
+from stockdatamanage.db.sqlrw import readProfitInc, readClassifyProfitInc
 from stockdatamanage.util.initlog import initlog
 
 
@@ -28,6 +28,9 @@ def test_stockProfitsInc():
             .set_global_opts(title_opts=opts.TitleOpts(title="Bar-基本示例", subtitle="我是副标题"))
     )
     return c.dump_options_with_quotes()
+
+
+def test_classifyProfitInc():
 
 
 if __name__ == '__main__':

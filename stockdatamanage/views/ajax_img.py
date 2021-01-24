@@ -1,11 +1,15 @@
+import datetime as dt
 import logging
+import json
 
 from bokeh.embed import components
 from bokeh.resources import INLINE
 from flask import Blueprint, render_template, send_file, request
+from pyecharts import options as opts
+from pyecharts.charts import Bar
 
-from stockdatamanage.db.sqlrw import readIndexKline, readStockKline
-from stockdatamanage.util.bokeh_plot import BokehPlot, PlotProfitsInc, plotKline
+from ..db.sqlrw import readIndexKline, readStockKline, readClassifyProfitInc, readClassifyName
+from ..util.bokeh_plot import BokehPlot, PlotProfitsInc, plotKline
 
 ajax_img = Blueprint('ajax_img', __name__)
 
@@ -77,3 +81,28 @@ def del_profitsIncImg():
         return '<div>绘图失败</div>'
 
 
+@ajax_img.route("/classify_profit_inc_hist")
+def classifyProfitIncHist():
+    args = request.args.get('codes')
+    logging.debug(args)
+    if args is not None:
+        codes = json.loads(args)
+
+    c = Bar()
+    endDate = (dt.date.today() - dt.timedelta(days=1)).strftime('%Y%m%d')
+    startDate = f'{dt.date.today().year - 3}0101'
+    df = readClassifyProfitInc(codes, startDate, endDate)
+    stocks = []
+
+    for key, data in df.iteritems():
+        if key == 'end_date':
+            c.add_xaxis(data.to_list())
+        else:
+            name = readClassifyName(key)
+            title = f'{key} {name}'
+            stocks.append(title)
+            c.add_yaxis(title, data.to_list())
+    c.set_global_opts(
+        title_opts=opts.TitleOpts(title="Bar-基本示例",
+                                  subtitle=', '.join(stocks)))
+    return c.dump_options_with_quotes()
