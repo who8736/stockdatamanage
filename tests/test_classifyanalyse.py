@@ -2,14 +2,14 @@
 # author:who8736
 # datetime:2020/11/17 8:35
 
-from stockdatamanage.util.datatrans import calDate
 from stockdatamanage.analyse.classifyanalyse import (
-    calClassifyStaticTTMProfitLow,
+    calClassifyStaticTTMProfitLow, calClassifyProfitsIncCompare,
     calClassifyStaticTTMProfit,
     readClassifyPE,
     # readClassifyProfitInc,
 )
 from stockdatamanage.db.sqlrw import readProfitInc
+from stockdatamanage.util.datatrans import calDate
 
 
 def test_calDate():
@@ -43,8 +43,12 @@ def test_readClassifyPE():
 
 def test_readProfitInc():
     df = readProfitInc('20150331', '20200930', ptype='classify',
-                            reportType='year')
+                       reportType='year')
     print(df)
+
+
+def test_calClassifyProfitsIncCompare():
+    calClassifyProfitsIncCompare()
 
 
 if __name__ == '__main__':
@@ -55,5 +59,6 @@ if __name__ == '__main__':
 
     # test_readClassifyPE()
 
-    test_readProfitInc()
+    # test_readProfitInc()
 
+    test_calClassifyProfitsIncCompare()

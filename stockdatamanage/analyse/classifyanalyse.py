@@ -14,7 +14,7 @@ import pandas as pd
 
 from ..db.sqlconn import engine
 from ..db.sqlrw import (
-    readStockList, readTTMProfitsForDate, writeSQL,
+    readStockList, readTTMProfitsForDate, writeSQL, readProfit, readClassify
 )
 from ..util import datatrans
 from ..util.datatrans import calDate
@@ -313,29 +313,32 @@ def resetClassifyProfits(startQuarter='20200331', endQuarter='20201231'):
     for date in dates:
         calAllHYTTMProfits(date)
 
-# def test1():
-#     """ 查询一组股票所处的行业分别有多少公司
-#     """
-#     ts_codes = ['002508', '600261', '002285', '000488',
-#                 '002573', '300072', '000910']
-#     for ts_code in ts_codes:
-#         stockName = sqlrw.getStockName(ts_code)
-#         hyID = readClassify(ts_code)
-#         hyName = getClassifyName(hyID)
-#         hyCount = getHYStockCount(hyID)
-#         print(ts_code, stockName, hyID, hyName, hyCount)
 
+def calClassifyProfitsIncCompare(startDate='20170930', endDate='20200930'):
+    """计算N年内所有行业利润增长水平
+        采用可比利润计算，按计算时的行业分类，取当前和N年前行业股票,
+        剔除期间新增股票后, 计算利润增长水平与复利
+    """
+    # 历史利润
+    df = readProfit(startDate, endDate)
 
-# def test2():
-#     hyList = getHYList()
-#     hyPEs = {}
-#     for hyID in hyPE(hyID, '20171027')
-#         hyPEs[hyIDList:
-# #         pe = getHY] = pe
-#         print(hyID, pe)
+    # 增加行业代码
+    sql = f'''select ts_code, classify_code from classify_member 
+                where date=(select max(date) from classify_member);'''
+    classifymember = pd.read_sql(sql, engine)
+    df = df.merge(classifymember, on='ts_code')
 
+    # 分类汇总
+    dfgroup = df.groupby('classify_code')
+    dfgroup['inc'] = dfgroup[f'profit{endDate}'] / dfgroup[f'profit{startDate}']
+    dfgroup.loc[dfgroup[f'profit{startdate}'] > 0, 'inc'] = (
+            dfgroup.inc * 100 - 100).round(2)
+    dfgroup.loc[dfgroup[f'profit{startdate}'] < 0, 'inc'] = (
+            100 - dfgroup.inc * 100).round(2)
 
-# def getHYIDName(ts_code):
-#     hyID = getHYIDForStock(ts_code)
-#     hyName = getHYName(hyID)
-#     print ts_code, hyID, hyName
+    # 输出结果
+    classify = readClassify()
+    dfgroup = dfgroup.merge(classify, how='left', on='classify_code')
+    df.to_excel('classifyproifitinc.xlsx')
+    dfgroup.to_excel('classifyprofitgroup.xlsx')
+    print(df)

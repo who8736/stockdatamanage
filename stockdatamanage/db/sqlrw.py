@@ -874,3 +874,45 @@ def readProfitInc(startDate, endDate=None, ptype='stock',
             df = df.merge(_df, on=f'{field}', how='left')
 
     return df
+
+
+def readProfit(startDate, endDate=None, ptype='stock',
+                  code=None, reportType='quarter'):
+    """ 股票TTM利润增长率,按季或按年返回数个报告期增长率
+    :param ptype: str, stock股票, classify行业
+    :param reportType: str, quarter季报， year年报
+    :param code:
+    :param startDate:
+    :param endDate:
+    :return:
+    """
+    if ptype == 'stock':
+        table = 'ttmprofits'
+        codefield = 'ts_code'
+        profitfield = 'ttmprofits'
+    else:
+        table = 'classify_profits'
+        codefield = 'code'
+        profitfield = 'profits'
+    if endDate is None:
+        endDate = startDate
+    df = None
+    dates = quarterList(startDate, endDate, reportType=reportType)
+    import copy
+    for index, date in enumerate(dates):
+        sql = (f'select {codefield}, {profitfield} from {table} '
+               f'where end_date="{date}";')
+        _df = pd.read_sql(sql, engine)
+        _df.rename(columns={f'{profitfield}': f'profit{date}'}, inplace=True)
+        if isinstance(code, str):
+            _df = _df[_df[f'{codefield}'] == code]
+        elif isinstance(code, list):
+            _df = _df[_df[f'{codefield}'].isin(code)]
+
+
+        if df is None:
+            df = copy.deepcopy(_df)
+        else:
+            df = df.merge(_df, on=f'{codefield}')
+
+    return df
