@@ -17,7 +17,7 @@ from ..db.sqlrw import (
     readStockList, readTTMProfitsForDate, writeSQL, readProfit, readClassify
 )
 from ..util import datatrans
-from ..util.datatrans import calDate
+from ..util.datatrans import calDate, quarterList
 
 
 # import logging
@@ -329,16 +329,34 @@ def calClassifyProfitsIncCompare(startDate='20170930', endDate='20200930'):
     df = df.merge(classifymember, on='ts_code')
 
     # 分类汇总
-    dfgroup = df.groupby('classify_code')
-    dfgroup['inc'] = dfgroup[f'profit{endDate}'] / dfgroup[f'profit{startDate}']
-    dfgroup.loc[dfgroup[f'profit{startdate}'] > 0, 'inc'] = (
-            dfgroup.inc * 100 - 100).round(2)
-    dfgroup.loc[dfgroup[f'profit{startdate}'] < 0, 'inc'] = (
-            100 - dfgroup.inc * 100).round(2)
+    dfgroup = df.groupby('classify_code').sum()
+    dfgroup.reset_index(inplace=True)
+
+    # 总体利润增长率
+    baseField = f'profit{startDate}'
+    curField = f'fprofit{endDate}'
+    dfgroup[inc] = dfgroup[curField] / dfgroup[baseField]
+    dfgroup.loc[dfgroup[baseField] > 0, 'inc'] = (
+            dfgroup[incField] * 100 - 100).round(2)
+    dfgroup.loc[dfgroup[baseField] < 0, 'inc'] = (
+            100 - dfgroup[incField] * 100).round(2)
+
+    # 利润增长的稳定性
+    dates = quarterList(startDate, endDate)
+    for i in range(1, len(dates)):
+        print(dates[i - 1], dates[i])
+        lastField = f'profit{dates[i - 1]}'
+        curField = f'profit{dates[i]}'
+        incField = f'inc{dates[i]}'
+        dfgroup[incField] = dfgroup[curField] / dfgroup[lastField]
+        dfgroup.loc[dfgroup[lastField] > 0, incField] = (
+                dfgroup[incField] * 100 - 100).round(2)
+        dfgroup.loc[dfgroup[lastField] < 0, incField] = (
+                100 - dfgroup[incField] * 100).round(2)
 
     # 输出结果
     classify = readClassify()
-    dfgroup = dfgroup.merge(classify, how='left', on='classify_code')
+    dfgroup = dfgroup.merge(classify, how='left', left_on='classify_code', right_on='code')
     df.to_excel('classifyproifitinc.xlsx')
     dfgroup.to_excel('classifyprofitgroup.xlsx')
     print(df)
