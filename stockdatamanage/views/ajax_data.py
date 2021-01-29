@@ -1,3 +1,4 @@
+import json
 import datetime as dt
 import logging
 
@@ -6,6 +7,7 @@ from flask import current_app, request, Blueprint
 from ..analyse.classifyanalyse import readClassifyCodeForStock, getStockForClassify
 from ..db.sqlrw import readChigu, readClassifyProfit, readStockList, readProfitInc, readClassify
 from ..util.datatrans import lastQuarter
+from ..util.misc import INDEXLIST
 
 ajax_data = Blueprint('ajax_data', __name__)
 
@@ -57,17 +59,15 @@ def stockProfitsInc():
     startDate = dt.date(dt.date.today().year - 2, 1, 1).strftime('%Y%m%d')
     endDate = dt.date.today().strftime('%Y%m%d')
     df = readProfitInc(startDate=startDate, endDate=endDate, code=ts_code)
-    incDict = df.to_dict(orient='records')[0]
+    # incDict = df.to_dict(orient='records')[0]
     logging.debug(f'stock profits inc for {ts_code}')
 
     dates = [k[3:] for k in df.keys().to_list()[1:]]
     values = df.iloc[0, :].to_list()[1:]
-    c = (
-        Bar()
-            .add_xaxis(dates)
-            .add_yaxis('利润增长率', values)
-            .set_global_opts(title_opts=opts.TitleOpts(title="近2年TTM利润增长率"))
-    )
+    c = Bar()
+    c.add_xaxis(dates)
+    c.add_yaxis('利润增长率', values)
+    c.set_global_opts(title_opts=opts.TitleOpts(title="近2年TTM利润增长率"))
     return c.dump_options_with_quotes()
 
 
@@ -103,3 +103,12 @@ def classifylist():
     classify['text'] = classify.code + ' ' + classify.name
     classify.rename(columns={'code': 'id'}, inplace=True)
     return classify.to_json(orient='records', force_ascii=False)
+
+
+@ajax_data.route("/indexcode")
+def indexlist():
+    data = []
+    for key in INDEXLIST:
+        data.append({'id': key, 'text': key + ' ' + INDEXLIST[key]})
+    return json.dumps(data)
+

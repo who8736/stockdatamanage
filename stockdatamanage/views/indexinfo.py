@@ -19,3 +19,8 @@ def indexInfo():
     stockItem = reportIndex(ID)
     return render_template('indexinfo.html',
                            stock=stockItem)
+
+
+@indexinfo.route('/pe')
+def indexPE():
+    return render_template('index_pe.html')

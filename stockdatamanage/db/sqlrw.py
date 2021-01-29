@@ -813,6 +813,20 @@ def _readKline(sql):
     # return klineDf
 
 
+def readIndexPE(codes, startDate, endDate):
+    df = None
+    for code in codes:
+        sql = f'''select trade_date date, pe_ttm pe  from index_dailybasic
+                    where ts_code="{code}" 
+                    and trade_date>="{startDate}" and trade_date<="{endDate}"'''
+        _df = pd.read_sql(sql, engine)
+        _df.rename(columns={'pe': f'pe{code[:6]}'}, inplace=True)
+        if df is None:
+            df = _df.copy()
+        else:
+            df = df.merge(_df, on='date', how='outer')
+    return df
+
 def setUpdate(dataName, _date=None):
     """
 

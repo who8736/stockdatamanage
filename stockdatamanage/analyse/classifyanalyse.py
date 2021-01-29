@@ -334,25 +334,30 @@ def calClassifyProfitsIncCompare(startDate='20170930', endDate='20200930'):
 
     # 总体利润增长率
     baseField = f'profit{startDate}'
-    curField = f'fprofit{endDate}'
-    dfgroup[inc] = dfgroup[curField] / dfgroup[baseField]
+    curField = f'profit{endDate}'
+    dfgroup['inc'] = dfgroup[curField] / dfgroup[baseField]
     dfgroup.loc[dfgroup[baseField] > 0, 'inc'] = (
-            dfgroup[incField] * 100 - 100).round(2)
+            dfgroup.inc * 100 - 100).round(2)
     dfgroup.loc[dfgroup[baseField] < 0, 'inc'] = (
-            100 - dfgroup[incField] * 100).round(2)
+            100 - dfgroup.inc * 100).round(2)
 
     # 利润增长的稳定性
     dates = quarterList(startDate, endDate)
+    dfinc = dfgroup[['classify_code']].copy()
     for i in range(1, len(dates)):
         print(dates[i - 1], dates[i])
         lastField = f'profit{dates[i - 1]}'
         curField = f'profit{dates[i]}'
         incField = f'inc{dates[i]}'
-        dfgroup[incField] = dfgroup[curField] / dfgroup[lastField]
-        dfgroup.loc[dfgroup[lastField] > 0, incField] = (
-                dfgroup[incField] * 100 - 100).round(2)
-        dfgroup.loc[dfgroup[lastField] < 0, incField] = (
-                100 - dfgroup[incField] * 100).round(2)
+        dfinc[incField] = dfgroup[curField] / dfgroup[lastField]
+        dfinc.loc[dfgroup[lastField] > 0, incField] = (
+                dfinc[incField] * 100 - 100).round(2)
+        dfinc.loc[dfgroup[lastField] < 0, incField] = (
+                100 - dfinc[incField] * 100).round(2)
+    dfgroup['avg'] = dfinc.mean(axis=1).round(2)
+    # cv: 标准离差率
+    dfgroup['cv'] = (dfinc.std(axis=1) / dfinc.mean(axis=1)).round(2)
+
 
     # 输出结果
     classify = readClassify()

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}指数PE查询{% endblock %}
+
+
+{% block body %}
+    {{ super() }}
+    <div class="container">
+        <div class="text-center">
+            <div><h1>指数PE</h1></div>
+            <div><label for="selectcode">指数:</label>
+                <select class="js-example-basic-multiple
+                                js-states
+                                form-control
+                                js-data-example-ajax"
+                        id="selectcode"
+                        multiple="multiple"
+                        {#                        data-ajax--url="{{ url_for('helpers.readstocks') }}"#}
+                ></select>
+            </div>
+            <div>
+                <button class="btn btn-primary" id="loaddata">读取数据</button>
+            </div>
+            <div id="line" style="width:800px; height:450px;"></div>
+        </div>
+    </div>
+{% endblock %}
+
+
+{% block scripts %}
+    {{ super() }}
+    <script>
+        $(function () {
+            let chart = echarts.init(document.getElementById('line'),
+                'white', {renderer: 'canvas'})
+            let codes = ['000001.SH']
+            $.ajax({
+                type: 'GET',
+                url: '/ajax_img/index_pe',
+                dataType: 'json',
+                data: {'codes': JSON.stringify(codes)},
+                success: function (result) {
+                    console.log('ajax return success')
+                    chart.setOption(result)
+                },
+
+            })
+        })
+
+
+        $.ajax({
+            type: 'GET',
+            url: '/ajax_data/indexcode',
+            dataType: 'json',
+            success: function (data) {
+                $('#selectcode').select2({
+                    data: data,
+                    maximumSelectionLength: 2,
+                })
+            },
+        })
+
+        $('#loaddata').click(function () {
+            selected = $('#selectcode').val()
+            console.log(selected)
+            let chart = echarts.init(document.getElementById('line'),
+                'white', {renderer: 'canvas'})
+            $.ajax({
+                type: 'GET',
+                url: '/ajax_img/index_pe',
+                dataType: 'json',
+                contentType: 'application/json; charset=UTF-8',
+                data: {codes: JSON.stringify(selected)},
+                success: function (result) {
+                    console.log(result)
+                    chart.setOption(result)
+                },
+            })
+        })
+
+
+    </script>
+{% endblock %}

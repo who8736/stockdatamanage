@@ -8,6 +8,20 @@ Created on 2017年10月26日
 import datetime as dt
 from datetime import timedelta
 
+INDEXLIST = {
+    '000001.SH': '上证综指',
+    '000005.SH': '上证商业类指数',
+    '000006.SH': '上证房地产指数',
+    '000016.SH': '上证50',
+    '000905.SH': '中证500',
+    '399001.SZ': '深证成指',
+    '399005.SZ': '中小板指',
+    '399006.SZ': '创业板指',
+    '399016.SZ': '深证创新',
+    '399300.SZ': '沪深300',
+}
+
+
 # from download import DownloaderQuarter
 # from sqlrw import readStockList
 
@@ -103,6 +117,7 @@ def dayDelta(sorDate, days, dateformat='%Y%m%d'):
     elif isinstance(sorDate, str):
         _sorDate = dt.datetime.strptime(sorDate, '%Y%m%d')
         return (_sorDate + timedelta(days=days)).strftime(dateformat)
+
 
 if __name__ == '__main__':
     pass

@@ -1,15 +1,17 @@
 import datetime as dt
-import logging
 import json
+import logging
 
 from bokeh.embed import components
 from bokeh.resources import INLINE
 from flask import Blueprint, render_template, send_file, request
 from pyecharts import options as opts
-from pyecharts.charts import Bar
+from pyecharts.charts import Bar, Line
 
-from ..db.sqlrw import readIndexKline, readStockKline, readClassifyProfitInc, readClassifyName
+from ..db.sqlrw import readIndexKline, readStockKline, readClassifyProfitInc, readClassifyName, readIndexPE
 from ..util.bokeh_plot import BokehPlot, PlotProfitsInc, plotKline
+from ..util.misc import INDEXLIST
+
 
 ajax_img = Blueprint('ajax_img', __name__)
 
@@ -104,5 +106,33 @@ def classifyProfitIncHist():
                 c.add_yaxis(title, data.to_list())
         c.set_global_opts(
             title_opts=opts.TitleOpts(title="Bar-基本示例",
+                                      subtitle=', '.join(stocks)))
+        return c.dump_options_with_quotes()
+
+
+@ajax_img.route("/index_pe")
+def indexPE():
+    args = request.args.get('codes')
+    logging.debug(args)
+    if args is not None:
+        codes = json.loads(args)
+
+        c = Line()
+        endDate = (dt.date.today() - dt.timedelta(days=1)).strftime('%Y%m%d')
+        startDate = f'{dt.date.today().year - 3}0101'
+        df = readIndexPE(codes, startDate, endDate)
+        stocks = []
+
+        for key, data in df.iteritems():
+            if key == 'date':
+                c.add_xaxis(data.to_list())
+            else:
+                code = f'{key[2:]}.SH'
+                name = INDEXLIST[code]
+                title = f'{code} {name}'
+                stocks.append(title)
+                c.add_yaxis(title, data.to_list())
+        c.set_global_opts(
+            title_opts=opts.TitleOpts(title='指数PE',
                                       subtitle=', '.join(stocks)))
         return c.dump_options_with_quotes()
