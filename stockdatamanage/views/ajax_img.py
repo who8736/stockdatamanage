@@ -12,7 +12,6 @@ from ..db.sqlrw import readIndexKline, readStockKline, readClassifyProfitInc, re
 from ..util.bokeh_plot import BokehPlot, PlotProfitsInc, plotKline
 from ..util.misc import INDEXLIST
 
-
 ajax_img = Blueprint('ajax_img', __name__)
 
 
@@ -127,12 +126,24 @@ def indexPE():
             if key == 'date':
                 c.add_xaxis(data.to_list())
             else:
-                code = f'{key[2:]}.SH'
+                code = key[2:] + ('.SH' if key[2] == '0' else '.SZ')
                 name = INDEXLIST[code]
                 title = f'{code} {name}'
                 stocks.append(title)
-                c.add_yaxis(title, data.to_list())
+                c.add_yaxis(title, data.to_list(),
+                            label_opts=opts.LabelOpts(is_show=False))
+
+        tool_js = """function (param) {return param.seriesName + ' — ' +param.data[3]+'<br/>' +'d0: '+param.data[0]+'<br/>' +'d1: '+param.data[1]+'<br/>' ;}"""
         c.set_global_opts(
-            title_opts=opts.TitleOpts(title='指数PE',
-                                      subtitle=', '.join(stocks)))
+            title_opts=opts.TitleOpts(title='指数PE', subtitle=', '.join(stocks)),
+            xaxis_opts=opts.AxisOpts(
+                type_='time',
+                splitline_opts=opts.SplitLineOpts(is_show=True),
+            ),
+            yaxis_opts=opts.AxisOpts(
+                is_scale=True,
+                splitline_opts=opts.SplitLineOpts(is_show=True),
+            ),
+            # tooltip_opts=opts.TooltipOpts(formatter=JsCode(tool_js))
+        )
         return c.dump_options_with_quotes()

@@ -39,28 +39,33 @@
                 <li class="nav-item">
                     <a class="nav-link" href="/">首页</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('valuation.valuationNav', valu_type='chigu') }}">持股股票评分</a>
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button">
+                        评分
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <a class="dropdown-item" href="{{ url_for('valuation.valuationNav', valu_type='chigu') }}">持股股票评分</a>
+                        <a class="dropdown-item" href="{{ url_for('valuation.valuationNav', valu_type='youzhi') }}">优质股票评分</a>
+                        <a class="dropdown-item" href="{{ url_for('valuation.valuationNav', valu_type='all') }}">全部股票评分</a>
+                    </div>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('valuation.valuationNav', valu_type='youzhi') }}">优质股票评分</a>
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button">
+                        行业
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <a class="dropdown-item" href="{{ url_for('classify.profit') }}">行业利润</a>
+                        <a class="dropdown-item" href="/classify/profit_inc_hist">行业利润增长比较</a>
+                    </div>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('valuation.valuationNav', valu_type='all') }}">全部股票评分</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('classify.profit') }}">行业利润</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/classify/profit_inc_hist">行业利润增长比较</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link"
-                       href="/indexinfo/pe">指数PE</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link"
-                       href="/indexklineimgnew/000010.SH">上证180历史PE</a>
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button">
+                        指数
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <a class="dropdown-item" href="/indexinfo/pe">指数PE</a>
+{#                        <a class="dropdown-item" href="/indexklineimgnew/000010.SH">上证180历史PE</a>#}
+                    </div>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link"

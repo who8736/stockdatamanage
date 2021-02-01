@@ -21,7 +21,7 @@
             <div>
                 <button class="btn btn-primary" id="loaddata">读取数据</button>
             </div>
-            <div id="line" style="width:800px; height:450px;"></div>
+            <div id="line" style="width:1200px; height:450px;"></div>
         </div>
     </div>
 {% endblock %}
@@ -55,7 +55,7 @@
             success: function (data) {
                 $('#selectcode').select2({
                     data: data,
-                    maximumSelectionLength: 2,
+                    maximumSelectionLength: 6,
                 })
             },
         })
