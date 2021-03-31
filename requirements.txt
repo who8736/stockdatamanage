@@ -16,7 +16,7 @@ Flask_Bootstrap==3.3.7.1
 Flask==1.1.1
 numpy==1.18.1
 Flask_WTF==0.14.3
-lxml==4.5.0
+lxml==4.6.3
 tushare==1.2.54
 python_dateutil==2.8.1
 scikit_learn==0.22.2.post1
