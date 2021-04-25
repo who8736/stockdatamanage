@@ -652,7 +652,7 @@ def linearPlot(data, plot=False, title=None, filename=None):
 def plotProfitInc(ts_code, data):
     # sql = select
     # data = getProfitsInc(ts_code, startDate, endDate)
-    filename = os.path.join(DATAPATH, 'linear_img',
+    filename = os.path.join(DATAPATH, 'linear_img/profitinc',
                             f'profit_inc_{ts_code[:6]}.png')
     name = readStockName(ts_code)
     title = f'{ts_code} {name}'

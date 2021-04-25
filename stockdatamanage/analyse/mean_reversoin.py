@@ -19,16 +19,17 @@ from statsmodels.tsa.stattools import adfuller
 from stockdatamanage.db.sqlconn import engine
 from stockdatamanage.db.sqlrw import readStockList
 from stockdatamanage.util.bokeh_plot import plotProfitInc
-from ..config import DATAPATH
+from stockdatamanage.config import DATAPATH
 
 
 def adfTestPE(ts_code, startDate, endDate, plotFlag=False):
-    sql = (f'select ttmpe from klinestock '
+    sql = (f'select pe_ttm from daily_basic '
            f'where ts_code="{ts_code}" '
-           f'and date>="{startDate}" and date<="{endDate}"')
+           f'and trade_date>="{startDate}" and trade_date<="{endDate}"')
     dfa = pd.read_sql(sql, engine)
-    resulta = adfuller(dfa['ttmpe'])
-    dfb = np.diff(dfa['ttmpe'])
+    dfa.dropna(inplace=True)
+    resulta = adfuller(dfa['pe_ttm'])
+    dfb = np.diff(dfa['pe_ttm'])
     resultb = adfuller(dfb)
     print('stock:', ts_code)
     print('resulta:\n', resulta)
@@ -53,7 +54,7 @@ def plotDf(ts_code, dfa, dfb):
     ax1 = plt.subplot(gs[0, 0])
     ax2 = plt.subplot(gs[0, 1])
     # 绘制拆线图
-    ax1.plot(dfa.ttmpe, color='blue', label=ts_code)
+    ax1.plot(dfa.pe_ttm, color='blue', label=ts_code)
     ax1.legend()
     ax1.set_title(ts_code, fontsize=12)
     ax2.plot(dfb, color='blue', label=ts_code)
@@ -70,7 +71,8 @@ def plotDf(ts_code, dfa, dfb):
     # fig.autofmt_xdate()
 
     plt.grid(True)
-    plt.show()
+    plt.savefig(os.path.join(DATAPATH, 'linear_img/pe', f'ADFTest{ts_code}.png'))
+    # plt.show()
 
 
 def adfTestProfits(ts_code, startDate, endDate):
@@ -238,20 +240,22 @@ def adfTestAllPE(stockList, startDate, endDate, plotFlag):
     nameDf = readStockList()
     # nameDf = pd.DataFrame(readStockListFromSQL(), columns=['id', 'name'])
     df = pd.merge(df, nameDf, left_on='ts_code', right_on='ts_code')
-    df.to_excel('adf_pe.xlsx')
+    df.to_excel(os.path.join(DATAPATH, 'adf_pe.xlsx'))
     # print(df)
 
 
 if __name__ == '__main__':
     pass
     # stockList = ['000651', '000333', '000002']
-    startDate = '20140101'
-    endDate = '20191231'
+    startDate = '20180101'
+    endDate = '20210423'
 
     # pro = ts.pro_api()
     # indexDf = pro.index_weight(index_code='399300.SZ', start_date='20200301')
     # stockList = indexDf.con_code.str[:6].to_list()
-    # adfTestAllPE(stockList, startDate, endDate, plotFlag=False)
+    stocks = readStockList()
+    # stocks = stocks[:6]
+    adfTestAllPE(stocks['ts_code'], startDate, endDate, plotFlag=True)
 
     # adfTestPE('000651', startDate, endDate, plotFlag=True)
     adfTestAllProfitsInc()
