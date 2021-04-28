@@ -3,9 +3,10 @@
 """
 import os
 from collections import OrderedDict
-from math import log, sqrt
+from math import log
 
 # import matplotlib.mlab as mlab
+import matplotlib
 import matplotlib.dates as mdates
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt  # @IgnorePep8
@@ -18,14 +19,17 @@ from sklearn import datasets, linear_model
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import LocalOutlierFactor
-from sklearn.preprocessing import PowerTransformer
+from sklearn.preprocessing import PowerTransformer, MinMaxScaler
 from statsmodels.tsa.stattools import adfuller
+from fbprophet import Prophet
 
 import stockdatamanage.views.home
 from stockdatamanage.db.sqlconn import engine
 from stockdatamanage.db.sqlrw import readStockList, readStockName
 from ..config import DATAPATH
 
+matplotlib.rcParams['font.sans-serif'] = ['simsun']
+matplotlib.use('TkAgg')
 
 def studyTime():
     examDict = {
@@ -233,35 +237,49 @@ def _linearProfitIncDouble(ts_code, startDate, endDate):
     return result_linear, result_huber
 
 
-def _linearProfits(ts_code, startQuarter, fig):
+def _linearProfits(ts_code, startDate, fig):
     """
     对单一自变量进行线性回归，返回（截距， 系数，平均方差）
+    采用财务指标表中的扣非净利润
+    table: fina_indicator
+    field: profit_dedt
+
     :return:
     """
     pass
-    sql = (f'SELECT ttmprofits FROM stockdata.ttmprofits'
-           f' where ts_code="{ts_code}" and date>={startQuarter};')
+    sql = (f'SELECT profit_dedt FROM stockdata.fina_indicator'
+           f' where ts_code="{ts_code}" and end_date>="{startDate}";')
     result = engine.execute(sql).fetchall()
     cnt = len(result)
     if cnt < 10:
         return None, None, None
-    y = [i[0] / 10000 / 10000 for i in result]
+    # y = [i[0] / 10000 / 10000 for i in result]
+
+    # 将数据压缩到(1, 2)区间内，便于比较不同股票间的利润增长水平
+    # 如压缩到(0, 1)区间内则会产生除0异常
+    scaler = MinMaxScaler(feature_range=(1, 2))
+    # y = scaler.fit([i[0] for i in result])
+    y = scaler.fit_transform(result)
     x = np.array(range(cnt))
     x = x[:, np.newaxis]
 
     # 拟合
     regr = linear_model.LinearRegression()
     regr.fit(x, y)
-    intercept = regr.intercept_
-    coef = regr.coef_[0]
+    intercept = regr.intercept_[0]
+    coef = regr.coef_[0][0]
     # print(f'截距:{intercept}, 系数:{coef}')
 
     # 计算平均残差
     Y = [intercept + i * coef for i in x]
-    try:
-        cha = sum(map(lambda a, b: abs(sqrt((a - b) ** 2) / a), y, Y)) / cnt
-    except ZeroDivisionError:
-        return None, None, None
+    Y_predict = regr.predict(x)
+    print('Y:\n', Y)
+    print('Y_predict:\n', Y_predict)
+    # try:
+    #     cha = sum(map(lambda a, b: abs(sqrt((a - b) ** 2) / a), y, Y)) / cnt
+    # except ZeroDivisionError:
+    #     return None, None, None
+    score = r2_score(y, Y_predict)
 
     # 绘图
     # ax = plt.subplot()
@@ -271,11 +289,11 @@ def _linearProfits(ts_code, startQuarter, fig):
     name = readStockName(ts_code)
     plt.title(f'{ts_code} {name}', fontproperties='simsun', fontsize=26)
     # plt.show()
-    filename = f'../data/linear_img/{ts_code[:6]}.png'
+    filename = os.path.join(DATAPATH, 'linear_img', f'linear_profit_{ts_code[:6]}.png')
     plt.savefig(filename)
     plt.clf()
 
-    return intercept, coef, cha
+    return intercept, coef, score
 
 
 def plotPairs(df, intercept, coef):
@@ -550,31 +568,32 @@ def linearProfits():
     fig = plt.figure(figsize=(10, 10))
     stocks = readStockList()
     # stocks = stocks[455 + 1398:]
+    stocks = stocks[:6]
     intercept = []
     coef = []
-    chas = []
-    startQuarter = 20091
+    r2values = []
+    startQuarter = '20070331'
     cnt = len(stocks)
     cur = 1
     for ts_code in stocks.ts_code:
         # ts_code = '002161.SZ'
-        _intercept, _coef, cha = _linearProfits(ts_code, startQuarter,
-                                                fig)
+        _intercept, _coef, r2value = _linearProfits(ts_code, startQuarter,
+                                                    fig)
         if _intercept is not None:
-            print(f'{cur}/{cnt} {ts_code} 截距: {round(_intercept, 2)}'
-                  f' 系数: {round(_coef, 2)}'
-                  f' 平均残差率: {round(cha, 2)}')
+            print(f'{cur}/{cnt} {ts_code} 截距: {_intercept:.3f}'
+                  f' 系数: {_coef:.3f}'
+                  f' r2分值: {r2value}')
         else:
             print(f'{cur}/{cnt} {ts_code} 无数据')
         intercept.append(_intercept)
         coef.append(_coef)
-        chas.append(cha)
+        r2values.append(r2value)
         cur += 1
 
     stocks['intercept'] = intercept
     stocks['coef'] = coef
-    stocks['cha'] = chas
-    stocks.to_excel('../data/profits_linear_regression.xlsx')
+    stocks['r2values'] = r2values
+    stocks.to_excel(os.path.join(DATAPATH, 'linearprofit', 'profits_linear_regression.xlsx'))
 
 
 def series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
@@ -803,6 +822,27 @@ def testoutlier(end_date=2017):
     df.to_excel('../data/testoutlier.xlsx')
     plt.hist(data, bins=30)
     plt.show()
+
+
+def prophetProfit(ts_code='000002.SZ', startDate='20170331'):
+    sql = f'''SELECT end_date ds, profit_dedt y FROM stockdata.fina_indicator
+               where ts_code="{ts_code}" and end_date>="{startDate}";'''
+    df = pd.read_sql(sql, engine)
+    m = Prophet()
+    m.fit(df)
+    future = m.make_future_dataframe(periods=3)
+    # future.tail()
+    forecast = m.predict(future)
+    forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail()
+    fig1 = m.plot(forecast)
+    fig1.show()
+    filename = os.path.join(DATAPATH, 'linear_img/profit', f'prophet_{ts_code}.png')
+    # plt.show()
+    plt.savefig(filename)
+    fig2 = m.plot_components(forecast)
+    fig2.show()
+    filename = os.path.join(DATAPATH, 'linear_img/profit', f'comp_{ts_code}.png')
+    plt.savefig(filename)
 
 
 if __name__ == '__main__':

@@ -18,8 +18,10 @@ class SQLConn:
     def __init__(self):
         connectStr = (f'mysql://{SQLUSER}:{SQLPASSWORD}'
                       f'@{SQLHOST}/stockdata?charset=utf8')
-        self.engine = create_engine(connectStr,
-                                    strategy='threadlocal', echo=False)
+        self.engine = create_engine(connectStr, echo=False)
+        # sqlalchemy升级后，strategy='threadlocal'参数失效
+        # self.engine = create_engine(connectStr,
+        #                             strategy='threadlocal', echo=False)
         self.Session = scoped_session(
             sessionmaker(bind=self.engine, autoflush=False))
 

@@ -163,7 +163,7 @@ def adfTestAllProfitsInc(startDate=None, endDate=None):
         startDate = f'{int(endDate[:4]) - 3}0331'
 
     stocks = readStockList()
-    # stocks = stocks[:20]
+    stocks = stocks[:6]
     cnt = len(stocks)
     cur = 1
     # print(stocks)
