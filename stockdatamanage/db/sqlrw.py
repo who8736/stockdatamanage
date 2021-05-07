@@ -377,6 +377,21 @@ def readTTMProfitsForStock(ts_code: str, startDate=None, endDate=None):
     return df
 
 
+def readTTMProfitsUpdate():
+    """读取TTM利润最后更新日期
+    实现方式：取每只股票最后一期TTM利润的报表日期，与最后一期利润表的报表日期比较，
+    如不一致，则说明需更新TTM利润表，返回所有股票中最小的需要更新的报表日期
+    """
+    sql = """select min(c.ttmprofits_end_date) from
+        (select a.ts_code, a.ttmprofits_end_date, b.income_end_date from 
+        (select ts_code, max(end_date) ttmprofits_end_date from ttmprofits group by ts_code) a,
+        (select ts_code, max(end_date) income_end_date from income group by ts_code) b
+        where a.ts_code=b.ts_code and a.ttmprofits_end_date!=b.income_end_date) c;
+    """
+    result = engine.execute(sql).fetchone()
+    if result:
+        return dt.datetime.strftime(result[0], '%Y%m%d')
+
 # TODO: 废弃本函数， 用readProfitInc代替
 def del_readLastTTMProfit(ts_code, limit=1, date=None):
     """取指定股票最近几期TTM利润

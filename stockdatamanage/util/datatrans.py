@@ -40,10 +40,11 @@ def del_quarterAdd(_quarterDate, addNum):
     return _quarterDate
 
 
-def quarterList(startDate, endDate, reportType='quarter'):
+def quarterList(startDate, endDate, reportType='quarter', includeStart=True):
     """ 生成从startDate到endDate的季度列表
     :param startDate:
     :param endDate:
+    :param includeStart: 返回的日期列表中是否包含开始日期
     :param reportType: str, quarter季报, year年报
     """
     assert reportType in ('quarter', 'year'), '报告期类型错，应为quarter或year'

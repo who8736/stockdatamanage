@@ -23,7 +23,7 @@ from ..analyse.compute import calAllPEHistory, calAllTTMProfits, calIndexPE
 from ..config import TUSHARETOKEN
 from ..db.sqlconn import engine
 from ..db.sqlrw import (
-    readCal, readUpdate, setUpdate,
+    readCal, readUpdate, setUpdate, readTTMProfitsUpdate,
 )
 from ..downloader.download import (
     DownloaderQuarter, downAdjFactor, downClassify, downDaily, downDailyBasic,
@@ -426,13 +426,13 @@ def updateTTMProfits():
     上次更新日至当前日期间有新财务报表的，更新这几期财报的ttmprofits
     """
     pass
-    startDate = readUpdate('ttmprofits', offsetdays=1)
+    startDate = readTTMProfitsUpdate()
     endDate = dayDelta(dt.datetime.today(), days=-1)
-    dates = readCal(startDate, endDate)
+    dates = quarterList(startDate, endDate, includeStart=False)
     if dates is not None:
         for d in dates:
             calAllTTMProfits(d)
-            setUpdate('ttmprofits', d)
+            # setUpdate('ttmprofits', d)
 
 
 @logfun
