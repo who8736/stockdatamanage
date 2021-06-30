@@ -208,6 +208,10 @@ def writeSQL(df: pd.DataFrame, tableName: str, replace=False):
                 table = MyTable(**(row.to_dict()))
                 session.merge(table)
                 session.commit()
+            # mytable = Table(tableName, metadata, autoload=True)
+            # session.execute(mytable.insert().prefix_with('IGNORE'),
+            #                 df.to_dict(orient='records'))
+
         else:
             mytable = Table(tableName, metadata, autoload=True)
             session.execute(mytable.insert().prefix_with('IGNORE'),
@@ -215,8 +219,6 @@ def writeSQL(df: pd.DataFrame, tableName: str, replace=False):
         session.commit()
         session.close()
     except Exception as e:
-        # print(e)
-        # print('写表失败： %s' % tableName)
         logging.error(f'写表失败[{tableName}]: {e}')
         return False
     return True

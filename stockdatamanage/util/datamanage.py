@@ -31,7 +31,7 @@ from ..downloader.downloadtushare import (
     downIndexDaily, downIndexDailyBasic, downIndexWeight,
     downStockListTushare, downTradeCalTushare,
 )
-from ..downloader.downloadbaostock import downTradeCalBaostock
+from ..downloader.downloadbaostock import downTradeCalBaostock, downStockListBaostock
 from ..util.check import checkQuarterData
 from ..util.datatrans import classifyEndDate, quarterList
 from ..util.initlog import initlog, logfun
@@ -50,9 +50,7 @@ def startUpdate():
         logging.warning('DATASCOURCE must be "tushare" or "baostock"')
         return
 
-    # 更新股票列表
-    updateStockList()
-
+    return
     # 更新股票日交易数据
     updateDaily()
 
@@ -110,8 +108,9 @@ def startUpdateBaostock():
     updateTradeCalBaostock()
 
     # 更新股票列表
-    updateStockList()
+    updateStockListBaostock()
 
+    return
     # 更新股票日交易数据
     updateDaily()
 
@@ -572,6 +571,11 @@ def updateTTMProfits():
 @logfun
 def updateStockListTushare():
     downStockListTushare()
+
+
+@logfun
+def updateStockListBaostock():
+    downStockListBaostock()
 
 
 @logfun

@@ -54,21 +54,24 @@ def downStockListBaostock():
     rs = bs.query_stock_basic()
     df = rs.get_data()
     if not df.empty:
-
         # 转换为tushare列标题
         df.rename(columns={'code': 'ts_code',
                            'code_name': 'name',
                            'ipoDate': 'list_date',
                            'outDate': 'delist_date',
+                           'type': 'stocktype',
                            'status': 'list_status',
                            }, inplace=True)
         # 转换为tushare格式
         # 转换股票代码
-        df.code = df.code.map(lambda x: x[3:] + '.' + x[:2].upper())
+        df.ts_code = df.ts_code.map(lambda x: x[3:] + '.' + x[:2].upper())
         # 状态为上市
-        df[df.list_status=='1'] = 'L'
+        df.loc[df.list_status == '1', ['list_status']] = 'L'
         # 状态为退市
-        df[df.list_status=='0'] = 'D'
+        df.loc[df.list_status == '0', ['list_status']] = 'D'
+        # 退市日期为空时替换为'0000-00-00'
+        df.loc[df.delist_date == '', ['delist_date']] = '0000-00-00'
+
         writeSQL(df, 'stock_basic', replace=True)
 
     bs.logout()
