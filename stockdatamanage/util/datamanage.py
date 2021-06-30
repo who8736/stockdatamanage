@@ -20,16 +20,18 @@ from ..analyse.classifyanalyse import (
     calClassifyPE, calClassifyStaticTTMProfit,
 )
 from ..analyse.compute import calAllPEHistory, calAllTTMProfits, calIndexPE
-from ..config import TUSHARETOKEN
+from ..config import DATASOURCE, TUSHARETOKEN
 from ..db.sqlconn import engine
 from ..db.sqlrw import (
     readCal, readUpdate, setUpdate, readTTMProfitsUpdate,
 )
-from ..downloader.download import (
-    DownloaderQuarter, downAdjFactor, downClassify, downDaily, downDailyBasic,
+from ..downloader.downloadtushare import (
+    DownloaderQuarterTushare, downAdjFactorTushare, downClassify, downDaily,
+    downDailyBasic,
     downIndexDaily, downIndexDailyBasic, downIndexWeight,
-    downStockList, downTradeCal,
+    downStockListTushare, downTradeCalTushare,
 )
+from ..downloader.downloadbaostock import downTradeCalBaostock
 from ..util.check import checkQuarterData
 from ..util.datatrans import classifyEndDate, quarterList
 from ..util.initlog import initlog, logfun
@@ -40,8 +42,13 @@ from ..util.misc import dayDelta
 def startUpdate():
     """自动更新全部数据，包括K线历史数据、利润数据、K线表中的TTM市盈率
     """
-    # 更新交易日历
-    updateTradeCal()
+    if DATASOURCE == 'baostock':
+        startUpdateBaostock()
+    elif DATASOURCE == 'tushere':
+        startUpdateTushare()
+    else:
+        logging.warning('DATASCOURCE must be "tushare" or "baostock"')
+        return
 
     # 更新股票列表
     updateStockList()
@@ -53,7 +60,123 @@ def startUpdate():
     updateDailybasic()
 
     # 更新复权因子
-    updateAdjFacotr()
+    updateAdjFacotrTushare()
+
+    # 更新非季报表格
+    # 财务披露表（另外单独更新）
+    # 质押表（另外单独更新）
+    # 业绩预告（另外单独更新）
+    # 业绩快报（另外单独更新）
+    # 分红送股（另外单独更新）
+
+    # 更新股票季报数据
+    # 资产负债表
+    # 利润表
+    # 现金流量表
+    # 财务指标表
+    updateQuarterData()
+
+    # 更新股票TTM利润
+    updateTTMProfits()
+
+    # 更新行业列表
+    updateClassifyList()
+
+    # 更新行业利润
+    updateClassifyProfits()
+
+    # 计算行业PE
+    updateClassifyPE()
+
+    # 更新股票估值, 废弃, 用股票评分代替
+    # updateGuzhiData()
+
+    # 更新股票评分
+    updatePf()
+
+    # 更新指数数据及PE
+    updateIndex()
+
+    # 更新全市PE
+    updateAllMarketPE()
+
+
+@logfun
+def startUpdateBaostock():
+    """自动更新全部数据，包括K线历史数据、利润数据、K线表中的TTM市盈率
+    """
+
+    # 更新交易日历
+    updateTradeCalBaostock()
+
+    # 更新股票列表
+    updateStockList()
+
+    # 更新股票日交易数据
+    updateDaily()
+
+    # 更新每日指标
+    updateDailybasic()
+
+    # 更新复权因子
+    updateAdjFacotrTushare()
+
+    # 更新非季报表格
+    # 财务披露表（另外单独更新）
+    # 质押表（另外单独更新）
+    # 业绩预告（另外单独更新）
+    # 业绩快报（另外单独更新）
+    # 分红送股（另外单独更新）
+
+    # 更新股票季报数据
+    # 资产负债表
+    # 利润表
+    # 现金流量表
+    # 财务指标表
+    updateQuarterData()
+
+    # 更新股票TTM利润
+    updateTTMProfits()
+
+    # 更新行业列表
+    updateClassifyList()
+
+    # 更新行业利润
+    updateClassifyProfits()
+
+    # 计算行业PE
+    updateClassifyPE()
+
+    # 更新股票估值, 废弃, 用股票评分代替
+    # updateGuzhiData()
+
+    # 更新股票评分
+    updatePf()
+
+    # 更新指数数据及PE
+    updateIndex()
+
+    # 更新全市PE
+    updateAllMarketPE()
+
+
+def startUpdateTushare():
+    """自动更新全部数据，包括K线历史数据、利润数据、K线表中的TTM市盈率
+    """
+    # 更新交易日历
+    updateTradeCalTushare()
+
+    # 更新股票列表
+    updateStockListTushare()
+
+    # 更新股票日交易数据
+    updateDaily()
+
+    # 更新每日指标
+    updateDailybasic()
+
+    # 更新复权因子
+    updateAdjFacotrTushare()
 
     # 更新非季报表格
     # 财务披露表（另外单独更新）
@@ -236,7 +359,8 @@ def updateQuarterData():
             # _date = dt.datetime.strptime(e_date, '%Y%m%d')
             e_date += relativedelta(days=1)
             datestr = e_date.strftime('%Y%m%d')
-        downloader = DownloaderQuarter(ts_code=ts_code, startDate=datestr)
+        downloader = DownloaderQuarterTushare(ts_code=ts_code,
+                                              startDate=datestr)
         downloader.run()
 
 
@@ -409,15 +533,25 @@ def updateDailybasic():
 
 
 @logfun
-def updateTradeCal():
+def updateTradeCalBaostock():
+    """更新交易日历
+    """
+    sql = 'select max(cal_date) from trade_cal'
+    lastDate = engine.execute(sql).fetchone()[0]
+    if lastDate < dt.date.today():
+        downTradeCalBaostock(lastDate.strftime('%Y-%m-%d'))
+
+
+@logfun
+def updateTradeCalTushare():
     """更新交易日历
     """
     sql = 'select year(max(cal_date)) from trade_cal'
     lastYear = engine.execute(sql).fetchone()[0]
     if lastYear is None:
-        downTradeCal('1990')
+        downTradeCalTushare('1990')
     elif lastYear < dt.datetime.today().year:
-        downTradeCal(str(int(lastYear) + 1))
+        downTradeCalTushare(str(int(lastYear) + 1))
 
 
 @logfun
@@ -436,12 +570,12 @@ def updateTTMProfits():
 
 
 @logfun
-def updateStockList():
-    downStockList()
+def updateStockListTushare():
+    downStockListTushare()
 
 
 @logfun
-def updateAdjFacotr():
+def updateAdjFacotrTushare():
     """
     下载复权因子
     前复权 = 当日收盘价 × 当日复权因子 / 最新复权因子	qfq
@@ -457,7 +591,7 @@ def updateAdjFacotr():
     endDate = dt.datetime.today().strftime('%Y%m%d')
     dateList = readCal(startDate=startDate, endDate=endDate)
     for d in dateList:
-        downAdjFactor(d)
+        downAdjFactorTushare(d)
 
 
 if __name__ == '__main__':

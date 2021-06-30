@@ -14,7 +14,7 @@ from datamanage import logfun
 from initlog import initlog
 
 from ..db.sqlrw import readStockList, readTableFields, writeSQL
-from .download import DownloaderMisc
+from .downloadtushare import DownloaderMisc
 
 tables = [
     ['pledge_stat', 60, 50],

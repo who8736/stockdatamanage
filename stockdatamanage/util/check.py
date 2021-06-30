@@ -10,7 +10,7 @@ import pandas as pd
 from ..config import DATAPATH, LOGPATH
 from ..db import engine
 from ..db.sqlrw import readCal
-from ..downloader.download import DownloaderQuarter
+from ..downloader.downloadtushare import DownloaderQuarterTushare
 from ..util.datatrans import lastQuarter, quarterList
 
 
@@ -164,8 +164,8 @@ def repairLost(startDate, endDate):
                 lost.drop_duplicates(['ts_code'])
             for code in lost.ts_code.values:
                 print(_date, table, code)
-                downloader = DownloaderQuarter(ts_code=code,
-                                               tables=[table],
-                                               period=_date,
-                                               replace=True)
+                downloader = DownloaderQuarterTushare(ts_code=code,
+                                                      tables=[table],
+                                                      period=_date,
+                                                      replace=True)
                 downloader.run()

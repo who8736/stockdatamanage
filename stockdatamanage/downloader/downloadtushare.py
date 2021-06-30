@@ -29,7 +29,7 @@ from ..util.initlog import initlog
 from ..util.misc import tsCode
 
 
-class DownloaderQuarter:
+class DownloaderQuarterTushare:
     """限时下载器
     """
 
@@ -75,18 +75,18 @@ class DownloaderQuarter:
     def run(self):
         for table in self.tables:
             # result = pd.DataFrame()
-            perTimes = DownloaderQuarter.perTimes[table]
-            limit = DownloaderQuarter.limit[table]
-            cur = DownloaderQuarter.curcall[table]
+            perTimes = DownloaderQuarterTushare.perTimes[table]
+            limit = DownloaderQuarterTushare.limit[table]
+            cur = DownloaderQuarterTushare.curcall[table]
             for _ in range(self.retry):
                 nowtime = dt.datetime.now()
                 if (perTimes > 0 and limit <= cur
-                        and (nowtime < DownloaderQuarter.times[table][
+                        and (nowtime < DownloaderQuarterTushare.times[table][
                             cur - limit]
                              + dt.timedelta(seconds=perTimes))):
-                    _timedelta = nowtime - DownloaderQuarter.times[table][
+                    _timedelta = nowtime - DownloaderQuarterTushare.times[table][
                         cur - limit]
-                    sleeptime = DownloaderQuarter.perTimes[
+                    sleeptime = DownloaderQuarterTushare.perTimes[
                                     table] - _timedelta.seconds
                     logging.debug(f'******暂停{sleeptime}秒******')
                     time.sleep(sleeptime)
@@ -100,7 +100,7 @@ class DownloaderQuarter:
                         kwargs['period'] = self.period
 
                     if table == 'fina_indicator':
-                        kwargs['fields'] = DownloaderQuarter.fields
+                        kwargs['fields'] = DownloaderQuarterTushare.fields
                     result = downStockQuarterData(**kwargs)
                 except(socket.timeout):
                     logging.warning(f'downloader timeout: '
@@ -112,8 +112,8 @@ class DownloaderQuarter:
                         return
                 finally:
                     nowtime = dt.datetime.now()
-                    DownloaderQuarter.times[table].append(nowtime)
-                    DownloaderQuarter.curcall[table] += 1
+                    DownloaderQuarterTushare.times[table].append(nowtime)
+                    DownloaderQuarterTushare.curcall[table] += 1
 
 
 class DownloaderMisc:
@@ -230,7 +230,7 @@ def downStockQuarterData(**kwargs):
         return True
 
 
-def downStockList():
+def downStockListTushare():
     """ 更新股票列表与行业列表
     """
     pro = ts.pro_api()
@@ -496,7 +496,7 @@ def downloaderStock(tablename, stocks, perTimes=0, downLimit=0):
             writeSQL(df, tablename)
 
 
-def downTradeCal(year):
+def downTradeCalTushare(year):
     pro = ts.pro_api()
     df = pro.trade_cal(exchange='SSE', start_date=f'{year}0101')
     writeSQL(df, 'trade_cal')
@@ -692,7 +692,7 @@ def downIndexDailyBasic():
         writeSQL(df, 'index_dailybasic')
 
 
-def downAdjFactor(trade_date, retry=3):
+def downAdjFactorTushare(trade_date, retry=3):
     """
     下载复权因子
     前复权 = 当日收盘价 × 当日复权因子 / 最新复权因子	qfq

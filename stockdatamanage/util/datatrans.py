@@ -9,7 +9,6 @@ import datetime as dt
 from dateutil.relativedelta import relativedelta
 from lxml import etree
 
-
 # from datetime import datetime, timedelta, date
 
 
@@ -294,3 +293,8 @@ def classifyEndDate(date=None):
     else:
         end_date = f'{_date.year - 1}0930'
     return end_date
+
+
+def longDate(datestr):
+    """日期格式YYYYMMDD转换为YYYY-MM-DD"""
+    return dt.datetime.strptime(datestr, '%Y%m%d').strftime('%Y-%m-%d')

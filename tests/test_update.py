@@ -1,10 +1,10 @@
 from stockdatamanage.util.datamanage import (
-    updateAdjFacotr, updateAllMarketPE, updateClassifyList,
+    updateAdjFacotrTushare, updateAllMarketPE, updateClassifyList,
     updateClassifyProfits, updateDaily, updateDailybasic, updateIndex, updatePf,
     updateQuarterData, updateStockList, updateTradeCal,
 )
 from stockdatamanage.util.initlog import initlog
-from stockdatamanage.downloader.download import downIndexWeight
+from stockdatamanage.downloader.downloadtushare import downIndexWeight
 from stockdatamanage.db.sqlrw import readUpdate
 from stockdatamanage.analyse.compute import calIndexPE
 
