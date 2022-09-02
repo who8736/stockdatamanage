@@ -307,6 +307,7 @@ tags
 *.iml
 out
 gen
+/log/
 /exportdata/
 /data/
 /stockdatamanage/stockdata.conf
