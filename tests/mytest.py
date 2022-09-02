@@ -743,7 +743,7 @@ if __name__ == "__main__":
     initlog()
 
     # __testDownload()
-    __testMisc()
+    # __testMisc()
     # __testPlot()
     # __testRepair()
     # __testUpdate()

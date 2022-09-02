@@ -361,7 +361,7 @@ def downIndexBasic():
     writeSQL(df_index_basic_sz, 'index_basic')
 
 
-def downDaily(trade_date=None):
+def downDailyTushare(trade_date=None):
     """下载日K线数据
 
     :param trade_date:
@@ -373,7 +373,7 @@ def downDaily(trade_date=None):
     writeSQL(df, 'daily')
 
 
-def downDailyRepair():
+def downDailyRepairTushare():
     """修复日K线"""
     # stocks = readStockList()
     sql = ('select ts_code from stock_basic'

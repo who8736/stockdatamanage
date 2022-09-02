@@ -20,18 +20,20 @@ from ..analyse.classifyanalyse import (
     calClassifyPE, calClassifyStaticTTMProfit,
 )
 from ..analyse.compute import calAllPEHistory, calAllTTMProfits, calIndexPE
+# from ..config import TUSHARETOKEN
 from ..config import DATASOURCE, TUSHARETOKEN
 from ..db.sqlconn import engine
 from ..db.sqlrw import (
-    readCal, readUpdate, setUpdate, readTTMProfitsUpdate,
+    readCal, readUpdate, setUpdate, readTTMProfitsUpdate, readStockList
 )
+from ..downloader.downloadbaostock import downTradeCalBaostock, downStockListBaostock
 from ..downloader.downloadtushare import (
-    DownloaderQuarterTushare, downAdjFactorTushare, downClassify, downDaily,
+    DownloaderQuarterTushare, downAdjFactorTushare, downClassify, downDailyTushare,
     downDailyBasic,
     downIndexDaily, downIndexDailyBasic, downIndexWeight,
     downStockListTushare, downTradeCalTushare,
 )
-from ..downloader.downloadbaostock import downTradeCalBaostock, downStockListBaostock
+from ..downloader.downloadakshare import (downStockList)
 from ..util.check import checkQuarterData
 from ..util.datatrans import classifyEndDate, quarterList
 from ..util.initlog import initlog, logfun
@@ -44,18 +46,16 @@ def startUpdate():
     """
     if DATASOURCE == 'baostock':
         startUpdateBaostock()
-    elif DATASOURCE == 'tushere':
+    elif DATASOURCE == 'tushare':
         startUpdateTushare()
+    elif DATASOURCE == 'akshare':
+        startUpdateAkshare()
     else:
-        logging.warning('DATASCOURCE must be "tushare" or "baostock"')
+        logging.warning(
+            'DATASCOURCE must be "tushare" or "baostock" or "akshare"')
         return
 
     return
-    # 更新股票日交易数据
-    updateDaily()
-
-    # 更新每日指标
-    updateDailybasic()
 
     # 更新复权因子
     updateAdjFacotrTushare()
@@ -112,10 +112,10 @@ def startUpdateBaostock():
 
     return
     # 更新股票日交易数据
-    updateDaily()
+    updateDailyTushare()
 
     # 更新每日指标
-    updateDailybasic()
+    updateDailybasicTushare()
 
     # 更新复权因子
     updateAdjFacotrTushare()
@@ -169,10 +169,10 @@ def startUpdateTushare():
     updateStockListTushare()
 
     # 更新股票日交易数据
-    updateDaily()
+    updateDailyTushare()
 
     # 更新每日指标
-    updateDailybasic()
+    updateDailybasicTushare()
 
     # 更新复权因子
     updateAdjFacotrTushare()
@@ -214,6 +214,67 @@ def startUpdateTushare():
 
     # 更新全市PE
     updateAllMarketPE()
+
+
+@logfun
+def startUpdateAkshare():
+    """自动更新全部数据，包括K线历史数据、利润数据、K线表中的TTM市盈率
+    """
+    # TODO:补充更新函数
+    pass
+
+    # 更新交易日历
+    downTradeCal()
+
+    # 更新股票列表
+    downStockList()
+
+    # 更新股票日交易数据
+    # updateDailyTushare()
+
+    # 更新每日指标
+    # updateDailybasicTushare()
+
+    # 更新复权因子
+    # updateAdjFacotrTushare()
+
+    # 更新非季报表格
+    # 财务披露表（另外单独更新）
+    # 质押表（另外单独更新）
+    # 业绩预告（另外单独更新）
+    # 业绩快报（另外单独更新）
+    # 分红送股（另外单独更新）
+
+    # 更新股票季报数据
+    # 资产负债表
+    # 利润表
+    # 现金流量表
+    # 财务指标表
+    # updateQuarterData()
+
+    # 更新股票TTM利润
+    # updateTTMProfits()
+
+    # 更新行业列表
+    # updateClassifyList()
+
+    # 更新行业利润
+    # updateClassifyProfits()
+
+    # 计算行业PE
+    # updateClassifyPE()
+
+    # 更新股票估值, 废弃, 用股票评分代替
+    # updateGuzhiData()
+
+    # 更新股票评分
+    # updatePf()
+
+    # 更新指数数据及PE
+    # updateIndex()
+
+    # 更新全市PE
+    # updateAllMarketPE()
 
 
 @logfun
@@ -501,7 +562,23 @@ def readStockListFromFile(filename):
 
 
 @logfun
-def updateDaily():
+def updateDailyBaostock():
+    """更新日K线和每日指标
+    """
+    bs.login()
+    sql = 'select max(trade_date) from daily'
+    startDate = engine.execute(sql).fetchone()[0]
+    assert isinstance(startDate, dt.date), 'startDate应为date类型'
+    startDate = (startDate + dt.timedelta(days=1)).strftime('%Y-%m-%d')
+    stocks = readStockList()
+    dates = readCal(startDate, endDate)
+    if dates:
+        for d in dates:
+            downDailyTushare(d)
+
+
+@logfun
+def updateDailyTushare():
     """更新日K线
     """
     sql = 'select max(trade_date) from daily'
@@ -512,11 +589,11 @@ def updateDaily():
     dates = readCal(startDate, endDate)
     if dates:
         for d in dates:
-            downDaily(d)
+            downDailyTushare(d)
 
 
 @logfun
-def updateDailybasic():
+def updateDailybasicTushare():
     """更新每日指标
     """
     sql = 'select max(trade_date) from daily_basic'

@@ -1,6 +1,6 @@
 from stockdatamanage.util.datamanage import (
     updateAdjFacotrTushare, updateAllMarketPE, updateClassifyList,
-    updateClassifyProfits, updateDaily, updateDailybasic, updateIndex, updatePf,
+    updateClassifyProfits, updateDailyTushare, updateDailybasicTushare, updateIndex, updatePf,
     updateQuarterData, updateStockList, updateTradeCal,
 )
 from stockdatamanage.util.initlog import initlog
