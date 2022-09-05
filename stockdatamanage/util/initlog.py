@@ -10,24 +10,22 @@ def initlog():
     # 取得当前年份，按年记录日志
     nowTime = dt.datetime.now()
     logDate = nowTime.strftime('%Y')
-    logfilename = f'datamanage{logDate}.log'
-    logfilename = os.path.join(LOGPATH, logfilename)
+    logfilename = os.path.join(LOGPATH, f'datamanage{logDate}.log')
 
     formatStr = ('%(asctime)s %(filename)s[line:%(lineno)d] '
                  '%(levelname)s %(message)s')
     logging.basicConfig(level=logging.DEBUG,
                         format=formatStr,
-                        #                     datefmt = '%Y-%m-%d %H:%M:%S',
                         filename=logfilename,
-                        filemode='a')
+                        filemode='a',
+                        force=True)
 
     ##########################################################################
     # 定义一个StreamHandler，将INFO级别或更高的日志信息打印到标准错误，
     # 并将其添加到当前的日志处理对象#
     console = logging.StreamHandler()
     console.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s %(filename)s[line:%(lineno)d] '
-                                  '%(levelname)s: %(message)s')
+    formatter = logging.Formatter(formatStr)
     console.setFormatter(formatter)
     logging.getLogger('').addHandler(console)
     ##########################################################################

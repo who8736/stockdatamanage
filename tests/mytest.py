@@ -7,10 +7,12 @@ Created on Mon Apr 15 15:27:38 2019
 
 from urllib.request import urlopen
 from xml import etree
+import logging
 
 from matplotlib.widgets import Cursor
 import pandas as pd
 
+from context import stockdatamanage
 import stockdatamanage.views.home
 from stockdatamanage.analyse.classifyanalyse import (
     calClassifyPE,
@@ -90,9 +92,11 @@ def analyIndex(code1='000001.SH', code2='000016.SH', startDate='20070101',
         label1 = INDEXNAME[code1]
         label2 = INDEXNAME[code2]
         # noinspection PyUnusedLocal
-        line1 = ax.plot(stockdatamanage.views.home.index, df.line1, label=label1, color='blue')
+        line1 = ax.plot(stockdatamanage.views.home.index,
+                        df.line1, label=label1, color='blue')
         # noinspection PyUnusedLocal
-        line2 = ax.plot(stockdatamanage.views.home.index, df.line2, label=label2, color='red')
+        line2 = ax.plot(stockdatamanage.views.home.index,
+                        df.line2, label=label2, color='red')
         dates = [date.strftime('%Y%m%d') for date in df.trade_date]
         tickerIndex, tickerLabels = getMonthIndex(dates, ptype='year')
         locator = FixedLocator(tickerIndex)
@@ -452,9 +456,6 @@ def __testDownload():
     # downIndexWeight()
 
 
-
-
-
 # 更新股票市值与PE
 # stockList = sqlrw.readts_codesFromSQL()
 # for ts_code in stockList:
@@ -597,7 +598,6 @@ def __testValuation():
     # testChigu()
     # testShaixuan()
 
-
     # 更新股票估值
     # calGuzhi()
 
@@ -647,8 +647,9 @@ def __test_fina_indicator_end_date():
     df['fina_date'] = df.fina_date.apply(lambda x: x.strftime('%Y%m%d'))
     # for index, row in df.iterrows():
     #     print(index, row)
-        # datestr = row.fina_date.strftime('%Y%m%d')
-        # print(row.ts_code, datestr)
+    # datestr = row.fina_date.strftime('%Y%m%d')
+    # print(row.ts_code, datestr)
+
 
 def __testMisc():
     """测试专用函数:杂项测试
@@ -744,7 +745,7 @@ if __name__ == "__main__":
 
     # __testDownload()
     # __testMisc()
-    # __testPlot()
+    # __testPlot()lo
     # __testRepair()
     # __testUpdate()
     # __testValuation()

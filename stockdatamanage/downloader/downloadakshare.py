@@ -11,8 +11,10 @@ import pandas as pd
 
 from ..db.sqlrw import writeSQL
 from ..db import engine
+from ..util.initlog import logfun
 
 
+@logfun
 def downStockList():
     """ 更新股票列表
     """
@@ -65,6 +67,7 @@ def downStockList():
     pass
 
 
+@logfun
 def downTradeCal():
     sql = 'select max(cal_date) from trade_cal'
     lastday = engine.execute(sql).fetchone()[0]
