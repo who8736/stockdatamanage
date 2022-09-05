@@ -33,7 +33,7 @@ from ..downloader.downloadtushare import (
     downIndexDaily, downIndexDailyBasic, downIndexWeight,
     downStockListTushare, downTradeCalTushare,
 )
-from ..downloader.downloadakshare import (downStockList)
+from ..downloader.downloadakshare import (downStockList, downTradeCal)
 from ..util.check import checkQuarterData
 from ..util.datatrans import classifyEndDate, quarterList
 from ..util.initlog import initlog, logfun
@@ -53,7 +53,6 @@ def startUpdate():
     else:
         logging.warning(
             'DATASCOURCE must be "tushare" or "baostock" or "akshare"')
-        return
 
     return
 
@@ -218,13 +217,14 @@ def startUpdateTushare():
 
 @logfun
 def startUpdateAkshare():
-    """自动更新全部数据，包括K线历史数据、利润数据、K线表中的TTM市盈率
+    """自动更新全部数据,包括K线历史数据、利润数据、K线表中的TTM市盈率
     """
     # TODO:补充更新函数
     pass
 
     # 更新交易日历
     downTradeCal()
+    print('下载日历数据， AKShare')
 
     # 更新股票列表
     downStockList()
