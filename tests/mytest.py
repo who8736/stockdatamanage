@@ -11,6 +11,8 @@ import logging
 
 from matplotlib.widgets import Cursor
 import pandas as pd
+# from retrying import retry
+from tenacity import retry, stop_after_attempt, RetryError
 
 from context import stockdatamanage
 import stockdatamanage.views.home
@@ -737,11 +739,29 @@ def testPEProfitsTTM1(ts_code):
     return mvpettm, profitsttm, div
 
 
+retry_cnt = 0
+
+
+@retry(stop=stop_after_attempt(3))
+def testretrying():
+    global retry_cnt
+    retry_cnt += 1
+    print(f'retry times: {retry_cnt}')
+    raise IOError(f'raise IOError retry times: {retry_cnt}')
+    print('cannot get here')
+
+
 if __name__ == "__main__":
     """
     本文件用于测试各模块功能
     """
     initlog()
+
+    try:
+        testretrying()
+    except RetryError:
+        pass
+        print('超过重试次数，函数调用失败')
 
     # __testDownload()
     # __testMisc()

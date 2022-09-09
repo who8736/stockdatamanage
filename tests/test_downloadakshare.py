@@ -4,8 +4,9 @@
 # datetime:2022/2/10 9:23
 # software: PyCharm
 
+from context import stockdatamanage
 from stockdatamanage.downloader.downloadakshare import (
-    downStockList, downTradeCal
+    downStockList, downTradeCal, downloadDaily
 )
 
 from stockdatamanage.util.initlog import initlog
@@ -19,11 +20,16 @@ def test_downTradeCal():
     downTradeCal()
 
 
+def test_downDaily():
+    downloadDaily()
+
+
 if __name__ == '__main__':
     initlog()
 
     # test_downStockList()
-    test_downTradeCal()
+    # test_downTradeCal()
+    test_downDaily()
 
     # testUpdate()
     # test_download_index_weight()

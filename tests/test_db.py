@@ -7,7 +7,7 @@
 from stockdatamanage.util.initlog import initlog
 import datetime as dt
 
-from stockdatamanage.db.sqlrw import readProfitInc
+from stockdatamanage.db.sqlrw import readProfitInc, readStockUpdate
 
 
 def test_readProfitInc():
@@ -18,8 +18,13 @@ def test_readProfitInc():
     print(df)
 
 
+def test_readStockUpdate():
+    readStockUpdate()
+
+
 if __name__ == '__main__':
     pass
     initlog()
 
-    test_readProfitInc()
+    # test_readProfitInc()
+    test_readStockUpdate()

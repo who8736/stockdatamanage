@@ -172,7 +172,7 @@ def readGuzhi(ts_code):
 
 
 def readStockList(list_date=None):
-    sql = 'select ts_code, name from stock_basic'
+    sql = 'select code, name from stock_basic'
     if list_date:
         sql += f' where list_date>="{list_date}"'
     df = pd.read_sql(sql, engine)
@@ -947,3 +947,14 @@ def readProfit(startDate, endDate=None, ptype='stock',
             df = df.merge(_df, on=f'{codefield}')
 
     return df
+
+
+def readStockUpdate():
+    """读取股票更新日期
+    """
+    df = readStockList()
+    sql = 'select code, max(trade_date) trade_date from daily group by code;'
+    dfupdate = pd.read_sql(sql, engine)
+    df = df.merge(dfupdate, how='left')
+    return df
+    
