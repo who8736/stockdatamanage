@@ -5,16 +5,20 @@
 # software: PyCharm
 
 import datetime as dt
+import logging
 
 import akshare as ak
 import pandas as pd
+import numpy as np
+from tenacity import retry, stop_after_attempt, RetryError
 
-from ..db.sqlrw import writeSQL
+from ..db.sqlrw import writeSQL, readStockUpdate
 from ..db import engine
 from ..util.initlog import logfun
 
 
 @logfun
+@retry(stop=stop_after_attempt(3))
 def downStockList():
     """ 更新股票列表
     """
@@ -79,6 +83,48 @@ def downTradeCal():
         df['is_open'] = 1
         df.rename(columns={'trade_date': 'cal_date'}, inplace=True)
         writeSQL(df, 'trade_cal')
+
+
+@logfun
+def downloadDaily():
+    """下载日交易历史数据
+    """
+    update_dates = readStockUpdate()
+    for _, row in update_dates.iterrows():
+        code = row.code
+        _date = row.trade_date
+        if _date is np.nan:
+            start_date = '19800101'
+        else:
+            _date += dt.timedelta(days=1)
+            start_date = _date.strftime('%Y%m%d')
+        # print(start_date)
+        _end_date = dt.datetime.today() - dt.timedelta(days=1)
+        end_date = _end_date.strftime('%Y%m%d')
+        if start_date >= end_date:
+            continue
+
+        logging.info(f'code:{code},start:{start_date},end:{end_date}')
+        try:
+            df = _downloadDaily(code, start_date, end_date)
+        except RetryError:
+            continue
+        else:
+            writeSQL(df, 'daily')
+
+
+@retry(stop=stop_after_attempt(3))
+def _downloadDaily(code, start_date, end_date):
+    df = ak.stock_zh_a_hist(
+        symbol=code, start_date=start_date, end_date=end_date)
+    if df.empty:
+        return df
+    df.columns = ['trade_date', 'open', 'close', 'high',
+                  'low', 'vol', 'amount', '_', 'pct_chg', 'change', '_']
+    df = df[['trade_date', 'open', 'close', 'high',
+             'low', 'vol', 'amount', 'pct_chg', 'change']]
+    df['code'] = code
+    return df
 
 
 if __name__ == '__main__':
