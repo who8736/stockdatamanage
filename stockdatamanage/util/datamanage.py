@@ -33,7 +33,7 @@ from ..downloader.downloadtushare import (
     downIndexDaily, downIndexDailyBasic, downIndexWeight,
     downStockListTushare, downTradeCalTushare,
 )
-from ..downloader.downloadakshare import (downStockList, downTradeCal)
+from ..downloader.downloadakshare import (downStockList, downTradeCal, downloadDaily)
 from ..util.check import checkQuarterData
 from ..util.datatrans import classifyEndDate, quarterList
 from ..util.initlog import initlog, logfun
@@ -230,7 +230,7 @@ def startUpdateAkshare():
     downStockList()
 
     # 更新股票日交易数据
-    # updateDailyTushare()
+    downloadDaily()
 
     # 更新每日指标
     # updateDailybasicTushare()

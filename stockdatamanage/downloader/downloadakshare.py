@@ -99,7 +99,8 @@ def downloadDaily():
             _date += dt.timedelta(days=1)
             start_date = _date.strftime('%Y%m%d')
         # print(start_date)
-        _end_date = dt.datetime.today() - dt.timedelta(days=1)
+        # 当前时间减18小时得到需更新的日期，即0点至18点仅更新至前一日数据
+        _end_date = dt.datetime.today() - dt.timedelta(hours=18)
         end_date = _end_date.strftime('%Y%m%d')
         if start_date >= end_date:
             continue
