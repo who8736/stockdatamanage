@@ -33,7 +33,8 @@ from ..downloader.downloadtushare import (
     downIndexDaily, downIndexDailyBasic, downIndexWeight,
     downStockListTushare, downTradeCalTushare,
 )
-from ..downloader.downloadakshare import (downStockList, downTradeCal, downloadDaily)
+from ..downloader.downloadakshare import (
+    downStockList, downTradeCal, downloadDaily, downloadDailyBasic)
 from ..util.check import checkQuarterData
 from ..util.datatrans import classifyEndDate, quarterList
 from ..util.initlog import initlog, logfun
@@ -223,17 +224,17 @@ def startUpdateAkshare():
     pass
 
     # 更新交易日历
-    downTradeCal()
-    print('下载日历数据， AKShare')
+    # downTradeCal()
+    # print('下载日历数据， AKShare')
 
     # 更新股票列表
-    downStockList()
+    # downStockList()
 
     # 更新股票日交易数据
-    downloadDaily()
+    # downloadDaily()
 
     # 更新每日指标
-    # updateDailybasicTushare()
+    downloadDailyBasic()
 
     # 更新复权因子
     # updateAdjFacotrTushare()
@@ -347,60 +348,6 @@ def updateClassifyList():
     downClassify()
 
 
-# @logfun
-# def updateQuarterData_del():
-#     """更新股票季报数据
-#
-#     :return:
-#     """
-#     stocks = readStockList()
-#
-#     # 每支股票最后的报告期和公告日期
-#     sql = (f'select ts_code, max(end_date) end_date, max(f_ann_date) ann_date'
-#            f' from income group by ts_code')
-#     df = pd.read_sql(sql, engine)
-#     stocks = pd.merge(stocks, df, how='left',
-#                       left_on='ts_code', right_on='ts_code')
-#     end_date = lastQarterDate(dt.datetime.today().date())
-#     stocks = stocks[(stocks.end_date.isnull()) | (stocks.end_date < end_date)]
-#
-#     # 每支股票最后更新季报日期与每日指标中的最后日期计算的销售收入是否存在差异
-#     # 如有差异则说明需更新季报
-#     df = checkQuarterData_del()
-#     stocks = pd.merge(stocks, df, how='left',
-#                       left_on='ts_code', right_on='ts_code')
-#     stocks.set_index('ts_code', inplace=True)
-#
-#     resultList = []
-#     for ts_code in stocks.index:
-#         # print(ts_code)
-#         # result, div = checkQuarterData(ts_code)
-#         # resultList.append(dict(ts_code=ts_code, result=result, div=div))
-#         if np.isnan(stocks.loc[ts_code, 'cha']):
-#             datestr = ''
-#         elif stocks.loc[ts_code, 'cha'] < 0.001:
-#             continue
-#         else:
-#             ann_date = stocks.loc[ts_code, 'ann_date']
-#             ann_date += relativedelta(days=1)
-#             datestr = ann_date.strftime('%Y%m%d')
-#
-#         # if result == 0:
-#         #     continue
-#         # elif result == 1:
-#         #     # 更新该股票全部财务数据
-#         #     datestr = ''
-#         # else:
-#         #     ann_date = stocks[stocks.ts_code == ts_code].ann_date.values[0]
-#         #     ann_date += relativedelta(days=1)
-#         #     datestr = ann_date.strftime('%Y%m%d')
-#         downloader = DownloaderQuarter(ts_code=ts_code, startDate=datestr)
-#         downloader.run()
-#
-#     # df = pd.DataFrame(resultList)
-#     # df.to_excel('data/mvpettm.xlsx')
-
-
 @logfun
 def updateQuarterData():
     """更新股票季报数据
@@ -424,53 +371,6 @@ def updateQuarterData():
         downloader.run()
 
 
-# @logfun
-# def updateKlineEXTData(stockList, threadNum):
-#     pool = ThreadPool(processes=threadNum)
-#     pool.map(sqlrw.updateKlineEXTData, stockList)
-#     pool.close()
-#     pool.join()
-
-
-# @logfun
-# def updateGuben(stockList, threadNum):
-#     """ 更新股本多线程版， 因新浪限制， 暂时无用
-#     """
-#     pool = ThreadPool(processes=threadNum)
-#     pool.map(downGuben, stockList)
-#     pool.close()
-#     pool.join()
-
-
-# @logfun
-# def del_updateGubenSingleThread():
-#     """ 更新股本单线程版
-#     """
-#     # stockList = sqlrw.readGubenUpdateList()
-#     # for ts_code in stockList:
-#     #     downGuben(ts_code)
-#     #     time.sleep(5)
-#     # 以上代码为原股本下载代码
-#
-#     endTime = dt.datetime.now()
-#     endTime = endTime + dt.timedelta(days=-1)
-#     # 选择要提前的天数
-#     startTime = endTime + dt.timedelta(days=-10)
-#     # 格式化处理
-#     startDate = startTime.strftime('%Y%m%d')
-#     endDate = endTime.strftime('%Y%m%d')
-#
-#     pro = ts.pro_api()
-#     df = pro.trade_cal(exchange='SSE', start_date=startDate,
-#                        end_date=endDate)
-#     date = df[df.is_open == 1].cal_date.max()
-#     # gubenUpdateDf = checkGuben(date)
-#     # for ts_code in gubenUpdateDf['ts_code']:
-#     #     downGuben(ts_code)
-#     #     setGubenLastUpdate(ts_code, date)
-#     #     time.sleep(2)
-
-
 @logfun
 def updatePf():
     """ 重算评分
@@ -492,68 +392,6 @@ def updatePf():
             valuation.calpfnew(date)
 
 
-#
-# def updateDataTest(stockList):
-#     stockList = stockList[:10]
-
-
-# @logfun
-# def updateGuzhi(stockList, threadNum):
-#     """ 因东方财富修改估值文件下载功能， 暂不能用
-#     """
-#     pool = ThreadPool(processes=threadNum)
-#     #     pool.map(sqlrw.downGuzhiToFile, stockList)
-#     pool.map(downGuzhi, stockList)
-#     pool.close()
-#     pool.join()
-
-
-# @logfun
-# def del_updateKlineBaseData(stockList, threadNum):
-#     """ 启动多线程更新K线历史数据主函数
-#     """
-#     pool = ThreadPool(processes=threadNum)
-#     # pool.map(downKline, stockList)
-#     pool.close()
-#     pool.join()
-
-
-@logfun
-def del_updateKline():
-    """ 更新日交易数据
-    """
-    pass
-    # startDate = getStockKlineUpdateDate() + timedelta(days=1)
-    # endDate = dt.datetime.today().date() - timedelta(days=1)
-    # for tradeDate in dateList(startDate, endDate):
-    #     downKline(tradeDate)
-
-
-# @logfun
-# def updateMainTable(stockList, threadNum):
-#     """ 更新主表数据多线程版， # 因新浪反爬虫策略，改用单线程
-#     """
-#     pool = ThreadPool(processes=threadNum)
-#     pool.map(downMainTable, stockList)
-#     pool.close()
-#     pool.join()
-
-
-# @logfun
-# def updateMainTableSingleThread(stockList):
-#     """ 更新主表数据单线程版， 因主表数据暂时无用
-#     """
-#     for ts_code in stockList:
-#         downMainTable(ts_code)
-#         time.sleep(1)
-
-
-# @logfun
-# def updateGuzhiData():
-#     testChigu()
-#     testShaixuan()
-
-
 def readStockListFromFile(filename):
     stockFile = open(filename, 'r')
     stockList = [i[:6] for i in stockFile.readlines()]
@@ -564,17 +402,19 @@ def readStockListFromFile(filename):
 @logfun
 def updateDailyBaostock():
     """更新日K线和每日指标
+    本函数需重写
     """
-    bs.login()
-    sql = 'select max(trade_date) from daily'
-    startDate = engine.execute(sql).fetchone()[0]
-    assert isinstance(startDate, dt.date), 'startDate应为date类型'
-    startDate = (startDate + dt.timedelta(days=1)).strftime('%Y-%m-%d')
-    stocks = readStockList()
-    dates = readCal(startDate, endDate)
-    if dates:
-        for d in dates:
-            downDailyTushare(d)
+    pass
+    # bs.login()
+    # sql = 'select max(trade_date) from daily'
+    # startDate = engine.execute(sql).fetchone()[0]
+    # assert isinstance(startDate, dt.date), 'startDate应为date类型'
+    # startDate = (startDate + dt.timedelta(days=1)).strftime('%Y-%m-%d')
+    # stocks = readStockList()
+    # dates = readCal(startDate, endDate)
+    # if dates:
+    #     for d in dates:
+    #         downDailyTushare(d)
 
 
 @logfun

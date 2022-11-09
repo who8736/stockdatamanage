@@ -12,7 +12,7 @@ import pandas as pd
 import numpy as np
 from tenacity import retry, stop_after_attempt, RetryError
 
-from ..db.sqlrw import writeSQL, readStockUpdate
+from ..db.sqlrw import writeSQL, readStockUpdate, readStockBasicUpdate
 from ..db import engine
 from ..util.initlog import logfun
 
@@ -124,6 +124,47 @@ def _downloadDaily(code, start_date, end_date):
                   'low', 'vol', 'amount', '_', 'pct_chg', 'change', '_']
     df = df[['trade_date', 'open', 'close', 'high',
              'low', 'vol', 'amount', 'pct_chg', 'change']]
+    df['code'] = code
+    return df
+
+
+def downloadDailyBasic():
+    """下载个股指标历史数据
+    """
+    update_dates = readStockBasicUpdate()
+    for _, row in update_dates.iterrows():
+        code = row.code
+        start_date = row.trade_date
+        if start_date is np.nan:
+            start_date = dt.date(1980, 1, 1)
+        else:
+            start_date += dt.timedelta(days=1)
+
+        # print(start_date)
+        # 当前时间减18小时得到需更新的日期，即0点至18点仅更新至前一日数据
+        end_date = dt.datetime.today() - dt.timedelta(hours=18)
+        end_date = end_date.date()
+        if start_date >= end_date:
+            continue
+
+        logging.info(f'code:{code},start:{start_date},end:{end_date}')
+        try:
+            df = _downloadDailyBasic(code, start_date, end_date)
+        except RetryError:
+            continue
+        else:
+            writeSQL(df, 'daily_basic')
+
+
+@retry(stop=stop_after_attempt(3))
+def _downloadDailyBasic(code, start_date, end_date):
+    df = ak.stock_a_lg_indicator(symbol=code)
+    if df.empty:
+        return df
+    # df['trade_date'] = df['trade_date'].map(lambda x: x.strftime('%Y%m%d'))
+    df = df[(df.trade_date >= start_date) & (df.trade_date <= end_date)]
+    # df.columns = ['trade_date', 'pe', 'pe_ttm', 'pb',
+    #               'ps', 'ps_ttm', 'dv_ratio', 'dv_ttm', 'total_mv', ]
     df['code'] = code
     return df
 

@@ -190,8 +190,10 @@ def writeSQL(df: pd.DataFrame, tableName: str, replace=False):
     if not initsql.existTable(tableName):
         logging.error('not exist %s' % tableName)
         return False
-    df = df.where(pd.notnull(df), None)
+    # df = df.where(pd.notnull(df), None)
+    df.fillna(value='', inplace=True)
     # df = transDfToList(df)
+
 
     Base = declarative_base()
 
@@ -954,6 +956,16 @@ def readStockUpdate():
     """
     df = readStockList()
     sql = 'select code, max(trade_date) trade_date from daily group by code;'
+    dfupdate = pd.read_sql(sql, engine)
+    df = df.merge(dfupdate, how='left')
+    return df
+    
+
+def readStockBasicUpdate():
+    """读取股票指标更新日期
+    """
+    df = readStockList()
+    sql = 'select code, max(trade_date) trade_date from daily_basic group by code;'
     dfupdate = pd.read_sql(sql, engine)
     df = df.merge(dfupdate, how='left')
     return df
