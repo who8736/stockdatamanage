@@ -804,32 +804,6 @@ def _readKline(sql):
     df = df.sort_index()
     df = df.reset_index()
     return df
-    # result = engine.execute(sql).fetchall()
-    # stockDatas = [i for i in reversed(result)]
-    # # klineDatas = []
-    # dateList = []
-    # openList = []
-    # closeList = []
-    # highList = []
-    # lowList = []
-    # peList = []
-    # indexes = list(range(len(result)))
-    # for i in indexes:
-    #     date, _open, high, low, close, ttmpe = stockDatas[i]
-    #     dateList.append(date.strftime("%Y-%m-%d"))
-    #     # QuarterList.append(date)
-    #     openList.append(_open)
-    #     closeList.append(close)
-    #     highList.append(high)
-    #     lowList.append(low)
-    #     peList.append(ttmpe)
-    # klineDf = pd.DataFrame({'date': dateList,
-    #                         'open': openList,
-    #                         'close': closeList,
-    #                         'high': highList,
-    #                         'low': lowList,
-    #                         'pe': peList})
-    # return klineDf
 
 
 def readIndexPE(codes, startDate, endDate):

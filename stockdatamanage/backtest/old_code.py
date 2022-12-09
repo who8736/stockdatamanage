@@ -10,8 +10,8 @@ import backtrader.indicators as btind
 import numpy as np
 import pandas as pd
 
-from ..db import engine
-from ..db.sqlrw import readStockKline
+from stockdatamanage.db import engine
+from stockdatamanage.db.sqlrw import readStockKline
 
 
 class PandasData(bt.feeds.PandasData):

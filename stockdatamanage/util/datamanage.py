@@ -34,7 +34,7 @@ from ..downloader.downloadtushare import (
     downStockListTushare, downTradeCalTushare,
 )
 from ..downloader.downloadakshare import (
-    downStockList, downTradeCal, downloadDaily, downloadDailyBasic)
+    downStockList, downTradeCal, downloadDaily, downloadDailyBasic, downloadIndexDaily, downloadIndexDailyIndicator, downloadETFDaily)
 from ..util.check import checkQuarterData
 from ..util.datatrans import classifyEndDate, quarterList
 from ..util.initlog import initlog, logfun
@@ -219,8 +219,8 @@ def startUpdateTushare():
 @logfun
 def startUpdateAkshare():
     """自动更新全部数据,包括K线历史数据、利润数据、K线表中的TTM市盈率
+    标星部分为等补充函数
     """
-    # TODO:补充更新函数
     pass
 
     # 更新交易日历
@@ -234,47 +234,51 @@ def startUpdateAkshare():
     # downloadDaily()
 
     # 更新每日指标
-    downloadDailyBasic()
+    # downloadDailyBasic()
 
-    # 更新复权因子
+    # 更新复权因子*
     # updateAdjFacotrTushare()
 
-    # 更新非季报表格
-    # 财务披露表（另外单独更新）
-    # 质押表（另外单独更新）
-    # 业绩预告（另外单独更新）
-    # 业绩快报（另外单独更新）
-    # 分红送股（另外单独更新）
+    # 更新非季报表格*
+    # 财务披露表（另外单独更新）*
+    # 质押表（另外单独更新）*
+    # 业绩预告（另外单独更新）*
+    # 业绩快报（另外单独更新）*
+    # 分红送股（另外单独更新）*
 
-    # 更新股票季报数据
-    # 资产负债表
-    # 利润表
-    # 现金流量表
-    # 财务指标表
+    # 更新股票季报数据*
+    # 资产负债表*
+    # 利润表*
+    # 现金流量表*
+    # 财务指标表*
     # updateQuarterData()
 
-    # 更新股票TTM利润
+    # 更新股票TTM利润*
     # updateTTMProfits()
 
-    # 更新行业列表
+    # 更新行业列表*
     # updateClassifyList()
 
-    # 更新行业利润
+    # 更新行业利润*
     # updateClassifyProfits()
 
-    # 计算行业PE
+    # 计算行业PE*
     # updateClassifyPE()
 
     # 更新股票估值, 废弃, 用股票评分代替
     # updateGuzhiData()
 
-    # 更新股票评分
+    # 更新股票评分*
     # updatePf()
 
     # 更新指数数据及PE
-    # updateIndex()
+    # downloadIndexDaily()
+    downloadIndexDailyIndicator()
 
-    # 更新全市PE
+    # 更新ETF每日净值
+    # downloadETFDaily()
+
+    # 更新全市PE*
     # updateAllMarketPE()
 
 
