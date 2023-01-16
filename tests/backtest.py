@@ -11,11 +11,11 @@ from stockdatamanage.db import engine
 
 def read_data():
     # 沪深300指数数据
-    sql = 'select trade_date, close from index_daily where code="399300" and trade_date>="20130101"'
+    sql = 'select trade_date, close, open from index_daily where code="399300" and trade_date>="20130101"'
     df = pd.read_sql(sql, engine, parse_dates=['trade_date'])
     df['high'] = 0
     df['low'] = 0
-    df['open'] = 0
+    # df['open'] = 0
     df['volumn'] = 0
     df['openinterest'] = 0
     df = df[['trade_date', 'open', 'high', 'low',
@@ -49,6 +49,8 @@ def quantile_rate(x):
 class TestStrategy(bt.Strategy):
     params = (
         ('pe', -1),
+        ('close', -1),
+        ('open', -1),
     )
 
     def log(self, txt, dt=None):
@@ -60,6 +62,7 @@ class TestStrategy(bt.Strategy):
         # Keep a reference to the "close" line in the data[0] dataseries
         self.datape = self.data.pe
         self.dataclose = self.data.close
+        self.dataopen = self.data.open
         self.dataquantile = self.data.quantile
         self.order = None
 
@@ -67,7 +70,8 @@ class TestStrategy(bt.Strategy):
         # Simply log the closing price of the series from the reference
 
         # self.log(f'PE, {self.datape[0]:.2f}')
-        self.log(f'Close, {self.dataclose[0]:.2f}')
+        # self.log(f'Close, {self.dataclose[0]:.2f}')
+        self.log(f'Open, {self.dataopen[0]:.2f}')
 
         # if self.order:
         # return
@@ -111,12 +115,13 @@ class TestStrategy(bt.Strategy):
 
 
 class IndexData(bt.feeds.PandasData):
-    lines = ('close', 'pe', 'quantile')
+    lines = ('open', 'close', 'high', 'low', 'volumn', 'pe', 'quantile')
     params = (
         ('close', -1),
         ('open', -1),
         ('high', -1),
         ('low', -1),
+        ('volumn', -1),
         ('pe', -1),
         ('quantile', -1),
 
