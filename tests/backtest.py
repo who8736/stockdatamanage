@@ -49,8 +49,8 @@ def quantile_rate(x):
 class TestStrategy(bt.Strategy):
     params = (
         ('pe', -1),
-        ('close', -1),
-        ('open', -1),
+        # ('close', -1),
+        # ('open', -1),
     )
 
     def log(self, txt, dt=None):
@@ -71,7 +71,7 @@ class TestStrategy(bt.Strategy):
 
         # self.log(f'PE, {self.datape[0]:.2f}')
         # self.log(f'Close, {self.dataclose[0]:.2f}')
-        self.log(f'Open, {self.dataopen[0]:.2f}')
+        # self.log(f'Open, {self.dataopen[0]:.2f}')
 
         # if self.order:
         # return
@@ -115,13 +115,14 @@ class TestStrategy(bt.Strategy):
 
 
 class IndexData(bt.feeds.PandasData):
-    lines = ('open', 'close', 'high', 'low', 'volumn', 'pe', 'quantile')
+    # lines = ('open', 'close', 'high', 'low', 'volumn', 'pe', 'quantile')
+    lines = ('open', 'close', 'pe', 'quantile')
     params = (
         ('close', -1),
         ('open', -1),
-        ('high', -1),
-        ('low', -1),
-        ('volumn', -1),
+        # ('high', -1),
+        # ('low', -1),
+        # ('volumn', -1),
         ('pe', -1),
         ('quantile', -1),
 
@@ -141,6 +142,7 @@ if __name__ == '__main__':
 
     # 增加策略
     cerebro.addstrategy(TestStrategy)
+    cerebro.addsizer(bt.sizers.FixedSize, stake=100)
     print('初始资金: %.2f' % cerebro.broker.getvalue())
     cerebro.run()
     print('结束资金: %.2f' % cerebro.broker.getvalue())
