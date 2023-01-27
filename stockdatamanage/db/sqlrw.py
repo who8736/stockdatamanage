@@ -175,7 +175,7 @@ def readStockList(list_date=None):
     sql = 'select code, name from stock_basic'
     if list_date:
         sql += f' where list_date>="{list_date}"'
-    df = pd.read_sql(sql, engine)
+    df = pd.read_sql(sql, engine.connect())
     return df
 
 
