@@ -5,8 +5,9 @@ Created on 2016年11月21日
 @author: who8736
 """
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.exc import NoResultFound
 
 from ..config import SQLHOST, SQLUSER, SQLPASSWORD
 # from initlog import initlog
@@ -29,3 +30,16 @@ class SQLConn:
 sqlconn = SQLConn()
 engine = sqlconn.engine
 Session = sqlconn.Session
+
+
+def executesql(sql, return_value=True):
+    with engine.connect() as conn:
+        result = conn.execute(text(sql))
+        # print(result)
+        try:
+            if return_value:
+                return result.one()[0]
+            else:
+                return result.all()
+        except NoResultFound:
+            return None

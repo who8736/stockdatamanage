@@ -11,7 +11,7 @@ import logging
 import pandas as pd
 import xlrd
 from pandas.core.frame import DataFrame
-from sqlalchemy import MetaData, Table
+from sqlalchemy import MetaData, Table, text
 from sqlalchemy.ext.declarative import declarative_base
 
 from . import initsql
@@ -182,7 +182,7 @@ def readStockList(list_date=None):
 def writeSQL(df: pd.DataFrame, tableName: str, replace=False):
     """
     Dataframe格式数据写入tableName指定的表中
-    replace: True，主键重复时更新数据， False, 忽略重复主键, 默认为False
+    replace: True,主键重复时更新数据, False, 忽略重复主键, 默认为False
     """
     if df.empty:
         return True
@@ -194,16 +194,16 @@ def writeSQL(df: pd.DataFrame, tableName: str, replace=False):
     df.fillna(value='', inplace=True)
     # df = transDfToList(df)
 
-
     Base = declarative_base()
 
     class MyTable(Base):
-        __table__ = Table(f'{tableName}', Base.metadata,
-                          autoload=True, autoload_with=engine)
+        __table__ = Table(f'{tableName}', Base.metadata, autoload_with=engine)
 
     try:
         session = Session()
         metadata = MetaData(bind=engine)
+        metadata.create_all(engine)
+        metadata.reflect(engine)
         if replace:
             for _index, row in df.iterrows():
                 # noinspection PyArgumentList
@@ -397,6 +397,8 @@ def readTTMProfitsUpdate():
         return dt.datetime.strftime(result[0], '%Y%m%d')
 
 # TODO: 废弃本函数， 用readProfitInc代替
+
+
 def del_readLastTTMProfit(ts_code, limit=1, date=None):
     """取指定股票最近几期TTM利润
     Parameters
@@ -655,6 +657,7 @@ def readClassifyName(code):
     if result:
         return result[0]
 
+
 def readClassifyProfit(date, lv=None):
     """
 
@@ -820,6 +823,7 @@ def readIndexPE(codes, startDate, endDate):
             df = df.merge(_df, on='date', how='outer')
     return df
 
+
 def setUpdate(dataName, _date=None):
     """
 
@@ -837,7 +841,8 @@ def setUpdate(dataName, _date=None):
 def readTableFields(table):
     sql = (f'select column_name from information_schema.columns'
            f' where table_name="{table}"')
-    result = engine.execute(sql).fetchall()
+    with engine.connect() as conn:
+        result = conn.execute(text(sql)).all()
     return ','.join([s[0] for s in result])
 
 
@@ -884,7 +889,7 @@ def readProfitInc(startDate, endDate=None, ptype='stock',
 
 
 def readProfit(startDate, endDate=None, ptype='stock',
-                  code=None, reportType='quarter'):
+               code=None, reportType='quarter'):
     """ 股票TTM利润增长率,按季或按年返回数个报告期增长率
     :param ptype: str, stock股票, classify行业
     :param reportType: str, quarter季报， year年报
@@ -916,7 +921,6 @@ def readProfit(startDate, endDate=None, ptype='stock',
         elif isinstance(code, list):
             _df = _df[_df[f'{codefield}'].isin(code)]
 
-
         if df is None:
             df = copy.deepcopy(_df)
         else:
@@ -933,7 +937,7 @@ def readStockUpdate():
     dfupdate = pd.read_sql(sql, engine)
     df = df.merge(dfupdate, how='left')
     return df
-    
+
 
 def readStockBasicUpdate():
     """读取股票指标更新日期
@@ -943,4 +947,3 @@ def readStockBasicUpdate():
     dfupdate = pd.read_sql(sql, engine)
     df = df.merge(dfupdate, how='left')
     return df
-    

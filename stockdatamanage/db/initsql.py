@@ -6,7 +6,7 @@ Created on 2016年11月30日
 """
 import pandas as pd
 
-from .sqlconn import engine
+from stockdatamanage.db import engine, executesql
 
 
 # from sqlrw import readts_codesFromSQL
@@ -14,8 +14,9 @@ from .sqlconn import engine
 
 def existTable(tablename):
     sql = 'show tables like "%s"' % tablename
-    result = engine.execute(sql)
-    return False if result.rowcount == 0 else True
+    result = executesql(sql)
+    return result
+    # return False if result.rowcount == 0 else True
 
 
 def createTable():

@@ -11,9 +11,10 @@ import akshare as ak
 import pandas as pd
 import numpy as np
 from tenacity import retry, stop_after_attempt, RetryError
+# from sqlalchemy import text
 
 from ..db.sqlrw import writeSQL, readStockUpdate, readStockBasicUpdate
-from ..db import engine
+from ..db import engine, executesql
 from ..util.initlog import logfun
 
 
@@ -74,7 +75,10 @@ def downStockList():
 @logfun
 def downTradeCal():
     sql = 'select max(cal_date) from trade_cal'
-    lastday = engine.execute(sql).fetchone()[0]
+    lastday = executesql(sql)
+
+    # lastday = conn.execute(text(sql)).fetchone()[0]
+    # lastday = result[0]
     today = dt.date.today()
     if lastday < today:
         df = ak.tool_trade_date_hist_sina()

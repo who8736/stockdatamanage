@@ -10,7 +10,8 @@ if __name__ == '__main__':
     check.checkPath()
     initlog.initlog()
 
-    try:
-        datamanage.startUpdate()
-    except Exception as e:
-        logging.error(e)
+    datamanage.startUpdate()
+    # try:
+    #     datamanage.startUpdate()
+    # except Exception as e:
+    #     logging.error(e)
