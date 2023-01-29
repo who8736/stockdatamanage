@@ -170,6 +170,7 @@ def _downloadDailyBasic(code, start_date, end_date):
     # df.columns = ['trade_date', 'pe', 'pe_ttm', 'pb',
     #               'ps', 'ps_ttm', 'dv_ratio', 'dv_ttm', 'total_mv', ]
     df['code'] = code
+    df.replace(np.nan, None, inplace=True)
     return df
 
 

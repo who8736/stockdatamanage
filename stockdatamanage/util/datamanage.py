@@ -231,10 +231,10 @@ def startUpdateAkshare():
     # downStockList()
 
     # 更新股票日交易数据
-    downloadDaily()
+    # downloadDaily()
 
     # 更新每日指标
-    # downloadDailyBasic()
+    downloadDailyBasic()
 
     # 更新复权因子*
     # updateAdjFacotrTushare()
