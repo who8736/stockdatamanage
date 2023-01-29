@@ -42,7 +42,8 @@ def checkQuarterData_del():
                 (select ts_code, total_mv/ps tp 
                     from daily_basic where trade_date='{endDate}') b
                 where a.ts_code=b.ts_code;"""
-    df = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        df = pd.read_sql(text(sql), conn)
 
     sql = f"""select a.ts_code from income a,
                 (select ts_code, max(end_date) edate from income 
@@ -52,7 +53,8 @@ def checkQuarterData_del():
                         (select max(trade_date) from daily_basic)) c
                 where a.ts_code=b.ts_code and a.end_date=b.edate 
                     and a.ts_code=c.ts_code and abs(a.revenue/c.rev-1)>0.0001;"""
-    df1 = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        df1 = pd.read_sql(text(sql), conn)
     df.loc[df.ts_code.isin(df1.ts_code), 'cha'] = 1
     return df
     # print(df)
@@ -70,7 +72,8 @@ def checkQuarterData():
     # end_date = '20200331'
     end_date = lastQuarter(dt.date.today())
     sql = f'call checkquarterdata("{end_date}");'
-    df = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        df = pd.read_sql(text(sql), conn)
     # print(df)
     return df
 
@@ -83,7 +86,8 @@ def checkClassifyMemberListdate():
     #     print(root, path, files)
 
     sql = 'select ts_code, list_date from stock_basic'
-    stocks = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        stocks = pd.read_sql(text(sql), conn)
     # print(stocks)
 
     dates = readCal('20200101', '20201101')
@@ -97,7 +101,8 @@ def checkClassifyMemberListdate():
                     where date=(select max(date) from classify_member 
                         where date<="{_date}")
                 '''
-        members = pd.read_sql(sql, engine)
+        with engine.connect() as conn:
+            members = pd.read_sql(text(sql), conn)
         # result = engine.execute(sql).fetchall()
         if members.empty:
             logging.warning(f'查询不到行业清单：{_date}')
@@ -143,23 +148,27 @@ def repairLost(startDate, endDate):
     for _date in dates:
         # print(_date)
         sql = f'select ts_code from stock_basic where list_date<="{_date}"'
-        stocks = pd.read_sql(sql, engine)
+        with engine.connect() as conn:
+            stocks = pd.read_sql(text(sql), conn)
         for table in tables:
             sql = f'select ts_code from {table} where end_date="{_date}"'
-            df = pd.read_sql(sql, engine)
+            with engine.connect() as conn:
+                df = pd.read_sql(text(sql), conn)
             lost = stocks[~stocks.ts_code.isin(df.ts_code)]
             if table == 'fina_indicator':
                 sql = f'''select ts_code from fina_indicator
                             where end_date="{_date}" 
                                 and (profit_dedt is null or eps is null);'''
-                df = pd.read_sql(sql, engine)
+                with engine.connect() as conn:
+                    df = pd.read_sql(text(sql), conn)
                 lost = pd.concat([lost, df])
                 lost.drop_duplicates(['ts_code'])
             if table == 'income':
                 sql = f'''select ts_code from income
                             where end_date="{_date}" 
                                 and (n_income is null);'''
-                df = pd.read_sql(sql, engine)
+                with engine.connect() as conn:
+                    df = pd.read_sql(text(sql), conn)
                 lost = pd.concat([lost, df])
                 lost.drop_duplicates(['ts_code'])
             for code in lost.ts_code.values:

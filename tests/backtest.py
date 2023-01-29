@@ -12,7 +12,8 @@ from stockdatamanage.db import engine
 def read_data():
     # 沪深300指数数据
     sql = 'select trade_date, close, open from index_daily where code="399300" and trade_date>="20130101"'
-    df = pd.read_sql(sql, engine, parse_dates=['trade_date'])
+    with engine.connect() as conn:
+        df = pd.read_sql(text(sql), conn, parse_dates=['trade_date'])
     df['high'] = 0
     df['low'] = 0
     # df['open'] = 0
@@ -23,7 +24,8 @@ def read_data():
 
     # 沪深300滚动PE
     sql = 'select trade_date, pe from index_dailyindicator where code="399300.SZ" and trade_date>="20130101"'
-    pedf = pd.read_sql(sql, engine, parse_dates=['trade_date'])
+    with engine.connect() as conn:
+        pedf = pd.read_sql(text(sql), conn, parse_dates=['trade_date'])
     df = df.merge(pedf, how='left', on='trade_date')
 
     df.rename(columns={'trade_date': 'datetime'}, inplace=True)

@@ -115,7 +115,8 @@ class TestStrategy(bt.Strategy):
         if self.endDate is not None:
             sql += (f' and (pay_date<="{self.endDate}"'
                     f' or div_listdate<="{self.endDate}")')
-        self.dividentData = pd.read_sql(sql, engine)
+        with engine.connect() as conn:
+            self.dividentData = pd.read_sql(text(sql), conn)
         # self.log('除权除息数据：')
         # print('-' * 80)
         # print(self.dividentData)
@@ -422,7 +423,8 @@ def getData(ts_code, startDate=None, endDate=None):
     if startDate is not None:
         sql += f' and date<="{endDate}"'
 
-    dfpe = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        dfpe = pd.read_sql(text(sql), conn)
     dfpe.date = pd.to_datetime(dfpe.date)
     dfpe = dfpe.set_index('date')
     # dfpe.rename(columns={'pe200': 'volume'}, inplace=True)

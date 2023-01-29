@@ -78,7 +78,8 @@ def peZ(stock, dayCount, date=None):
         sql += f' and trade_date<="{date}"'
     sql += f' order by trade_date desc limit {dayCount};'
     # print(sql)
-    peDf = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        peDf = pd.read_sql(text(sql), conn)
     # 如果历史交易天数不足，则本项指标为0
     if len(peDf.index) != dayCount:
         return 0
@@ -115,7 +116,7 @@ def lowPEZ1000(stock):
 #
 #     # 市盈率低于行业平均
 #     sql = 'select ts_code, hyid from hangyestock;'
-#     hyDf = pd.read_sql(sql, engine)
+#     hyDf = pd.read_sql(text(sql), conn)
 #     stocks = pd.merge(stocks, hyDf, on='ts_code', how='left')
 #     classifyPE = classifyanalyse.readClassifyPE()
 #     stocks = pd.merge(stocks, classifyPE, on='hyid', how='left')
@@ -224,7 +225,8 @@ def calpfnew(_date, replace=False):
             (select ts_code, max(date) cdate from classify_member 
                 where date<="{_date}" group by ts_code) b
             where a.ts_code=b.ts_code and a.date=b.cdate;'''
-    classifyDf = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        classifyDf = pd.read_sql(text(sql), conn)
     stocks = pd.merge(stocks, classifyDf, on='ts_code', how='left')
     classifyPEDf = classifyanalyse.readClassifyPE(_date)
     classifyPEDf.rename(columns={'pe': 'classify_pe'}, inplace=True)

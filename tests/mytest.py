@@ -5,24 +5,31 @@ Created on Mon Apr 15 15:27:38 2019
 @author: ff
 """
 
+import datetime as dt
 from urllib.request import urlopen
 from xml import etree
 import logging
+from matplotlib.ticker import FixedLocator
+
 
 from matplotlib.widgets import Cursor
+import matplotlib.pyplot as plt
 import pandas as pd
 # from retrying import retry
 from tenacity import retry, stop_after_attempt, RetryError
+import tushare as ts
 
 from context import stockdatamanage
+from stockdatamanage.util import datatrans
+from stockdatamanage.util.bokeh_plot import getMonthIndex, plotProfitInc
+from stockdatamanage.util.initlog import initlog
 import stockdatamanage.views.home
 from stockdatamanage.analyse.classifyanalyse import (
     calClassifyPE,
 )
 from stockdatamanage.analyse.valuation import calpfnew
 from stockdatamanage.db import engine
-from stockdatamanage.db.sqlrw import readCal, readValuationSammary
-from stockdatamanage.util.initlog import initlog
+from stockdatamanage.db.sqlrw import readCal, readStockList, readValuationSammary, writeSQL
 
 INDEXNAME = {'000001.SH': '上证综指',
              # '000005.SH': '上证商业类指数',
@@ -62,7 +69,8 @@ def analyIndex(code1='000001.SH', code2='000016.SH', startDate='20070101',
     pass
     sql = (f'select trade_date, close close_sh from index_daily'
            f' where ts_code="{code1}" and trade_date >= "{startDate}"')
-    df1 = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        df1 = pd.read_sql(text(sql), conn)
     if df1.empty:
         return None
     # print(df1)
@@ -73,7 +81,8 @@ def analyIndex(code1='000001.SH', code2='000016.SH', startDate='20070101',
 
     sql = (f'select trade_date, close close_sz from index_daily'
            f' where ts_code="{code2}" and trade_date >= "{startDate}"')
-    df2 = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        df2 = pd.read_sql(text(sql), conn)
     if df2.empty:
         return None
     # noinspection PyUnusedLocal
@@ -118,158 +127,10 @@ def analyIndex(code1='000001.SH', code2='000016.SH', startDate='20070101',
     return df.line2.values[-1]
 
 
-def downGubenFromEastmoney():
-    """ 从东方财富下载总股本变动数据
-    url: 
-    """
-    pass
-    ts_code = '600000.SH'
-    # startDate = '2019-04-01'
-    bs.login()
-    # from misc import usrlGubenEastmoney
-    # urlGubenEastmoney('600000')
-    gubenURL = urlGubenEastmoney(ts_code)
-    # req = getreq(gubenURL, includeHeader=True)
-    req = getreq(gubenURL)
-    guben = urlopen(req).read()
-
-    gubenTree = etree.HTML(guben)
-    # //*[@id="lngbbd_Table"]/tbody/tr[1]/th[3]
-    # gubenData = gubenTree.xpath('//tr')
-    gubenData = gubenTree.xpath('''//html//body//div//div
-                                //div//div//table//tr//td
-                                //table//tr//td//table//tr//td''')
-    date = [gubenData[i][0].text for i in range(0, len(gubenData), 2)]
-    date = [datetime.strptime(d, '%Y%m%d') for d in date]
-    #     print date
-    totalshares = [
-        gubenData[i + 1][0].text for i in range(0, len(gubenData), 2)]
-    #     print totalshares
-    #     t = [i[:-2] for i in totalshares]
-    #     print t
-    try:
-        totalshares = [float(i[:-2]) * 10000 for i in totalshares]
-    except ValueError as e:
-        # logging.error('ts_code:%s, %s', ts_code, e)
-        print('ts_code:%s, %s', ts_code, e)
-    #     print totalshares
-    gubenDf = DataFrame({'ts_code': ts_code,
-                         'date': date,
-                         'totalshares': totalshares})
-    return gubenDf
-
-
 def urlGuben(ts_code):
     return ('http://vip.stock.finance.sina.com.cn/corp/go.php'
             '/vCI_StockStructureHistory/ts_code'
             '/%s/stocktype/TotalStock.phtml' % ts_code)
-
-
-def del_downLiutongGubenFromBaostock():
-    """ 从baostock下载每日K线数据，并根据成交量与换手率计算流通总股本
-    """
-    code = 'sz.000651'
-    startDate = '2019-03-01'
-    endDate = '2019-04-15'
-    fields = "date,code,close,volume,turn,peTTM,tradestatus"
-
-    lg = bs.login()
-    print('baostock login code: ', lg.error_code)
-    rs = bs.query_history_k_data_plus(code, fields, startDate, endDate)
-    dataList = []
-    while rs.next():
-        dataList.append(rs.get_row_data())
-    result = pd.DataFrame(dataList, columns=rs.fields)
-    print(result)
-    #    lg.logout()
-    bs.logout()
-    return result
-
-
-def resetTTMLirun():
-    """
-    重算TTM利润
-    :return:
-    """
-    startQuarter = 20174
-    endQuarter = 20191
-    # noinspection PyUnusedLocal
-    dates = datatrans.quarterList(startQuarter, endQuarter)
-    for year in range(2010, 2020):
-        for md in ['0331', '0630', '0930', '1231']:
-            date = f'{year}{md}'
-            logging.debug('updateLirun: %s', date)
-            calAllTTMLirun(date, replace=True)
-
-
-def del_resetLirun():
-    """
-    下载所有股票的利润数据更新到数据库， 主要用于修复库内历史数据缺失的情况
-    :return:
-    """
-    startDate = '2018-01-01'
-    fields = 'ts_code,ann_date,end_date,total_profit,n_income,n_income_attr_p'
-    pro = ts.pro_api()
-
-    # stockList = readStockListFromSQL()
-    stockList = [['600306', 'aaa']]
-    for ts_code, stockName in stockList:
-        print(ts_code, stockName)
-        # ts_code = '002087'
-        ts_code = tsCode(ts_code)
-        df = pro.income(ts_code=ts_code, start_date=startDate, fields=fields)
-        df['date'] = df['end_date'].apply(transTushareDateToQuarter)
-        df['ts_code'] = df['ts_code'].apply(lambda x: x[:6])
-        df['reportdate'] = df['ann_date'].apply(
-            lambda x: '%s-%s-%s' % (x[:4], x[4:6], x[6:]))
-        df.rename(columns={'n_income_attr_p': 'profits'}, inplace=True)
-        df1 = df[['ts_code', 'date', 'profits', 'reportdate']]
-        if not df1.empty:
-            writeSQL(df1, 'lirun')
-
-        # tushare每分钟最多访问接口80次
-        time.sleep(0.4)
-
-
-def testBokeh():
-    """bokeh测试用"""
-    # b = BokehPlot('000651')
-    # p = b.plot()
-    # output_file("kline.html", title="kline plot tests")
-    output_file('../vbar.html')
-    p = figure(plot_width=400, plot_height=400)
-    p.vbar(x=[1, 2, 3], width=0.5, bottom=[1, 2, 3],
-           top=[1.2, 2, 3.1], color="firebrick")
-    show(p)  # open a browser
-
-
-def del_gatherKline():
-    stockList = readStockList()
-    for ts_code in stockList:
-        # ts_code = '000002'
-        sql = f"""insert ignore stockdata.kline(`ts_code`, `date`, `open`, 
-                    `high`, `close`, `low`, `volume`, `totalmarketvalue`, 
-                    `ttmprofits`, `ttmpe`) 
-                select '{ts_code}', s.`date`, s.`open`, s.`high`, s.`close`, 
-                    s.`low`, s.`volume`, s.`totalmarketvalue`, s.`ttmprofits`, 
-                    s.`ttmpe` from klinestock where ts_code='{ts_code}' as s;
-              """
-        print('process ts_code: ', ts_code)
-        # print(sql)
-        engine.execute(sql)
-        # if ts_code > '000020':
-        #     break
-
-
-def testBokehtest():
-    """
-    测试bokehtest中的功能
-    :return:
-    """
-    mybokeh = bokehtest.BokehPlotStock('000651', 1000)
-    myplot = mybokeh.plot()
-    output_file("../kline.html", title="kline plot tests")
-    show(myplot)  # open a browser
 
 
 def testDownIndexWeightRepair():
@@ -319,7 +180,7 @@ def testDownIndexWeightRepair():
                 _timedelta = nowtime - times[cur - downLimit]
                 sleeptime = perTimes - _timedelta.seconds
                 print(f'******暂停{sleeptime}秒******')
-                time.sleep(sleeptime)
+                dt.time.sleep(sleeptime)
 
             startDate = initDate.strftime('%Y%m%d')
             initDate += dt.timedelta(days=30)
@@ -616,8 +477,8 @@ def __testPlot():
     pass
 
     # noinspection PyUnusedLocal
-    p = PlotProfitsInc(ts_code='000651.SZ', startDate='20150331',
-                       endDate='20191231')
+    p = plotProfitInc(ts_code='000651.SZ', startDate='20150331',
+                      endDate='20191231')
     # bokeh绘图
     # testBokeh()
 
@@ -643,7 +504,7 @@ def __test_fina_indicator_end_date():
     #         where a.ts_code = b.ts_code and a.end_date = b.fina_date
     #         order by fina_date;
     # '''
-    # df = pd.read_sql(sql, engine)
+    # df = pd.read_sql(text(sql), conn)
 
     df = readValuationSammary()
     df['fina_date'] = df.fina_date.apply(lambda x: x.strftime('%Y%m%d'))
@@ -677,66 +538,6 @@ def checkIncome():
     end_date = '20191231'
     # noinspection PyUnusedLocal
     sql = f'select ts_code from income where end_date="{end_date}"'
-
-
-def repairFinaIndicator():
-    stocks = readStockList()
-    for ts_code in stocks.ts_code:
-        downloader = DownloaderFinaIndicator(ts_code)
-        downloader.run()
-
-
-def testPEProfitsTTM1(ts_code):
-    """
-    按每日指标和利润表分别计算TTM利润，
-    两者差异超过0.00001时表示需更新财务季报
-    利润表应取最后一季，最后一季上年同期，上年年末计算得到profits_ttm
-    :return:
-    无利润表 返回1
-    无每日指标 返回2
-    利润表数据不全 返回3
-    每日指标与利润表差异较大 返回4
-    无差异 返回0
-    """
-
-    sql = f"""select total_mv/pe_ttm mvpettm from daily_basic
-           where ts_code="{ts_code}" order by trade_date desc limit 1;
-        """
-    result = engine.execute(sql).fetchone()
-    if result is None or result[0] is None:
-        mvpettm = None
-    else:
-        mvpettm = result[0] * 10000
-
-    # d1 最后一季日期
-    # d2 上年末季日期
-    # d3 最后一季上年同期日期
-    # p1,p2,p3类似
-    sql = f"""select end_date, n_income_attr_p from income 
-                where ts_code="{ts_code}" 
-                order by end_date desc limit 5;
-            """
-    df = pd.read_sql(sql, engine)
-    if df.empty:
-        profitsttm = None
-    else:
-        d1 = df.end_date.values[0]
-        d2 = d1 - relativedelta(years=1, month=12, day=31)
-        d3 = d1 - relativedelta(years=1)
-        if ((d2 not in df.end_date.values)
-                or (d3 not in df.end_date.values)):
-            profitsttm = None
-        else:
-            p1 = df[df.end_date == d1].n_income_attr_p.values[0]
-            p2 = df[df.end_date == d2].n_income_attr_p.values[0]
-            p3 = df[df.end_date == d3].n_income_attr_p.values[0]
-            profitsttm = p1 + p2 - p3
-
-    if mvpettm is None or profitsttm is None:
-        div = None
-    else:
-        div = abs(mvpettm / profitsttm - 1)
-    return mvpettm, profitsttm, div
 
 
 retry_cnt = 0

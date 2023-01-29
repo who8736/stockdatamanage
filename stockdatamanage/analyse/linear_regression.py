@@ -4,6 +4,7 @@
 import os
 from collections import OrderedDict
 from math import log
+import datetime as dt
 
 # import matplotlib.mlab as mlab
 import matplotlib
@@ -30,6 +31,7 @@ from ..config import DATAPATH
 
 matplotlib.rcParams['font.sans-serif'] = ['simsun']
 matplotlib.use('TkAgg')
+
 
 def studyTime():
     examDict = {
@@ -208,7 +210,8 @@ def _linearProfitInc(ts_code, startDate, endDate):
     sql = (f'select dt_netprofit_yoy inc from fina_indicator'
            f' where ts_code="{ts_code}" and end_date>="{startDate}"'
            f' and end_date<="{endDate}"')
-    df = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        df = pd.read_sql(text(sql), conn)
     df.dropna(inplace=True)
     result = _linear(df.inc.values)
     if result is not None:
@@ -228,7 +231,8 @@ def _linearProfitIncDouble(ts_code, startDate, endDate):
     sql = (f'select dt_netprofit_yoy inc from fina_indicator'
            f' where ts_code="{ts_code}" and end_date>="{startDate}"'
            f' and end_date<="{endDate}"')
-    df = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        df = pd.read_sql(text(sql), conn)
     df.dropna(inplace=True)
     result_linear = _linear(df.inc.values)
     result_huber = _linearHuber(df.inc.values)
@@ -289,7 +293,8 @@ def _linearProfits(ts_code, startDate, fig):
     name = readStockName(ts_code)
     plt.title(f'{ts_code} {name}', fontproperties='simsun', fontsize=26)
     # plt.show()
-    filename = os.path.join(DATAPATH, 'linear_img', f'linear_profit_{ts_code[:6]}.png')
+    filename = os.path.join(DATAPATH, 'linear_img',
+                            f'linear_profit_{ts_code[:6]}.png')
     plt.savefig(filename)
     plt.clf()
 
@@ -302,8 +307,10 @@ def plotPairs(df, intercept, coef):
     ax1 = plt.subplot(gs[0, 0])
     ax2 = plt.subplot(gs[0, 1])
     # 绘制拆线图
-    ax1.plot(stockdatamanage.views.home.index, df.ttmpea, color='blue', label='ts_codea')
-    ax1.plot(stockdatamanage.views.home.index, df.ttmpeb, color='yellow', label='ts_codeb')
+    ax1.plot(stockdatamanage.views.home.index,
+             df.ttmpea, color='blue', label='ts_codea')
+    ax1.plot(stockdatamanage.views.home.index,
+             df.ttmpeb, color='yellow', label='ts_codeb')
     ax1.legend()
     # 设置X轴的刻度间隔
     # 可选:YearLocator,年刻度; MonthLocator,月刻度; DayLocator,日刻度
@@ -345,16 +352,20 @@ def findPairs(ts_codea, ts_codeb, startDate='20090101', endDate='20191231',
     sql = (f'select trade_date, pe_ttm'
            f' from daily_basic where ts_code="{ts_codea}"'
            f' and trade_date>="{startDate}" and trade_date<="{endDate}"')
-    dfa = pd.read_sql(sql, engine)
-    dfa.rename(columns={'pe_ttm': 'ttmpea', 'trade_date': 'date'}, inplace=True)
+    with engine.connect() as conn:
+        dfa = pd.read_sql(text(sql), conn)
+    dfa.rename(columns={'pe_ttm': 'ttmpea',
+               'trade_date': 'date'}, inplace=True)
     dfa.set_index('date', inplace=True)
     # print(dfa)
 
     sql = (f'select trade_date, pe_ttm'
            f' from daily_basic where ts_code="{ts_codeb}"'
            f' and trade_date>="{startDate}" and trade_date<="{endDate}"')
-    dfb = pd.read_sql(sql, engine)
-    dfb.rename(columns={'pe_ttm': 'ttmpeb', 'trade_date': 'date'}, inplace=True)
+    with engine.connect() as conn:
+        dfb = pd.read_sql(text(sql), conn)
+    dfb.rename(columns={'pe_ttm': 'ttmpeb',
+               'trade_date': 'date'}, inplace=True)
     dfb.set_index('date', inplace=True)
     # print(dfb)
 
@@ -395,14 +406,14 @@ def findPairs(ts_codea, ts_codeb, startDate='20090101', endDate='20191231',
 #     """
 #     sql = (f'select date, ttmpe from klinestock where ts_code="{ts_codea}"'
 #            f' and date>="{startDate}" and date<="{endDate}"')
-#     dfa = pd.read_sql(sql, engine)
+#     dfa = pd.read_sql(text(sql), conn)
 #     dfa.rename(columns={'ttmpe': 'ttmpea'}, inplace=True)
 #     dfa.set_index('date', inplace=True)
 #     # print(dfa)
 #
 #     sql = (f'select date, ttmpe from klinestock where ts_code="{ts_codeb}"'
 #            f' and date>="{startDate}" and date<="{endDate}"')
-#     dfb = pd.read_sql(sql, engine)
+#     dfb = pd.read_sql(text(sql), conn)
 #     dfb.rename(columns={'ttmpe': 'ttmpeb'}, inplace=True)
 #     dfb.set_index('date', inplace=True)
 #     # print(dfb)
@@ -593,7 +604,8 @@ def linearProfits():
     stocks['intercept'] = intercept
     stocks['coef'] = coef
     stocks['r2values'] = r2values
-    stocks.to_excel(os.path.join(DATAPATH, 'linearprofit', 'profits_linear_regression.xlsx'))
+    stocks.to_excel(os.path.join(DATAPATH, 'linearprofit',
+                    'profits_linear_regression.xlsx'))
 
 
 def series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
@@ -640,7 +652,8 @@ def trans_series():
     sql = (f'select dt_netprofit_yoy inc from fina_indicator'
            f' where ts_code="{ts_code}" and end_date>="{startDate}"'
            f' and end_date<="{endDate}"')
-    df = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        df = pd.read_sql(text(sql), conn)
     df.dropna(inplace=True)
     results = _linear_trans(df.inc.values)
     print(f'转换序列拟合结果')
@@ -663,7 +676,8 @@ def profits_inc_lof(ts_code, startDate='20150101', endDate='20191231'):
     sql = (f'select dt_netprofit_yoy inc from fina_indicator'
            f' where ts_code="{ts_code}" and end_date>="{startDate}"'
            f' and end_date<="{endDate}"')
-    df = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        df = pd.read_sql(text(sql), conn)
     df.dropna(inplace=True)
     print(df)
 
@@ -827,7 +841,8 @@ def testoutlier(end_date=2017):
 def prophetProfit(ts_code='000002.SZ', startDate='20170331'):
     sql = f'''SELECT end_date ds, profit_dedt y FROM stockdata.fina_indicator
                where ts_code="{ts_code}" and end_date>="{startDate}";'''
-    df = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        df = pd.read_sql(text(sql), conn)
     m = Prophet()
     m.fit(df)
     future = m.make_future_dataframe(periods=3)
@@ -836,12 +851,14 @@ def prophetProfit(ts_code='000002.SZ', startDate='20170331'):
     forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail()
     fig1 = m.plot(forecast)
     fig1.show()
-    filename = os.path.join(DATAPATH, 'linear_img/profit', f'prophet_{ts_code}.png')
+    filename = os.path.join(
+        DATAPATH, 'linear_img/profit', f'prophet_{ts_code}.png')
     # plt.show()
     plt.savefig(filename)
     fig2 = m.plot_components(forecast)
     fig2.show()
-    filename = os.path.join(DATAPATH, 'linear_img/profit', f'comp_{ts_code}.png')
+    filename = os.path.join(
+        DATAPATH, 'linear_img/profit', f'comp_{ts_code}.png')
     plt.savefig(filename)
 
 

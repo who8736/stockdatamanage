@@ -16,6 +16,7 @@ from ..db.sqlconn import engine
 from ..db.sqlrw import (
     readStockList, readTTMProfitsForDate, writeSQL, readProfit, readClassify
 )
+from ..db import executesql
 from ..util import datatrans
 from ..util.datatrans import calDate, quarterList
 
@@ -35,7 +36,8 @@ def getStockForClassify(code=None, date=None):
         sql += f' and classify_code="{code}" '
     sql += (f' and date=(select max(date) from classify_member where '
             f'date<="{date}")')
-    df = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        df = pd.read_sql(text(sql), conn)
 
     stockname = readStockList()
     df = df.merge(stockname, on='ts_code', how='left')
@@ -77,13 +79,13 @@ def getClassifyProfitCnt(code, quarter):
     return result.fetchone()[0]
 
 
-# def getHYList(level=4):
-#     """ 查询指定级别的所有行业代码
-#     """
-#     sql = 'select hyid from hangyename where hylevel=%(level)s;' % locals()
-#     #     print sql
-#     result = engine.execute(sql).fetchall()
-#     return [i[0] for i in result]
+def getHYList(level=4):
+    """ 查询指定级别的所有行业代码
+    """
+    sql = f'select hyid from hangyename where hylevel={level};'
+    #     print sql
+    result = executesql(sql)
+    return [i[0] for i in result]
 
 
 def getSubHY(hyID, subLevel):
@@ -106,7 +108,8 @@ def readClassifyName(code=None):
     """
     assert isinstance(code, (str, pd.DataFrame)), 'code应为str或DataFrame'
     sql = f'select code, name from classify;'
-    df = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        df = pd.read_sql(text(sql), conn)
     if df.empty:
         return None
     if isinstance(code, str):
@@ -174,9 +177,9 @@ def calClassifyStaticTTMProfitHigh(classify, end_date, replace=False):
         result = df.groupby('code').sum()
         result['inc'] = result.profits_com / result.lastprofits
         result.loc[result.lastprofits > 0, 'inc'] = (
-                result.inc * 100 - 100).round(2)
+            result.inc * 100 - 100).round(2)
         result.loc[result.lastprofits < 0, 'inc'] = (
-                100 - result.inc * 100).round(2)
+            100 - result.inc * 100).round(2)
         result.loc[result.lastprofits == 0, 'inc'] = 100
         result['end_date'] = dt.datetime.strptime(end_date, '%Y%m%d')
         # print(result)
@@ -218,9 +221,9 @@ def calClassifyStaticTTMProfitLow(end_date, replace=False):
     classifyCom = stocksCom.groupby('code').sum()
     classifyCom['inc'] = classifyCom.profits_com / classifyCom.lastprofits
     classifyCom.loc[classifyCom.lastprofits > 0, 'inc'] = (
-            classifyCom.inc * 100 - 100).round(2)
+        classifyCom.inc * 100 - 100).round(2)
     classifyCom.loc[classifyCom.lastprofits < 0, 'inc'] = (
-            100 - classifyCom.inc * 100).round(2)
+        100 - classifyCom.inc * 100).round(2)
     classifyCom.loc[classifyCom.lastprofits == 0, 'inc'] = 100
     # print(classifyCom)
 
@@ -266,7 +269,8 @@ def readClassifyPE(date=None, code=None):
     else:
         condition = f'"{date}"'
     sql = f'select code, pe from classify_pe where date={condition}'
-    df = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        df = pd.read_sql(text(sql), conn)
     if code is not None:
         df = df[df.code.isin(code)]
     if not df.empty:
@@ -304,14 +308,14 @@ def calClassifyPE(date):
         logging.error(f'failed to read hangyepe for date:{date}:', e)
 
 
-def resetClassifyProfits(startQuarter='20200331', endQuarter='20201231'):
-    """
-    重算指定日期所有行业TTM利润
-    :return:
-    """
-    dates = datatrans.quarterList(startQuarter, endQuarter)
-    for date in dates:
-        calAllHYTTMProfits(date)
+# def resetClassifyProfits(startQuarter='20200331', endQuarter='20201231'):
+#     """
+#     重算指定日期所有行业TTM利润
+#     :return:
+#     """
+#     dates = datatrans.quarterList(startQuarter, endQuarter)
+#     for date in dates:
+#         calAllHYTTMProfits(date)
 
 
 def calClassifyProfitsIncCompare(startDate='20170930', endDate='20200930'):
@@ -325,7 +329,8 @@ def calClassifyProfitsIncCompare(startDate='20170930', endDate='20200930'):
     # 增加行业代码
     sql = f'''select ts_code, classify_code from classify_member 
                 where date=(select max(date) from classify_member);'''
-    classifymember = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        classifymember = pd.read_sql(text(sql), conn)
     df = df.merge(classifymember, on='ts_code')
 
     # 分类汇总
@@ -337,9 +342,9 @@ def calClassifyProfitsIncCompare(startDate='20170930', endDate='20200930'):
     curField = f'profit{endDate}'
     dfgroup['inc'] = dfgroup[curField] / dfgroup[baseField]
     dfgroup.loc[dfgroup[baseField] > 0, 'inc'] = (
-            dfgroup.inc * 100 - 100).round(2)
+        dfgroup.inc * 100 - 100).round(2)
     dfgroup.loc[dfgroup[baseField] < 0, 'inc'] = (
-            100 - dfgroup.inc * 100).round(2)
+        100 - dfgroup.inc * 100).round(2)
 
     # 利润增长的稳定性
     dates = quarterList(startDate, endDate)
@@ -351,17 +356,17 @@ def calClassifyProfitsIncCompare(startDate='20170930', endDate='20200930'):
         incField = f'inc{dates[i]}'
         dfinc[incField] = dfgroup[curField] / dfgroup[lastField]
         dfinc.loc[dfgroup[lastField] > 0, incField] = (
-                dfinc[incField] * 100 - 100).round(2)
+            dfinc[incField] * 100 - 100).round(2)
         dfinc.loc[dfgroup[lastField] < 0, incField] = (
-                100 - dfinc[incField] * 100).round(2)
+            100 - dfinc[incField] * 100).round(2)
     dfgroup['avg'] = dfinc.mean(axis=1).round(2)
     # cv: 标准离差率
     dfgroup['cv'] = (dfinc.std(axis=1) / dfinc.mean(axis=1)).round(2)
 
-
     # 输出结果
     classify = readClassify()
-    dfgroup = dfgroup.merge(classify, how='left', left_on='classify_code', right_on='code')
+    dfgroup = dfgroup.merge(classify, how='left',
+                            left_on='classify_code', right_on='code')
     df.to_excel('classifyproifitinc.xlsx')
     dfgroup.to_excel('classifyprofitgroup.xlsx')
     print(df)

@@ -8,6 +8,7 @@ Created on 2017年2月10日
 import datetime as dt
 # import datetime
 import os
+import logging
 
 import matplotlib
 import numpy as np
@@ -134,7 +135,8 @@ def plotKlineIndex(ID, days):
            f'from daily a, daily_basic b '
            f'where a.ts_code="{ID}" and a.ts_code=b.ts_code and a.trade=b.trade'
            f'order by a.trade_date desc limit {days};')
-    df = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        df = pd.read_sql(text(sql), conn)
     print(df.head())
     bokehplot = BokehPlot(df)
     return bokehplot.plot()
@@ -152,7 +154,7 @@ def plotKlineStock(ID, days):
     #        f' where a.ts_code="{ID}" and a.ts_code=b.ts_code '
     #        f' and a.trade_date=b.trade_date'
     #        f' order by date desc limit {days};')
-    # df = pd.read_sql(sql, engine)
+    # df = pd.read_sql(text(sql), conn)
     df = readStockKline(ts_code=ID, days=days)
     # print(df.head())
     bokehplot = BokehPlot(df)
@@ -540,7 +542,8 @@ class PlotProfitsInc:
         sql += f' and end_date>="{startDate}"' if startDate else ''
         sql += f' and end_date<="{endDate}"' if endDate else ''
         # print(sql)
-        df = pd.read_sql(sql, engine)
+        with engine.connect() as conn:
+            df = pd.read_sql(text(sql), conn)
         df.dropna(inplace=True)
         df['date'] = [i.strftime('%Y%m%d') for i in df.date]
         # print(df)

@@ -26,7 +26,8 @@ def adfTestPE(ts_code, startDate, endDate, plotFlag=False):
     sql = (f'select pe_ttm from daily_basic '
            f'where ts_code="{ts_code}" '
            f'and trade_date>="{startDate}" and trade_date<="{endDate}"')
-    dfa = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        dfa = pd.read_sql(text(sql), conn)
     dfa.dropna(inplace=True)
     resulta = adfuller(dfa['pe_ttm'])
     dfb = np.diff(dfa['pe_ttm'])
@@ -71,7 +72,8 @@ def plotDf(ts_code, dfa, dfb):
     # fig.autofmt_xdate()
 
     plt.grid(True)
-    plt.savefig(os.path.join(DATAPATH, 'linear_img/pe', f'ADFTest{ts_code}.png'))
+    plt.savefig(os.path.join(
+        DATAPATH, 'linear_img/pe', f'ADFTest{ts_code}.png'))
     # plt.show()
 
 
@@ -79,7 +81,8 @@ def adfTestProfits(ts_code, startDate, endDate):
     sql = (f'select ttmprofits from ttmlirun '
            f'where ts_code="{ts_code}" '
            f'and date>="{startDate}" and date<="{endDate}"')
-    df = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        df = pd.read_sql(text(sql), conn)
     resulta = adfuller(df['ttmprofits'])
     df1 = np.diff(df['ttmprofits'])
     resultb = adfuller(df1)
@@ -197,7 +200,7 @@ def adfTestAllProfitsInc(startDate=None, endDate=None):
 
 def adfTestAllPE(stockList, startDate, endDate, plotFlag):
     """
-    
+
     :param stockList: 
     :param startDate: 
     :param endDate: 

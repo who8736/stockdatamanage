@@ -7,7 +7,7 @@
 import numpy as np
 import pandas as pd
 import talib as ta
-from sklearn.datasets.samples_generator import make_classification
+# from sklearn.datasets.samples_generator import make_classification
 from sklearn.linear_model import (LassoCV, LinearRegression, RidgeCV)
 from sklearn.metrics import confusion_matrix, precision_score, r2_score
 from sklearn.model_selection import (
@@ -16,8 +16,10 @@ from sklearn.model_selection import (
 from sklearn.preprocessing import PowerTransformer, scale
 from sklearn.svm import LinearSVC, SVC
 from sklearn.utils import check_X_y
-from sqlconn import engine
 from talib import MA_Type
+
+
+from stockdatamanage.db import engine
 
 
 def getdata(ts_code, startDate='20090101', endDate='20191231',
@@ -29,7 +31,8 @@ def getdata(ts_code, startDate='20090101', endDate='20191231',
     sql = (f'SELECT trade_date, close, open, high, low, pct_chg, vol volume'
            f' FROM stockdata.index_daily where ts_code = "{ts_code}"'
            f' and trade_date>="{startDate}" and trade_date<="{endDate}";')
-    df = pd.read_sql(sql, engine, index_col='trade_date')
+    with engine.connect() as conn:
+        df = pd.read_sql(text(sql), conn, index_col='trade_date')
 
     dftalib = ta_indicators(df)
     df = pd.merge(df, dftalib, left_index=True, right_index=True)
@@ -680,7 +683,8 @@ def ta_indicators(df):
     # 函数名：LINEARREG_INTERCEPT
     # 名称：线性回归截距
     # real = LINEARREG_INTERCEPT(df.close, timeperiod=14)
-    dfa["LINEARREG_INTERCEPT"] = ta.LINEARREG_INTERCEPT(df.close, timeperiod=14)
+    dfa["LINEARREG_INTERCEPT"] = ta.LINEARREG_INTERCEPT(
+        df.close, timeperiod=14)
     # LINEARREG_SLOPE - Linear Regression Slope
     # 函数名：LINEARREG_SLOPE
     # 名称：线性回归斜率指标
@@ -813,27 +817,6 @@ def model_main_classifier(C=0.05):
     # 交叉验证
     # scores = cross_val_score(model, x_train, y_train, cv=10)
     # print(f'accuracy: {scores.mean():.2f} (+/- {scores.std() * 2})')
-
-
-def mofantest():
-    """试验莫烦sklearn网页中数据正规化示例
-    https://morvanzhou.github.io/tutorials/machine-learning/sklearn/3-1-normalization/
-    """
-    X, y = make_classification(n_samples=300, n_features=2,
-                               n_redundant=0, n_informative=2,
-                               random_state=22, n_clusters_per_class=1,
-                               scale=100)
-    # print('X:\n', X)
-    # print('-' * 80)
-    # print('y:\n', y)
-    X = scale(X)
-    x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
-    model = SVC(gamma='auto', verbose=True)
-    model.fit(x_train, y_train)
-    score = model.score(x_test, y_test)
-    print('SVC score:', score)
-    # plt.scatter(X[:, 0], X[:, 1], cmap='brg', c=y)
-    # plt.show()
 
 
 if __name__ == '__main__':

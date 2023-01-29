@@ -175,7 +175,8 @@ def _downloadDailyBasic(code, start_date, end_date):
 
 def downloadIndexDaily():
     sql = 'SELECT code, max(trade_date) update_date FROM index_daily group by code;'
-    updatedf = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        updatedf = pd.read_sql(text(sql), conn)
     for index, row in updatedf.iterrows():
         code = row['code']
         start_date = row['update_date'] + dt.timedelta(days=1)
@@ -234,12 +235,13 @@ def downloadIndexDailyIndicator():
     end_date = dt.datetime.today() - dt.timedelta(hours=18)
     end_date = end_date.date()
 
-    for index_name in index_dict.keys():
-        index_code = index_dict[index_name]
+    # for index_name in index_dict.keys():
+    for index_code in index_dict.values():
+        # index_code = index_dict[index_name]
         # print(index_name, index_code)
 
         sql = f'select max(trade_date) from index_dailyindicator where code="{index_code}"'
-        res = engine.execute(sql).fetchone()[0]
+        res = executesql(sql)
         # print(res)
         if res:
             start_date = res + dt.timedelta(days=1)

@@ -10,5 +10,6 @@
     "sqlrw",
     "stockdatamanage",
     "tushare"
-  ]
+  ],
+  "cSpell.enabled": false
 }

@@ -64,80 +64,6 @@ def writeClassifyNameToSQL(filename):
         writeSQL(classifyDf, 'classify')
 
 
-# def writeGuzhiToSQL(ts_code, data):
-#     """下载单个股票估值数据写入数据库"""
-#     guzhiDict = transGuzhiDataToDict(data)
-#     if guzhiDict is None:
-#         return True
-#     # print guzhiDict
-#     #     guzhiDf = DataFrame(guzhiDict, index=[0])
-#     #     writeSQLUpdate(guzhiDict, 'guzhi')
-#     #     print guzhiDict
-#     tablename = 'guzhi'
-#     if 'peg' in list(guzhiDict.keys()):
-#         peg = guzhiDict['peg']
-#     else:
-#         peg = 'null'
-#     if 'next1YearPE' in list(guzhiDict.keys()):
-#         next1YearPE = guzhiDict['next1YearPE']
-#     else:
-#         next1YearPE = 'null'
-#     if 'next2YearPE' in list(guzhiDict.keys()):
-#         next2YearPE = guzhiDict['next2YearPE']
-#     else:
-#         next2YearPE = 'null'
-#     if 'next3YearPE' in list(guzhiDict.keys()):
-#         next3YearPE = guzhiDict['next3YearPE']
-#     else:
-#         next3YearPE = 'null'
-#     # noinspection SqlResolve
-#     sql = (f'replace into {tablename}'
-#            '(ts_code, peg, next1YearPE, next2YearPE, next3YearPE) '
-#            'values("%(ts_code)s", %(peg)s, '
-#            '%(next1YearPE)s, %(next2YearPE)s, '
-#            '%(next3YearPE)s);')
-#     return engine.execute(sql)
-
-
-# def writeKline(ts_code, df, insertType='IGNORE'):
-#     """股票K线历史写入数据库"""
-#     tableName = tablenameKline(ts_code)
-#     if not initsql.existTable(tableName):
-#         initsql.createKlineTable(ts_code)
-#     return writeSQL(df, tableName, insertType)
-
-
-# def lirunFileToList(ts_code, date):
-#     fileName = filenameLirun(ts_code)
-#     lirunFile = open(fileName, 'r')
-#     lirunData = lirunFile.readlines()
-#
-#     dateList = lirunData[0].split()
-#     logging.debug(repr(dateList))
-#
-#     try:
-#         index = dateList.index(date)
-#         logging.debug(repr(index))
-#     except ValueError:
-#         return []
-#
-#     profitsList = lirunData[42].split()
-#     # if profitsList[0].decode('gbk') != '归属于母公司所有者的净利润':
-#     if profitsList[0] != '归属于母公司所有者的净利润':
-#         logging.error('lirunFileToList read %s error', ts_code)
-#         return []
-#
-#     return {'ts_code': ts_code,
-#             'date': date,
-#             'profits': profitsList[index],
-#             'reportdate': dateList[index]
-#             }
-
-
-# def tablenameKline(ts_code):
-#     return 'kline%s' % ts_code
-
-
 def dropTable(tableName):
     engine.execute('DROP TABLE %s' % tableName)
 
@@ -159,14 +85,16 @@ def readLowPEStock(maxPE=40):
     maxPE: 最大PE
     """
     sql = f'select ts_code, pe from stocklist where pe>0 and pe<={maxPE}'
-    df = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        df = pd.read_sql(text(sql), conn)
     return df
 
 
 def readGuzhi(ts_code):
     # noinspection SqlResolve
     sql = f'select * from guzhiresult where "{ts_code}"=ts_code limit 1'
-    df = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        df = pd.read_sql(text(sql), conn)
     if not df.empty:
         return df.iloc[0].todict()
 
@@ -175,7 +103,8 @@ def readStockList(list_date=None):
     sql = 'select code, name from stock_basic'
     if list_date:
         sql += f' where list_date>="{list_date}"'
-    df = pd.read_sql(sql, engine.connect())
+    with engine.connect() as conn:
+        df = pd.read_sql(text(sql), conn)
     return df
 
 
@@ -191,7 +120,7 @@ def writeSQL(df: pd.DataFrame, tableName: str, replace=False):
         logging.error('not exist %s' % tableName)
         return False
     # df = df.where(pd.notnull(df), None)
-    df.fillna(value='', inplace=True)
+    # df.fillna(value='', inplace=True)
     # df = transDfToList(df)
 
     Base = declarative_base()
@@ -201,7 +130,7 @@ def writeSQL(df: pd.DataFrame, tableName: str, replace=False):
 
     try:
         session = Session()
-        metadata = MetaData(bind=engine)
+        metadata = MetaData()
         metadata.create_all(engine)
         metadata.reflect(engine)
         if replace:
@@ -222,6 +151,7 @@ def writeSQL(df: pd.DataFrame, tableName: str, replace=False):
         session.close()
     except Exception as e:
         logging.error(f'写表失败[{tableName}]: {e}')
+        session.rollback()
         return False
     return True
 
@@ -230,7 +160,8 @@ def readGuzhiSQLToDf(stockList):
     listStr = ','.join(stockList)
     sql = 'select * from guzhi where ts_code in (%s);' % listStr
     #     result = engine.execute(sql)
-    df = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        df = pd.read_sql(text(sql), conn)
     print(df)
     return df
 
@@ -241,7 +172,8 @@ def readValuationSammary(date=None):
     sql = ('select ts_code, name, date, pf, pe, peg, pe200, pe1000 '
            'from valuation where date = (select max(date) from valuation) '
            'order by pf desc;')
-    stocks = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        stocks = pd.read_sql(text(sql), conn)
 
     # 行业名称
     sql = ('select a.ts_code, a.name, c.name as classify_name'
@@ -253,7 +185,8 @@ def readValuationSammary(date=None):
         sql += f' and b.date="{date}" '
     sql += (' and b.classify_code=c.code'
             ' order by ts_code;')
-    hyname = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        hyname = pd.read_sql(text(sql), conn)
     stocks = pd.merge(stocks, hyname, how='left')
 
     # 财务指标
@@ -263,7 +196,8 @@ def readValuationSammary(date=None):
            ' (select ts_code, max(end_date) as fina_date '
            ' from fina_indicator group by ts_code) b'
            ' where a.ts_code = b.ts_code and a.end_date = b.fina_date;')
-    finastat = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        finastat = pd.read_sql(text(sql), conn)
     finastat['grossprofit_margin'] = finastat.grossprofit_margin.round(2)
     finastat['roe'] = finastat.roe.round(2)
     finastat = finastat[['ts_code', 'fina_date', 'grossprofit_margin', 'roe']]
@@ -280,7 +214,8 @@ def readValuationSammary(date=None):
             from daily_basic group by ts_code) b
             where a.ts_code = b.ts_code and a.trade_date = b.daily_date;"""
 
-    daily = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        daily = pd.read_sql(text(sql), conn)
     stocks = pd.merge(stocks, daily, how='left')
 
     # 排序
@@ -293,7 +228,8 @@ def readValuation(ts_code):
     """
     sql = (f'select * from valuation where ts_code="{ts_code}" '
            ' order by date desc limit 1')
-    df = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        df = pd.read_sql(text(sql), conn)
     if not df.empty:
         return df.iloc[0].to_dict()
 
@@ -319,7 +255,7 @@ def readValuation(ts_code):
 # def readLirunList(date):
 #     sql = 'select * from lirun where `date` >= %s and `date` <= %s' % (
 #         str(date - 10), str(date))
-#     df = pd.read_sql(sql, engine)
+#     df = pd.read_sql(text(sql), conn)
 #     return df
 
 
@@ -372,7 +308,8 @@ def readTTMProfitsForStock(ts_code: str, startDate=None, endDate=None):
     #     print sql
     if endDate is not None:
         sql += ' and `date` <= "%s"' % endDate.strftime('%Y-%m-%d')
-    df = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        df = pd.read_sql(text(sql), conn)
 
     # 指定日期（含）前存在股本变动数据的，重设第1次变动日期为startDate，
     # 减少更新Kline表中总市值所需计算量
@@ -454,7 +391,8 @@ def readTTMProfitsForDate(end_date):
     """
     sql = (f'select ts_code, ttmprofits, inc from ttmprofits '
            f'where `end_date`="{end_date}"')
-    df = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        df = pd.read_sql(text(sql), conn)
     return df
 
 
@@ -465,7 +403,7 @@ def readTTMProfitsForDate(end_date):
 #     """
 #     sql = ('select ts_code, end_date, ann_date, n_income_attr_p as profits '
 #            f'from income where `end_date`="{end_date}"')
-#     df = pd.read_sql(sql, engine)
+#     df = pd.read_sql(text(sql), conn)
 #     return df
 
 
@@ -474,7 +412,8 @@ def readTTMPE(ts_code):
     """
     sql = ('select date, ttmpe from klinestock where ts_code="%(ts_code)s";'
            % locals())
-    df = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        df = pd.read_sql(text(sql), conn)
     return df
 
 
@@ -552,7 +491,8 @@ def readLastTTMPEs(stocks, trade_date=None):
     sql = (f'select ts_code, pe_ttm pe from daily_basic '
            f'where trade_date={condition}')
 
-    df = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        df = pd.read_sql(text(sql), conn)
     if df.empty:
         logging.warning(f'缺少{trade_date}每日指标')
         return None
@@ -597,7 +537,8 @@ def readGubenUpdateList():
     """ 比较股票已存股本数据与最新股数据，不相同时则表示需要更新的股票
     """
     sql = 'select ts_code, totals as totalsnew from stocklist;'
-    dfNew = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        dfNew = pd.read_sql(text(sql), conn)
 
     #     dfNew = ts.get_stock_basics()
     #     dfNew = dfNew.reset_index()
@@ -606,7 +547,8 @@ def readGubenUpdateList():
     sql = ('SELECT ts_code, totalshares as totalsold '
            'FROM (select * from stockdata.guben order by date desc) '
            'as tablea group by ts_code;')
-    dfOld = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        dfOld = pd.read_sql(text(sql), conn)
     dfOld.totalsold = dfOld.totalsold / 100000000
     dfOld = dfOld.round(2)
     updateList = pd.merge(dfNew, dfOld, on='ts_code', how='left')
@@ -640,14 +582,16 @@ def readChigu():
     #     sql = ('select chigu.ts_code, stocklist.name from chigu, stocklist '
     #            'where chigu.ts_code=stocklist.ts_code')
     sql = 'select ts_code from chigu'
-    return pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        return pd.read_sql(text(sql), conn)
 
 
 def readClassify():
     """
     """
     sql = 'select code, name from classify'
-    df = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        df = pd.read_sql(text(sql), conn)
     return df
 
 
@@ -674,7 +618,8 @@ def readClassifyProfit(date, lv=None):
                 where end_date="{date}" and a.code=b.code'''
     if lv is not None:
         sql += f' and length(a.code)={lv * 2}'
-    return pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        return pd.read_sql(text(sql), conn)
 
 
 def readClassifyProfitInc(codes, startDate, endDate):
@@ -702,7 +647,8 @@ def _readClassifyProfitInc(code, startDate, endDate):
                 where code="{code}" and
                     end_date>="{startDate}" and end_date<="{endDate}"
             '''
-    return pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        return pd.read_sql(text(sql), conn)
 
 # def getGuzhiList():
 #     #     sql = ('select guzhiresult.ts_code, stocklist.name '
@@ -789,7 +735,7 @@ def readIndexKline(index_code, days):
            f' and a.trade_date=b.trade_date'
            f' order by trade_date desc limit {days};')
     df = _readKline(sql)
-    # df = pd.read_sql(sql, engine)
+    # df = pd.read_sql(text(sql), conn)
     # df.rename(columns={'pe_ttm': 'pe'}, inplace=True)
     # df['date'] = df.trade_date.apply(lambda x: x.strftime('%Y%m%d'))
     # df.sort_values(by='date', inplace=True)
@@ -800,7 +746,8 @@ def readIndexKline(index_code, days):
 
 
 def _readKline(sql):
-    df = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        df = pd.read_sql(text(sql), conn)
     df.rename(columns={'trade_date': 'date', 'pe_ttm': 'pe'}, inplace=True)
     df.date = pd.to_datetime(df.date)
     df = df.set_index('date')
@@ -815,7 +762,8 @@ def readIndexPE(codes, startDate, endDate):
         sql = f'''select trade_date date, pe_ttm pe  from index_dailybasic
                     where ts_code="{code}" 
                     and trade_date>="{startDate}" and trade_date<="{endDate}"'''
-        _df = pd.read_sql(sql, engine)
+        with engine.connect() as conn:
+            _df = pd.read_sql(text(sql), conn)
         _df.rename(columns={'pe': f'pe{code[:6]}'}, inplace=True)
         if df is None:
             df = _df.copy()
@@ -870,7 +818,8 @@ def readProfitInc(startDate, endDate=None, ptype='stock',
     for index, date in enumerate(dates):
         sql = (f'select {field}, inc from {table} '
                f'where end_date="{date}";')
-        _df = pd.read_sql(sql, engine)
+        with engine.connect() as conn:
+            _df = pd.read_sql(text(sql), conn)
         if isinstance(code, str):
             _df = _df[_df[f'{field}'] == code]
         elif isinstance(code, list):
@@ -914,7 +863,8 @@ def readProfit(startDate, endDate=None, ptype='stock',
     for index, date in enumerate(dates):
         sql = (f'select {codefield}, {profitfield} from {table} '
                f'where end_date="{date}";')
-        _df = pd.read_sql(sql, engine)
+        with engine.connect() as conn:
+            _df = pd.read_sql(text(sql), conn)
         _df.rename(columns={f'{profitfield}': f'profit{date}'}, inplace=True)
         if isinstance(code, str):
             _df = _df[_df[f'{codefield}'] == code]
@@ -934,7 +884,8 @@ def readStockUpdate():
     """
     df = readStockList()
     sql = 'select code, max(trade_date) trade_date from daily group by code;'
-    dfupdate = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        dfupdate = pd.read_sql(text(sql), conn)
     df = df.merge(dfupdate, how='left')
     return df
 
@@ -944,6 +895,7 @@ def readStockBasicUpdate():
     """
     df = readStockList()
     sql = 'select code, max(trade_date) trade_date from daily_basic group by code;'
-    dfupdate = pd.read_sql(sql, engine)
-    df = df.merge(dfupdate, how='left')
+    dfupdate = pd.read_sql(text(sql), conn)
+    with engine.connect() as conn:
+        df = df.merge(dfupdate, how='left')
     return df

@@ -161,12 +161,14 @@ def divRangeStock(ts_code='000002.SZ', startDate='20090101',
     sql = (f'select trade_date, close cl from daily'
            f' where ts_code="{ts_code}" and trade_date>="{startDate}"'
            f' and trade_date<="{endDate}"')
-    df = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        df = pd.read_sql(text(sql), conn)
 
     sql = (f'select trade_date, adj_factor from adj_factor'
            f' where ts_code="{ts_code}" and trade_date>="{startDate}"'
            f' and trade_date<="{endDate}"')
-    factor = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        factor = pd.read_sql(text(sql), conn)
     df = pd.merge(df, factor, how='left', left_on='trade_date',
                   right_on='trade_date')
     df['close'] = df.cl * df.adj_factor
@@ -179,7 +181,8 @@ def divRangeIndex(ts_code='399300.SZ', startDate='20090101',
     sql = (f'select trade_date, close from index_daily'
            f' where ts_code="{ts_code}" and trade_date>="{startDate}"'
            f' and trade_date<="{endDate}"')
-    df = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        df = pd.read_sql(text(sql), conn)
 
     _divRange(df)
 
@@ -190,9 +193,9 @@ def _divRange(df):
 
     df['flag'] = 0
     df.loc[(df.ma60.shift(1) < df.ma120.shift(1)) & (
-            df.ma60 > df.ma120), 'flag'] = 1
+        df.ma60 > df.ma120), 'flag'] = 1
     df.loc[(df.ma60.shift(1) > df.ma120.shift(1)) & (
-            df.ma60 < df.ma120), 'flag'] = 2
+        df.ma60 < df.ma120), 'flag'] = 2
 
     pos = 0
     while True:
@@ -209,8 +212,10 @@ def _divRange(df):
     ax.plot(df.ma120)
     ymin, ymax = plt.ylim()
     offset = (ymax - ymin) / 40
-    ax.plot(stockdatamanage.views.home.index, df[df.flag == 1].ma120 - offset, 'r^')
-    ax.plot(stockdatamanage.views.home.index, df[df.flag == 2].ma120 + offset, 'gv')
+    ax.plot(stockdatamanage.views.home.index,
+            df[df.flag == 1].ma120 - offset, 'r^')
+    ax.plot(stockdatamanage.views.home.index,
+            df[df.flag == 2].ma120 + offset, 'gv')
 
     plt.show()
 

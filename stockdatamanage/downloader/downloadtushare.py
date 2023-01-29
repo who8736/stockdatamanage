@@ -28,6 +28,8 @@ from ..downloader.webRequest import WebRequest
 from ..util.initlog import initlog
 from ..util.misc import tsCode
 
+CONNECTTIMEOUT = 20
+
 
 class DownloaderQuarterTushare:
     """限时下载器
@@ -83,11 +85,11 @@ class DownloaderQuarterTushare:
                 if (perTimes > 0 and limit <= cur
                         and (nowtime < DownloaderQuarterTushare.times[table][
                             cur - limit]
-                             + dt.timedelta(seconds=perTimes))):
+                            + dt.timedelta(seconds=perTimes))):
                     _timedelta = nowtime - DownloaderQuarterTushare.times[table][
                         cur - limit]
                     sleeptime = DownloaderQuarterTushare.perTimes[
-                                    table] - _timedelta.seconds
+                        table] - _timedelta.seconds
                     logging.debug(f'******暂停{sleeptime}秒******')
                     time.sleep(sleeptime)
                 try:
@@ -102,7 +104,7 @@ class DownloaderQuarterTushare:
                     if table == 'fina_indicator':
                         kwargs['fields'] = DownloaderQuarterTushare.fields
                     result = downStockQuarterData(**kwargs)
-                except(socket.timeout):
+                except (socket.timeout):
                     logging.warning(f'downloader timeout: '
                                     f'{table}-{self.ts_code}-{self.startDate}')
                 else:
@@ -157,7 +159,7 @@ class DownloaderMisc:
                 time.sleep(sleeptime)
             try:
                 result = fun(**kwargs)
-            except(socket.timeout, CONNECTTIMEOUT, ReadTimeout):
+            except (socket.timeout, ReadTimeout):
                 logging.warning(f'downloader timeout: {table}')
             else:
                 return result
@@ -190,7 +192,7 @@ class Downloader:
         self.times = []
 
     # 下载限制由类静态成员记载与控制
-    def run(self, **kwargs):
+    def run(self, table, **kwargs):
         for _ in range(self.retry):
             nowtime = dt.datetime.now()
             if (self.cur >= self.limit
@@ -202,7 +204,7 @@ class Downloader:
                 time.sleep(sleeptime)
             try:
                 result = self.func(**kwargs)
-            except(socket.timeout, ConnectTimeout, ReadTimeout):
+            except (socket.timeout, ConnectTimeout, ReadTimeout):
                 logging.warning(f'downloader timeout: {table}')
             else:
                 return result
@@ -288,26 +290,6 @@ def downClassifyFile(_date):
         logging.warning(e)
 
 
-def getreq_del(url, includeHeader=False):
-    if includeHeader:
-        # headers = {'User-Agent': ('Mozilla/5.0 (Windows; U; Windows NT 6.1; '
-        #                           'en-US;rv:1.9.1.6) Gecko/20091201 '
-        #                           'Firefox/3.5.6')}
-        headers = {'User-Agent': ('Mozilla/5.0 (Windows NT 10.0; WOW64; '
-                                  'rv:49.0) Gecko/20100101 Firefox/49.0'),
-                   'Accept': ('text/html,application/xhtml+xml,'
-                              'application/xml;q=0.9,*/*;q=0.8'),
-                   # 'Accept-Encoding': 'gzip, deflate',
-                   'Accept-Language': 'zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3',
-                   'Connection': 'keep-alive',
-                   'DNT': '1',
-                   'Upgrade-Insecure-Requests': '1',
-                   }
-        return request.Request(url, headers=headers)
-    else:
-        return request.Request(url)
-
-
 # def downGuzhi_del(ts_code):
 #     """ 确认无用后可删除
 #     # 下载单个股票估值数据， 保存并返回估值数据
@@ -378,7 +360,8 @@ def downDailyRepairTushare():
     # stocks = readStockList()
     sql = ('select ts_code from stock_basic'
            ' where ts_code not in (select distinct ts_code from daily);')
-    stocks = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        stocks = pd.read_sql(text(sql), conn)
     pro = ts.pro_api()
     for ts_code in stocks.ts_code.to_list():
         logging.info('下载日K线：', ts_code)
@@ -547,7 +530,8 @@ def downIndexWeight():
         if lastDate is None:
             startDate = dt.date(2001, 1, 1)
         else:
-            startDate = dt.datetime.strptime(lastDate, '%Y%m%d').date() + dt.timedelta(days=1)
+            startDate = dt.datetime.strptime(
+                lastDate, '%Y%m%d').date() + dt.timedelta(days=1)
         endDate = dt.date.today() - dt.timedelta(days=1)
 
         # noinspection DuplicatedCode
@@ -558,7 +542,8 @@ def downIndexWeight():
             arg = {'index_code': code,
                    'start_date': _startDate,
                    'end_date': _endDate, }
-            logging.debug(f'download index_weight {code} {_startDate}-{_endDate}')
+            logging.debug(
+                f'download index_weight {code} {_startDate}-{_endDate}')
             result = downloader.run(**arg)
             if result is not None:
                 writeSQL(result, 'index_weight')
@@ -705,7 +690,7 @@ def downAdjFactorTushare(trade_date, retry=3):
         try:
             df = pro.adj_factor(trade_date=trade_date)
             writeSQL(df, 'adj_factor')
-        except (socket.timeout, CONNECTTIMEOUT):
+        except (socket.timeout):
             continue
         else:
             break

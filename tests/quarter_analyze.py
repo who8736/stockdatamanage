@@ -3,9 +3,12 @@
 # datetime:2020/4/26 11:06
 # 季报数据分析
 
-
+import pandas as pd
+from stockdatamanage.db import engine
 
 # noinspection PyUnusedLocal
+
+
 def profit_dedt(ts_code='600705.SH', startDate='20131231', endDate='20181231'):
     """扣非净利润增长水平"""
     sql = f"""select a.ts_code, c.name, 
@@ -20,7 +23,8 @@ def profit_dedt(ts_code='600705.SH', startDate='20131231', endDate='20181231'):
                     and a.ts_code=c.ts_code and b.profit_dedt/a.profit_dedt>2
                 order by inc desc;
             """
-    df = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        df = pd.read_sql(text(sql), conn)
     print(df)
 
 
@@ -36,7 +40,8 @@ def check_income():
             where end_date='20181231'
             ;
     """
-    df = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        df = pd.read_sql(text(sql), conn)
     df.to_excel('../data/checkincome.xlsx')
 
 

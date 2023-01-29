@@ -24,8 +24,10 @@ def plotCandlestick(p, df):
     incSor = ColumnDataSource(df[inc])
     decSor = ColumnDataSource(df[dec])
 
-    p.segment(x0='index', y0='high', x1='index', y1='low', source=incSor, color="red")
-    p.segment(x0='index', y0='high', x1='index', y1='low', source=decSor, color="green")
+    p.segment(x0='index', y0='high', x1='index',
+              y1='low', source=incSor, color="red")
+    p.segment(x0='index', y0='high', x1='index',
+              y1='low', source=decSor, color="green")
     w = 0.6
     p.vbar(x='index', bottom='open', top='close',
            width=w, source=incSor,
@@ -45,7 +47,8 @@ def plotCandlestick(p, df):
 
 def test():
     TOOLS = "pan,wheel_zoom,box_zoom,reset,save"
-    p = figure(x_axis_type="datetime", tools=TOOLS, plot_width=1000, title="MSFT Candlestick")
+    p = figure(x_axis_type="datetime", tools=TOOLS,
+               plot_width=1000, title="MSFT Candlestick")
     p.xaxis.major_label_orientation = pi / 4
     p.grid.grid_line_alpha = 0.8
 
@@ -140,13 +143,13 @@ def testPlotKline(ts_code, days=1000):
     plotPE(ppe, source)
 
     select = figure(
-                    # title="Drag the middle and edges of the selection box to change the range above",
-                    plot_height=selectHeight,
-                    plot_width=width,
-                    # y_range=ppe.y_range,
-                    # x_axis_type="datetime",
-                    y_axis_type=None,
-                    tools="", toolbar_location=None, background_fill_color="#efefef")
+        # title="Drag the middle and edges of the selection box to change the range above",
+        plot_height=selectHeight,
+        plot_width=width,
+        # y_range=ppe.y_range,
+        # x_axis_type="datetime",
+        y_axis_type=None,
+        tools="", toolbar_location=None, background_fill_color="#efefef")
     select.xaxis.major_label_overrides = df['date'].to_dict()
     plotPE(select, source)
 
@@ -168,7 +171,8 @@ def plotIndexPE():
     :return:
     """
     sql = 'select date, pe from pehistory where name="all"'
-    df = pd.read_sql(sql, engine)
+    with engine.connect() as conn:
+        df = pd.read_sql(text(sql), conn)
     print(df)
     source = ColumnDataSource(df)
     TOOLS = "pan,wheel_zoom,box_zoom,reset,save"
@@ -404,7 +408,8 @@ class BokehPlotPE:
 
     def __init__(self, days=1000):
         sql = 'select date, pe from pehistory where name="all"'
-        self.df = pd.read_sql(sql, engine)
+        with engine.connect() as conn:
+            self.df = pd.read_sql(text(sql), conn)
         self.source = ColumnDataSource(self.df)
 
         TOOLS = "pan,wheel_zoom,box_zoom,reset,save"
@@ -526,6 +531,3 @@ if __name__ == '__main__':
     # testPlotKline('600519')
     # df = testPlotKline('600519')
     # plotDf(df)
-
-
-
