@@ -895,7 +895,7 @@ def readStockBasicUpdate():
     """
     df = readStockList()
     sql = 'select code, max(trade_date) trade_date from daily_basic group by code;'
-    dfupdate = pd.read_sql(text(sql), conn)
     with engine.connect() as conn:
-        df = df.merge(dfupdate, how='left')
+        dfupdate = pd.read_sql(text(sql), conn)
+    df = df.merge(dfupdate, how='left')
     return df
