@@ -224,14 +224,14 @@ def startUpdateAkshare():
     pass
 
     # 更新交易日历
-    # downTradeCal()
+    downTradeCal()
     # print('下载日历数据， AKShare')
 
     # 更新股票列表
-    # downStockList()
+    downStockList()
 
     # 更新股票日交易数据
-    # downloadDaily()
+    downloadDaily()
 
     # 更新每日指标
     downloadDailyBasic()
