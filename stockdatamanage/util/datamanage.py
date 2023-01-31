@@ -224,17 +224,17 @@ def startUpdateAkshare():
     pass
 
     # 更新交易日历
-    downTradeCal()
+    # downTradeCal()
     # print('下载日历数据， AKShare')
 
     # 更新股票列表
-    downStockList()
+    # downStockList()
 
     # 更新股票日交易数据
-    downloadDaily()
+    # downloadDaily()
 
     # 更新每日指标
-    downloadDailyBasic()
+    # downloadDailyBasic()
 
     # 更新复权因子*
     # updateAdjFacotrTushare()
@@ -276,7 +276,7 @@ def startUpdateAkshare():
     # downloadIndexDailyIndicator()
 
     # 更新ETF每日净值
-    # downloadETFDaily()
+    downloadETFDaily()
 
     # 更新全市PE*
     # updateAllMarketPE()

@@ -11,7 +11,7 @@ import akshare as ak
 import pandas as pd
 import numpy as np
 from tenacity import retry, stop_after_attempt, RetryError
-# from sqlalchemy import text
+from sqlalchemy import text
 
 from ..db.sqlrw import writeSQL, readStockUpdate, readStockBasicUpdate
 from ..db import engine, executesql
@@ -236,9 +236,9 @@ def downloadIndexDailyIndicator():
     end_date = dt.datetime.today() - dt.timedelta(hours=18)
     end_date = end_date.date()
 
-    # for index_name in index_dict.keys():
-    for index_code in index_dict.values():
-        # index_code = index_dict[index_name]
+    for index_name in index_dict.keys():
+        # for index_code in index_dict.values():
+        index_code = index_dict[index_name]
         # print(index_name, index_code)
 
         sql = f'select max(trade_date) from index_dailyindicator where code="{index_code}"'
@@ -284,7 +284,8 @@ def downloadETFDaily():
 
     for code in codes:
         sql = f'select max(trade_date) from etf_daily where code="{code}"'
-        res = engine.execute(sql).fetchone()[0]
+        res = executesql(sql)
+        # res = engine.execute(sql).fetchone()[0]
         # print(res)
         if res:
             start_date = res.strftime('%Y%m%d')
