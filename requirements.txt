@@ -11,7 +11,7 @@ hurst==0.0.5
 baostock==0.8.8
 pandas==1.0.3
 TA_Lib==0.4.17
-requests==2.23.0
+requests==2.31.0
 Flask_Bootstrap==3.3.7.1
 Flask==1.1.1
 numpy==1.18.1
